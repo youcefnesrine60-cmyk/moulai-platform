@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📦 BASE MODEL
 # النموذج الأساسي لجميع الجداول في قاعدة البيانات
 # يوفر حقولاً مشتركة ودوال مساعدة
@@ -12,13 +19,21 @@ from sqlalchemy import (
     Integer,
     func,
 )
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
 # ==============================================
-# 🏗️ BASE
+# 🏗️ BASE - تعريف واحد فقط لجميع النماذج SQLAlchemy
 # ==============================================
 
-Base = declarative_base()
+class Base(DeclarativeBase):
+    """
+    الفئة الأساسية لجميع نماذج SQLAlchemy.
+    
+    جميع النماذج الجديدة (SQLAlchemy) ترث من هذه الفئة.
+    النماذج القديمة (psycopg) تستخدم ملف db.py مؤقتاً.
+    """
+    pass
+
 
 # ==============================================
 # 🧩 TYPES
@@ -26,13 +41,14 @@ Base = declarative_base()
 
 ModelDict = Dict[str, Any]
 
+
 # ==============================================
 # 📦 BASE MODEL (مع id)
 # ==============================================
 
 class BaseModel(Base):
     """
-        النموذج الأساسي - للجداول التي تحتوي على عمود id.
+    النموذج الأساسي - للجداول التي تحتوي على عمود id.
     
     يوفر:
         - معرف تلقائي (id)
@@ -75,7 +91,7 @@ class BaseModel(Base):
     
     def to_dict(self) -> ModelDict:
         """
-        تحويل النموذج إلى قاموس
+        تحويل النموذج إلى قاموس.
         
         Returns:
             قاموس يحتوي على جميع أعمدة النموذج
@@ -99,9 +115,9 @@ class BaseModelWithoutId(Base):
         - طابع زمني للتحديث (updated_at)
         - دالة تحويل إلى قاموس (to_dict)
 
-        Attributes:
-            created_at: تاريخ ووقت الإنشاء
-            updated_at: تاريخ ووقت آخر تحديث
+    Attributes:
+        created_at: تاريخ ووقت الإنشاء
+        updated_at: تاريخ ووقت آخر تحديث
     """
     __abstract__ = True
 
@@ -126,8 +142,25 @@ class BaseModelWithoutId(Base):
     # ==========================================
 
     def to_dict(self) -> ModelDict:
-        """تحويل النموذج إلى قاموس."""
+        """
+        تحويل النموذج إلى قاموس.
+        
+        Returns:
+            قاموس يحتوي على جميع أعمدة النموذج
+        """
         return {
             column.name: getattr(self, column.name)
             for column in self.__table__.columns
         }
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "Base",
+    "BaseModel",
+    "BaseModelWithoutId",
+    "ModelDict",
+]

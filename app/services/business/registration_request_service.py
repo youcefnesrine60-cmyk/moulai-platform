@@ -48,7 +48,7 @@ from app.models.registration_request import RegistrationRequest
 from app.repositories.registration_request_repo import (
     RegistrationRequestRepository,
 )
-from app.repositories.restaurant_repo import RestaurantRepository
+from app.repositories.restaurant.restaurant_repo import RestaurantRepository
 from app.services.business.owner_service import OwnerService
 from app.services.business.subscription_service import (
     SubscriptionService,

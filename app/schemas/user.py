@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 👤 USER SCHEMAS
 # نماذج Pydantic للمستخدمين
 # تدير التحقق من صحة البيانات وتسلسلها للمستخدمين
@@ -14,8 +21,10 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
 )
+
 
 # ==============================================
 # 🧩 TYPES
@@ -24,6 +33,7 @@ from pydantic import (
 UserData = Dict[str, Any]
 UserUpdateData = Dict[str, Any]
 UserList = List["UserResponse"]
+
 
 # ==============================================
 # 📦 BASE SCHEMA
@@ -44,24 +54,24 @@ class UserBase(BaseModel):
     chat_id: Optional[int] = Field(
         None,
         description="معرف المستخدم في تيليجرام",
-        example=123456789,
+        json_schema_extra={"example": 123456789},
     )
     consent: bool = Field(
         False,
         description="موافقة المستخدم على الشروط والأحكام",
-        example=True,
+        json_schema_extra={"example": True},
     )
     customer_name: Optional[str] = Field(
         None,
         max_length=255,
         description="اسم العميل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     customer_phone: Optional[str] = Field(
         None,
         max_length=20,
         description="رقم هاتف العميل",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
 
 
@@ -82,24 +92,24 @@ class UserCreate(BaseModel):
     chat_id: int = Field(
         ...,
         description="معرف المستخدم في تيليجرام",
-        example=123456789,
+        json_schema_extra={"example": 123456789},
     )
     consent: bool = Field(
         False,
         description="موافقة المستخدم على الشروط والأحكام",
-        example=True,
+        json_schema_extra={"example": True},
     )
     customer_name: Optional[str] = Field(
         None,
         max_length=255,
         description="اسم العميل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     customer_phone: Optional[str] = Field(
         None,
         max_length=20,
         description="رقم هاتف العميل",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
 
 
@@ -119,19 +129,19 @@ class UserUpdate(BaseModel):
     consent: Optional[bool] = Field(
         None,
         description="موافقة المستخدم على الشروط والأحكام",
-        example=True,
+        json_schema_extra={"example": True},
     )
     customer_name: Optional[str] = Field(
         None,
         max_length=255,
         description="اسم العميل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     customer_phone: Optional[str] = Field(
         None,
         max_length=20,
         description="رقم هاتف العميل",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
 
 
@@ -149,7 +159,7 @@ class UserConsentUpdate(BaseModel):
     consent: bool = Field(
         ...,
         description="حالة الموافقة الجديدة",
-        example=True,
+        json_schema_extra={"example": True},
     )
 
 
@@ -166,10 +176,12 @@ class UserResponse(UserBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف المستخدم",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -179,12 +191,6 @@ class UserResponse(UserBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -201,6 +207,8 @@ class UserListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: UserList = Field(
         ...,
         description="قائمة المستخدمين",
@@ -208,17 +216,17 @@ class UserListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
     )
 
 
@@ -239,40 +247,42 @@ class UserSummary(BaseModel):
         consent_rate: نسبة الموافقة
         profile_completion_rate: نسبة اكتمال الملف الشخصي
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total_users: int = Field(
         ...,
         description="إجمالي عدد المستخدمين",
-        example=100,
+        json_schema_extra={"example": 100},
     )
     users_with_consent: int = Field(
         ...,
         description="عدد المستخدمين بالموافقة",
-        example=80,
+        json_schema_extra={"example": 80},
     )
     users_without_consent: int = Field(
         ...,
         description="عدد المستخدمين بدون موافقة",
-        example=20,
+        json_schema_extra={"example": 20},
     )
     users_with_name: int = Field(
         ...,
         description="عدد المستخدمين بالاسم",
-        example=70,
+        json_schema_extra={"example": 70},
     )
     users_with_phone: int = Field(
         ...,
         description="عدد المستخدمين برقم الهاتف",
-        example=60,
+        json_schema_extra={"example": 60},
     )
     consent_rate: float = Field(
         ...,
         description="نسبة الموافقة (%)",
-        example=80.0,
+        json_schema_extra={"example": 80.0},
     )
     profile_completion_rate: float = Field(
         ...,
         description="نسبة اكتمال الملف الشخصي (%)",
-        example=65.0,
+        json_schema_extra={"example": 65.0},
     )
 
 
@@ -293,20 +303,20 @@ class UserSearch(BaseModel):
         ...,
         min_length=1,
         description="نص البحث (الاسم أو رقم الهاتف)",
-        example="أحمد",
+        json_schema_extra={"example": "أحمد"},
     )
     skip: int = Field(
         0,
         ge=0,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
     )
     limit: int = Field(
         100,
         ge=1,
         le=100,
         description="الحد الأقصى للسجلات",
-        example=10,
+        json_schema_extra={"example": 10},
     )
 
 
@@ -323,18 +333,40 @@ class ConsentResponse(BaseModel):
         has_consent: حالة الموافقة
         message: رسالة توضيحية
     """
+    model_config = ConfigDict(from_attributes=True)
+
     chat_id: int = Field(
         ...,
         description="معرف المستخدم في تيليجرام",
-        example=123456789,
+        json_schema_extra={"example": 123456789},
     )
     has_consent: bool = Field(
         ...,
         description="حالة الموافقة",
-        example=True,
+        json_schema_extra={"example": True},
     )
     message: str = Field(
         ...,
         description="رسالة توضيحية",
-        example="User has given consent",
+        json_schema_extra={"example": "User has given consent"},
     )
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "UserBase",
+    "UserCreate",
+    "UserUpdate",
+    "UserConsentUpdate",
+    "UserResponse",
+    "UserListResponse",
+    "UserSummary",
+    "UserSearch",
+    "ConsentResponse",
+    "UserData",
+    "UserUpdateData",
+    "UserList",
+]

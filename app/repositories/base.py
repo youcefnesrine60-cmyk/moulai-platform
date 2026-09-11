@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📦 BASE REPOSITORY
 # النموذج الأساسي لجميع المستودعات
 # يوفر عمليات CRUD مشتركة لجميع النماذج
@@ -19,9 +26,11 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from app.core.logger import logger
 from app.models.base import BaseModel
+
 
 # ==============================================
 # 🧩 TYPES
@@ -32,10 +41,10 @@ CreateSchemaType = TypeVar("CreateSchemaType", bound=Dict[str, Any])
 UpdateSchemaType = TypeVar("UpdateSchemaType", bound=Dict[str, Any])
 FilterType = Optional[Dict[str, Any]]
 
+
 # ==============================================
 # 📦 BASE REPOSITORY
 # ==============================================
-
 
 class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """
@@ -83,6 +92,10 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         إنشاء سجل جديد.
         
+        ✅ التصحيح النهائي: استخدام commit() بدلاً من flush()
+        ✅ commit() يغلق الترانزاكشن بشكل صحيح
+        ✅ refresh() يعمل بعد commit()
+        
         Args:
             data: بيانات الإنشاء
             
@@ -92,7 +105,11 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         try:
             instance = self.model(**data)
             self.session.add(instance)
+            
+            # ✅ استخدام commit() بدلاً من flush()
             await self.session.commit()
+            
+            # ✅ refresh بعد commit يعمل بشكل صحيح
             await self.session.refresh(instance)
 
             logger.info(
@@ -102,6 +119,13 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
             return instance
 
+        except IntegrityError as e:
+            await self.session.rollback()
+            logger.warning(
+                f"{self.model.__name__}_create_integrity_error",
+                extra={"error": str(e)},
+            )
+            raise
         except Exception as e:
             await self.session.rollback()
             logger.exception(
@@ -131,6 +155,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         try:
             instances = [self.model(**data) for data in data_list]
             self.session.add_all(instances)
+            
+            # ✅ استخدام commit()
             await self.session.commit()
 
             for instance in instances:
@@ -143,6 +169,13 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
             return instances
 
+        except IntegrityError as e:
+            await self.session.rollback()
+            logger.warning(
+                f"{self.model.__name__}_create_many_integrity_error",
+                extra={"error": str(e)},
+            )
+            raise
         except Exception as e:
             await self.session.rollback()
             logger.exception(
@@ -278,7 +311,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
             result = await self.session.execute(query)
 
-            return result.scalar_one()
+            return result.scalar_one() or 0
 
         except Exception as e:
             logger.exception(
@@ -341,6 +374,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         تحديث سجل.
         
+        ✅ التصحيح: استخدام commit() بدلاً من flush()
+        
         Args:
             id: المعرف
             data: بيانات التحديث
@@ -358,6 +393,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 if hasattr(instance, key) and value is not None:
                     setattr(instance, key, value)
 
+            # ✅ استخدام commit()
             await self.session.commit()
             await self.session.refresh(instance)
 
@@ -395,6 +431,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         حذف سجل.
         
+        ✅ التصحيح: استخدام commit() بدلاً من flush()
+        
         Args:
             id: المعرف
             
@@ -408,6 +446,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 return False
 
             await self.session.delete(instance)
+            
+            # ✅ استخدام commit()
             await self.session.commit()
 
             logger.info(
@@ -440,6 +480,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         حذف عدة سجلات.
         
+        ✅ التصحيح: استخدام commit() بدلاً من flush()
+        
         Args:
             ids: قائمة المعرفات
             
@@ -456,6 +498,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             for instance in instances:
                 await self.session.delete(instance)
 
+            # ✅ استخدام commit()
             await self.session.commit()
 
             logger.info(
@@ -470,5 +513,48 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             logger.exception(
                 f"{self.model.__name__}_delete_many_failed",
                 extra={"error": str(e)},
+            )
+            raise
+
+    # ==========================================
+    # 📊 EXTRA
+    # ==========================================
+
+    # ==============================================
+    # COUNT RESTAURANTS
+    # ==============================================
+
+    async def count_restaurants(
+        self,
+        *,
+        owner_id: int,
+    ) -> int:
+        """
+        حساب عدد المطاعم المملوكة لمالك معين.
+        
+        Args:
+            owner_id: معرف المالك
+            
+        Returns:
+            عدد المطاعم
+        """
+        try:
+            from app.models.restaurant import Restaurant
+
+            result = await self.session.execute(
+                select(func.count())
+                .select_from(Restaurant)
+                .where(Restaurant.owner_id == owner_id),
+            )
+
+            return result.scalar_one() or 0
+
+        except Exception as e:
+            logger.exception(
+                "count_restaurants_failed",
+                extra={
+                    "owner_id": owner_id,
+                    "error": str(e),
+                },
             )
             raise

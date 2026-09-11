@@ -6,7 +6,7 @@ from app.core.logger import logger
 
 from app.helpers.ui_manager import UIManager
 
-from app.repositories.restaurant_repo import get_restaurant_by_id
+from app.repositories.restaurant.restaurant_repo import get_restaurant_by_id
 
 from app.views.ui import (
     back_ui,

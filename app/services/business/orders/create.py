@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📦 ORDERS SERVICE - CREATE
 # إنشاء الطلب 
 # (create_restaurant_order, create_order_with_items)
@@ -25,10 +32,10 @@ from app.repositories.orders_repo import OrdersRepository
 from app.repositories.order_status_history_repo import (
     OrderStatusHistoryRepository,
 )
-from app.repositories.restaurant_metrics_repo import (
+from app.repositories.restaurant.restaurant_metrics_repo import (
     RestaurantMetricsRepository,
 )
-from app.repositories.restaurant_order_counters_repo import (
+from app.repositories.restaurant.restaurant_order_counters_repo import (
     RestaurantOrderCountersRepository,
 )
 from app.services.business.feature_usage_counter_engine import increase_usage

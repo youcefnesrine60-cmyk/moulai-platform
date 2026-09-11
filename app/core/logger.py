@@ -1,3 +1,10 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
 import logging
 import sys
 
@@ -36,7 +43,7 @@ class SafeJsonFormatter(json.JsonFormatter):
 # LOGGER
 # ==========================================
 
-logger = logging.getLogger("DZ_EATERY")
+logger = logging.getLogger("MoulAI™ Platform - Agent-as-a-Service")
 logger.setLevel(logging.INFO)
 
 handler = logging.StreamHandler(sys.stdout)

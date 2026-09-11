@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 👤 OWNER SERVICE
 # Business Logic Layer
 # منطق الأعمال للمالكين
@@ -13,6 +20,7 @@ from typing import (
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
@@ -58,7 +66,6 @@ OwnerList = List[Owner]
 # ==============================================
 # 👤 OWNER SERVICE
 # ==============================================
-
 
 class OwnerService:
     """
@@ -381,6 +388,8 @@ class OwnerService:
         """
         إنشاء مالك جديد.
         
+        ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
+        
         Args:
             owner_data: بيانات المالك
             
@@ -430,17 +439,42 @@ class OwnerService:
             "trial_used": owner_data.trial_used or False,
         }
 
-        owner = await self.repo.create(data=data)
+        try:
+            # ✅ base.py يقوم بـ commit() و refresh()
+            owner = await self.repo.create(data=data)
+            
+            # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
-        logger.info(
-            "owner_created_successfully",
-            extra={
-                "owner_id": owner.id,
-                "chat_id": owner.chat_id,
-            },
-        )
+            logger.info(
+                "owner_created_successfully",
+                extra={
+                    "owner_id": owner.id,
+                    "chat_id": owner.chat_id,
+                },
+            )
 
-        return OwnerResponse.model_validate(owner)
+            return OwnerResponse.model_validate(owner)
+
+        except IntegrityError as e:
+            logger.warning(
+                "owner_service_create_integrity_error",
+                extra={
+                    "chat_id": owner_data.chat_id,
+                    "error": str(e),
+                },
+            )
+            raise ConflictError(
+                message=f"المالك بـ chat_id '{owner_data.chat_id}' موجود مسبقاً",
+            )
+        except Exception as e:
+            logger.exception(
+                "owner_service_create_error",
+                extra={
+                    "chat_id": owner_data.chat_id,
+                    "error": str(e),
+                },
+            )
+            raise
 
     # ==============================================
     # UPDATE OWNER
@@ -454,6 +488,8 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         تحديث مالك.
+        
+        ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
         
         Args:
             owner_id: معرف المالك
@@ -502,7 +538,7 @@ class OwnerService:
                     message="البريد الإلكتروني غير صالح",
                 )
 
-        # تحديث المالك
+        # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
             owner_id=owner_id,
             data=updates,
@@ -512,6 +548,8 @@ class OwnerService:
             raise NotFoundError(
                 message=f"المالك بـ ID '{owner_id}' غير موجود",
             )
+
+        # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
         logger.info(
             "owner_updated_successfully",
@@ -535,6 +573,8 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         تحديث حالة المالك.
+        
+        ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
         
         Args:
             owner_id: معرف المالك
@@ -566,6 +606,7 @@ class OwnerService:
             },
         )
 
+        # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
             owner_id=owner_id,
             data={"registration_status": status},
@@ -575,6 +616,8 @@ class OwnerService:
             raise NotFoundError(
                 message=f"المالك بـ ID '{owner_id}' غير موجود",
             )
+
+        # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
         logger.info(
             "owner_status_updated_successfully",
@@ -598,6 +641,8 @@ class OwnerService:
         """
         اعتماد مالك (تغيير الحالة إلى approved).
         
+        ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
+        
         Args:
             owner_id: معرف المالك
             
@@ -612,6 +657,7 @@ class OwnerService:
             extra={"owner_id": owner_id},
         )
 
+        # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
             owner_id=owner_id,
             data={"registration_status": "approved"},
@@ -621,6 +667,8 @@ class OwnerService:
             raise NotFoundError(
                 message=f"المالك بـ ID '{owner_id}' غير موجود",
             )
+
+        # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
         logger.info(
             "owner_approved_successfully",
@@ -641,6 +689,8 @@ class OwnerService:
         """
         رفض مالك (تغيير الحالة إلى rejected).
         
+        ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
+        
         Args:
             owner_id: معرف المالك
             
@@ -655,6 +705,7 @@ class OwnerService:
             extra={"owner_id": owner_id},
         )
 
+        # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
             owner_id=owner_id,
             data={"registration_status": "rejected"},
@@ -664,6 +715,8 @@ class OwnerService:
             raise NotFoundError(
                 message=f"المالك بـ ID '{owner_id}' غير موجود",
             )
+
+        # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
         logger.info(
             "owner_rejected_successfully",
@@ -684,6 +737,8 @@ class OwnerService:
         """
         تعيين حالة المالك إلى pending.
         
+        ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
+        
         Args:
             owner_id: معرف المالك
             
@@ -698,6 +753,7 @@ class OwnerService:
             extra={"owner_id": owner_id},
         )
 
+        # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
             owner_id=owner_id,
             data={"registration_status": "pending"},
@@ -707,6 +763,8 @@ class OwnerService:
             raise NotFoundError(
                 message=f"المالك بـ ID '{owner_id}' غير موجود",
             )
+
+        # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
         logger.info(
             "owner_set_pending_successfully",
@@ -728,6 +786,8 @@ class OwnerService:
         """
         تحديث حالة استخدام الفترة التجريبية.
         
+        ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
+        
         Args:
             owner_id: معرف المالك
             trial_used: حالة الاستخدام
@@ -746,6 +806,7 @@ class OwnerService:
             },
         )
 
+        # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
             owner_id=owner_id,
             data={"trial_used": trial_used},
@@ -755,6 +816,8 @@ class OwnerService:
             raise NotFoundError(
                 message=f"المالك بـ ID '{owner_id}' غير موجود",
             )
+
+        # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
         logger.info(
             "owner_trial_toggled_successfully",
@@ -810,6 +873,8 @@ class OwnerService:
         """
         تفعيل استخدام الفترة التجريبية.
         
+        ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
+        
         Args:
             owner_id: معرف المالك
             
@@ -846,7 +911,7 @@ class OwnerService:
                     message="المالك غير معتمد، لا يمكن تفعيل الفترة التجريبية",
                 )
 
-        # تفعيل الفترة التجريبية
+        # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
             owner_id=owner_id,
             data={"trial_used": True},
@@ -856,6 +921,8 @@ class OwnerService:
             raise NotFoundError(
                 message=f"المالك بـ ID '{owner_id}' غير موجود",
             )
+
+        # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
         logger.info(
             "owner_trial_activated_successfully",
@@ -879,6 +946,8 @@ class OwnerService:
     ) -> None:
         """
         حذف مالك.
+        
+        ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
         
         Args:
             owner_id: معرف المالك
@@ -912,12 +981,15 @@ class OwnerService:
                 },
             )
 
+        # ✅ base.py يقوم بـ commit()
         deleted = await self.repo.delete(owner_id=owner_id)
 
         if not deleted:
             raise NotFoundError(
                 message=f"المالك بـ ID '{owner_id}' غير موجود",
             )
+
+        # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
         logger.info(
             "owner_deleted_successfully",

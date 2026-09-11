@@ -1,13 +1,14 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🚀 MoulAI MAIN APPLICATION
 # ==============================================
+
 """التطبيق الرئيسي لمنصة مولاي."""
 
 from contextlib import asynccontextmanager
@@ -20,26 +21,32 @@ from fastapi.middleware.cors import CORSMiddleware
 # 📦 IMPORT ROUTERS
 # ==============================================
 
-from app.api.v1.registration_request import router as registration_requests_router
-from app.api.v1.restaurants import router as restaurants_router
-from app.api.v1.owners import router as owners_router
-from app.api.v1.payments import router as payments_router
-from app.api.v1.products import router as products_router
+# Admin
+from app.api.v1.admin import (
+    admin_router,
+    admin_log_router,
+    admin_session_router,
+)
+
+# API v1 Routers
 from app.api.v1.branches import router as branches_router
 from app.api.v1.categories import router as categories_router
-from app.api.v1.orders import router as orders_router
-from app.api.v1.order_item import router as order_items_router
-from app.api.v1.restaurant_payment_setting import router as payment_settings_router
-from app.api.v1.restaurant_metric import router as restaurant_metrics_router
-from app.api.v1.restaurant_order_counter import router as order_counter_router
 from app.api.v1.option_group import router as option_groups_router
+from app.api.v1.order_item import router as order_items_router
+from app.api.v1.orders import router as orders_router
+from app.api.v1.owners import router as owners_router
+from app.api.v1.payments import router as payments_router
 from app.api.v1.product_option import router as product_options_router
+from app.api.v1.products import router as products_router
+from app.api.v1.registration_request import router as registration_requests_router
+# Restaurant (جميع الروترات مجمعة في ملف واحد)
+from app.api.v1.restaurant import router as restaurant_router
 from app.api.v1.user import router as users_router
 from app.api.webhook import router as webhook_router
 from app.api.webhook import register_routes
 
 from app.core.config import settings
-from app.core.db import init_db, close_db
+from app.core.database import close_db, init_db
 from app.core.logger import logger
 
 
@@ -107,9 +114,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 # ==============================================
 
 app = FastAPI(
-    title= "MoulAI - مولاي",
+    title="MoulAI - مولاي",
     version="1.0.0",
-    description="Platform - Agent-as-a-Service",
+    description="Agent-as-a-Service Platform",
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -123,7 +130,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS.split(","),
+    allow_origins=settings.ALLOWED_ORIGINS_LIST,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -134,9 +141,30 @@ app.add_middleware(
 # 📋 INCLUDE ROUTERS
 # ==============================================
 
-# ✅ نقاط نهاية المطاعم (API v1)
+# ✅ نقاط نهاية المديرين (API v1)
 app.include_router(
-    restaurants_router,
+    admin_router,
+    prefix="/api/v1",
+    tags=["Admins"],
+)
+
+# ✅ نقاط نهاية سجل أنشطة المديرين (API v1)
+app.include_router(
+    admin_log_router,
+    prefix="/api/v1",
+    tags=["Admin Logs"],
+)
+
+# ✅ نقاط نهاية جلسات المديرين (API v1)
+app.include_router(
+    admin_session_router,
+    prefix="/api/v1",
+    tags=["Admin Sessions"],
+)
+
+# ✅ نقاط نهاية المطاعم (API v1) - جميع الروترات الفرعية
+app.include_router(
+    restaurant_router,
     prefix="/api/v1",
     tags=["Restaurants"],
 )
@@ -148,7 +176,7 @@ app.include_router(
     tags=["Owners"],
 )
 
-# ✅ نقاط نهاية طلبات التسجيل (API v1) 
+# ✅ نقاط نهاية طلبات التسجيل (API v1)
 app.include_router(
     registration_requests_router,
     prefix="/api/v1",
@@ -197,25 +225,11 @@ app.include_router(
     tags=["Order Items"],
 )
 
-# ✅ نقاط نهاية إعدادات الدفع (API v1)
+# ✅ نقاط نهاية فروع المطاعم (API v1)
 app.include_router(
-    payment_settings_router,
+    branches_router,
     prefix="/api/v1",
-    tags=["Payment Settings"],
-)
-
-# ✅ نقاط نهاية مقاييس المطعم (API v1)
-app.include_router(
-    restaurant_metrics_router,
-    prefix="/api/v1",
-    tags=["Restaurant Metrics"],
-)
-
-# ✅ نقاط نهاية عداد طلبات المطعم (API v1)
-app.include_router(
-    order_counter_router,
-    prefix="/api/v1",
-    tags=["Order Counters"],
+    tags=["Restaurant Branches"],
 )
 
 # ✅ نقاط نهاية مجموعات الخيارات (API v1)
@@ -259,7 +273,7 @@ async def root() -> dict:
         dict: معلومات عن التطبيق
     """
     return {
-        "message": "Welcome to MoulAI API",
+        "message": "Welcome to MoulAI Platform",
         "version": "1.0.0",
         "environment": settings.APP_ENV,
         "docs": "/docs",

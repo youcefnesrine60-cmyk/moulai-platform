@@ -15,7 +15,7 @@ from app.repositories.registration_request_repo import (
     get_registration_request_by_id,
 )
 
-from app.repositories.restaurant_repo import get_all_restaurants
+from app.repositories.restaurant.restaurant_repo import get_all_restaurants
 from app.repositories.owner_repo import get_all_owners
 from app.repositories.orders_repo import get_restaurant_orders
 
@@ -24,7 +24,7 @@ from app.services.business.registration_request_service import (
     reject_registration,
 )
 
-from app.services.business.admin_service import (
+from app.services.business.admin.admin_service import (
     is_admin,
     count_admins,
 )

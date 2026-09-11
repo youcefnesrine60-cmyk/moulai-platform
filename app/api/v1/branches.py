@@ -328,7 +328,7 @@ async def create_branch(
         "api_create_branch",
         extra={
             "restaurant_id": restaurant_id,
-            "name": data.name,
+            "branches_name": data.name,
         },
     )
 
@@ -356,7 +356,7 @@ async def create_branch(
             "api_create_branch_conflict",
             extra={
                 "restaurant_id": restaurant_id,
-                "name": data.name,
+                "branches_name": data.name,
                 "error": str(e),
             },
         )

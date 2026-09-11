@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 👤 OWNER SCHEMAS
 # نماذج Pydantic للمالكين
 # تدير التحقق من صحة البيانات وتسلسلها للمالكين
@@ -14,6 +21,7 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     field_validator,
 )
@@ -47,34 +55,35 @@ class OwnerBase(BaseModel):
     chat_id: int = Field(
         ...,
         description="معرف المستخدم في تيليجرام",
-        example=123456789,
+        json_schema_extra={"example": 123456789},
         ge=1,
     )
     full_name: Optional[str] = Field(
         None,
         max_length=255,
         description="الاسم الكامل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     phone: Optional[str] = Field(
         None,
         max_length=20,
         description="رقم الهاتف",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
     email: Optional[str] = Field(
         None,
         max_length=255,
         description="البريد الإلكتروني",
-        example="ahmed@example.com",
+        json_schema_extra={"example": "ahmed@example.com"},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("email")
     @classmethod
-    def validate_email(
-        cls,
-        value: Optional[str],
-    ) -> Optional[str]:
+    def validate_email(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة البريد الإلكتروني.
         
@@ -82,7 +91,7 @@ class OwnerBase(BaseModel):
             value: البريد الإلكتروني
             
         Returns:
-            البريد الإلكتروني المدقق
+            Optional[str]: البريد الإلكتروني المدقق
             
         Raises:
             ValueError: إذا كان البريد الإلكتروني غير صالح
@@ -96,10 +105,7 @@ class OwnerBase(BaseModel):
 
     @field_validator("phone")
     @classmethod
-    def validate_phone(
-        cls,
-        value: Optional[str],
-    ) -> Optional[str]:
+    def validate_phone(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة رقم الهاتف.
         
@@ -107,23 +113,17 @@ class OwnerBase(BaseModel):
             value: رقم الهاتف
             
         Returns:
-            رقم الهاتف المدقق
+            Optional[str]: رقم الهاتف المدقق
             
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
         """
         if value is not None:
-            # إزالة المسافات والشرطات
             cleaned = value.replace(" ", "").replace("-", "")
-            
-            # التحقق من أن الرقم يتكون من أرقام فقط
             if not cleaned.isdigit():
                 raise ValueError("رقم الهاتف يجب أن يحتوي على أرقام فقط")
-            
-            # التحقق من الطول (للأرقام الجزائرية)
             if len(cleaned) < 10 or len(cleaned) > 15:
                 raise ValueError("رقم الهاتف يجب أن يكون بين 10 و 15 رقماً")
-            
             return cleaned
         return value
 
@@ -146,20 +146,21 @@ class OwnerCreate(OwnerBase):
         "pending",
         max_length=50,
         description="حالة التسجيل",
-        example="pending",
+        json_schema_extra={"example": "pending"},
     )
     trial_used: Optional[bool] = Field(
         False,
         description="هل استخدم الفترة التجريبية",
-        example=False,
+        json_schema_extra={"example": False},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("registration_status")
     @classmethod
-    def validate_registration_status(
-        cls,
-        value: str,
-    ) -> str:
+    def validate_registration_status(cls, value: str) -> str:
         """
         التحقق من صحة حالة التسجيل.
         
@@ -167,14 +168,16 @@ class OwnerCreate(OwnerBase):
             value: حالة التسجيل
             
         Returns:
-            حالة التسجيل المدققة
+            str: حالة التسجيل المدققة
             
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
         valid_statuses = {"pending", "approved", "rejected"}
         if value not in valid_statuses:
-            raise ValueError(f"حالة التسجيل يجب أن تكون واحدة من: {', '.join(valid_statuses)}")
+            raise ValueError(
+                f"حالة التسجيل يجب أن تكون واحدة من: {', '.join(valid_statuses)}"
+            )
         return value
 
 
@@ -199,38 +202,39 @@ class OwnerUpdate(BaseModel):
         None,
         max_length=255,
         description="الاسم الكامل",
-        example="أحمد محمد علي",
+        json_schema_extra={"example": "أحمد محمد علي"},
     )
     phone: Optional[str] = Field(
         None,
         max_length=20,
         description="رقم الهاتف",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
     email: Optional[str] = Field(
         None,
         max_length=255,
         description="البريد الإلكتروني",
-        example="ahmed.ali@example.com",
+        json_schema_extra={"example": "ahmed.ali@example.com"},
     )
     registration_status: Optional[str] = Field(
         None,
         max_length=50,
         description="حالة التسجيل",
-        example="approved",
+        json_schema_extra={"example": "approved"},
     )
     trial_used: Optional[bool] = Field(
         None,
         description="هل استخدم الفترة التجريبية",
-        example=True,
+        json_schema_extra={"example": True},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("email")
     @classmethod
-    def validate_email(
-        cls,
-        value: Optional[str],
-    ) -> Optional[str]:
+    def validate_email(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة البريد الإلكتروني.
         
@@ -238,7 +242,7 @@ class OwnerUpdate(BaseModel):
             value: البريد الإلكتروني
             
         Returns:
-            البريد الإلكتروني المدقق
+            Optional[str]: البريد الإلكتروني المدقق
             
         Raises:
             ValueError: إذا كان البريد الإلكتروني غير صالح
@@ -252,10 +256,7 @@ class OwnerUpdate(BaseModel):
 
     @field_validator("phone")
     @classmethod
-    def validate_phone(
-        cls,
-        value: Optional[str],
-    ) -> Optional[str]:
+    def validate_phone(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة رقم الهاتف.
         
@@ -263,7 +264,7 @@ class OwnerUpdate(BaseModel):
             value: رقم الهاتف
             
         Returns:
-            رقم الهاتف المدقق
+            Optional[str]: رقم الهاتف المدقق
             
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
@@ -279,10 +280,7 @@ class OwnerUpdate(BaseModel):
 
     @field_validator("registration_status")
     @classmethod
-    def validate_registration_status(
-        cls,
-        value: Optional[str],
-    ) -> Optional[str]:
+    def validate_registration_status(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة حالة التسجيل.
         
@@ -290,7 +288,7 @@ class OwnerUpdate(BaseModel):
             value: حالة التسجيل
             
         Returns:
-            حالة التسجيل المدققة
+            Optional[str]: حالة التسجيل المدققة
             
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
@@ -298,7 +296,9 @@ class OwnerUpdate(BaseModel):
         if value is not None:
             valid_statuses = {"pending", "approved", "rejected"}
             if value not in valid_statuses:
-                raise ValueError(f"حالة التسجيل يجب أن تكون واحدة من: {', '.join(valid_statuses)}")
+                raise ValueError(
+                    f"حالة التسجيل يجب أن تكون واحدة من: {', '.join(valid_statuses)}"
+                )
         return value
 
 
@@ -319,15 +319,16 @@ class OwnerStatusUpdate(BaseModel):
         ...,
         max_length=50,
         description="حالة التسجيل الجديدة",
-        example="approved",
+        json_schema_extra={"example": "approved"},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("registration_status")
     @classmethod
-    def validate_registration_status(
-        cls,
-        value: str,
-    ) -> str:
+    def validate_registration_status(cls, value: str) -> str:
         """
         التحقق من صحة حالة التسجيل.
         
@@ -335,14 +336,16 @@ class OwnerStatusUpdate(BaseModel):
             value: حالة التسجيل
             
         Returns:
-            حالة التسجيل المدققة
+            str: حالة التسجيل المدققة
             
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
         valid_statuses = {"pending", "approved", "rejected"}
         if value not in valid_statuses:
-            raise ValueError(f"حالة التسجيل يجب أن تكون واحدة من: {', '.join(valid_statuses)}")
+            raise ValueError(
+                f"حالة التسجيل يجب أن تكون واحدة من: {', '.join(valid_statuses)}"
+            )
         return value
 
 
@@ -363,21 +366,23 @@ class OwnerResponse(OwnerBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف المالك",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=1,
     )
     registration_status: str = Field(
         ...,
         description="حالة التسجيل",
-        example="approved",
+        json_schema_extra={"example": "approved"},
     )
     trial_used: bool = Field(
         ...,
         description="هل استخدم الفترة التجريبية",
-        example=False,
+        json_schema_extra={"example": False},
     )
     created_at: datetime = Field(
         ...,
@@ -387,12 +392,6 @@ class OwnerResponse(OwnerBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -411,6 +410,8 @@ class OwnerListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[OwnerResponse] = Field(
         ...,
         description="قائمة المالكين",
@@ -418,19 +419,19 @@ class OwnerListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
         ge=0,
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=1,
     )
 
@@ -453,40 +454,42 @@ class OwnerStatistics(BaseModel):
         trial_used: عدد المالكين الذين استخدموا الفترة التجريبية
         trial_available: عدد المالكين الذين لم يستخدموا الفترة التجريبية
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total: int = Field(
         ...,
         description="إجمالي عدد المالكين",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=0,
     )
     pending: int = Field(
         ...,
         description="عدد المالكين المعلقين",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     approved: int = Field(
         ...,
         description="عدد المالكين المعتمدين",
-        example=80,
+        json_schema_extra={"example": 80},
         ge=0,
     )
     rejected: int = Field(
         ...,
         description="عدد المالكين المرفوضين",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     trial_used: int = Field(
         ...,
         description="عدد المالكين الذين استخدموا الفترة التجريبية",
-        example=30,
+        json_schema_extra={"example": 30},
         ge=0,
     )
     trial_available: int = Field(
         ...,
         description="عدد المالكين الذين لم يستخدموا الفترة التجريبية",
-        example=50,
+        json_schema_extra={"example": 50},
         ge=0,
     )
 
@@ -510,34 +513,35 @@ class OwnerSearch(BaseModel):
         min_length=1,
         max_length=255,
         description="نص البحث",
-        example="أحمد",
+        json_schema_extra={"example": "أحمد"},
     )
     status: Optional[str] = Field(
         None,
         max_length=50,
         description="تصفية حسب حالة التسجيل",
-        example="approved",
+        json_schema_extra={"example": "approved"},
     )
     skip: int = Field(
         0,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
         ge=0,
     )
     limit: int = Field(
         100,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=1,
         le=1000,
     )
 
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
+
     @field_validator("status")
     @classmethod
-    def validate_status(
-        cls,
-        value: Optional[str],
-    ) -> Optional[str]:
+    def validate_status(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة حالة التسجيل.
         
@@ -545,7 +549,7 @@ class OwnerSearch(BaseModel):
             value: حالة التسجيل
             
         Returns:
-            حالة التسجيل المدققة
+            Optional[str]: حالة التسجيل المدققة
             
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
@@ -553,7 +557,9 @@ class OwnerSearch(BaseModel):
         if value is not None:
             valid_statuses = {"pending", "approved", "rejected"}
             if value not in valid_statuses:
-                raise ValueError(f"حالة التسجيل يجب أن تكون واحدة من: {', '.join(valid_statuses)}")
+                raise ValueError(
+                    f"حالة التسجيل يجب أن تكون واحدة من: {', '.join(valid_statuses)}"
+                )
         return value
 
 
@@ -571,7 +577,7 @@ class TrialActivation(BaseModel):
     owner_id: int = Field(
         ...,
         description="معرف المالك",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=1,
     )
 
@@ -586,15 +592,17 @@ class TrialActivationResponse(BaseModel):
         activated_at: تاريخ التفعيل
         message: رسالة تأكيد
     """
+    model_config = ConfigDict(from_attributes=True)
+
     owner_id: int = Field(
         ...,
         description="معرف المالك",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     trial_used: bool = Field(
         ...,
         description="حالة استخدام الفترة التجريبية",
-        example=True,
+        json_schema_extra={"example": True},
     )
     activated_at: datetime = Field(
         ...,
@@ -603,7 +611,7 @@ class TrialActivationResponse(BaseModel):
     message: str = Field(
         ...,
         description="رسالة تأكيد",
-        example="تم تفعيل الفترة التجريبية بنجاح",
+        json_schema_extra={"example": "تم تفعيل الفترة التجريبية بنجاح"},
     )
 
 

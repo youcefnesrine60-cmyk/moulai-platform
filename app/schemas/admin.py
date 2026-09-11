@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 👑 ADMIN SCHEMAS
 # نماذج Pydantic للمديرين
 # تدير التحقق من صحة البيانات وتسلسلها للمديرين
@@ -14,6 +21,7 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     field_validator,
 )
@@ -49,30 +57,30 @@ class AdminBase(BaseModel):
     chat_id: int = Field(
         ...,
         description="معرف الدردشة في Telegram",
-        example=123456789,
+        json_schema_extra={"example": 123456789},
     )
     username: str = Field(
         ...,
         max_length=255,
         description="اسم المستخدم",
-        example="admin_username",
+        json_schema_extra={"example": "admin_username"},
     )
     full_name: str = Field(
         ...,
         max_length=255,
         description="الاسم الكامل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     role: str = Field(
         "admin",
         max_length=50,
         description="دور المدير (admin, super_admin, manager)",
-        example="admin",
+        json_schema_extra={"example": "admin"},
     )
     is_active: bool = Field(
         True,
         description="حالة النشاط",
-        example=True,
+        json_schema_extra={"example": True},
     )
 
 
@@ -95,40 +103,44 @@ class AdminCreate(BaseModel):
     chat_id: int = Field(
         ...,
         description="معرف الدردشة في Telegram",
-        example=123456789,
+        json_schema_extra={"example": 123456789},
     )
     username: str = Field(
         ...,
         min_length=3,
         max_length=255,
         description="اسم المستخدم",
-        example="admin_username",
+        json_schema_extra={"example": "admin_username"},
     )
     full_name: str = Field(
         ...,
         min_length=2,
         max_length=255,
         description="الاسم الكامل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     password: Optional[str] = Field(
         None,
         min_length=6,
         max_length=255,
         description="كلمة المرور (اختياري)",
-        example="SecurePassword123",
+        json_schema_extra={"example": "SecurePassword123"},
     )
     role: str = Field(
         "admin",
         max_length=50,
         description="دور المدير (admin, super_admin, manager)",
-        example="admin",
+        json_schema_extra={"example": "admin"},
     )
     is_active: Optional[bool] = Field(
         True,
         description="حالة النشاط",
-        example=True,
+        json_schema_extra={"example": True},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("username")
     @classmethod
@@ -140,7 +152,7 @@ class AdminCreate(BaseModel):
             value: اسم المستخدم
             
         Returns:
-            اسم المستخدم المحقق
+            str: اسم المستخدم المحقق
             
         Raises:
             ValueError: إذا كان اسم المستخدم غير صالح
@@ -161,14 +173,16 @@ class AdminCreate(BaseModel):
             value: الدور
             
         Returns:
-            الدور المحقق
+            str: الدور المحقق
             
         Raises:
             ValueError: إذا كان الدور غير صالح
         """
         valid_roles = ["admin", "super_admin", "manager"]
         if value not in valid_roles:
-            raise ValueError(f"الدور يجب أن يكون أحد القيم: {', '.join(valid_roles)}")
+            raise ValueError(
+                f"الدور يجب أن يكون أحد القيم: {', '.join(valid_roles)}"
+            )
         return value
 
 
@@ -192,33 +206,37 @@ class AdminUpdate(BaseModel):
         min_length=3,
         max_length=255,
         description="اسم المستخدم",
-        example="admin_username",
+        json_schema_extra={"example": "admin_username"},
     )
     full_name: Optional[str] = Field(
         None,
         min_length=2,
         max_length=255,
         description="الاسم الكامل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     password: Optional[str] = Field(
         None,
         min_length=6,
         max_length=255,
         description="كلمة المرور الجديدة",
-        example="NewSecurePassword123",
+        json_schema_extra={"example": "NewSecurePassword123"},
     )
     role: Optional[str] = Field(
         None,
         max_length=50,
         description="دور المدير (admin, super_admin, manager)",
-        example="super_admin",
+        json_schema_extra={"example": "super_admin"},
     )
     is_active: Optional[bool] = Field(
         None,
         description="حالة النشاط",
-        example=True,
+        json_schema_extra={"example": True},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("username")
     @classmethod
@@ -230,7 +248,7 @@ class AdminUpdate(BaseModel):
             value: اسم المستخدم
             
         Returns:
-            اسم المستخدم المحقق
+            Optional[str]: اسم المستخدم المحقق
             
         Raises:
             ValueError: إذا كان اسم المستخدم غير صالح
@@ -253,7 +271,7 @@ class AdminUpdate(BaseModel):
             value: الدور
             
         Returns:
-            الدور المحقق
+            Optional[str]: الدور المحقق
             
         Raises:
             ValueError: إذا كان الدور غير صالح
@@ -261,7 +279,9 @@ class AdminUpdate(BaseModel):
         if value is not None:
             valid_roles = ["admin", "super_admin", "manager"]
             if value not in valid_roles:
-                raise ValueError(f"الدور يجب أن يكون أحد القيم: {', '.join(valid_roles)}")
+                raise ValueError(
+                    f"الدور يجب أن يكون أحد القيم: {', '.join(valid_roles)}"
+                )
         return value
 
 
@@ -280,13 +300,13 @@ class AdminLogin(BaseModel):
     username: str = Field(
         ...,
         description="اسم المستخدم",
-        example="admin_username",
+        json_schema_extra={"example": "admin_username"},
     )
     password: str = Field(
         ...,
         min_length=1,
         description="كلمة المرور",
-        example="SecurePassword123",
+        json_schema_extra={"example": "SecurePassword123"},
     )
 
 
@@ -309,24 +329,24 @@ class AdminSessionBase(BaseModel):
     admin_id: int = Field(
         ...,
         description="معرف المدير",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     session_token: str = Field(
         ...,
         description="رمز الجلسة",
-        example="abc123def456",
+        json_schema_extra={"example": "abc123def456"},
     )
     ip_address: Optional[str] = Field(
         None,
         max_length=45,
         description="عنوان IP",
-        example="192.168.1.1",
+        json_schema_extra={"example": "192.168.1.1"},
     )
     user_agent: Optional[str] = Field(
         None,
         max_length=500,
         description="متصفح المستخدم",
-        example="Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        json_schema_extra={"example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
     )
     expires_at: datetime = Field(
         ...,
@@ -335,7 +355,7 @@ class AdminSessionBase(BaseModel):
     is_active: bool = Field(
         True,
         description="حالة النشاط",
-        example=True,
+        json_schema_extra={"example": True},
     )
 
 
@@ -353,12 +373,12 @@ class AdminSessionCreate(BaseModel):
     admin_id: int = Field(
         ...,
         description="معرف المدير",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     session_token: str = Field(
         ...,
         description="رمز الجلسة",
-        example="abc123def456",
+        json_schema_extra={"example": "abc123def456"},
     )
     expires_at: datetime = Field(
         ...,
@@ -368,13 +388,13 @@ class AdminSessionCreate(BaseModel):
         None,
         max_length=45,
         description="عنوان IP",
-        example="192.168.1.1",
+        json_schema_extra={"example": "192.168.1.1"},
     )
     user_agent: Optional[str] = Field(
         None,
         max_length=500,
         description="متصفح المستخدم",
-        example="Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        json_schema_extra={"example": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"},
     )
 
 
@@ -390,7 +410,7 @@ class AdminSessionUpdate(BaseModel):
     is_active: Optional[bool] = Field(
         None,
         description="حالة النشاط",
-        example=False,
+        json_schema_extra={"example": False},
     )
     expires_at: Optional[datetime] = Field(
         None,
@@ -412,10 +432,12 @@ class AdminSessionResponse(AdminSessionBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف الجلسة",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     last_activity: datetime = Field(
         ...,
@@ -429,12 +451,6 @@ class AdminSessionResponse(AdminSessionBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -450,10 +466,12 @@ class AdminResponse(AdminBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف المدير",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -463,12 +481,6 @@ class AdminResponse(AdminBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -487,6 +499,8 @@ class AdminListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[AdminResponse] = Field(
         ...,
         description="قائمة المديرين",
@@ -494,17 +508,17 @@ class AdminListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
     )
 
 
@@ -522,6 +536,8 @@ class AdminLoginResponse(BaseModel):
         admin: بيانات المدير
         session: بيانات الجلسة
     """
+    model_config = ConfigDict(from_attributes=True)
+
     admin: AdminResponse = Field(
         ...,
         description="بيانات المدير",
@@ -548,30 +564,35 @@ class AdminStatistics(BaseModel):
         inactive: عدد المديرين غير النشطين
         roles: توزيع الأدوار
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total: int = Field(
         ...,
         description="إجمالي عدد المديرين",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     active: int = Field(
         ...,
         description="عدد المديرين النشطين",
-        example=8,
+        json_schema_extra={"example": 8},
     )
     inactive: int = Field(
         ...,
         description="عدد المديرين غير النشطين",
-        example=2,
+        json_schema_extra={"example": 2},
     )
     roles: RoleDistribution = Field(
         ...,
         description="توزيع الأدوار",
-        example={
-            "super_admin": 1,
-            "admin": 5,
-            "manager": 4,
+        json_schema_extra={
+            "example": {
+                "super_admin": 1,
+                "admin": 5,
+                "manager": 4,
+            }
         },
     )
+
 
 # ==============================================
 # 🔐 AUTH RESPONSE
@@ -588,6 +609,8 @@ class AdminAuthResponse(BaseModel):
         session_token: رمز الجلسة
         expires_at: تاريخ انتهاء الجلسة
     """
+    model_config = ConfigDict(from_attributes=True)
+
     admin: AdminResponse = Field(
         ...,
         description="بيانات المدير",
@@ -595,7 +618,7 @@ class AdminAuthResponse(BaseModel):
     session_token: str = Field(
         ...,
         description="رمز الجلسة",
-        example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        json_schema_extra={"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."},
     )
     expires_at: datetime = Field(
         ...,
@@ -616,20 +639,22 @@ class TokenResponse(BaseModel):
         token_type: نوع الرمز
         expires_in: مدة الصلاحية بالثواني
     """
+    model_config = ConfigDict(from_attributes=True)
+
     access_token: str = Field(
         ...,
         description="رمز الوصول",
-        example="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        json_schema_extra={"example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."},
     )
     token_type: str = Field(
         "bearer",
         description="نوع الرمز",
-        example="bearer",
+        json_schema_extra={"example": "bearer"},
     )
     expires_in: int = Field(
         ...,
         description="مدة الصلاحية بالثواني",
-        example=604800,
+        json_schema_extra={"example": 604800},
         ge=1,
     )
 
@@ -654,29 +679,29 @@ class AdminSearch(BaseModel):
         min_length=1,
         max_length=255,
         description="نص البحث",
-        example="أحمد",
+        json_schema_extra={"example": "أحمد"},
     )
     only_active: bool = Field(
         True,
         description="البحث في النشطين فقط",
-        example=True,
+        json_schema_extra={"example": True},
     )
     role: Optional[str] = Field(
         None,
         max_length=50,
         description="تصفية حسب الدور",
-        example="admin",
+        json_schema_extra={"example": "admin"},
     )
     skip: int = Field(
         0,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
         ge=0,
     )
     limit: int = Field(
         100,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=1,
         le=1000,
     )
@@ -698,20 +723,20 @@ class AdminPermissionCheck(BaseModel):
     admin_id: int = Field(
         ...,
         description="معرف المدير",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=1,
     )
     required_role: Optional[str] = Field(
         None,
         max_length=50,
         description="الدور المطلوب",
-        example="super_admin",
+        json_schema_extra={"example": "super_admin"},
     )
     required_permission: Optional[str] = Field(
         None,
         max_length=100,
         description="الصلاحية المطلوبة",
-        example="manage_admins",
+        json_schema_extra={"example": "manage_admins"},
     )
 
 
@@ -726,28 +751,59 @@ class AdminPermissionResponse(BaseModel):
         is_active: حالة النشاط
         message: رسالة توضيحية
     """
+    model_config = ConfigDict(from_attributes=True)
+
     has_permission: bool = Field(
         ...,
         description="وجود الصلاحية",
-        example=True,
+        json_schema_extra={"example": True},
     )
     admin_id: int = Field(
         ...,
         description="معرف المدير",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     role: str = Field(
         ...,
         description="دور المدير",
-        example="super_admin",
+        json_schema_extra={"example": "super_admin"},
     )
     is_active: bool = Field(
         ...,
         description="حالة النشاط",
-        example=True,
+        json_schema_extra={"example": True},
     )
     message: Optional[str] = Field(
         None,
         description="رسالة توضيحية",
-        example="المدير لديه الصلاحية المطلوبة",
+        json_schema_extra={"example": "المدير لديه الصلاحية المطلوبة"},
     )
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "AdminBase",
+    "AdminCreate",
+    "AdminResponse",
+    "AdminUpdate",
+    "AdminLogin",
+    "AdminLoginResponse",
+    "AdminAuthResponse",
+    "AdminSessionBase",
+    "AdminSessionCreate",
+    "AdminSessionUpdate",
+    "AdminSessionResponse",
+    "AdminListResponse",
+    "AdminStatistics",
+    "AdminSearch",
+    "AdminPermissionCheck",
+    "AdminPermissionResponse",
+    "TokenResponse",
+    "RoleDistribution",
+    "AdminData",
+    "AdminUpdateData",
+    "AdminSessionData",
+]

@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 🎯 PRODUCT OPTION SCHEMAS
 # نماذج Pydantic لخيارات المنتج
 # تدير التحقق من صحة البيانات وتسلسلها لخيارات المنتج
@@ -14,8 +21,10 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
 )
+
 
 # ==============================================
 # 🧩 TYPES
@@ -24,6 +33,7 @@ from pydantic import (
 ProductOptionData = Dict[str, Any]
 ProductOptionUpdateData = Dict[str, Any]
 ProductOptionList = List["ProductOptionResponse"]
+
 
 # ==============================================
 # 📦 BASE SCHEMA
@@ -45,29 +55,29 @@ class ProductOptionBase(BaseModel):
     group_id: int = Field(
         ...,
         description="معرف مجموعة الخيارات",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: str = Field(
         ...,
         max_length=255,
         description="اسم الخيار",
-        example="كبير",
+        json_schema_extra={"example": "كبير"},
     )
     extra_price: float = Field(
         0,
         ge=0,
         description="السعر الإضافي",
-        example=5.00,
+        json_schema_extra={"example": 5.00},
     )
     is_available: bool = Field(
         True,
         description="حالة التوفر",
-        example=True,
+        json_schema_extra={"example": True},
     )
     sort_order: int = Field(
         0,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -89,23 +99,23 @@ class ProductOptionCreate(BaseModel):
         ...,
         max_length=255,
         description="اسم الخيار",
-        example="كبير",
+        json_schema_extra={"example": "كبير"},
     )
     extra_price: float = Field(
         0,
         ge=0,
         description="السعر الإضافي",
-        example=5.00,
+        json_schema_extra={"example": 5.00},
     )
     is_available: bool = Field(
         True,
         description="حالة التوفر",
-        example=True,
+        json_schema_extra={"example": True},
     )
     sort_order: int = Field(
         0,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -127,23 +137,23 @@ class ProductOptionUpdate(BaseModel):
         None,
         max_length=255,
         description="اسم الخيار",
-        example="كبير",
+        json_schema_extra={"example": "كبير"},
     )
     extra_price: Optional[float] = Field(
         None,
         ge=0,
         description="السعر الإضافي",
-        example=5.00,
+        json_schema_extra={"example": 5.00},
     )
     is_available: Optional[bool] = Field(
         None,
         description="حالة التوفر",
-        example=True,
+        json_schema_extra={"example": True},
     )
     sort_order: Optional[int] = Field(
         None,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -161,7 +171,7 @@ class ProductOptionAvailabilityUpdate(BaseModel):
     is_available: bool = Field(
         ...,
         description="حالة التوفر الجديدة",
-        example=False,
+        json_schema_extra={"example": False},
     )
 
 
@@ -178,10 +188,12 @@ class ProductOptionResponse(ProductOptionBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف الخيار",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -191,12 +203,6 @@ class ProductOptionResponse(ProductOptionBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -213,6 +219,8 @@ class ProductOptionListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: ProductOptionList = Field(
         ...,
         description="قائمة الخيارات",
@@ -220,17 +228,17 @@ class ProductOptionListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
     )
 
 
@@ -252,45 +260,47 @@ class ProductOptionSummary(BaseModel):
         min_extra_price: أقل سعر إضافي
         max_extra_price: أعلى سعر إضافي
     """
+    model_config = ConfigDict(from_attributes=True)
+
     group_id: int = Field(
         ...,
         description="معرف مجموعة الخيارات",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     total_options: int = Field(
         ...,
         description="إجمالي عدد الخيارات",
-        example=5,
+        json_schema_extra={"example": 5},
     )
     available_options: int = Field(
         ...,
         description="عدد الخيارات المتاحة",
-        example=4,
+        json_schema_extra={"example": 4},
     )
     unavailable_options: int = Field(
         ...,
         description="عدد الخيارات غير المتاحة",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     total_extra_price: float = Field(
         ...,
         description="إجمالي السعر الإضافي",
-        example=15.00,
+        json_schema_extra={"example": 15.00},
     )
     avg_extra_price: float = Field(
         ...,
         description="متوسط السعر الإضافي",
-        example=3.00,
+        json_schema_extra={"example": 3.00},
     )
     min_extra_price: float = Field(
         ...,
         description="أقل سعر إضافي",
-        example=0,
+        json_schema_extra={"example": 0},
     )
     max_extra_price: float = Field(
         ...,
         description="أعلى سعر إضافي",
-        example=5.00,
+        json_schema_extra={"example": 5.00},
     )
 
 
@@ -307,20 +317,22 @@ class ProductOptionValidation(BaseModel):
         errors: قائمة الأخطاء
         warnings: قائمة التحذيرات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     is_valid: bool = Field(
         ...,
         description="هل الخيار صالح",
-        example=True,
+        json_schema_extra={"example": True},
     )
     errors: List[str] = Field(
         default_factory=list,
         description="قائمة الأخطاء",
-        example=["الاسم مطلوب"],
+        json_schema_extra={"example": ["الاسم مطلوب"]},
     )
     warnings: List[str] = Field(
         default_factory=list,
         description="قائمة التحذيرات",
-        example=["السعر الإضافي مرتفع مقارنة بالمنتجات الأخرى"],
+        json_schema_extra={"example": ["السعر الإضافي مرتفع مقارنة بالمنتجات الأخرى"]},
     )
 
 
@@ -339,10 +351,30 @@ class ProductOptionBulkCreate(BaseModel):
     group_id: int = Field(
         ...,
         description="معرف مجموعة الخيارات",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     options: List[ProductOptionCreate] = Field(
         ...,
         description="قائمة الخيارات",
         min_length=1,
     )
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "ProductOptionBase",
+    "ProductOptionCreate",
+    "ProductOptionUpdate",
+    "ProductOptionAvailabilityUpdate",
+    "ProductOptionResponse",
+    "ProductOptionListResponse",
+    "ProductOptionSummary",
+    "ProductOptionValidation",
+    "ProductOptionBulkCreate",
+    "ProductOptionData",
+    "ProductOptionUpdateData",
+    "ProductOptionList",
+]

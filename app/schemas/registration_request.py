@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📋 REGISTRATION REQUEST SCHEMAS
 # نماذج Pydantic لطلبات التسجيل
 # ==============================================
@@ -12,9 +19,10 @@ from typing import (
 )
 
 from pydantic import (
-    BaseModel, 
-    Field, 
-    field_validator
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
 )
 
 
@@ -50,64 +58,68 @@ class RegistrationRequestBase(BaseModel):
     chat_id: int = Field(
         ...,
         description="معرف المستخدم في تيليجرام",
-        example=123456789,
+        json_schema_extra={"example": 123456789},
         ge=1,
     )
     full_name: str = Field(
         ...,
         max_length=255,
         description="الاسم الكامل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
         min_length=2,
     )
     owner_phone: str = Field(
         ...,
         max_length=20,
         description="رقم هاتف المالك",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
     email: Optional[str] = Field(
         None,
         max_length=255,
         description="البريد الإلكتروني",
-        example="ahmed@example.com",
+        json_schema_extra={"example": "ahmed@example.com"},
     )
     restaurant_name: str = Field(
         ...,
         max_length=255,
         description="اسم المطعم",
-        example="مطعم البيتزا السريعة",
+        json_schema_extra={"example": "مطعم البيتزا السريعة"},
         min_length=2,
     )
     restaurant_type: str = Field(
         ...,
         max_length=100,
         description="نوع المطعم",
-        example="بيتزا",
+        json_schema_extra={"example": "بيتزا"},
         min_length=2,
     )
     restaurant_phone: str = Field(
         ...,
         max_length=20,
         description="رقم هاتف المطعم",
-        example="0555987654",
+        json_schema_extra={"example": "0555987654"},
     )
     wilaya: Optional[str] = Field(
         None,
         max_length=100,
         description="الولاية",
-        example="Alger",
+        json_schema_extra={"example": "Alger"},
     )
     lat: Optional[float] = Field(
         None,
         description="خط العرض",
-        example=36.7538,
+        json_schema_extra={"example": 36.7538},
     )
     lng: Optional[float] = Field(
         None,
         description="خط الطول",
-        example=3.0588,
+        json_schema_extra={"example": 3.0588},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("email")
     @classmethod
@@ -119,7 +131,7 @@ class RegistrationRequestBase(BaseModel):
             value: البريد الإلكتروني
             
         Returns:
-            البريد الإلكتروني المدقق
+            Optional[str]: البريد الإلكتروني المدقق
             
         Raises:
             ValueError: إذا كان البريد الإلكتروني غير صالح
@@ -141,20 +153,20 @@ class RegistrationRequestBase(BaseModel):
             value: رقم الهاتف
             
         Returns:
-            رقم الهاتف المدقق
+            str: رقم الهاتف المدقق
             
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
         """
         # إزالة المسافات والشرطات
         cleaned = value.replace(" ", "").replace("-", "")
-        
+
         if not cleaned.isdigit():
             raise ValueError("رقم الهاتف يجب أن يحتوي على أرقام فقط")
-        
+
         if len(cleaned) < 10 or len(cleaned) > 15:
             raise ValueError("رقم الهاتف يجب أن يكون بين 10 و 15 رقماً")
-        
+
         return cleaned
 
 
@@ -166,7 +178,7 @@ class RegistrationRequestCreate(RegistrationRequestBase):
     """
     نموذج إنشاء طلب تسجيل جديد.
     
-    وراثة من RegistrationRequestBase مع إمكانية إضافة حقول إضافية.
+    وراثة من RegistrationRequestBase.
     """
     pass
 
@@ -255,6 +267,10 @@ class RegistrationRequestUpdate(BaseModel):
         ge=1,
     )
 
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
+
     @field_validator("email")
     @classmethod
     def validate_email(cls, value: Optional[str]) -> Optional[str]:
@@ -265,7 +281,7 @@ class RegistrationRequestUpdate(BaseModel):
             value: البريد الإلكتروني
             
         Returns:
-            البريد الإلكتروني المدقق
+            Optional[str]: البريد الإلكتروني المدقق
             
         Raises:
             ValueError: إذا كان البريد الإلكتروني غير صالح
@@ -287,20 +303,20 @@ class RegistrationRequestUpdate(BaseModel):
             value: رقم الهاتف
             
         Returns:
-            رقم الهاتف المدقق
+            Optional[str]: رقم الهاتف المدقق
             
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
         """
         if value is not None:
             cleaned = value.replace(" ", "").replace("-", "")
-            
+
             if not cleaned.isdigit():
                 raise ValueError("رقم الهاتف يجب أن يحتوي على أرقام فقط")
-            
+
             if len(cleaned) < 10 or len(cleaned) > 15:
                 raise ValueError("رقم الهاتف يجب أن يكون بين 10 و 15 رقماً")
-            
+
             return cleaned
         return value
 
@@ -320,14 +336,18 @@ class RegistrationRequestStatusUpdate(BaseModel):
     status: str = Field(
         ...,
         description="الحالة الجديدة: approved, rejected",
-        example="approved",
+        json_schema_extra={"example": "approved"},
     )
     note: Optional[str] = Field(
         None,
         max_length=500,
         description="ملاحظة إضافية",
-        example="تم الموافقة على طلب التسجيل",
+        json_schema_extra={"example": "تم الموافقة على طلب التسجيل"},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("status")
     @classmethod
@@ -339,14 +359,16 @@ class RegistrationRequestStatusUpdate(BaseModel):
             value: الحالة
             
         Returns:
-            الحالة المدققة
+            str: الحالة المدققة
             
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
         valid_statuses = {"approved", "rejected"}
         if value not in valid_statuses:
-            raise ValueError(f"الحالة يجب أن تكون واحدة من: {', '.join(valid_statuses)}")
+            raise ValueError(
+                f"الحالة يجب أن تكون واحدة من: {', '.join(valid_statuses)}"
+            )
         return value
 
 
@@ -365,21 +387,23 @@ class RegistrationRequestResponse(RegistrationRequestBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف طلب التسجيل",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=1,
     )
     status: str = Field(
         ...,
         description="حالة الطلب: pending, approved, rejected",
-        example="pending",
+        json_schema_extra={"example": "pending"},
     )
     owner_id: Optional[int] = Field(
         None,
         description="معرف المالك المرتبط",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -389,12 +413,6 @@ class RegistrationRequestResponse(RegistrationRequestBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -413,6 +431,8 @@ class RegistrationRequestListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[RegistrationRequestResponse] = Field(
         ...,
         description="قائمة طلبات التسجيل",
@@ -420,19 +440,19 @@ class RegistrationRequestListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
         ge=0,
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=1,
     )
 
@@ -451,28 +471,30 @@ class RegistrationRequestSummary(BaseModel):
         approved: عدد الطلبات المعتمدة
         rejected: عدد الطلبات المرفوضة
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total: int = Field(
         ...,
         description="إجمالي عدد الطلبات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=0,
     )
     pending: int = Field(
         ...,
         description="عدد الطلبات المعلقة",
-        example=30,
+        json_schema_extra={"example": 30},
         ge=0,
     )
     approved: int = Field(
         ...,
         description="عدد الطلبات المعتمدة",
-        example=50,
+        json_schema_extra={"example": 50},
         ge=0,
     )
     rejected: int = Field(
         ...,
         description="عدد الطلبات المرفوضة",
-        example=20,
+        json_schema_extra={"example": 20},
         ge=0,
     )
 

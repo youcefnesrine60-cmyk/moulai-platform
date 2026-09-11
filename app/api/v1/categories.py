@@ -301,7 +301,7 @@ async def create_category(
         "api_create_category",
         extra={
             "restaurant_id": restaurant_id,
-            "name": data.name,
+            "categories_name": data.name,
         },
     )
 
@@ -317,7 +317,7 @@ async def create_category(
             "api_create_category_conflict",
             extra={
                 "restaurant_id": restaurant_id,
-                "name": data.name,
+                "categories_name": data.name,
                 "error": str(e),
             },
         )

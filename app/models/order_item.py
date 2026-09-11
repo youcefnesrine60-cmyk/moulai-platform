@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📋 ORDER ITEMS MODEL
 # نماذج عناصر الطلب والمدفوعات وحالة الطلب
 # تدير تفاصيل الطلبات من عناصر وخيارات ومدفوعات وحالة

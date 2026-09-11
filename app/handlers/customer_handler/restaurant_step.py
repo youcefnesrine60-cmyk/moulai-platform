@@ -15,7 +15,7 @@ from app.core.database import get_db
 
 from app.helpers.ui_manager import UIManager
 from app.repositories.state_repo import set_state
-from app.repositories.restaurant_repo import RestaurantRepository
+from app.repositories.restaurant.restaurant_repo import RestaurantRepository
 from app.repositories.products_repo import ProductRepository
 
 from app.states.customer_states import CustomerStates

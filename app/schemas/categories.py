@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📂 CATEGORY SCHEMAS
 # نماذج Pydantic للتصنيفات
 # تدير التحقق من صحة البيانات وتسلسلها للتصنيفات
@@ -14,6 +21,7 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
 )
 
@@ -44,18 +52,18 @@ class CategoryBase(BaseModel):
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: str = Field(
         ...,
         max_length=255,
         description="اسم التصنيف",
-        example="بيتزا",
+        json_schema_extra={"example": "بيتزا"},
     )
     sort_order: int = Field(
         0,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -75,12 +83,12 @@ class CategoryCreate(BaseModel):
         ...,
         max_length=255,
         description="اسم التصنيف",
-        example="بيتزا",
+        json_schema_extra={"example": "بيتزا"},
     )
     sort_order: int = Field(
         0,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -100,12 +108,12 @@ class CategoryUpdate(BaseModel):
         None,
         max_length=255,
         description="اسم التصنيف",
-        example="بيتزا",
+        json_schema_extra={"example": "بيتزا"},
     )
     sort_order: Optional[int] = Field(
         None,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -122,10 +130,12 @@ class CategoryResponse(CategoryBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف التصنيف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -135,12 +145,6 @@ class CategoryResponse(CategoryBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -159,6 +163,8 @@ class CategoryListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[CategoryResponse] = Field(
         ...,
         description="قائمة التصنيفات",
@@ -166,17 +172,17 @@ class CategoryListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
     )
 
 
@@ -197,28 +203,46 @@ class CategorySummary(BaseModel):
         total_products: إجمالي عدد المنتجات في جميع التصنيفات
         avg_products_per_category: متوسط عدد المنتجات لكل تصنيف
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total_categories: int = Field(
         ...,
         description="إجمالي عدد التصنيفات",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     categories_with_products: int = Field(
         ...,
         description="عدد التصنيفات التي تحتوي على منتجات",
-        example=8,
+        json_schema_extra={"example": 8},
     )
     empty_categories: int = Field(
         ...,
         description="عدد التصنيفات الفارغة",
-        example=2,
+        json_schema_extra={"example": 2},
     )
     total_products: int = Field(
         ...,
         description="إجمالي عدد المنتجات في جميع التصنيفات",
-        example=50,
+        json_schema_extra={"example": 50},
     )
     avg_products_per_category: float = Field(
         ...,
         description="متوسط عدد المنتجات لكل تصنيف",
-        example=5.0,
+        json_schema_extra={"example": 5.0},
     )
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "CategoryBase",
+    "CategoryCreate",
+    "CategoryUpdate",
+    "CategoryResponse",
+    "CategoryListResponse",
+    "CategorySummary",
+    "CategoryData",
+    "CategoryUpdateData",
+]

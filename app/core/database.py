@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 🐘 DATABASE - SQLAlchemy ORM
 # اتصال بقاعدة البيانات باستخدام SQLAlchemy مع Async
 # Production Ready
@@ -12,9 +19,6 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import (
-    DeclarativeBase,
-)
 
 from app.core.config import settings
 from app.core.logger import logger
@@ -26,17 +30,10 @@ from app.core.logger import logger
 load_dotenv()
 
 # ==============================================
-# 🧩 TYPES
+# ✅ استيراد Base من النماذج (مصدر واحد فقط)
 # ==============================================
 
-
-class Base(DeclarativeBase):
-    """
-    الفئة الأساسية لجميع نماذج SQLAlchemy.
-    
-    يمكن إضافة دوال مشتركة هنا إذا لزم الأمر.
-    """
-    pass
+from app.models.base import Base
 
 
 # ==============================================
@@ -53,6 +50,7 @@ engine = create_async_engine(
     pool_recycle=settings.DB_POOL_RECYCLE,
 )
 
+
 # ==============================================
 # 🔌 SESSION FACTORY
 # ==============================================
@@ -65,10 +63,10 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
 )
 
+
 # ==============================================
 # 📥 GET DATABASE SESSION (Dependency Injection)
 # ==============================================
-
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -97,7 +95,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 # 📥 GET ASYNC SESSION
 # ==============================================
 
-
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """
     الحصول على جلسة قاعدة البيانات (مولد غير متزامن).
@@ -125,7 +122,6 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 # 📥 GET SESSION (للاستخدام المباشر)
 # ==============================================
 
-
 async def get_session() -> AsyncSession:
     """
     الحصول على جلسة قاعدة البيانات للاستخدام المباشر
@@ -142,7 +138,6 @@ async def get_session() -> AsyncSession:
 # 🚀 INITIALIZE DATABASE
 # ==============================================
 
-
 async def init_db() -> None:
     """
     تهيئة قاعدة البيانات وإنشاء الجداول
@@ -150,7 +145,8 @@ async def init_db() -> None:
     يتم استدعاؤها عند بدء التشغيل
     """
     try:
-        from app.models import Base
+        # ✅ استيراد جميع النماذج لضمان تسجيلها في Base.metadata
+        import app.models
 
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
@@ -174,7 +170,6 @@ async def init_db() -> None:
 # 🗑️ DROP DATABASE (للاختبار فقط)
 # ==============================================
 
-
 async def drop_db() -> None:
     """
     حذف جميع الجداول (للاختبار فقط)
@@ -183,7 +178,8 @@ async def drop_db() -> None:
     تستخدم فقط في بيئة الاختبار
     """
     try:
-        from app.models import Base
+        # ✅ استيراد جميع النماذج لضمان تسجيلها في Base.metadata
+        import app.models
 
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
@@ -200,7 +196,6 @@ async def drop_db() -> None:
 # ==============================================
 # 🔒 CLOSE DATABASE
 # ==============================================
-
 
 async def close_db() -> None:
     """
@@ -222,7 +217,6 @@ async def close_db() -> None:
 # ==============================================
 # ✅ CHECK DATABASE CONNECTION
 # ==============================================
-
 
 async def check_db_connection() -> bool:
     """

@@ -1,9 +1,20 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📦 MODELS INIT ( MODELS - نماذج SQLAlchemy.)
 # تهيئة مجلد النماذج
 # ==============================================
 
-from .base import Base, BaseModel
+from .base import (
+    Base, 
+    BaseModel, 
+    BaseModelWithoutId
+)
 from .owner import Owner
 from .restaurant import Restaurant
 from .branch import Branch
@@ -18,7 +29,12 @@ from .order_item import (
     OrderPayment,
     OrderStatusHistory,
 )
-from .agent import Agent, Channel, Conversation, Message
+from .agent import (
+    Agent, 
+    Channel, 
+    Conversation, 
+    Message
+)
 from .user import User
 from .admin import Admin
 from .admin_log import AdminLog
@@ -37,9 +53,16 @@ from .feature_pricing import (
     FeatureUsageCounter,
     BranchPricing,
 )
-from .loyalty_discount import LoyaltyDiscount, MultiRestaurantDiscount, Promotion
+from .loyalty_discount import (
+    LoyaltyDiscount, 
+    MultiRestaurantDiscount, 
+    Promotion
+)
 from .registration_request import RegistrationRequest
-from .restaurant_group import RestaurantGroup, RestaurantBranch
+from .restaurant_group import (
+    RestaurantGroup, 
+    RestaurantBranch
+)
 from .restaurant_metric import RestaurantMetric
 from .restaurant_order_counter import RestaurantOrderCounter
 from .restaurant_payment_setting import RestaurantPaymentSetting
@@ -51,6 +74,7 @@ from .payment import Payment
 # ==============================================
 
 __all__ = [
+
     # Base
     "Base",
     "BaseModel",

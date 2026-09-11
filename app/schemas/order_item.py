@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📦 ORDER ITEM SCHEMAS
 # نماذج Pydantic لتفاصيل الطلب
 # تدير التحقق من صحة البيانات وتسلسلها لتفاصيل الطلب
@@ -14,6 +21,7 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
 )
 
@@ -50,36 +58,36 @@ class OrderItemBase(BaseModel):
     order_id: int = Field(
         ...,
         description="معرف الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     product_id: int = Field(
         ...,
         description="معرف المنتج",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     product_name: str = Field(
         ...,
         max_length=255,
         description="اسم المنتج",
-        example="بيتزا مارغريتا",
+        json_schema_extra={"example": "بيتزا مارغريتا"},
     )
     unit_price: float = Field(
         ...,
         ge=0,
         description="سعر الوحدة",
-        example=1500.00,
+        json_schema_extra={"example": 1500.00},
     )
     quantity: int = Field(
         ...,
         ge=1,
         description="الكمية",
-        example=2,
+        json_schema_extra={"example": 2},
     )
     total_price: float = Field(
         ...,
         ge=0,
         description="السعر الإجمالي",
-        example=3000.00,
+        json_schema_extra={"example": 3000.00},
     )
 
 
@@ -103,41 +111,49 @@ class OrderItemCreate(BaseModel):
     order_id: int = Field(
         ...,
         description="معرف الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     product_id: int = Field(
         ...,
         description="معرف المنتج",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     product_name: str = Field(
         ...,
         max_length=255,
         description="اسم المنتج",
-        example="بيتزا مارغريتا",
+        json_schema_extra={"example": "بيتزا مارغريتا"},
     )
     unit_price: float = Field(
         ...,
         ge=0,
         description="سعر الوحدة",
-        example=1500.00,
+        json_schema_extra={"example": 1500.00},
     )
     quantity: int = Field(
         ...,
         ge=1,
         description="الكمية",
-        example=2,
+        json_schema_extra={"example": 2},
     )
     total_price: float = Field(
         ...,
         ge=0,
         description="السعر الإجمالي",
-        example=3000.00,
+        json_schema_extra={"example": 3000.00},
     )
     options: Optional[List[Dict[str, Any]]] = Field(
         None,
         description="خيارات المنتج",
-        example=[{"option_group_name": "حجم", "option_name": "كبير", "additional_price": 200}],
+        json_schema_extra={
+            "example": [
+                {
+                    "option_group_name": "حجم",
+                    "option_name": "كبير",
+                    "additional_price": 200,
+                }
+            ]
+        },
     )
 
 
@@ -157,13 +173,13 @@ class OrderItemUpdate(BaseModel):
         None,
         ge=1,
         description="الكمية الجديدة",
-        example=3,
+        json_schema_extra={"example": 3},
     )
     total_price: Optional[float] = Field(
         None,
         ge=0,
         description="السعر الإجمالي الجديد",
-        example=4500.00,
+        json_schema_extra={"example": 4500.00},
     )
 
 
@@ -179,21 +195,17 @@ class OrderItemResponse(OrderItemBase):
         id: معرف تفاصيل الطلب
         created_at: تاريخ الإنشاء
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف تفاصيل الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
         description="تاريخ الإنشاء",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -207,6 +219,8 @@ class OrderItemWithOptionsResponse(OrderItemResponse):
     Attributes:
         options: قائمة خيارات المنتج
     """
+    model_config = ConfigDict(from_attributes=True)
+
     options: List["OrderItemOptionResponse"] = Field(
         default_factory=list,
         description="خيارات المنتج",
@@ -227,6 +241,8 @@ class OrderItemListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[OrderItemResponse] = Field(
         ...,
         description="قائمة تفاصيل الطلب",
@@ -234,19 +250,19 @@ class OrderItemListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
         ge=0,
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=1,
     )
 
@@ -266,34 +282,36 @@ class OrderItemSummary(BaseModel):
         total_options_price: إجمالي سعر الخيارات
         total_price: السعر الإجمالي
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total_items: int = Field(
         ...,
         description="إجمالي عدد العناصر",
-        example=5,
+        json_schema_extra={"example": 5},
         ge=0,
     )
     total_quantity: int = Field(
         ...,
         description="إجمالي الكمية",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     subtotal: float = Field(
         ...,
         description="المجموع الفرعي",
-        example=15000.00,
+        json_schema_extra={"example": 15000.00},
         ge=0,
     )
     total_options_price: float = Field(
         ...,
         description="إجمالي سعر الخيارات",
-        example=500.00,
+        json_schema_extra={"example": 500.00},
         ge=0,
     )
     total_price: float = Field(
         ...,
         description="السعر الإجمالي",
-        example=15500.00,
+        json_schema_extra={"example": 15500.00},
         ge=0,
     )
 
@@ -319,25 +337,25 @@ class OrderItemOptionBase(BaseModel):
     order_item_id: int = Field(
         ...,
         description="معرف تفاصيل الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     option_group_name: str = Field(
         ...,
         max_length=255,
         description="اسم مجموعة الخيارات",
-        example="حجم",
+        json_schema_extra={"example": "حجم"},
     )
     option_name: str = Field(
         ...,
         max_length=255,
         description="اسم الخيار",
-        example="كبير",
+        json_schema_extra={"example": "كبير"},
     )
     additional_price: float = Field(
         ...,
         ge=0,
         description="السعر الإضافي",
-        example=200.00,
+        json_schema_extra={"example": 200.00},
     )
 
 
@@ -358,25 +376,25 @@ class OrderItemOptionCreate(BaseModel):
     order_item_id: int = Field(
         ...,
         description="معرف تفاصيل الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     option_group_name: str = Field(
         ...,
         max_length=255,
         description="اسم مجموعة الخيارات",
-        example="حجم",
+        json_schema_extra={"example": "حجم"},
     )
     option_name: str = Field(
         ...,
         max_length=255,
         description="اسم الخيار",
-        example="كبير",
+        json_schema_extra={"example": "كبير"},
     )
     additional_price: float = Field(
         ...,
         ge=0,
         description="السعر الإضافي",
-        example=200.00,
+        json_schema_extra={"example": 200.00},
     )
 
 
@@ -397,19 +415,19 @@ class OrderItemOptionUpdate(BaseModel):
         None,
         max_length=255,
         description="اسم مجموعة الخيارات الجديد",
-        example="حجم",
+        json_schema_extra={"example": "حجم"},
     )
     option_name: Optional[str] = Field(
         None,
         max_length=255,
         description="اسم الخيار الجديد",
-        example="وسط",
+        json_schema_extra={"example": "وسط"},
     )
     additional_price: Optional[float] = Field(
         None,
         ge=0,
         description="السعر الإضافي الجديد",
-        example=150.00,
+        json_schema_extra={"example": 150.00},
     )
 
 
@@ -425,21 +443,17 @@ class OrderItemOptionResponse(OrderItemOptionBase):
         id: معرف الخيار
         created_at: تاريخ الإنشاء
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف الخيار",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
         description="تاريخ الإنشاء",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -455,22 +469,24 @@ class OrderItemOptionSummary(BaseModel):
         total_additional_price: إجمالي السعر الإضافي
         groups: توزيع الخيارات حسب المجموعة
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total_options: int = Field(
         ...,
         description="إجمالي عدد الخيارات",
-        example=3,
+        json_schema_extra={"example": 3},
         ge=0,
     )
     total_additional_price: float = Field(
         ...,
         description="إجمالي السعر الإضافي",
-        example=500.00,
+        json_schema_extra={"example": 500.00},
         ge=0,
     )
     groups: Dict[str, List[str]] = Field(
         default_factory=dict,
         description="توزيع الخيارات حسب المجموعة",
-        example={"حجم": ["كبير", "وسط"], "إضافات": ["جبن إضافي"]},
+        json_schema_extra={"example": {"حجم": ["كبير", "وسط"], "إضافات": ["جبن إضافي"]}},
     )
 
 
@@ -497,31 +513,31 @@ class OrderPaymentBase(BaseModel):
     order_id: int = Field(
         ...,
         description="معرف الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     payment_method: str = Field(
         ...,
         max_length=50,
         description="طريقة الدفع",
-        example="cash",
+        json_schema_extra={"example": "cash"},
     )
     payment_status: str = Field(
         "pending",
         max_length=50,
         description="حالة الدفع",
-        example="pending",
+        json_schema_extra={"example": "pending"},
     )
     amount: float = Field(
         ...,
         ge=0,
         description="المبلغ",
-        example=15500.00,
+        json_schema_extra={"example": 15500.00},
     )
     transaction_reference: Optional[str] = Field(
         None,
         max_length=255,
         description="مرجع المعاملة",
-        example="TXN-123456",
+        json_schema_extra={"example": "TXN-123456"},
     )
     paid_at: Optional[datetime] = Field(
         None,
@@ -546,25 +562,25 @@ class OrderPaymentCreate(BaseModel):
     order_id: int = Field(
         ...,
         description="معرف الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     payment_method: str = Field(
         ...,
         max_length=50,
         description="طريقة الدفع",
-        example="cash",
+        json_schema_extra={"example": "cash"},
     )
     amount: float = Field(
         ...,
         ge=0,
         description="المبلغ",
-        example=15500.00,
+        json_schema_extra={"example": 15500.00},
     )
     transaction_reference: Optional[str] = Field(
         None,
         max_length=255,
         description="مرجع المعاملة",
-        example="TXN-123456",
+        json_schema_extra={"example": "TXN-123456"},
     )
 
 
@@ -585,13 +601,13 @@ class OrderPaymentUpdate(BaseModel):
         None,
         max_length=50,
         description="حالة الدفع الجديدة",
-        example="paid",
+        json_schema_extra={"example": "paid"},
     )
     transaction_reference: Optional[str] = Field(
         None,
         max_length=255,
         description="مرجع المعاملة الجديد",
-        example="TXN-789012",
+        json_schema_extra={"example": "TXN-789012"},
     )
     paid_at: Optional[datetime] = Field(
         None,
@@ -612,10 +628,12 @@ class OrderPaymentResponse(OrderPaymentBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف الدفعة",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -625,12 +643,6 @@ class OrderPaymentResponse(OrderPaymentBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -648,7 +660,7 @@ class OrderPaymentStatusUpdate(BaseModel):
         ...,
         max_length=50,
         description="حالة الدفع الجديدة",
-        example="paid",
+        json_schema_extra={"example": "paid"},
     )
 
 
@@ -673,24 +685,24 @@ class OrderStatusHistoryBase(BaseModel):
     order_id: int = Field(
         ...,
         description="معرف الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     status: str = Field(
         ...,
         max_length=50,
         description="الحالة الجديدة",
-        example="confirmed",
+        json_schema_extra={"example": "confirmed"},
     )
     employee_id: Optional[int] = Field(
         None,
         description="معرف الموظف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     note: Optional[str] = Field(
         None,
         max_length=500,
         description="ملاحظة",
-        example="تم تأكيد الطلب من قبل الموظف",
+        json_schema_extra={"example": "تم تأكيد الطلب من قبل الموظف"},
     )
 
 
@@ -711,24 +723,24 @@ class OrderStatusHistoryCreate(BaseModel):
     order_id: int = Field(
         ...,
         description="معرف الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     status: str = Field(
         ...,
         max_length=50,
         description="الحالة الجديدة",
-        example="confirmed",
+        json_schema_extra={"example": "confirmed"},
     )
     employee_id: Optional[int] = Field(
         None,
         description="معرف الموظف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     note: Optional[str] = Field(
         None,
         max_length=500,
         description="ملاحظة",
-        example="تم تأكيد الطلب من قبل الموظف",
+        json_schema_extra={"example": "تم تأكيد الطلب من قبل الموظف"},
     )
 
 
@@ -744,21 +756,17 @@ class OrderStatusHistoryResponse(OrderStatusHistoryBase):
         id: معرف السجل
         created_at: تاريخ الإنشاء
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف السجل",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
         description="تاريخ الإنشاء",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -777,21 +785,21 @@ __all__ = [
     "OrderItemData",
     "OrderItemUpdateData",
     "OrderItemListData",
-    
+
     # Order Item Option
     "OrderItemOptionBase",
     "OrderItemOptionCreate",
     "OrderItemOptionUpdate",
     "OrderItemOptionResponse",
     "OrderItemOptionSummary",
-    
+
     # Order Payment
     "OrderPaymentBase",
     "OrderPaymentCreate",
     "OrderPaymentUpdate",
     "OrderPaymentResponse",
     "OrderPaymentStatusUpdate",
-    
+
     # Order Status History
     "OrderStatusHistoryBase",
     "OrderStatusHistoryCreate",

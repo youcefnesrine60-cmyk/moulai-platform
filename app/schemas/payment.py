@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 💳 PAYMENT SCHEMAS
 # نماذج Pydantic للمدفوعات
 # تدير التحقق من صحة البيانات وتسلسلها للمدفوعات
@@ -14,6 +21,7 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
 )
 
@@ -49,41 +57,41 @@ class PaymentBase(BaseModel):
     owner_id: int = Field(
         ...,
         description="معرف المالك",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     subscription_id: Optional[int] = Field(
         None,
         description="معرف الاشتراك المرتبط",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     payment_method: str = Field(
         ...,
         max_length=50,
         description="طريقة الدفع: cash, card, online",
-        example="card",
+        json_schema_extra={"example": "card"},
     )
     amount: float = Field(
         ...,
         gt=0,
         description="المبلغ",
-        example=100.50,
+        json_schema_extra={"example": 100.50},
     )
     status: str = Field(
         "pending",
         max_length=50,
         description="حالة الدفع: pending, paid, failed, cancelled",
-        example="pending",
+        json_schema_extra={"example": "pending"},
     )
     external_reference: Optional[str] = Field(
         None,
         max_length=255,
         description="المرجع الخارجي من بوابة الدفع",
-        example="pay_123456789",
+        json_schema_extra={"example": "pay_123456789"},
     )
 
 
@@ -106,35 +114,35 @@ class PaymentCreate(BaseModel):
     owner_id: int = Field(
         ...,
         description="معرف المالك",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     subscription_id: Optional[int] = Field(
         None,
         description="معرف الاشتراك المرتبط",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     payment_method: str = Field(
         ...,
         max_length=50,
         description="طريقة الدفع: cash, card, online",
-        example="card",
+        json_schema_extra={"example": "card"},
     )
     amount: float = Field(
         ...,
         gt=0,
         description="المبلغ",
-        example=100.50,
+        json_schema_extra={"example": 100.50},
     )
     external_reference: Optional[str] = Field(
         None,
         max_length=255,
         description="المرجع الخارجي من بوابة الدفع",
-        example="pay_123456789",
+        json_schema_extra={"example": "pay_123456789"},
     )
 
 
@@ -155,13 +163,13 @@ class PaymentUpdate(BaseModel):
         None,
         max_length=50,
         description="حالة الدفع: pending, paid, failed, cancelled",
-        example="paid",
+        json_schema_extra={"example": "paid"},
     )
     external_reference: Optional[str] = Field(
         None,
         max_length=255,
         description="المرجع الخارجي من بوابة الدفع",
-        example="pay_123456789",
+        json_schema_extra={"example": "pay_123456789"},
     )
     paid_at: Optional[datetime] = Field(
         None,
@@ -185,7 +193,7 @@ class PaymentStatusUpdate(BaseModel):
         ...,
         max_length=50,
         description="الحالة الجديدة: paid, failed, cancelled",
-        example="paid",
+        json_schema_extra={"example": "paid"},
     )
     paid_at: Optional[datetime] = Field(
         None,
@@ -209,7 +217,7 @@ class PaymentConfirm(BaseModel):
         ...,
         max_length=255,
         description="المرجع الخارجي من بوابة الدفع",
-        example="pay_123456789",
+        json_schema_extra={"example": "pay_123456789"},
     )
     paid_at: Optional[datetime] = Field(
         None,
@@ -231,10 +239,12 @@ class PaymentResponse(PaymentBase):
         updated_at: تاريخ آخر تحديث
         paid_at: تاريخ الدفع
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف الدفع",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -248,12 +258,6 @@ class PaymentResponse(PaymentBase):
         None,
         description="تاريخ الدفع",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -272,6 +276,8 @@ class PaymentListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[PaymentResponse] = Field(
         ...,
         description="قائمة المدفوعات",
@@ -279,19 +285,19 @@ class PaymentListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
         ge=0,
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=1,
     )
 
@@ -316,51 +322,47 @@ class PaymentStatus(BaseModel):
         amount: المبلغ
         paid_at: تاريخ الدفع
     """
+    model_config = ConfigDict(from_attributes=True)
+
     payment_id: int = Field(
         ...,
         description="معرف الدفع",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     status: str = Field(
         ...,
         description="حالة الدفع",
-        example="paid",
+        json_schema_extra={"example": "paid"},
     )
     is_paid: bool = Field(
         ...,
         description="هل الدفع مدفوع؟",
-        example=True,
+        json_schema_extra={"example": True},
     )
     is_pending: bool = Field(
         ...,
         description="هل الدفع معلق؟",
-        example=False,
+        json_schema_extra={"example": False},
     )
     is_failed: bool = Field(
         ...,
         description="هل الدفع فاشل؟",
-        example=False,
+        json_schema_extra={"example": False},
     )
     is_cancelled: bool = Field(
         ...,
         description="هل الدفع ملغى؟",
-        example=False,
+        json_schema_extra={"example": False},
     )
     amount: float = Field(
         ...,
         description="المبلغ",
-        example=100.50,
+        json_schema_extra={"example": 100.50},
     )
     paid_at: Optional[datetime] = Field(
         None,
         description="تاريخ الدفع",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -383,52 +385,54 @@ class PaymentSummary(BaseModel):
         total_paid_amount: إجمالي المبلغ المدفوع
         total_pending_amount: إجمالي المبلغ المعلق
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total_payments: int = Field(
         ...,
         description="إجمالي عدد المدفوعات",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     total_paid: int = Field(
         ...,
         description="إجمالي المدفوعات الناجحة",
-        example=5,
+        json_schema_extra={"example": 5},
         ge=0,
     )
     total_pending: int = Field(
         ...,
         description="إجمالي المدفوعات المعلقة",
-        example=3,
+        json_schema_extra={"example": 3},
         ge=0,
     )
     total_failed: int = Field(
         ...,
         description="إجمالي المدفوعات الفاشلة",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=0,
     )
     total_cancelled: int = Field(
         ...,
         description="إجمالي المدفوعات الملغاة",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=0,
     )
     total_amount: float = Field(
         ...,
         description="إجمالي المبلغ",
-        example=1000.00,
+        json_schema_extra={"example": 1000.00},
         ge=0,
     )
     total_paid_amount: float = Field(
         ...,
         description="إجمالي المبلغ المدفوع",
-        example=500.00,
+        json_schema_extra={"example": 500.00},
         ge=0,
     )
     total_pending_amount: float = Field(
         ...,
         description="إجمالي المبلغ المعلق",
-        example=300.00,
+        json_schema_extra={"example": 300.00},
         ge=0,
     )
 

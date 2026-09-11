@@ -12,7 +12,7 @@ from app.helpers.ui_manager import UIManager
 from app.repositories.state_repo import get_state, set_state
 
 # ✅ استيراد الـ Repositories الصحيحة
-from app.repositories.restaurant_repo import get_restaurant_by_id
+from app.repositories.restaurant.restaurant_repo import get_restaurant_by_id
 from app.repositories.orders_repo import get_restaurant_orders
 from app.repositories.products_repo import count_restaurant_products
 from app.repositories.categories_repo import get_restaurant_categories

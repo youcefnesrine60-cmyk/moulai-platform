@@ -10,7 +10,7 @@ from app.core.middleware.rate_limit import rate_limit
 
 from app.helpers.ui_manager import UIManager
 
-from app.repositories.restaurant_repo import get_restaurant_by_id
+from app.repositories.restaurant.restaurant_repo import get_restaurant_by_id
 from app.repositories.branches_repo import get_restaurant_branches
 from app.repositories.products_repo import count_restaurant_products
 

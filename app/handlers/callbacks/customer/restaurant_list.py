@@ -7,7 +7,7 @@ import re
 
 from app.core.logger import logger
 
-from app.repositories.restaurant_repo import get_all_restaurants
+from app.repositories.restaurant.restaurant_repo import get_all_restaurants
 from app.repositories.user_repo import has_consent
 from app.repositories.state_repo import set_state
 from app.helpers.ui_manager import UIManager

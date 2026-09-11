@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 🍔 PRODUCT SCHEMAS
 # نماذج Pydantic للمنتجات
 # تدير التحقق من صحة البيانات وتسلسلها للمنتجات
@@ -14,6 +21,7 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
 )
 
@@ -49,45 +57,45 @@ class ProductBase(BaseModel):
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     category_id: int = Field(
         ...,
         description="معرف التصنيف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: str = Field(
         ...,
         max_length=255,
         description="اسم المنتج",
-        example="بيتزا مارغريتا",
+        json_schema_extra={"example": "بيتزا مارغريتا"},
     )
     description: Optional[str] = Field(
         None,
         description="وصف المنتج",
-        example="بيتزا كلاسيكية مع صلصة الطماطم والموزاريلا",
+        json_schema_extra={"example": "بيتزا كلاسيكية مع صلصة الطماطم والموزاريلا"},
     )
     price: float = Field(
         ...,
         gt=0,
         description="السعر",
-        example=25.00,
+        json_schema_extra={"example": 25.00},
     )
     image_url: Optional[str] = Field(
         None,
         max_length=500,
         description="رابط الصورة",
-        example="https://example.com/pizza.jpg",
+        json_schema_extra={"example": "https://example.com/pizza.jpg"},
     )
     is_available: bool = Field(
         True,
         description="حالة التوفر",
-        example=True,
+        json_schema_extra={"example": True},
     )
     sort_order: int = Field(
         0,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -110,35 +118,35 @@ class ProductCreate(BaseModel):
     category_id: int = Field(
         ...,
         description="معرف التصنيف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: str = Field(
         ...,
         max_length=255,
         description="اسم المنتج",
-        example="بيتزا مارغريتا",
+        json_schema_extra={"example": "بيتزا مارغريتا"},
     )
     description: Optional[str] = Field(
         None,
         description="وصف المنتج",
-        example="بيتزا كلاسيكية مع صلصة الطماطم والموزاريلا",
+        json_schema_extra={"example": "بيتزا كلاسيكية مع صلصة الطماطم والموزاريلا"},
     )
     price: float = Field(
         ...,
         gt=0,
         description="السعر",
-        example=25.00,
+        json_schema_extra={"example": 25.00},
     )
     image_url: Optional[str] = Field(
         None,
         max_length=500,
         description="رابط الصورة",
-        example="https://example.com/pizza.jpg",
+        json_schema_extra={"example": "https://example.com/pizza.jpg"},
     )
     sort_order: int = Field(
         0,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -162,40 +170,40 @@ class ProductUpdate(BaseModel):
     category_id: Optional[int] = Field(
         None,
         description="معرف التصنيف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: Optional[str] = Field(
         None,
         max_length=255,
         description="اسم المنتج",
-        example="بيتزا مارغريتا",
+        json_schema_extra={"example": "بيتزا مارغريتا"},
     )
     description: Optional[str] = Field(
         None,
         description="وصف المنتج",
-        example="بيتزا كلاسيكية مع صلصة الطماطم والموزاريلا",
+        json_schema_extra={"example": "بيتزا كلاسيكية مع صلصة الطماطم والموزاريلا"},
     )
     price: Optional[float] = Field(
         None,
         gt=0,
         description="السعر",
-        example=25.00,
+        json_schema_extra={"example": 25.00},
     )
     image_url: Optional[str] = Field(
         None,
         max_length=500,
         description="رابط الصورة",
-        example="https://example.com/pizza.jpg",
+        json_schema_extra={"example": "https://example.com/pizza.jpg"},
     )
     is_available: Optional[bool] = Field(
         None,
         description="حالة التوفر",
-        example=True,
+        json_schema_extra={"example": True},
     )
     sort_order: Optional[int] = Field(
         None,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -213,7 +221,7 @@ class ProductAvailabilityUpdate(BaseModel):
     is_available: bool = Field(
         ...,
         description="حالة التوفر الجديدة",
-        example=True,
+        json_schema_extra={"example": True},
     )
 
 
@@ -230,10 +238,12 @@ class ProductResponse(ProductBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف المنتج",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -243,12 +253,6 @@ class ProductResponse(ProductBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -267,6 +271,8 @@ class ProductListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[ProductResponse] = Field(
         ...,
         description="قائمة المنتجات",
@@ -274,17 +280,17 @@ class ProductListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
     )
 
 
@@ -307,38 +313,57 @@ class ProductSummary(BaseModel):
         min_price: أقل سعر
         max_price: أعلى سعر
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total_products: int = Field(
         ...,
         description="إجمالي عدد المنتجات",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     available_products: int = Field(
         ...,
         description="عدد المنتجات المتاحة",
-        example=8,
+        json_schema_extra={"example": 8},
     )
     unavailable_products: int = Field(
         ...,
         description="عدد المنتجات غير المتاحة",
-        example=2,
+        json_schema_extra={"example": 2},
     )
     total_price: float = Field(
         ...,
         description="إجمالي أسعار المنتجات",
-        example=250.00,
+        json_schema_extra={"example": 250.00},
     )
     avg_price: float = Field(
         ...,
         description="متوسط السعر",
-        example=25.00,
+        json_schema_extra={"example": 25.00},
     )
     min_price: float = Field(
         ...,
         description="أقل سعر",
-        example=10.00,
+        json_schema_extra={"example": 10.00},
     )
     max_price: float = Field(
         ...,
         description="أعلى سعر",
-        example=50.00,
+        json_schema_extra={"example": 50.00},
     )
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "ProductBase",
+    "ProductCreate",
+    "ProductUpdate",
+    "ProductAvailabilityUpdate",
+    "ProductResponse",
+    "ProductListResponse",
+    "ProductSummary",
+    "ProductData",
+    "ProductUpdateData",
+]

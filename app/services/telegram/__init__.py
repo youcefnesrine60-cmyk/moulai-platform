@@ -1,3 +1,10 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
 # ============================================
 # 🤖 TELEGRAM SERVICE EXPORTS
 # ============================================
@@ -11,6 +18,10 @@ from app.services.telegram.callbacks import answer_callback
 from app.services.telegram.webhook import set_webhook
 from app.services.telegram.actions import send_chat_action 
 from app.services.telegram.client import close_http_client
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
 
 __all__ = [
 

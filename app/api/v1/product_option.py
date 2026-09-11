@@ -390,7 +390,7 @@ async def create_product_option(
         "api_create_product_option",
         extra={
             "group_id": group_id,
-            "name": data.name,
+            "product_option_name": data.name,
             "extra_price": data.extra_price,
         },
     )
@@ -420,7 +420,7 @@ async def create_product_option(
             "api_create_product_option_conflict",
             extra={
                 "group_id": group_id,
-                "name": data.name,
+                "product_option_name": data.name,
                 "error": str(e),
             },
         )

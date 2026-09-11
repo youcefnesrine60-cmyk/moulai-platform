@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 👤 OWNERS API
 # نقاط نهاية API للمالكين
 # تدير عمليات إنشاء واستعراض المالكين
@@ -84,16 +91,6 @@ async def create_owner(
 ) -> OwnerResponse:
     """
     إنشاء مالك جديد.
-    
-    Args:
-        data: بيانات المالك
-        service: خدمة المالكين
-        
-    Returns:
-        OwnerResponse: المالك المنشأ
-        
-    Raises:
-        HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
     logger.info(
         "api_create_owner",
@@ -104,9 +101,7 @@ async def create_owner(
     )
 
     try:
-        owner = await service.create_owner(
-            owner_data=data,
-        )
+        owner = await service.create_owner(owner_data=data)
         return owner
 
     except ConflictError as e:
@@ -134,16 +129,19 @@ async def create_owner(
             detail=str(e),
         )
     except Exception as e:
+        # ✅ عرض تفاصيل الخطأ الحقيقي للتشخيص
         logger.exception(
             "api_create_owner_error",
             extra={
                 "chat_id": data.chat_id,
                 "error": str(e),
+                "error_type": type(e).__name__,
             },
         )
+        # ✅ إرجاع تفاصيل الخطأ الحقيقي مؤقتاً للتشخيص
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء إنشاء المالك",
+            detail=f"حدث خطأ أثناء إنشاء المالك: {type(e).__name__} - {str(e)}",
         )
 
 

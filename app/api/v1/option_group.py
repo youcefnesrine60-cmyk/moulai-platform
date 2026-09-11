@@ -388,7 +388,7 @@ async def create_option_group(
         "api_create_option_group",
         extra={
             "product_id": product_id,
-            "name": data.name,
+            "option_group_name": data.name,
         },
     )
 
@@ -417,7 +417,7 @@ async def create_option_group(
             "api_create_option_group_conflict",
             extra={
                 "product_id": product_id,
-                "name": data.name,
+                "option_group_name": data.name,
                 "error": str(e),
             },
         )

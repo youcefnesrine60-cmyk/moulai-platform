@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📦 ORDER SCHEMAS
 # نماذج Pydantic للطلبات
 # تدير التحقق من صحة البيانات وتسلسلها للطلبات
@@ -14,6 +21,7 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
     field_validator,
 )
@@ -57,61 +65,63 @@ class OrderBase(BaseModel):
         tax_amount: مبلغ الضريبة
         delivery_amount: مبلغ التوصيل
         total_amount: المبلغ النهائي
+        is_paid: هل الطلب مدفوع؟
+        payment_status: حالة الدفع
     """
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=1,
     )
     branch_id: Optional[int] = Field(
         None,
         description="معرف الفرع",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     table_id: Optional[int] = Field(
         None,
         description="معرف الطاولة",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     employee_id: Optional[int] = Field(
         None,
         description="معرف الموظف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     order_number: str = Field(
         ...,
         max_length=50,
         description="رقم الطلب",
-        example="RST1-000001",
+        json_schema_extra={"example": "RST1-000001"},
     )
     order_type: str = Field(
         ...,
         max_length=30,
         description="نوع الطلب: dine_in, takeaway, delivery",
-        example="dine_in",
+        json_schema_extra={"example": "dine_in"},
     )
     customer_name: Optional[str] = Field(
         None,
         max_length=255,
         description="اسم العميل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     customer_phone: Optional[str] = Field(
         None,
         max_length=50,
         description="رقم هاتف العميل",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
     delivery_address: Optional[str] = Field(
         None,
         description="عنوان التوصيل",
-        example="شارع الأندلس، الجزائر",
+        json_schema_extra={"example": "شارع الأندلس، الجزائر"},
     )
     customer_note: Optional[str] = Field(
         None,
         description="ملاحظات العميل",
-        example="الرجاء إضافة صوص إضافي",
+        json_schema_extra={"example": "الرجاء إضافة صوص إضافي"},
     )
     status: str = Field(
         "pending",
@@ -120,49 +130,53 @@ class OrderBase(BaseModel):
             "حالة الطلب: pending, confirmed, preparing, ready, "
             "delivering, delivered, completed, cancelled"
         ),
-        example="pending",
+        json_schema_extra={"example": "pending"},
     )
     subtotal_amount: float = Field(
         0,
         description="المبلغ الإجمالي قبل الخصم",
-        example=100.00,
+        json_schema_extra={"example": 100.00},
         ge=0,
     )
     discount_amount: float = Field(
         0,
         description="مبلغ الخصم",
-        example=10.00,
+        json_schema_extra={"example": 10.00},
         ge=0,
     )
     tax_amount: float = Field(
         0,
         description="مبلغ الضريبة",
-        example=15.00,
+        json_schema_extra={"example": 15.00},
         ge=0,
     )
     delivery_amount: float = Field(
         0,
         description="مبلغ التوصيل",
-        example=5.00,
+        json_schema_extra={"example": 5.00},
         ge=0,
     )
     total_amount: float = Field(
         0,
         description="المبلغ النهائي",
-        example=110.00,
+        json_schema_extra={"example": 110.00},
         ge=0,
     )
     is_paid: bool = Field(
         False,
         description="هل الطلب مدفوع؟",
-        example=False,
+        json_schema_extra={"example": False},
     )
     payment_status: Optional[str] = Field(
         None,
         max_length=50,
         description="حالة الدفع",
-        example="pending",
+        json_schema_extra={"example": "pending"},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("order_type")
     @classmethod
@@ -174,7 +188,7 @@ class OrderBase(BaseModel):
             value: نوع الطلب
             
         Returns:
-            نوع الطلب المدقق
+            str: نوع الطلب المدقق
             
         Raises:
             ValueError: إذا كان النوع غير صالح
@@ -196,14 +210,20 @@ class OrderBase(BaseModel):
             value: حالة الطلب
             
         Returns:
-            حالة الطلب المدققة
+            str: حالة الطلب المدققة
             
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
         valid_statuses = {
-            "pending", "confirmed", "preparing", "ready",
-            "delivering", "delivered", "completed", "cancelled"
+            "pending",
+            "confirmed",
+            "preparing",
+            "ready",
+            "delivering",
+            "delivered",
+            "completed",
+            "cancelled",
         }
         if value.lower() not in valid_statuses:
             raise ValueError(
@@ -240,106 +260,124 @@ class OrderCreate(BaseModel):
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=1,
     )
     branch_id: Optional[int] = Field(
         None,
         description="معرف الفرع",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     table_id: Optional[int] = Field(
         None,
         description="معرف الطاولة",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     employee_id: Optional[int] = Field(
         None,
         description="معرف الموظف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     order_type: str = Field(
         ...,
         max_length=30,
         description="نوع الطلب: dine_in, takeaway, delivery",
-        example="dine_in",
+        json_schema_extra={"example": "dine_in"},
     )
     customer_name: Optional[str] = Field(
         None,
         max_length=255,
         description="اسم العميل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     customer_phone: Optional[str] = Field(
         None,
         max_length=50,
         description="رقم هاتف العميل",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
     delivery_address: Optional[str] = Field(
         None,
         description="عنوان التوصيل",
-        example="شارع الأندلس، الجزائر",
+        json_schema_extra={"example": "شارع الأندلس، الجزائر"},
     )
     customer_note: Optional[str] = Field(
         None,
         description="ملاحظات العميل",
-        example="الرجاء إضافة صوص إضافي",
+        json_schema_extra={"example": "الرجاء إضافة صوص إضافي"},
     )
     subtotal_amount: float = Field(
         0,
         description="المبلغ الإجمالي قبل الخصم",
-        example=100.00,
+        json_schema_extra={"example": 100.00},
         ge=0,
     )
     discount_amount: float = Field(
         0,
         description="مبلغ الخصم",
-        example=10.00,
+        json_schema_extra={"example": 10.00},
         ge=0,
     )
     tax_amount: float = Field(
         0,
         description="مبلغ الضريبة",
-        example=15.00,
+        json_schema_extra={"example": 15.00},
         ge=0,
     )
     delivery_amount: float = Field(
         0,
         description="مبلغ التوصيل",
-        example=5.00,
+        json_schema_extra={"example": 5.00},
         ge=0,
     )
     total_amount: float = Field(
         0,
         description="المبلغ النهائي",
-        example=110.00,
+        json_schema_extra={"example": 110.00},
         ge=0,
     )
     items: Optional[List[OrderItemPayload]] = Field(
         None,
         description="قائمة عناصر الطلب",
-        example=[
-            {
-                "product_id": 1,
-                "product_name": "بيتزا مارغريتا",
-                "unit_price": 25.00,
-                "quantity": 2,
-                "total_price": 50.00,
-                "options": [
-                    {
-                        "option_group_name": "حجم",
-                        "option_name": "كبير",
-                        "additional_price": 5.00,
-                    }
-                ],
-            }
-        ],
+        json_schema_extra={
+            "example": [
+                {
+                    "product_id": 1,
+                    "product_name": "بيتزا مارغريتا",
+                    "unit_price": 25.00,
+                    "quantity": 2,
+                    "total_price": 50.00,
+                    "options": [
+                        {
+                            "option_group_name": "حجم",
+                            "option_name": "كبير",
+                            "additional_price": 5.00,
+                        }
+                    ],
+                }
+            ]
+        },
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("order_type")
     @classmethod
     def validate_order_type(cls, value: str) -> str:
+        """
+        التحقق من صحة نوع الطلب.
+        
+        Args:
+            value: نوع الطلب
+            
+        Returns:
+            str: نوع الطلب المدقق
+            
+        Raises:
+            ValueError: إذا كان النوع غير صالح
+        """
         valid_types = {"dine_in", "takeaway", "delivery"}
         if value.lower() not in valid_types:
             raise ValueError(
@@ -367,44 +405,46 @@ class OrderItemCreate(BaseModel):
     product_id: int = Field(
         ...,
         description="معرف المنتج",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=1,
     )
     product_name: str = Field(
         ...,
         max_length=255,
         description="اسم المنتج",
-        example="بيتزا مارغريتا",
+        json_schema_extra={"example": "بيتزا مارغريتا"},
         min_length=1,
     )
     unit_price: float = Field(
         ...,
         gt=0,
         description="سعر الوحدة",
-        example=25.00,
+        json_schema_extra={"example": 25.00},
     )
     quantity: int = Field(
         ...,
         gt=0,
         description="الكمية",
-        example=2,
+        json_schema_extra={"example": 2},
     )
     total_price: float = Field(
         ...,
         gt=0,
         description="السعر الإجمالي",
-        example=50.00,
+        json_schema_extra={"example": 50.00},
     )
     options: Optional[List[OrderOptionPayload]] = Field(
         None,
         description="قائمة الخيارات",
-        example=[
-            {
-                "option_group_name": "حجم",
-                "option_name": "كبير",
-                "additional_price": 5.00,
-            }
-        ],
+        json_schema_extra={
+            "example": [
+                {
+                    "option_group_name": "حجم",
+                    "option_name": "كبير",
+                    "additional_price": 5.00,
+                }
+            ]
+        },
     )
 
 
@@ -433,69 +473,69 @@ class OrderUpdate(BaseModel):
     branch_id: Optional[int] = Field(
         None,
         description="معرف الفرع",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     table_id: Optional[int] = Field(
         None,
         description="معرف الطاولة",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     employee_id: Optional[int] = Field(
         None,
         description="معرف الموظف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     customer_name: Optional[str] = Field(
         None,
         max_length=255,
         description="اسم العميل",
-        example="أحمد محمد",
+        json_schema_extra={"example": "أحمد محمد"},
     )
     customer_phone: Optional[str] = Field(
         None,
         max_length=50,
         description="رقم هاتف العميل",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
     delivery_address: Optional[str] = Field(
         None,
         description="عنوان التوصيل",
-        example="شارع الأندلس، الجزائر",
+        json_schema_extra={"example": "شارع الأندلس، الجزائر"},
     )
     customer_note: Optional[str] = Field(
         None,
         description="ملاحظات العميل",
-        example="الرجاء إضافة صوص إضافي",
+        json_schema_extra={"example": "الرجاء إضافة صوص إضافي"},
     )
     subtotal_amount: Optional[float] = Field(
         None,
         ge=0,
         description="المبلغ الإجمالي قبل الخصم",
-        example=100.00,
+        json_schema_extra={"example": 100.00},
     )
     discount_amount: Optional[float] = Field(
         None,
         ge=0,
         description="مبلغ الخصم",
-        example=10.00,
+        json_schema_extra={"example": 10.00},
     )
     tax_amount: Optional[float] = Field(
         None,
         ge=0,
         description="مبلغ الضريبة",
-        example=15.00,
+        json_schema_extra={"example": 15.00},
     )
     delivery_amount: Optional[float] = Field(
         None,
         ge=0,
         description="مبلغ التوصيل",
-        example=5.00,
+        json_schema_extra={"example": 5.00},
     )
     total_amount: Optional[float] = Field(
         None,
         ge=0,
         description="المبلغ النهائي",
-        example=110.00,
+        json_schema_extra={"example": 110.00},
     )
 
 
@@ -516,26 +556,48 @@ class OrderStatusUpdate(BaseModel):
         ...,
         max_length=50,
         description="الحالة الجديدة",
-        example="confirmed",
+        json_schema_extra={"example": "confirmed"},
     )
     note: Optional[str] = Field(
         None,
         max_length=500,
         description="ملاحظة إضافية",
-        example="تم تأكيد الطلب",
+        json_schema_extra={"example": "تم تأكيد الطلب"},
     )
     employee_id: Optional[int] = Field(
         None,
         description="معرف الموظف",
-        example=1,
+        json_schema_extra={"example": 1},
     )
+
+    # ==========================================
+    # 🔍 VALIDATORS
+    # ==========================================
 
     @field_validator("status")
     @classmethod
     def validate_status(cls, value: str) -> str:
+        """
+        التحقق من صحة حالة الطلب.
+        
+        Args:
+            value: حالة الطلب
+            
+        Returns:
+            str: حالة الطلب المدققة
+            
+        Raises:
+            ValueError: إذا كانت الحالة غير صالحة
+        """
         valid_statuses = {
-            "pending", "confirmed", "preparing", "ready",
-            "delivering", "delivered", "completed", "cancelled"
+            "pending",
+            "confirmed",
+            "preparing",
+            "ready",
+            "delivering",
+            "delivered",
+            "completed",
+            "cancelled",
         }
         if value.lower() not in valid_statuses:
             raise ValueError(
@@ -557,10 +619,12 @@ class OrderResponse(OrderBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف الطلب",
-        example=1,
+        json_schema_extra={"example": 1},
         ge=1,
     )
     created_at: datetime = Field(
@@ -571,12 +635,6 @@ class OrderResponse(OrderBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -595,6 +653,8 @@ class OrderListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[OrderResponse] = Field(
         ...,
         description="قائمة الطلبات",
@@ -602,19 +662,19 @@ class OrderListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
         ge=0,
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=1,
     )
 
@@ -632,6 +692,8 @@ class OrderWithItemsResponse(OrderResponse):
         payments: قائمة مدفوعات الطلب
         status_history: قائمة تاريخ الحالات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[Dict[str, Any]] = Field(
         default_factory=list,
         description="قائمة عناصر الطلب",
@@ -669,70 +731,72 @@ class OrderSummary(BaseModel):
         total_revenue: إجمالي الإيرادات
         avg_order_value: متوسط قيمة الطلب
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total_orders: int = Field(
         ...,
         description="إجمالي عدد الطلبات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=0,
     )
     pending_orders: int = Field(
         ...,
         description="عدد الطلبات المعلقة",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     confirmed_orders: int = Field(
         ...,
         description="عدد الطلبات المؤكدة",
-        example=15,
+        json_schema_extra={"example": 15},
         ge=0,
     )
     preparing_orders: int = Field(
         ...,
         description="عدد الطلبات قيد التحضير",
-        example=20,
+        json_schema_extra={"example": 20},
         ge=0,
     )
     ready_orders: int = Field(
         ...,
         description="عدد الطلبات الجاهزة",
-        example=5,
+        json_schema_extra={"example": 5},
         ge=0,
     )
     delivering_orders: int = Field(
         ...,
         description="عدد الطلبات قيد التوصيل",
-        example=8,
+        json_schema_extra={"example": 8},
         ge=0,
     )
     delivered_orders: int = Field(
         ...,
         description="عدد الطلبات الموصلة",
-        example=12,
+        json_schema_extra={"example": 12},
         ge=0,
     )
     completed_orders: int = Field(
         ...,
         description="عدد الطلبات المكتملة",
-        example=25,
+        json_schema_extra={"example": 25},
         ge=0,
     )
     cancelled_orders: int = Field(
         ...,
         description="عدد الطلبات الملغاة",
-        example=5,
+        json_schema_extra={"example": 5},
         ge=0,
     )
     total_revenue: float = Field(
         ...,
         description="إجمالي الإيرادات",
-        example=10000.00,
+        json_schema_extra={"example": 10000.00},
         ge=0,
     )
     avg_order_value: float = Field(
         ...,
         description="متوسط قيمة الطلب",
-        example=100.00,
+        json_schema_extra={"example": 100.00},
         ge=0,
     )
 

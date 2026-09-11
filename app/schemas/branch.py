@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 🏢 BRANCH SCHEMAS
 # نماذج Pydantic للفروع
 # تدير التحقق من صحة البيانات وتسلسلها للفروع
@@ -14,6 +21,7 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
 )
 
@@ -48,40 +56,40 @@ class BranchBase(BaseModel):
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: str = Field(
         ...,
         max_length=255,
         description="اسم الفرع",
-        example="الفرع الرئيسي",
+        json_schema_extra={"example": "الفرع الرئيسي"},
     )
     phone: Optional[str] = Field(
         None,
         max_length=20,
         description="رقم الهاتف",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
     wilaya: Optional[str] = Field(
         None,
         max_length=100,
         description="الولاية",
-        example="Alger",
+        json_schema_extra={"example": "Alger"},
     )
     lat: Optional[float] = Field(
         None,
         description="خط العرض",
-        example=36.7538,
+        json_schema_extra={"example": 36.7538},
     )
     lng: Optional[float] = Field(
         None,
         description="خط الطول",
-        example=3.0588,
+        json_schema_extra={"example": 3.0588},
     )
     is_active: bool = Field(
         True,
         description="حالة النشاط",
-        example=True,
+        json_schema_extra={"example": True},
     )
 
 
@@ -104,29 +112,29 @@ class BranchCreate(BaseModel):
         ...,
         max_length=255,
         description="اسم الفرع",
-        example="الفرع الرئيسي",
+        json_schema_extra={"example": "الفرع الرئيسي"},
     )
     phone: Optional[str] = Field(
         None,
         max_length=20,
         description="رقم الهاتف",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
     wilaya: Optional[str] = Field(
         None,
         max_length=100,
         description="الولاية",
-        example="Alger",
+        json_schema_extra={"example": "Alger"},
     )
     lat: Optional[float] = Field(
         None,
         description="خط العرض",
-        example=36.7538,
+        json_schema_extra={"example": 36.7538},
     )
     lng: Optional[float] = Field(
         None,
         description="خط الطول",
-        example=3.0588,
+        json_schema_extra={"example": 3.0588},
     )
 
 
@@ -150,34 +158,34 @@ class BranchUpdate(BaseModel):
         None,
         max_length=255,
         description="اسم الفرع",
-        example="الفرع الرئيسي",
+        json_schema_extra={"example": "الفرع الرئيسي"},
     )
     phone: Optional[str] = Field(
         None,
         max_length=20,
         description="رقم الهاتف",
-        example="0555123456",
+        json_schema_extra={"example": "0555123456"},
     )
     wilaya: Optional[str] = Field(
         None,
         max_length=100,
         description="الولاية",
-        example="Alger",
+        json_schema_extra={"example": "Alger"},
     )
     lat: Optional[float] = Field(
         None,
         description="خط العرض",
-        example=36.7538,
+        json_schema_extra={"example": 36.7538},
     )
     lng: Optional[float] = Field(
         None,
         description="خط الطول",
-        example=3.0588,
+        json_schema_extra={"example": 3.0588},
     )
     is_active: Optional[bool] = Field(
         None,
         description="حالة النشاط",
-        example=True,
+        json_schema_extra={"example": True},
     )
 
 
@@ -195,7 +203,7 @@ class BranchStatusUpdate(BaseModel):
     is_active: bool = Field(
         ...,
         description="حالة النشاط الجديدة",
-        example=False,
+        json_schema_extra={"example": False},
     )
 
 
@@ -212,10 +220,12 @@ class BranchResponse(BranchBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف الفرع",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -225,12 +235,6 @@ class BranchResponse(BranchBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -249,6 +253,8 @@ class BranchListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[BranchResponse] = Field(
         ...,
         description="قائمة الفروع",
@@ -256,17 +262,17 @@ class BranchListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
     )
 
 
@@ -287,28 +293,47 @@ class BranchSummary(BaseModel):
         total_cost: التكلفة الإجمالية للفروع
         branches_per_wilaya: توزيع الفروع حسب الولاية
     """
+    model_config = ConfigDict(from_attributes=True)
+
     total_branches: int = Field(
         ...,
         description="إجمالي عدد الفروع",
-        example=10,
+        json_schema_extra={"example": 10},
     )
     active_branches: int = Field(
         ...,
         description="عدد الفروع النشطة",
-        example=8,
+        json_schema_extra={"example": 8},
     )
     inactive_branches: int = Field(
         ...,
         description="عدد الفروع غير النشطة",
-        example=2,
+        json_schema_extra={"example": 2},
     )
     total_cost: float = Field(
         ...,
         description="التكلفة الإجمالية للفروع",
-        example=500.00,
+        json_schema_extra={"example": 500.00},
     )
     branches_per_wilaya: Dict[str, int] = Field(
         default_factory=dict,
         description="توزيع الفروع حسب الولاية",
-        example={"Alger": 5, "Oran": 3, "Constantine": 2},
+        json_schema_extra={"example": {"Alger": 5, "Oran": 3, "Constantine": 2}},
     )
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "BranchBase",
+    "BranchCreate",
+    "BranchUpdate",
+    "BranchStatusUpdate",
+    "BranchResponse",
+    "BranchListResponse",
+    "BranchSummary",
+    "BranchData",
+    "BranchUpdateData",
+]

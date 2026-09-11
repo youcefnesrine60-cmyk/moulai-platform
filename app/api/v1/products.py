@@ -299,7 +299,7 @@ async def create_product(
         "api_create_product",
         extra={
             "restaurant_id": restaurant_id,
-            "name": data.name,
+            "product_name": data.name,
             "price": data.price,
         },
     )
@@ -330,7 +330,7 @@ async def create_product(
             "api_create_product_conflict",
             extra={
                 "restaurant_id": restaurant_id,
-                "name": data.name,
+                "product_name": data.name,
                 "error": str(e),
             },
         )

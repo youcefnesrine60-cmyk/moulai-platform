@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 🎛 OPTION GROUP SCHEMAS
 # نماذج Pydantic لمجموعات الخيارات
 # تدير التحقق من صحة البيانات وتسلسلها لمجموعات الخيارات
@@ -14,6 +21,7 @@ from typing import (
 
 from pydantic import (
     BaseModel,
+    ConfigDict,
     Field,
 )
 
@@ -45,28 +53,28 @@ class OptionGroupBase(BaseModel):
     product_id: int = Field(
         ...,
         description="معرف المنتج",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: str = Field(
         ...,
         max_length=255,
         description="اسم مجموعة الخيارات",
-        example="حجم البيتزا",
+        json_schema_extra={"example": "حجم البيتزا"},
     )
     required: bool = Field(
         False,
         description="هل المجموعة إجبارية",
-        example=True,
+        json_schema_extra={"example": True},
     )
     multiple_choice: bool = Field(
         False,
         description="هل يسمح باختيار متعدد",
-        example=False,
+        json_schema_extra={"example": False},
     )
     sort_order: int = Field(
         0,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -88,28 +96,28 @@ class OptionGroupCreate(BaseModel):
     product_id: int = Field(
         ...,
         description="معرف المنتج",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: str = Field(
         ...,
         max_length=255,
         description="اسم مجموعة الخيارات",
-        example="حجم البيتزا",
+        json_schema_extra={"example": "حجم البيتزا"},
     )
     required: bool = Field(
         False,
         description="هل المجموعة إجبارية",
-        example=True,
+        json_schema_extra={"example": True},
     )
     multiple_choice: bool = Field(
         False,
         description="هل يسمح باختيار متعدد",
-        example=False,
+        json_schema_extra={"example": False},
     )
     sort_order: int = Field(
         0,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -131,22 +139,22 @@ class OptionGroupUpdate(BaseModel):
         None,
         max_length=255,
         description="اسم مجموعة الخيارات الجديد",
-        example="حجم البيتزا",
+        json_schema_extra={"example": "حجم البيتزا"},
     )
     required: Optional[bool] = Field(
         None,
         description="هل المجموعة إجبارية",
-        example=False,
+        json_schema_extra={"example": False},
     )
     multiple_choice: Optional[bool] = Field(
         None,
         description="هل يسمح باختيار متعدد",
-        example=True,
+        json_schema_extra={"example": True},
     )
     sort_order: Optional[int] = Field(
         None,
         description="ترتيب العرض الجديد",
-        example=2,
+        json_schema_extra={"example": 2},
     )
 
 
@@ -163,10 +171,12 @@ class OptionGroupResponse(OptionGroupBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف مجموعة الخيارات",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     created_at: datetime = Field(
         ...,
@@ -176,12 +186,6 @@ class OptionGroupResponse(OptionGroupBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-
-    class Config:
-        """
-        إعدادات نموذج Pydantic.
-        """
-        from_attributes = True
 
 
 # ==============================================
@@ -199,30 +203,32 @@ class ProductOptionResponse(BaseModel):
         is_available: حالة التوفر
         sort_order: ترتيب العرض
     """
+    model_config = ConfigDict(from_attributes=True)
+
     id: int = Field(
         ...,
         description="معرف الخيار",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: str = Field(
         ...,
         description="اسم الخيار",
-        example="كبير",
+        json_schema_extra={"example": "كبير"},
     )
     extra_price: float = Field(
         ...,
         description="السعر الإضافي",
-        example=200.00,
+        json_schema_extra={"example": 200.00},
     )
     is_available: bool = Field(
         ...,
         description="حالة التوفر",
-        example=True,
+        json_schema_extra={"example": True},
     )
     sort_order: int = Field(
         ...,
         description="ترتيب العرض",
-        example=1,
+        json_schema_extra={"example": 1},
     )
 
 
@@ -233,6 +239,8 @@ class OptionGroupWithOptionsResponse(OptionGroupResponse):
     Attributes:
         options: قائمة خيارات المنتج
     """
+    model_config = ConfigDict(from_attributes=True)
+
     options: List[ProductOptionResponse] = Field(
         default_factory=list,
         description="خيارات المنتج",
@@ -253,6 +261,8 @@ class OptionGroupListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     items: List[OptionGroupResponse] = Field(
         ...,
         description="قائمة مجموعات الخيارات",
@@ -260,19 +270,19 @@ class OptionGroupListResponse(BaseModel):
     total: int = Field(
         ...,
         description="العدد الإجمالي",
-        example=10,
+        json_schema_extra={"example": 10},
         ge=0,
     )
     skip: int = Field(
         ...,
         description="عدد السجلات المتخطية",
-        example=0,
+        json_schema_extra={"example": 0},
         ge=0,
     )
     limit: int = Field(
         ...,
         description="الحد الأقصى للسجلات",
-        example=100,
+        json_schema_extra={"example": 100},
         ge=1,
     )
 
@@ -292,33 +302,35 @@ class OptionGroupSummary(BaseModel):
         optional_groups: عدد المجموعات الاختيارية
         total_options: إجمالي عدد الخيارات
     """
+    model_config = ConfigDict(from_attributes=True)
+
     product_id: int = Field(
         ...,
         description="معرف المنتج",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     total_groups: int = Field(
         ...,
         description="إجمالي عدد المجموعات",
-        example=5,
+        json_schema_extra={"example": 5},
         ge=0,
     )
     required_groups: int = Field(
         ...,
         description="عدد المجموعات الإجبارية",
-        example=3,
+        json_schema_extra={"example": 3},
         ge=0,
     )
     optional_groups: int = Field(
         ...,
         description="عدد المجموعات الاختيارية",
-        example=2,
+        json_schema_extra={"example": 2},
         ge=0,
     )
     total_options: int = Field(
         ...,
         description="إجمالي عدد الخيارات",
-        example=15,
+        json_schema_extra={"example": 15},
         ge=0,
     )
 
@@ -337,26 +349,28 @@ class OptionGroupValidation(BaseModel):
         required: هل المجموعة إجبارية
         multiple_choice: هل يسمح باختيار متعدد
     """
+    model_config = ConfigDict(from_attributes=True)
+
     product_id: int = Field(
         ...,
         description="معرف المنتج",
-        example=1,
+        json_schema_extra={"example": 1},
     )
     name: str = Field(
         ...,
         max_length=255,
         description="اسم مجموعة الخيارات",
-        example="حجم البيتزا",
+        json_schema_extra={"example": "حجم البيتزا"},
     )
     required: bool = Field(
         False,
         description="هل المجموعة إجبارية",
-        example=True,
+        json_schema_extra={"example": True},
     )
     multiple_choice: bool = Field(
         False,
         description="هل يسمح باختيار متعدد",
-        example=False,
+        json_schema_extra={"example": False},
     )
 
 

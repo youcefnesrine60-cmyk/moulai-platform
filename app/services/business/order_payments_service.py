@@ -38,7 +38,7 @@ from app.core.logger import logger
 from app.models.order_item import OrderPayment
 from app.repositories.order_payments_repo import OrderPaymentsRepository
 from app.repositories.orders_repo import OrdersRepository
-from app.repositories.restaurant_payment_settings_repo import (
+from app.repositories.restaurant.restaurant_payment_settings_repo import (
     RestaurantPaymentSettingsRepository,
 )
 

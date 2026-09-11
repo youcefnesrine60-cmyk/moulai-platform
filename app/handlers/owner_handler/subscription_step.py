@@ -17,7 +17,7 @@ from app.repositories.subscription_plan_repo import get_active_subscription_plan
 from app.repositories.products_repo import count_restaurant_products
 from app.repositories.categories_repo import get_restaurant_categories
 from app.repositories.branches_repo import count_restaurant_branches
-from app.repositories.restaurant_repo import get_restaurants_by_owner
+from app.repositories.restaurant.restaurant_repo import get_restaurants_by_owner
 from app.repositories.owner_repo import get_owner_created_at
 
 # ✅ إضافة استيراد orders_repo

@@ -177,7 +177,7 @@ async def payment_confirm_callback(
             restaurant_id = order.get("restaurant_id")
             # owner_id لا يمكن جلبها من order مباشرة، نحتاج إلى جلبها من restaurant
             if restaurant_id:
-                from app.repositories.restaurant_repo import get_restaurant_by_id
+                from app.repositories.restaurant.restaurant_repo import get_restaurant_by_id
                 restaurant = await get_restaurant_by_id(restaurant_id=restaurant_id)
                 if restaurant:
                     owner_id = restaurant.get("owner_id")

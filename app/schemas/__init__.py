@@ -1,19 +1,14 @@
 # ==============================================
+# MoulAI Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine
+# ==============================================
+
+# ==============================================
 # 📦 SCHEMAS
 #  نماذج Pydantic للتحقق من البيانات.
 # ==============================================
-
-from app.schemas.restaurant import (
-    RestaurantBase,
-    RestaurantCreate,
-    RestaurantResponse,
-    RestaurantStats,
-    RestaurantUpdate,
-    RestaurantListResponse,      
-    RestaurantData,
-    RestaurantUpdateData,
-    RestaurantListData,          
-)
 
 from app.schemas.owner import (
     OwnerBase,
@@ -113,6 +108,7 @@ from app.schemas.order import (
 )
 
 from app.schemas.order_item import (
+    
     # Order Item
     OrderItemBase,
     OrderItemCreate,
@@ -145,18 +141,29 @@ from app.schemas.order_item import (
     OrderStatusHistoryResponse,
 )
 
-from app.schemas.restaurant_payment_setting import (
-    RestaurantPaymentSettingBase,
-    RestaurantPaymentSettingCreate,
-    RestaurantPaymentSettingResponse,
-    RestaurantPaymentSettingUpdate,
-    PaymentMethodsList,
-    PaymentSettingsSummary,
-    PaymentSettingData,
-    PaymentSettingUpdateData,
-)
+from app.schemas.restaurant import (
 
-from app.schemas.restaurant_metric import (
+    # Restaurant Group
+    RestaurantGroupBase,
+    RestaurantGroupCreate,
+    RestaurantGroupUpdate,
+    RestaurantGroupResponse,
+    RestaurantGroupListResponse,
+    RestaurantGroupStatistics,
+    RestaurantBranchBase,
+    RestaurantBranchCreate,
+    RestaurantBranchUpdate,
+    RestaurantBranchResponse,
+    RestaurantBranchListResponse,
+    RestaurantBranchBulkCreate,
+    RestaurantGroupData,
+    RestaurantGroupUpdateData,
+    RestaurantGroupListData,
+    RestaurantBranchData,
+    RestaurantBranchUpdateData,
+    RestaurantBranchListData,
+
+    # Restaurant Metric
     RestaurantMetricBase,
     RestaurantMetricCreate,
     RestaurantMetricResponse,
@@ -168,11 +175,9 @@ from app.schemas.restaurant_metric import (
     ProductMetrics,
     RestaurantMetricData,
     RestaurantMetricUpdateData,
-    RestaurantMetricListData,          
-)
+    RestaurantMetricListData,
 
-# Restaurant Order Counter
-from app.schemas.restaurant_order_counter import (
+    # Restaurant Order Counter
     RestaurantOrderCounterBase,
     RestaurantOrderCounterCreate,
     RestaurantOrderCounterResponse,
@@ -183,7 +188,29 @@ from app.schemas.restaurant_order_counter import (
     OrderNumberFormat,
     OrderCounterData,
     OrderCounterUpdateData,
-    OrderCounterListData,                    
+    OrderCounterListData,     
+
+    # Restaurant Payment Setting
+    RestaurantPaymentSettingBase,
+    RestaurantPaymentSettingCreate,
+    RestaurantPaymentSettingResponse,
+    RestaurantPaymentSettingUpdate,
+    PaymentMethodsList,
+    PaymentSettingsSummary,
+    PaymentSettingData,
+    PaymentSettingUpdateData, 
+
+    # Restaurant
+    RestaurantBase,
+    RestaurantCreate,
+    RestaurantResponse,
+    RestaurantStats,
+    RestaurantUpdate,
+    RestaurantListResponse,      
+    RestaurantData,
+    RestaurantUpdateData,
+    RestaurantListData,
+                  
 )
 
 from app.schemas.option_group import (
@@ -236,36 +263,54 @@ from app.schemas.admin import (
     AdminUpdate,
     AdminLogin,
     AdminLoginResponse,
-    AdminAuthResponse,          
+    AdminAuthResponse,
     AdminSessionBase,
     AdminSessionCreate,
     AdminSessionUpdate,
     AdminSessionResponse,
     AdminListResponse,
     AdminStatistics,
-    AdminSearch,                
-    AdminPermissionCheck,       
-    AdminPermissionResponse,    
-    TokenResponse,              
+    AdminSearch,
+    AdminPermissionCheck,
+    AdminPermissionResponse,
+    TokenResponse,
     RoleDistribution,
     AdminData,
     AdminUpdateData,
     AdminSessionData,
 )
 
+from app.schemas.admin_log import (
+    AdminLogBase,
+    AdminLogCreate,
+    AdminLogFilter,
+    AdminLogResponse,
+    AdminLogListResponse,
+    ActionSummary,
+    ActionsSummaryResponse,
+    AdminLogData,
+    AdminLogUpdateData,
+    AdminLogListData,
+)
+
+from app.schemas.admin_session import (
+    AdminSessionBase as AdminSessionBaseSchema,
+    AdminSessionCreate as AdminSessionCreateSchema,
+    AdminSessionExtend,
+    AdminSessionResponse as AdminSessionResponseSchema,
+    AdminSessionListResponse as AdminSessionListResponseSchema,
+    AdminSessionStatistics,
+    AdminSessionData as AdminSessionDataSchema,
+    AdminSessionUpdateData as AdminSessionUpdateDataSchema,
+    AdminSessionListData as AdminSessionListDataSchema,
+)
+
+
+# ==============================================
+# 📤 EXPORTS
+# ==============================================
 
 __all__ = [
-
-    # Restaurant
-    "RestaurantBase",
-    "RestaurantCreate",
-    "RestaurantResponse",
-    "RestaurantStats",
-    "RestaurantUpdate",
-    "RestaurantListResponse",
-    "RestaurantData",
-    "RestaurantUpdateData",
-    "RestaurantListData",
 
     # Owner
     "OwnerBase",
@@ -387,16 +432,25 @@ __all__ = [
     "OrderStatusHistoryCreate",
     "OrderStatusHistoryResponse",
 
-
-    # Restaurant Payment Setting
-    "RestaurantPaymentSettingBase",
-    "RestaurantPaymentSettingCreate",
-    "RestaurantPaymentSettingResponse",
-    "RestaurantPaymentSettingUpdate",
-    "PaymentMethodsList",
-    "PaymentSettingsSummary",
-    "PaymentSettingData",
-    "PaymentSettingUpdateData",
+    # Restaurant Group
+    "RestaurantGroupBase",
+    "RestaurantGroupCreate",
+    "RestaurantGroupUpdate",
+    "RestaurantGroupResponse",
+    "RestaurantGroupListResponse",
+    "RestaurantGroupStatistics",
+    "RestaurantBranchBase",
+    "RestaurantBranchCreate",
+    "RestaurantBranchUpdate",
+    "RestaurantBranchResponse",
+    "RestaurantBranchListResponse",
+    "RestaurantBranchBulkCreate",
+    "RestaurantGroupData",
+    "RestaurantGroupUpdateData",
+    "RestaurantGroupListData",
+    "RestaurantBranchData",
+    "RestaurantBranchUpdateData",
+    "RestaurantBranchListData",
 
     # Restaurant Metric
     "RestaurantMetricBase",
@@ -404,7 +458,7 @@ __all__ = [
     "RestaurantMetricResponse",
     "RestaurantMetricUpdate",
     "RestaurantMetricSummary",
-    "RestaurantMetricListResponse",
+    "RestaurantMetricListResponse",      
     "MetricsTrendPoint",
     "MetricsTrend",
     "ProductMetrics",
@@ -417,14 +471,35 @@ __all__ = [
     "RestaurantOrderCounterCreate",
     "RestaurantOrderCounterResponse",
     "RestaurantOrderCounterUpdate",
-    "RestaurantOrderCounterListResponse",
+    "RestaurantOrderCounterListResponse",      
     "NextOrderNumberResponse",
     "OrderCounterSummary",
     "OrderNumberFormat",
     "OrderCounterData",
     "OrderCounterUpdateData",
-    "OrderCounterListData",
+    "OrderCounterListData",     
 
+    # Restaurant Payment Setting
+    "RestaurantPaymentSettingBase",
+    "RestaurantPaymentSettingCreate",
+    "RestaurantPaymentSettingResponse",
+    "RestaurantPaymentSettingUpdate",
+    "PaymentMethodsList",
+    "PaymentSettingsSummary",
+    "PaymentSettingData",
+    "PaymentSettingUpdateData", 
+    
+    # Restaurant
+    "RestaurantBase",
+    "RestaurantCreate",
+    "RestaurantResponse",
+    "RestaurantStats",
+    "RestaurantUpdate",
+    "RestaurantListResponse",      
+    "RestaurantData",
+    "RestaurantUpdateData",
+    "RestaurantListData",
+    
     # Option Group
     "OptionGroupBase",
     "OptionGroupCreate",
@@ -487,5 +562,28 @@ __all__ = [
     "AdminData",
     "AdminUpdateData",
     "AdminSessionData",
+    
+    # Admin Log
+    "AdminLogBase",
+    "AdminLogCreate",
+    "AdminLogFilter",
+    "AdminLogResponse",
+    "AdminLogListResponse",
+    "ActionSummary",
+    "ActionsSummaryResponse",
+    "AdminLogData",
+    "AdminLogUpdateData",
+    "AdminLogListData",
+    
+    # Admin Session
+    "AdminSessionBaseSchema",
+    "AdminSessionCreateSchema",
+    "AdminSessionExtend",
+    "AdminSessionResponseSchema",
+    "AdminSessionListResponseSchema",
+    "AdminSessionStatistics",
+    "AdminSessionDataSchema",
+    "AdminSessionUpdateDataSchema",
+    "AdminSessionListDataSchema",
 
 ]

@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📦 ORDERS SERVICE - PACKAGE
 # حزمة خدمات الطلبات
 # ==============================================
@@ -140,6 +147,7 @@ from app.services.business.orders.constants import (
 # ==============================================
 
 __all__ = [
+    
     # Create
     "create_restaurant_order",
     "create_order_with_items",
