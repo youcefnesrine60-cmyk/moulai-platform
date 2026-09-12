@@ -122,7 +122,7 @@ class AIClient:
         if not self.enabled or self.client is None:
             logger.warning(
                 "ai_client_not_enabled",
-                extra={"message": "API key not configured"},
+                extra={"configuration_error": "API key not configured"},
             )
             return "عذراً، خدمة الذكاء الاصطناعي غير مفعلة. يرجى الاتصال بالدعم."
 
@@ -173,7 +173,7 @@ class AIClient:
                 "ai_chat_failed",
                 extra={
                     "error": str(e),
-                    "message": message[:100],
+                    "request_message_excerpt": message[:100],
                 },
             )
             return "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى."

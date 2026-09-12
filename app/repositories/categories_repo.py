@@ -148,7 +148,7 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
                 "categories_repo_get_by_name_failed",
                 extra={
                     "restaurant_id": restaurant_id,
-                    "name": name,
+                    "categories_name": name,
                     "error": str(e),
                 },
             )
@@ -274,7 +274,7 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
             "categories_repo_update_name",
             extra={
                 "category_id": category_id,
-                "name": name,
+                "categories_name": name,
             },
         )
 

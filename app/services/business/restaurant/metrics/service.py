@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -16,7 +16,7 @@ from typing import (
     Optional,
 )
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.core.exceptions import (
     NotFoundError,
@@ -178,12 +178,20 @@ class RestaurantMetricsService:
             restaurant_id=restaurant_id,
         )
 
+        # ✅ حساب products_per_category
+        products_per_category = 0.0
+        if metrics.categories_count > 0:
+            products_per_category = metrics.products_count / metrics.categories_count
+
+
         return RestaurantMetricSummary(
             restaurant_id=metrics.restaurant_id,
-            products_count=metrics.products_count,
-            categories_count=metrics.categories_count,
-            monthly_orders=metrics.monthly_orders,
-            average_order_value=metrics.average_order_value,
+            total_products=metrics.products_count,      # ✅
+            total_categories=metrics.categories_count,  # ✅
+            total_orders=metrics.monthly_orders,        # ✅
+            avg_order_value=metrics.average_order_value, # ✅
+            monthly_growth=None,
+            products_per_category=products_per_category, # ✅
         )
 
     # ==========================================

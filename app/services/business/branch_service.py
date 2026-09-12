@@ -425,7 +425,7 @@ class BranchService:
             "branch_service_create",
             extra={
                 "restaurant_id": restaurant_id,
-                "name": name,
+                "branch_name": name,
             },
         )
 

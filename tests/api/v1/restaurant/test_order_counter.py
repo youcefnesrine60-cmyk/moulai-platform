@@ -42,7 +42,7 @@ class TestOrderCounterAPI:
         # إنشاء مالك
         self.owner = Owner(**sample_owner_data)
         db_session.add(self.owner)
-        await db_session.flush()
+        await db_session.commit()
         await db_session.refresh(self.owner)
 
         # إنشاء مطعم
@@ -50,7 +50,7 @@ class TestOrderCounterAPI:
             **{**sample_restaurant_data, "owner_id": self.owner.id}
         )
         db_session.add(self.restaurant)
-        await db_session.flush()
+        await db_session.commit()
         await db_session.refresh(self.restaurant)
 
         self.restaurant_id = self.restaurant.id
@@ -130,8 +130,9 @@ class TestOrderCounterAPI:
         
         data = response.json()
         assert data["restaurant_id"] == self.restaurant_id
-        assert data["next_number"] == 1
-        assert data["formatted_number"] == f"RST{self.restaurant_id}-000001"
+        assert data["sequence"] == 1
+        assert data["previous_number"] == 0
+        assert data["order_number"] == f"RST{self.restaurant_id}-000001"
 
     # ==============================================
     # TEST INCREMENT ORDER COUNTER

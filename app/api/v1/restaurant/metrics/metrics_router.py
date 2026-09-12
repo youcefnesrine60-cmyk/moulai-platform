@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -193,8 +193,11 @@ async def initialize_restaurant_metrics(
     )
 
     try:
-        # التحقق من وجود المطعم
-        await restaurant_service.get_restaurant(restaurant_id=restaurant_id)
+        # ✅ التحقق من وجود المطعم (بما في ذلك غير النشط)
+        await restaurant_service.get_restaurant(
+            restaurant_id=restaurant_id,
+            include_inactive=True,
+        )
 
         # تهيئة المقاييس
         return await service.initialize_metrics(restaurant_id=restaurant_id)

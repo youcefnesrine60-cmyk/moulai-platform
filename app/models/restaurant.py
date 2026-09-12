@@ -61,6 +61,8 @@ class Restaurant(BaseModel):
         order_counter: عداد الطلبات
         feature_usage_counters: عدادات استخدام الميزات
         agents: وكلاء المطعم الذكية
+        payment_settings: إعدادات الدفع
+        promotions: قائمة العروض الترويجية
     """
     
     __tablename__ = "restaurants"
@@ -232,6 +234,15 @@ class Restaurant(BaseModel):
         back_populates="restaurant",
         cascade="all, delete-orphan",
         lazy="selectin",
+    )
+    
+    # 🎉 العروض الترويجية
+    promotions = relationship(
+        "Promotion",
+        back_populates="restaurant",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        # comment="قائمة العروض الترويجية",
     )
     
     # ==========================================

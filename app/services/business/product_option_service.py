@@ -438,7 +438,7 @@ class ProductOptionService:
             "product_option_service_create",
             extra={
                 "group_id": option_data.group_id,
-                "name": name,
+                "product_option_name": name,
                 "extra_price": option_data.extra_price,
             },
         )

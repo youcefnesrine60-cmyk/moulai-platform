@@ -224,7 +224,7 @@ class UserService:
         logger.info(
             "user_service_search_by_name",
             extra={
-                "name": clean_name,
+                "search_name": clean_name,
                 "skip": skip,
                 "limit": limit,
             },

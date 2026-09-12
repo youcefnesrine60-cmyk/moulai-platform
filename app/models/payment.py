@@ -52,7 +52,7 @@ class Payment(BaseModel):
         paid_at: تاريخ ووقت الدفع
         owner: علاقة مع نموذج Owner
         user: علاقة مع نموذج User
-        restaurant: علاقة مع نموذج Restaurant
+        restaurant: علاقة مع نموذج Restaurant (بدون back_populates)
         subscription: علاقة مع نموذج Subscription
     """
     __tablename__ = "payments"
@@ -129,7 +129,8 @@ class Payment(BaseModel):
     restaurant = relationship(
         "Restaurant",
         lazy="selectin",
-        # comment="المطعم",
+        # ملاحظة: لا يوجد back_populates لأن Restaurant لا يحتاج الوصول للمدفوعات
+        # comment="المطعم المرتبط",
     )
     subscription = relationship(
         "Subscription",

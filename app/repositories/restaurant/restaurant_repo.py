@@ -202,7 +202,7 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
                 "restaurant_repo_get_by_name_and_owner_failed",
                 extra={
                     "owner_id": owner_id,
-                    "name": name,
+                    "restaurant_name": name,
                     "error": str(e),
                 },
             )

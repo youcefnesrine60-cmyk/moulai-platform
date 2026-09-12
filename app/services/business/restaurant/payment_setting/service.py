@@ -309,7 +309,7 @@ class RestaurantPaymentSettingsService:
                 message=f"إعدادات الدفع للمطعم بـ ID '{settings_data.restaurant_id}' موجودة مسبقاً",
             )
 
-        settings = await self.repo.create_settings(
+        settings = await self.repo.upsert(
             restaurant_id=settings_data.restaurant_id,
             allow_cash=settings_data.allow_cash,
             allow_card=settings_data.allow_card,
@@ -480,7 +480,7 @@ class RestaurantPaymentSettingsService:
             },
         )
 
-        updates = {method.lower(): True}
+        updates = {f"allow_{method.lower()}": True}
 
         return await self.update_payment_methods(
             restaurant_id=restaurant_id,
@@ -517,7 +517,7 @@ class RestaurantPaymentSettingsService:
             },
         )
 
-        updates = {method.lower(): False}
+        updates = {f"allow_{method.lower()}": False}
 
         return await self.update_payment_methods(
             restaurant_id=restaurant_id,

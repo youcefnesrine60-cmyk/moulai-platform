@@ -154,7 +154,7 @@ class ProductOptionRepository(
                 "product_option_repo_get_by_name_failed",
                 extra={
                     "group_id": group_id,
-                    "name": name,
+                    "product_option_name": name,
                     "error": str(e),
                 },
             )
@@ -380,7 +380,7 @@ class ProductOptionRepository(
             "product_option_repo_update_name",
             extra={
                 "option_id": option_id,
-                "name": name,
+                "product_option_name": name,
             },
         )
 

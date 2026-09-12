@@ -78,7 +78,7 @@ async def get_error_message(
         "error_message_fetched",
         extra={
             "error_code": error_code,
-            "message": message,
+            "resolved_error_message": message,
         },
     )
     

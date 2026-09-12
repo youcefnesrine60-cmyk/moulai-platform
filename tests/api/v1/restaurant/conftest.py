@@ -19,7 +19,7 @@ import pytest
 
 
 # ==============================================
-# 📦 DATA FACTORIES - ✅ بدون chat_id
+# 📦 DATA FACTORIES - ✅ بدون is_active للمجموعة
 # ==============================================
 
 @pytest.fixture
@@ -38,10 +38,25 @@ def sample_restaurant_data() -> Dict[str, Any]:
 
 @pytest.fixture
 def sample_restaurant_group_data() -> Dict[str, Any]:
-    """بيانات مجموعة مطاعم نموذجية للاختبار."""
+    """
+    بيانات مجموعة مطاعم نموذجية للاختبار.
+    
+    ✅ التصحيح: إزالة is_active لأن RestaurantGroup لا يحتوي عليه
+    """
     return {
         "name": "مجموعة المطاعم الذهبية",
-        "is_active": True,
+    }
+
+
+@pytest.fixture
+def sample_group_data() -> Dict[str, Any]:
+    """
+    بيانات مجموعة نموذجية للاختبار.
+    
+    ✅ التصحيح: إزالة is_active
+    """
+    return {
+        "name": "مجموعة المطاعم الذهبية",
     }
 
 
@@ -146,6 +161,7 @@ def sample_category_data() -> Dict[str, Any]:
 __all__ = [
     "sample_restaurant_data",
     "sample_restaurant_group_data",
+    "sample_group_data",
     "sample_restaurant_branch_data",
     "sample_bulk_branches_data",
     "sample_metric_data",

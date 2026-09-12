@@ -550,20 +550,15 @@ class RestaurantOrderCounterService:
                 message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
             )
 
+        # ✅ حفظ الرقم السابق
+        previous_number = counter.last_number
+
         # توليد الرقم التالي (يزيد العداد تلقائياً)
         order_number = await self.repo.generate_next_order_number(
             restaurant_id=restaurant_id,
         )
 
-        logger.info(
-            "order_counter_service_generated_successfully",
-            extra={
-                "restaurant_id": restaurant_id,
-                "order_number": order_number,
-            },
-        )
-
-        # الحصول على الرقم الحالي
+        # ✅ الحصول على العداد المحدث
         updated = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
         )
@@ -573,10 +568,20 @@ class RestaurantOrderCounterService:
                 message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
             )
 
+
+        logger.info(
+            "order_counter_service_generated_successfully",
+            extra={
+                "restaurant_id": restaurant_id,
+                "order_number": order_number,
+            },
+        )
+
         return NextOrderNumberResponse(
             restaurant_id=restaurant_id,
-            next_number=updated.last_number,
-            formatted_number=order_number,
+            order_number=order_number,       # ✅
+            sequence=updated.last_number,    # ✅
+            previous_number=previous_number, # ✅
         )
 
     # ==========================================

@@ -56,9 +56,13 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         - عمليات التحديث (update)
         - عمليات الحذف (delete, delete_many)
     
+    ⚠️ يدعم النماذج التي تحتوي على `id` والنماذج التي لا تحتوي عليه
+       (مثل RestaurantMetric و RestaurantOrderCounter)
+    
     Attributes:
         model: نموذج SQLAlchemy
         session: جلسة قاعدة البيانات غير المتزامنة
+        _primary_key_name: اسم المفتاح الأساسي (id أو غيره)
     """
 
     def __init__(
@@ -75,14 +79,49 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         self.model = model
         self.session = session
+        self._primary_key_name = self._detect_primary_key_name()
+
+    # ==========================================
+    # 🔧 PRIVATE HELPERS
+    # ==========================================
+
+    def _detect_primary_key_name(self) -> str:
+        """
+        تحديد اسم المفتاح الأساسي للنموذج.
+        
+        ✅ يدعم النماذج التي لا تحتوي على `id`
+           (مثل RestaurantMetric الذي يستخدم restaurant_id)
+        
+        Returns:
+            str: اسم المفتاح الأساسي
+        """
+        # فحص المفتاح الأساسي عبر SQLAlchemy
+        if hasattr(self.model, "__table__"):
+            primary_keys = list(self.model.__table__.primary_key.columns)
+            if primary_keys:
+                return primary_keys[0].name
+
+        # افتراضياً: id
+        return "id"
+
+    def _get_primary_key_value(
+        self,
+        instance: ModelType,
+    ) -> Any:
+        """
+        الحصول على قيمة المفتاح الأساسي من نسخة النموذج.
+        
+        Args:
+            instance: نسخة من النموذج
+            
+        Returns:
+            Any: قيمة المفتاح الأساسي
+        """
+        return getattr(instance, self._primary_key_name, None)
 
     # ==========================================
     # 📥 CREATE
     # ==========================================
-
-    # ==============================================
-    # CREATE
-    # ==============================================
 
     async def create(
         self,
@@ -92,29 +131,27 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         إنشاء سجل جديد.
         
-        ✅ التصحيح النهائي: استخدام commit() بدلاً من flush()
-        ✅ commit() يغلق الترانزاكشن بشكل صحيح
-        ✅ refresh() يعمل بعد commit()
+        ✅ التصحيح النهائي: استخدام commit() و refresh()
         
         Args:
             data: بيانات الإنشاء
             
         Returns:
-            النموذج المُنشأ
+            ModelType: النموذج المُنشأ
         """
         try:
             instance = self.model(**data)
             self.session.add(instance)
-            
+
             # ✅ استخدام commit() بدلاً من flush()
             await self.session.commit()
-            
+
             # ✅ refresh بعد commit يعمل بشكل صحيح
             await self.session.refresh(instance)
 
             logger.info(
                 f"{self.model.__name__}_created",
-                extra={"id": getattr(instance, "id", None)},
+                extra={"id": self._get_primary_key_value(instance)},
             )
 
             return instance
@@ -150,12 +187,12 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             data_list: قائمة بيانات الإنشاء
             
         Returns:
-            قائمة النماذج المُنشأة
+            List[ModelType]: قائمة النماذج المُنشأة
         """
         try:
             instances = [self.model(**data) for data in data_list]
             self.session.add_all(instances)
-            
+
             # ✅ استخدام commit()
             await self.session.commit()
 
@@ -200,15 +237,21 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         الحصول على سجل بالمعرف.
         
+        ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
+           (مثل RestaurantMetric الذي يستخدم restaurant_id)
+        
         Args:
             id: المعرف
             
         Returns:
-            النموذج أو None
+            Optional[ModelType]: النموذج أو None
         """
         try:
+            # ✅ استخدام اسم المفتاح الأساسي الديناميكي
+            pk_column = getattr(self.model, self._primary_key_name)
+
             result = await self.session.execute(
-                select(self.model).where(self.model.id == id),
+                select(self.model).where(pk_column == id),
             )
 
             return result.scalar_one_or_none()
@@ -247,7 +290,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             descending: ترتيب تنازلي
             
         Returns:
-            قائمة النماذج
+            List[ModelType]: قائمة النماذج
         """
         try:
             query = select(self.model)
@@ -272,7 +315,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
             result = await self.session.execute(query)
 
-            return result.scalars().all()
+            return list(result.scalars().all())
 
         except Exception as e:
             logger.exception(
@@ -297,7 +340,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             filters: عوامل التصفية
             
         Returns:
-            عدد السجلات
+            int: عدد السجلات
         """
         try:
             query = select(func.count()).select_from(self.model)
@@ -332,16 +375,20 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         التحقق من وجود سجل.
         
+        ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
+        
         Args:
             id: المعرف
             
         Returns:
-            True إذا كان موجوداً، False إذا لم يكن
+            bool: True إذا كان موجوداً، False إذا لم يكن
         """
         try:
+            pk_column = getattr(self.model, self._primary_key_name)
+
             result = await self.session.execute(
                 select(func.count())
-                .where(self.model.id == id)
+                .where(pk_column == id)
                 .select_from(self.model),
             )
 
@@ -374,16 +421,18 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         تحديث سجل.
         
-        ✅ التصحيح: استخدام commit() بدلاً من flush()
+        ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
+           (مثل RestaurantMetric الذي يستخدم restaurant_id)
         
         Args:
             id: المعرف
             data: بيانات التحديث
             
         Returns:
-            النموذج المُحدّث أو None
+            Optional[ModelType]: النموذج المُحدّث أو None
         """
         try:
+            # ✅ استخدام اسم المفتاح الأساسي الديناميكي
             instance = await self.get_by_id(id=id)
 
             if not instance:
@@ -431,13 +480,13 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         حذف سجل.
         
-        ✅ التصحيح: استخدام commit() بدلاً من flush()
+        ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
         
         Args:
             id: المعرف
             
         Returns:
-            True إذا تم الحذف، False إذا لم يتم
+            bool: True إذا تم الحذف، False إذا لم يتم
         """
         try:
             instance = await self.get_by_id(id=id)
@@ -446,7 +495,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 return False
 
             await self.session.delete(instance)
-            
+
             # ✅ استخدام commit()
             await self.session.commit()
 
@@ -480,20 +529,22 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         """
         حذف عدة سجلات.
         
-        ✅ التصحيح: استخدام commit() بدلاً من flush()
+        ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
         
         Args:
             ids: قائمة المعرفات
             
         Returns:
-            عدد السجلات المحذوفة
+            int: عدد السجلات المحذوفة
         """
         try:
+            pk_column = getattr(self.model, self._primary_key_name)
+
             result = await self.session.execute(
-                select(self.model).where(self.model.id.in_(ids)),
+                select(self.model).where(pk_column.in_(ids)),
             )
 
-            instances = result.scalars().all()
+            instances = list(result.scalars().all())
 
             for instance in instances:
                 await self.session.delete(instance)
@@ -536,7 +587,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             owner_id: معرف المالك
             
         Returns:
-            عدد المطاعم
+            int: عدد المطاعم
         """
         try:
             from app.models.restaurant import Restaurant
@@ -558,3 +609,16 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 },
             )
             raise
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "BaseRepository",
+    "ModelType",
+    "CreateSchemaType",
+    "UpdateSchemaType",
+    "FilterType",
+]

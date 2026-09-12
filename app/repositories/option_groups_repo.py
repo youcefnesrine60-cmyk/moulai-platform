@@ -152,7 +152,7 @@ class OptionGroupsRepository(
                 "option_groups_repo_get_by_name_failed",
                 extra={
                     "product_id": product_id,
-                    "name": name,
+                    "option_groups_name": name,
                     "error": str(e),
                 },
             )
@@ -425,7 +425,7 @@ class OptionGroupsRepository(
             "option_groups_repo_update_name",
             extra={
                 "group_id": group_id,
-                "name": name,
+                "option_groups_name": name,
             },
         )
 

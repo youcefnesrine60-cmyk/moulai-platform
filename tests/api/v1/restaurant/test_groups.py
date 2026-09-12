@@ -39,10 +39,12 @@ class TestRestaurantGroupsAPI:
             sample_owner_data: بيانات مالك نموذجية
             sample_restaurant_data: بيانات مطعم نموذجية
         """
+        self.db_session = db_session
+
         # إنشاء مالك
         self.owner = Owner(**sample_owner_data)
         db_session.add(self.owner)
-        await db_session.flush()
+        await db_session.flush()  # ✅ flush بدلاً من commit
         await db_session.refresh(self.owner)
 
         # إنشاء مطاعم للاختبار
@@ -57,9 +59,15 @@ class TestRestaurantGroupsAPI:
             )
             db_session.add(restaurant)
             self.restaurants.append(restaurant)
-        await db_session.flush()
+
+        await db_session.flush()  # ✅ flush بدلاً من commit
+
         for r in self.restaurants:
             await db_session.refresh(r)
+
+        # تعمل طلبات API بجلسة مستقلة، لذا يجب تثبيت بيانات الإعداد
+        # قبل أن تحاول تلك الجلسة قراءتها.
+        await db_session.commit()
 
         self.owner_id = self.owner.id
         self.restaurant_ids = [r.id for r in self.restaurants]
@@ -85,12 +93,12 @@ class TestRestaurantGroupsAPI:
             **sample_group_data
         }
         response = await client.post("/api/v1/restaurant-groups/", json=data)
-        
-        assert response.status_code == 201
-        
-        data = response.json()
-        assert data["name"] == sample_group_data["name"]
-        assert data["owner_id"] == self.owner_id
+
+        assert response.status_code == 201, f"Failed: {response.text}"
+
+        response_data = response.json()
+        assert response_data["name"] == sample_group_data["name"]
+        assert response_data["owner_id"] == self.owner_id
 
     # ==============================================
     # TEST GET GROUP BY ID
@@ -108,21 +116,22 @@ class TestRestaurantGroupsAPI:
             client: عميل HTTP غير متزامن
             sample_group_data: بيانات مجموعة نموذجية
         """
-        # إنشاء مجموعة أولاً
         create_data = {"owner_id": self.owner_id, **sample_group_data}
         create_response = await client.post(
             "/api/v1/restaurant-groups/",
             json=create_data,
         )
+        assert create_response.status_code == 201
+
         group_id = create_response.json()["id"]
 
         response = await client.get(f"/api/v1/restaurant-groups/{group_id}")
-        
+
         assert response.status_code == 200
-        
-        data = response.json()
-        assert data["id"] == group_id
-        assert data["name"] == sample_group_data["name"]
+
+        response_data = response.json()
+        assert response_data["id"] == group_id
+        assert response_data["name"] == sample_group_data["name"]
 
     # ==============================================
     # TEST ADD BRANCHES TO GROUP
@@ -140,15 +149,15 @@ class TestRestaurantGroupsAPI:
             client: عميل HTTP غير متزامن
             sample_group_data: بيانات مجموعة نموذجية
         """
-        # إنشاء مجموعة أولاً
         create_data = {"owner_id": self.owner_id, **sample_group_data}
         create_response = await client.post(
             "/api/v1/restaurant-groups/",
             json=create_data,
         )
+        assert create_response.status_code == 201
+
         group_id = create_response.json()["id"]
 
-        # إضافة فروع
         data = {
             "group_id": group_id,
             "restaurant_ids": self.restaurant_ids
@@ -157,9 +166,9 @@ class TestRestaurantGroupsAPI:
             f"/api/v1/restaurant-groups/{group_id}/branches",
             json=data
         )
-        
+
         assert response.status_code == 201
-        
+
         branches = response.json()
         assert len(branches) == len(self.restaurant_ids)
 
@@ -179,24 +188,27 @@ class TestRestaurantGroupsAPI:
             client: عميل HTTP غير متزامن
             sample_group_data: بيانات مجموعة نموذجية
         """
-        # إنشاء مجموعة أولاً
         create_data = {"owner_id": self.owner_id, **sample_group_data}
         create_response = await client.post(
             "/api/v1/restaurant-groups/",
             json=create_data,
         )
+        assert create_response.status_code == 201
+
         group_id = create_response.json()["id"]
 
-        # إضافة فروع
         data = {"group_id": group_id, "restaurant_ids": self.restaurant_ids}
-        await client.post(f"/api/v1/restaurant-groups/{group_id}/branches", json=data)
+        add_response = await client.post(
+            f"/api/v1/restaurant-groups/{group_id}/branches",
+            json=data,
+        )
+        assert add_response.status_code == 201
 
-        # إزالة فرع
         restaurant_id = self.restaurant_ids[0]
         response = await client.delete(
             f"/api/v1/restaurant-groups/{group_id}/branches/{restaurant_id}"
         )
-        
+
         assert response.status_code == 204
 
 

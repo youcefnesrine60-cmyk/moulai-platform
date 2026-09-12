@@ -288,12 +288,15 @@ class BranchPricing(BaseModel):
         - حدود عدد الفروع (الحد الأدنى والأقصى)
         - السعر لكل فرع
         - حالة النشاط
+        - العلاقة مع خطة الاشتراك
     
     Attributes:
+        plan_id: معرف خطة الاشتراك (ForeignKey) - اختياري
         min_branches: الحد الأدنى لعدد الفروع
         max_branches: الحد الأقصى لعدد الفروع
         price_per_branch: السعر لكل فرع
         active: حالة النشاط
+        plan: علاقة مع نموذج SubscriptionPlan
     """
     __tablename__ = "branch_pricing"
     
@@ -301,6 +304,12 @@ class BranchPricing(BaseModel):
     # 🗂️ COLUMNS
     # ==========================================
     
+    plan_id = Column(
+        Integer,
+        ForeignKey("subscription_plans.id", ondelete="CASCADE"),
+        nullable=True,
+        comment="معرف خطة الاشتراك (اختياري - None يعني تسعير عام)",
+    )
     min_branches = Column(
         Integer,
         nullable=False,
@@ -319,6 +328,17 @@ class BranchPricing(BaseModel):
         Boolean,
         default=True,
         comment="حالة النشاط",
+    )
+    
+    # ==========================================
+    # 🔗 RELATIONSHIPS
+    # ==========================================
+    
+    plan = relationship(
+        "SubscriptionPlan",
+        back_populates="branch_pricing",
+        lazy="selectin",
+        # comment="خطة الاشتراك المرتبطة (اختياري)",
     )
     
     # ==========================================

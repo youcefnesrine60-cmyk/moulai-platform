@@ -47,6 +47,7 @@ class Owner(BaseModel):
         subscriptions: قائمة الاشتراكات
         payments: قائمة المدفوعات
         registration_requests: قائمة طلبات التسجيل
+        loyalty_discounts: قائمة خصومات الولاء
     """
     __tablename__ = "owners"
     
@@ -122,6 +123,13 @@ class Owner(BaseModel):
         back_populates="owner",
         lazy="selectin",
         # comment="قائمة طلبات التسجيل",
+    )
+    loyalty_discounts = relationship(
+        "LoyaltyDiscount",
+        back_populates="owner",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        # comment="قائمة خصومات الولاء",
     )
     
     # ==========================================

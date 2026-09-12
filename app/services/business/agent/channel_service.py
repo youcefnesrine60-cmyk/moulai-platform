@@ -345,7 +345,7 @@ class ChannelService:
             extra={
                 "agent_id": channel_data.agent_id,
                 "type": channel_data.type,
-                "name": channel_data.name,
+                "channel_name": channel_data.name,
             },
         )
 

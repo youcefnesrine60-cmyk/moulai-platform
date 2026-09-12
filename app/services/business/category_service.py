@@ -215,7 +215,7 @@ class CategoryService:
             "category_service_get_by_name",
             extra={
                 "restaurant_id": restaurant_id,
-                "name": name,
+                "category_name": name,
             },
         )
 
@@ -392,7 +392,7 @@ class CategoryService:
             "category_service_create",
             extra={
                 "restaurant_id": restaurant_id,
-                "name": name,
+                "category_name": name,
             },
         )
 

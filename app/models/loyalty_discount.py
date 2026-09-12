@@ -16,9 +16,11 @@ from sqlalchemy import (
     Column,
     DateTime,
     Float,
+    ForeignKey,
     Integer,
     String,
 )
+from sqlalchemy.orm import relationship
 
 from .base import BaseModel
 
@@ -34,8 +36,10 @@ class LoyaltyDiscount(BaseModel):
     يمنح خصومات للعملاء بناءً على عدد سنوات الاشتراك.
     
     Attributes:
+        owner_id: معرف المالك (ForeignKey) - اختياري
         years_required: عدد السنوات المطلوبة للحصول على الخصم
         discount_percent: نسبة الخصم
+        owner: علاقة مع نموذج Owner
     """
     __tablename__ = "loyalty_discounts"
     
@@ -43,6 +47,12 @@ class LoyaltyDiscount(BaseModel):
     # 🗂️ COLUMNS
     # ==========================================
     
+    owner_id = Column(
+        Integer,
+        ForeignKey("owners.id", ondelete="CASCADE"),
+        nullable=True,
+        comment="معرف المالك (None = عام لجميع المالكين)",
+    )
     years_required = Column(
         Integer,
         nullable=False,
@@ -52,6 +62,17 @@ class LoyaltyDiscount(BaseModel):
         Float,
         nullable=False,
         comment="نسبة الخصم",
+    )
+    
+    # ==========================================
+    # 🔗 RELATIONSHIPS
+    # ==========================================
+    
+    owner = relationship(
+        "Owner",
+        back_populates="loyalty_discounts",
+        lazy="selectin",
+        # comment="المالك المرتبط (اختياري)",
     )
     
     # ==========================================
@@ -132,11 +153,13 @@ class Promotion(BaseModel):
     يدير العروض الترويجية للمطاعم مع تواريخ الصلاحية.
     
     Attributes:
+        restaurant_id: معرف المطعم (ForeignKey) - اختياري
         name: اسم العرض الترويجي
         discount_percent: نسبة الخصم
         starts_at: تاريخ بدء العرض
         expires_at: تاريخ انتهاء العرض
         active: حالة النشاط
+        restaurant: علاقة مع نموذج Restaurant
     """
     __tablename__ = "promotions"
     
@@ -144,6 +167,12 @@ class Promotion(BaseModel):
     # 🗂️ COLUMNS
     # ==========================================
     
+    restaurant_id = Column(
+        Integer,
+        ForeignKey("restaurants.id", ondelete="CASCADE"),
+        nullable=True,
+        comment="معرف المطعم (None = عام لجميع المطاعم)",
+    )
     name = Column(
         String(255),
         nullable=False,
@@ -166,6 +195,17 @@ class Promotion(BaseModel):
         Boolean,
         default=True,
         comment="حالة النشاط",
+    )
+    
+    # ==========================================
+    # 🔗 RELATIONSHIPS
+    # ==========================================
+    
+    restaurant = relationship(
+        "Restaurant",
+        back_populates="promotions",
+        lazy="selectin",
+        # comment="المطعم المرتبط (اختياري)",
     )
     
     # ==========================================

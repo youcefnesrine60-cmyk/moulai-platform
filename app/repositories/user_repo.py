@@ -177,7 +177,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
             logger.exception(
                 "user_repo_get_by_name_failed",
                 extra={
-                    "name": name,
+                    "user_name": name,
                     "error": str(e),
                 },
             )

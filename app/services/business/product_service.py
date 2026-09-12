@@ -480,7 +480,7 @@ class ProductService:
             "product_service_create",
             extra={
                 "restaurant_id": product_data.restaurant_id,
-                "name": name,
+                "product_name": name,
                 "price": product_data.price,
             },
         )

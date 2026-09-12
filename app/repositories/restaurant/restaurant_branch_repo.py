@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -64,7 +64,7 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
-        super().__init__(session, RestaurantBranch)
+        super().__init__(RestaurantBranch, session)
 
     # ==========================================
     # 📖 QUERIES
@@ -333,10 +333,22 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
             self.session.add(branch)
             branches.append(branch)
 
-        await self.session.flush()
+        # ✅ التصحيح: استخدام commit() بدلاً من flush()
+        # flush() لا يحفظ البيانات نهائياً في DB
+        # عند إغلاق session، يتم rollback تلقائي
+        await self.session.commit()
 
+        # ✅ refresh بعد commit
         for branch in branches:
             await self.session.refresh(branch)
+
+        logger.info(
+            "repo_bulk_create_branches_success",
+            extra={
+                "group_id": group_id,
+                "created_count": len(branches),
+            },
+        )
 
         return branches
 
@@ -373,7 +385,7 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
         for branch in branches:
             await self.session.delete(branch)
 
-        await self.session.flush()
+        await self.session.commit()
 
         return count
 
@@ -410,7 +422,7 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
         for branch in branches:
             await self.session.delete(branch)
 
-        await self.session.flush()
+        await self.session.commit()
 
         return count
 
@@ -451,7 +463,7 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
             return False
 
         await self.session.delete(branch)
-        await self.session.flush()
+        await self.session.commit()
 
         return True
 

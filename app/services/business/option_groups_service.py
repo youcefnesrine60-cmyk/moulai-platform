@@ -408,7 +408,7 @@ class OptionGroupsService:
             "option_groups_service_create",
             extra={
                 "product_id": group_data.product_id,
-                "name": name,
+                "option_group_name": name,
             },
         )
 

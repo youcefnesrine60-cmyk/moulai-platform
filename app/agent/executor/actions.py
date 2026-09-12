@@ -787,7 +787,7 @@ class ActionRegistry:
         logger.debug(
             "action_registered",
             extra={
-                "name": action.name,
+                "actions_name": action.name,
                 "priority": action.priority,
             },
         )
@@ -886,7 +886,7 @@ def get_action(name: str) -> Optional[BaseAction]:
     """
     logger.debug(
         "get_action_called",
-        extra={"name": name},
+        extra={"actions_name": name},
     )
 
     return action_registry.get(name)

@@ -52,6 +52,9 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     
     يدير عمليات قاعدة البيانات لنموذج RestaurantGroup.
     
+    ⚠️ ملاحظة: RestaurantGroup لا يحتوي على حقل is_active
+    ⚠️ ملاحظة: لا نستخدم "name" في extra لأنها محجوزة في LogRecord
+    
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         model: نموذج RestaurantGroup
@@ -67,7 +70,7 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
-        super().__init__(session, RestaurantGroup)
+        super().__init__(RestaurantGroup, session)
 
     # ==========================================
     # 📖 QUERIES
@@ -119,16 +122,18 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         owner_id: int,
         skip: int = 0,
         limit: int = 100,
-        include_inactive: bool = False,
+        include_inactive: bool = False,  # متجاهل — RestaurantGroup لا يحتوي على is_active
     ) -> List[RestaurantGroup]:
         """
         الحصول على مجموعات المطاعم لمالك معين.
+        
+        ✅ التصحيح: إزالة is_active (غير موجود في RestaurantGroup)
         
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            include_inactive: تضمين المجموعات غير النشطة
+            include_inactive: متجاهل (RestaurantGroup لا يحتوي على is_active)
             
         Returns:
             List[RestaurantGroup]: قائمة مجموعات المطاعم
@@ -139,18 +144,17 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
                 "owner_id": owner_id,
                 "skip": skip,
                 "limit": limit,
-                "include_inactive": include_inactive,
             },
         )
 
-        query = select(RestaurantGroup).where(
-            RestaurantGroup.owner_id == owner_id,
+        # ✅ إزالة is_active من الاستعلام
+        query = (
+            select(RestaurantGroup)
+            .where(RestaurantGroup.owner_id == owner_id)
+            .offset(skip)
+            .limit(limit)
+            .order_by(RestaurantGroup.created_at.desc())
         )
-
-        if not include_inactive:
-            query = query.where(RestaurantGroup.is_active == True)
-
-        query = query.offset(skip).limit(limit).order_by(RestaurantGroup.created_at.desc())
 
         result = await self.session.execute(query)
         return list(result.scalars().all())
@@ -163,24 +167,26 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         self,
         *,
         owner_id: int,
-        include_inactive: bool = False,
+        include_inactive: bool = False,  # متجاهل
     ) -> int:
         """
         حساب عدد مجموعات المطاعم لمالك معين.
         
+        ✅ التصحيح: إزالة is_active
+        
         Args:
             owner_id: معرف المالك
-            include_inactive: تضمين المجموعات غير النشطة
+            include_inactive: متجاهل
             
         Returns:
             int: عدد المجموعات
         """
-        query = select(func.count()).select_from(RestaurantGroup).where(
-            RestaurantGroup.owner_id == owner_id,
+        # ✅ إزالة is_active من الاستعلام
+        query = (
+            select(func.count())
+            .select_from(RestaurantGroup)
+            .where(RestaurantGroup.owner_id == owner_id)
         )
-
-        if not include_inactive:
-            query = query.where(RestaurantGroup.is_active == True)
 
         result = await self.session.execute(query)
         return result.scalar_one() or 0
@@ -194,15 +200,19 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         *,
         owner_id: int,
         name: str,
-        include_inactive: bool = False,
+        include_inactive: bool = False,  # متجاهل
     ) -> Optional[RestaurantGroup]:
         """
         الحصول على مجموعة مطاعم بواسطة اسمها.
         
+        ✅ التصحيح 1: إزالة is_active
+        ✅ التصحيح 2: استخدام "group_name" بدلاً من "name" في extra
+                      لأن "name" محجوزة في LogRecord
+        
         Args:
             owner_id: معرف المالك
             name: اسم المجموعة
-            include_inactive: تضمين المجموعات غير النشطة
+            include_inactive: متجاهل
             
         Returns:
             Optional[RestaurantGroup]: المجموعة أو None
@@ -211,19 +221,20 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
             "repo_get_group_by_name",
             extra={
                 "owner_id": owner_id,
-                "name": name,
+                "group_name": name,  # ✅ استخدام group_name بدلاً من name
             },
         )
 
-        query = select(RestaurantGroup).where(
-            and_(
-                RestaurantGroup.owner_id == owner_id,
-                RestaurantGroup.name == name,
-            ),
+        # ✅ إزالة is_active من الاستعلام
+        query = (
+            select(RestaurantGroup)
+            .where(
+                and_(
+                    RestaurantGroup.owner_id == owner_id,
+                    RestaurantGroup.name == name,
+                ),
+            )
         )
-
-        if not include_inactive:
-            query = query.where(RestaurantGroup.is_active == True)
 
         result = await self.session.execute(query)
         return result.scalar_one_or_none()
@@ -237,17 +248,19 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         *,
         query: str,
         owner_id: Optional[int] = None,
-        only_active: bool = True,
+        only_active: bool = True,  # متجاهل
         skip: int = 0,
         limit: int = 100,
     ) -> List[RestaurantGroup]:
         """
         البحث عن مجموعات المطاعم.
         
+        ✅ التصحيح: إزالة is_active
+        
         Args:
             query: نص البحث
             owner_id: معرف المالك (اختياري)
-            only_active: جلب المجموعات النشطة فقط
+            only_active: متجاهل
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             
@@ -257,19 +270,16 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         logger.info(
             "repo_search_groups",
             extra={
-                "query": query,
+                "search_query": query,  # ✅ استخدام search_query بدلاً من query (query محجوزة أيضاً!)
                 "owner_id": owner_id,
-                "only_active": only_active,
             },
         )
 
+        # ✅ إزالة is_active من الشروط
         conditions = [RestaurantGroup.name.ilike(f"%{query}%")]
 
         if owner_id is not None:
             conditions.append(RestaurantGroup.owner_id == owner_id)
-
-        if only_active:
-            conditions.append(RestaurantGroup.is_active == True)
 
         query_stmt = (
             select(RestaurantGroup)
@@ -296,6 +306,8 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         """
         الحصول على مجموعات المطاعم مع المطاعم التابعة لها.
         
+        ✅ التصحيح: إزالة is_active
+        
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
@@ -313,14 +325,10 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
             },
         )
 
+        # ✅ إزالة is_active من الاستعلام
         query = (
             select(RestaurantGroup)
-            .where(
-                and_(
-                    RestaurantGroup.owner_id == owner_id,
-                    RestaurantGroup.is_active == True,
-                ),
-            )
+            .where(RestaurantGroup.owner_id == owner_id)
             .options(
                 selectinload(RestaurantGroup.restaurants),
                 selectinload(RestaurantGroup.branch_links).selectinload(RestaurantBranch.restaurant),
@@ -345,6 +353,8 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         """
         الحصول على إحصائيات مجموعات المطاعم لمالك معين.
         
+        ✅ التصحيح: إزالة is_active
+        
         Args:
             owner_id: معرف المالك
             
@@ -356,20 +366,13 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
             extra={"owner_id": owner_id},
         )
 
-        total = await self.count_by_owner(
-            owner_id=owner_id,
-            include_inactive=False,
-        )
+        total = await self.count_by_owner(owner_id=owner_id)
 
-        active = await self.count_by_owner(
-            owner_id=owner_id,
-            include_inactive=False,
-        )
-
+        # ✅ RestaurantGroup لا يحتوي على is_active — الكل نشط
         return {
             "total_groups": total,
-            "active_groups": active,
-            "inactive_groups": total - active,
+            "active_groups": total,
+            "inactive_groups": 0,
         }
 
     # ==========================================
@@ -388,11 +391,14 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         """
         تبديل حالة المجموعة (نشط/غير نشط).
         
+        ⚠️ RestaurantGroup لا يحتوي على is_active
+        هذه الدالة موجودة للتوافق فقط — تُعيد المجموعة كما هي.
+        
         Args:
             group_id: معرف المجموعة
             
         Returns:
-            Optional[RestaurantGroup]: المجموعة المحدثة أو None
+            Optional[RestaurantGroup]: المجموعة أو None
         """
         logger.info(
             "repo_toggle_group_active",
@@ -404,10 +410,7 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         if not group:
             return None
 
-        group.is_active = not group.is_active
-        await self.session.flush()
-        await self.session.refresh(group)
-
+        # ⚠️ لا يوجد is_active — نُعيد المجموعة كما هي
         return group
 
     # ==============================================
@@ -423,12 +426,15 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         """
         تبديل حالة مجموعة من المجموعات.
         
+        ⚠️ RestaurantGroup لا يحتوي على is_active
+        هذه الدالة موجودة للتوافق فقط — تُعيد 0.
+        
         Args:
             group_ids: قائمة معرفات المجموعات
-            is_active: الحالة الجديدة
+            is_active: الحالة الجديدة (متجاهل)
             
         Returns:
-            int: عدد المجموعات المحدثة
+            int: 0 (لأنه لا يوجد is_active)
         """
         logger.info(
             "repo_bulk_toggle_groups_active",
@@ -438,23 +444,8 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
             },
         )
 
-        if not group_ids:
-            return 0
-
-        query = (
-            select(RestaurantGroup)
-            .where(RestaurantGroup.id.in_(group_ids))
-        )
-
-        result = await self.session.execute(query)
-        groups = list(result.scalars().all())
-
-        for group in groups:
-            group.is_active = is_active
-
-        await self.session.flush()
-
-        return len(groups)
+        # ⚠️ لا يوجد is_active — نُعيد 0
+        return 0
 
     # ==============================================
     # DELETE GROUP WITH BRANCHES

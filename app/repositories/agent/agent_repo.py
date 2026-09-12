@@ -161,7 +161,7 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
                 "agent_repo_get_by_name_failed",
                 extra={
                     "restaurant_id": restaurant_id,
-                    "name": name,
+                    "agent_name": name,
                     "error": str(e),
                 },
             )

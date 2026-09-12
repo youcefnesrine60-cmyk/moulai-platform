@@ -39,7 +39,7 @@ class SubscriptionPlan(BaseModel):
         - بيانات الخطة (الكود، الاسم، الوصف)
         - السعر الأساسي ونسبة الخصم
         - ترتيب العرض وحالة النشاط
-        - العلاقات مع الاشتراكات والميزات
+        - العلاقات مع الاشتراكات والميزات وتسعير الفروع
     
     Attributes:
         code: كود الخطة (فريد)
@@ -52,6 +52,7 @@ class SubscriptionPlan(BaseModel):
         subscriptions: قائمة الاشتراكات
         features: قائمة ميزات الخطة
         usage_limits: قائمة حدود الاستخدام
+        branch_pricing: قائمة تسعير الفروع
     """
     __tablename__ = "subscription_plans"
     
@@ -121,6 +122,13 @@ class SubscriptionPlan(BaseModel):
         lazy="selectin",
         # comment="قائمة حدود الاستخدام",
     )
+    branch_pricing = relationship(
+        "BranchPricing",
+        back_populates="plan",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+        # comment="قائمة تسعير الفروع",
+    )
     
     # ==========================================
     # 📝 REPRESENTATION
@@ -134,7 +142,6 @@ class SubscriptionPlan(BaseModel):
             سلسلة نصية تحتوي على المعرف والكود والاسم
         """
         return f"<SubscriptionPlan(id={self.id}, code={self.code}, name={self.name})>"
-
 
 # ==============================================
 # ⚙️ FEATURE

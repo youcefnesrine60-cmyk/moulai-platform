@@ -35,6 +35,7 @@ class TestRestaurantBranchesAPI:
         تهيئة بيانات الاختبار.
         
         ✅ التصحيح: استخدام flush() بدلاً من commit()
+        ✅ استخدام rollback() لإلغاء التغييرات بعد كل اختبار
         
         Args:
             db_session: جلسة قاعدة البيانات
@@ -49,7 +50,7 @@ class TestRestaurantBranchesAPI:
         # إنشاء مالك
         self.owner = Owner(**sample_owner_data)
         db_session.add(self.owner)
-        await db_session.flush()
+        await db_session.flush()  # ✅ flush بدلاً من commit
         await db_session.refresh(self.owner)
 
         # إنشاء مطعم
@@ -57,7 +58,7 @@ class TestRestaurantBranchesAPI:
             **{**sample_restaurant_data, "owner_id": self.owner.id}
         )
         db_session.add(self.restaurant)
-        await db_session.flush()
+        await db_session.flush()  # ✅ flush بدلاً من commit
         await db_session.refresh(self.restaurant)
 
         # إنشاء مجموعة
@@ -65,8 +66,12 @@ class TestRestaurantBranchesAPI:
             **{**sample_group_data, "owner_id": self.owner.id}
         )
         db_session.add(self.group)
-        await db_session.flush()
+        await db_session.flush()  # ✅ flush بدلاً من commit
         await db_session.refresh(self.group)
+
+        # تعمل طلبات API بجلسة مستقلة، لذا يجب تثبيت بيانات الإعداد
+        # قبل أن تحاول تلك الجلسة قراءتها.
+        await db_session.commit()
 
         self.restaurant_id = self.restaurant.id
         self.group_id = self.group.id
@@ -90,9 +95,9 @@ class TestRestaurantBranchesAPI:
             "restaurant_id": self.restaurant_id,
         }
         response = await client.post("/api/v1/restaurant-branches/", json=data)
-        
+
         assert response.status_code == 201
-        
+
         data = response.json()
         assert data["group_id"] == self.group_id
         assert data["restaurant_id"] == self.restaurant_id
@@ -111,7 +116,6 @@ class TestRestaurantBranchesAPI:
         Args:
             client: عميل HTTP غير متزامن
         """
-        # إنشاء فرع أولاً
         create_data = {
             "group_id": self.group_id,
             "restaurant_id": self.restaurant_id,
@@ -120,12 +124,14 @@ class TestRestaurantBranchesAPI:
             "/api/v1/restaurant-branches/",
             json=create_data,
         )
+        assert create_response.status_code == 201, f"Failed to create branch: {create_response.text}"
+
         branch_id = create_response.json()["id"]
 
         response = await client.get(f"/api/v1/restaurant-branches/{branch_id}")
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["id"] == branch_id
         assert data["group_id"] == self.group_id
@@ -145,7 +151,6 @@ class TestRestaurantBranchesAPI:
         Args:
             client: عميل HTTP غير متزامن
         """
-        # إنشاء فرع أولاً
         create_data = {
             "group_id": self.group_id,
             "restaurant_id": self.restaurant_id,
@@ -154,14 +159,16 @@ class TestRestaurantBranchesAPI:
             "/api/v1/restaurant-branches/",
             json=create_data,
         )
+        assert create_response.status_code == 201
+
         branch_id = create_response.json()["id"]
 
         response = await client.get(
             f"/api/v1/restaurant-branches/{branch_id}/details",
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["id"] == branch_id
         assert data["group_id"] == self.group_id
@@ -181,19 +188,22 @@ class TestRestaurantBranchesAPI:
         Args:
             client: عميل HTTP غير متزامن
         """
-        # إنشاء فرع أولاً
         create_data = {
             "group_id": self.group_id,
             "restaurant_id": self.restaurant_id,
         }
-        await client.post("/api/v1/restaurant-branches/", json=create_data)
+        create_response = await client.post(
+            "/api/v1/restaurant-branches/",
+            json=create_data,
+        )
+        assert create_response.status_code == 201
 
         response = await client.get(
             f"/api/v1/restaurant-branches/group/{self.group_id}",
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["total"] >= 1
         assert len(data["items"]) >= 1
@@ -213,19 +223,22 @@ class TestRestaurantBranchesAPI:
         Args:
             client: عميل HTTP غير متزامن
         """
-        # إنشاء فرع أولاً
         create_data = {
             "group_id": self.group_id,
             "restaurant_id": self.restaurant_id,
         }
-        await client.post("/api/v1/restaurant-branches/", json=create_data)
+        create_response = await client.post(
+            "/api/v1/restaurant-branches/",
+            json=create_data,
+        )
+        assert create_response.status_code == 201
 
         response = await client.get(
             f"/api/v1/restaurant-branches/restaurant/{self.restaurant_id}",
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["total"] >= 1
         assert len(data["items"]) >= 1
@@ -246,7 +259,7 @@ class TestRestaurantBranchesAPI:
             client: عميل HTTP غير متزامن
         """
         response = await client.get("/api/v1/restaurant-branches/9999")
-        
+
         assert response.status_code == 404
 
     # ==============================================
@@ -267,12 +280,11 @@ class TestRestaurantBranchesAPI:
             "group_id": self.group_id,
             "restaurant_id": self.restaurant_id,
         }
-        # إنشاء فرع أولاً
-        await client.post("/api/v1/restaurant-branches/", json=data)
+        first_response = await client.post("/api/v1/restaurant-branches/", json=data)
+        assert first_response.status_code == 201
 
-        # محاولة إنشاء فرع مكرر
         response = await client.post("/api/v1/restaurant-branches/", json=data)
-        
+
         assert response.status_code == 409
 
     # ==============================================
@@ -289,7 +301,6 @@ class TestRestaurantBranchesAPI:
         Args:
             client: عميل HTTP غير متزامن
         """
-        # إنشاء فرع أولاً
         create_data = {
             "group_id": self.group_id,
             "restaurant_id": self.restaurant_id,
@@ -298,13 +309,13 @@ class TestRestaurantBranchesAPI:
             "/api/v1/restaurant-branches/",
             json=create_data,
         )
+        assert create_response.status_code == 201
+
         branch_id = create_response.json()["id"]
 
-        # حذف الفرع
         response = await client.delete(f"/api/v1/restaurant-branches/{branch_id}")
         assert response.status_code == 204
 
-        # التحقق من الحذف
         get_response = await client.get(f"/api/v1/restaurant-branches/{branch_id}")
         assert get_response.status_code == 404
 
@@ -323,7 +334,7 @@ class TestRestaurantBranchesAPI:
             client: عميل HTTP غير متزامن
         """
         response = await client.delete("/api/v1/restaurant-branches/9999")
-        
+
         assert response.status_code == 404
 
     # ==============================================
@@ -345,7 +356,7 @@ class TestRestaurantBranchesAPI:
             "restaurant_id": self.restaurant_id,
         }
         response = await client.post("/api/v1/restaurant-branches/", json=data)
-        
+
         assert response.status_code == 404
 
     # ==============================================
@@ -367,7 +378,7 @@ class TestRestaurantBranchesAPI:
             "restaurant_id": 9999,
         }
         response = await client.post("/api/v1/restaurant-branches/", json=data)
-        
+
         assert response.status_code == 404
 
     # ==============================================
@@ -384,32 +395,37 @@ class TestRestaurantBranchesAPI:
         Args:
             client: عميل HTTP غير متزامن
         """
-        # إنشاء فروع متعددة
+        # ✅ إنشاء 4 مطاعم إضافية مباشرة في DB
         restaurant_ids = []
-        for i in range(5):
+        for i in range(4):
             restaurant = Restaurant(
                 **{
                     **self.sample_restaurant_data,
                     "owner_id": self.owner.id,
-                    "name": f"مطعم {i+1}",
+                    "name": f"مطعم إضافي {i+1}",
                 }
             )
             self.db_session.add(restaurant)
+            await self.db_session.flush()  # ✅ flush قبل قراءة الـ id
             restaurant_ids.append(restaurant.id)
-        await self.db_session.flush()
 
-        # إضافة الفروع إلى المجموعة
-        for rid in restaurant_ids:
+        await self.db_session.commit()
+
+        # ✅ إضافة الفروع (المطعم الأصلي + 4 إضافيين = 5 فروع)
+        all_restaurant_ids = [self.restaurant_id] + restaurant_ids
+
+        for rid in all_restaurant_ids:
             data = {"group_id": self.group_id, "restaurant_id": rid}
-            await client.post("/api/v1/restaurant-branches/", json=data)
+            response = await client.post("/api/v1/restaurant-branches/", json=data)
+            assert response.status_code == 201
 
-        # اختبار التصفح
+        # اختبار التصفح - الصفحة الأولى
         response = await client.get(
             f"/api/v1/restaurant-branches/group/{self.group_id}",
             params={"skip": 0, "limit": 3},
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["total"] == 5
         assert len(data["items"]) == 3
@@ -422,7 +438,7 @@ class TestRestaurantBranchesAPI:
             params={"skip": 3, "limit": 3},
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["total"] == 5
         assert len(data["items"]) == 2

@@ -10,11 +10,6 @@
 # منطق الأعمال لفروع المطاعم
 # ==============================================
 
-from typing import (
-    List,
-    Optional,
-)
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -24,6 +19,7 @@ from app.core.exceptions import (
 from app.core.logger import logger
 from app.repositories.restaurant.restaurant_branch_repo import RestaurantBranchRepository
 from app.repositories.restaurant.restaurant_group_repo import RestaurantGroupRepository
+from app.repositories.restaurant.restaurant_repo import RestaurantRepository
 from app.schemas.restaurant.restaurant_group import (
     RestaurantBranchCreate,
     RestaurantBranchResponse,
@@ -45,6 +41,7 @@ class RestaurantBranchService:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع فروع المطاعم
         group_repo: مستودع مجموعات المطاعم
+        restaurant_repo: مستودع المطاعم
     """
 
     def __init__(
@@ -60,6 +57,7 @@ class RestaurantBranchService:
         self.session = session
         self.repo = RestaurantBranchRepository(session)
         self.group_repo = RestaurantGroupRepository(session)
+        self.restaurant_repo = RestaurantRepository(session)
 
     # ==========================================
     # 📖 QUERIES
@@ -243,6 +241,9 @@ class RestaurantBranchService:
         """
         إنشاء فرع مطعم جديد.
         
+        ✅ التصحيح: التحقق من وجود المطعم قبل الإنشاء
+        ✅ التحقق من وجود المجموعة قبل الإنشاء
+        
         Args:
             branch_data: بيانات الفرع
             
@@ -250,7 +251,7 @@ class RestaurantBranchService:
             RestaurantBranchResponse: بيانات الفرع المنشأ
             
         Raises:
-            NotFoundError: إذا لم يتم العثور على المجموعة
+            NotFoundError: إذا لم يتم العثور على المجموعة أو المطعم
             ConflictError: إذا كان الفرع موجوداً مسبقاً
         """
         logger.info(
@@ -261,7 +262,7 @@ class RestaurantBranchService:
             },
         )
 
-        # التحقق من وجود المجموعة
+        # ✅ التحقق من وجود المجموعة
         group = await self.group_repo.get_by_id(id=branch_data.group_id)
 
         if not group:
@@ -269,7 +270,17 @@ class RestaurantBranchService:
                 message=f"المجموعة بـ ID '{branch_data.group_id}' غير موجودة",
             )
 
-        # التحقق من عدم وجود فرع مكرر
+        # ✅ التحقق من وجود المطعم (بما في ذلك غير النشط)
+        restaurant = await self.restaurant_repo.get_by_id(
+            id=branch_data.restaurant_id,
+        )
+
+        if not restaurant:
+            raise NotFoundError(
+                message=f"المطعم بـ ID '{branch_data.restaurant_id}' غير موجود",
+            )
+
+        # ✅ التحقق من عدم وجود فرع مكرر
         existing = await self.repo.get_by_group_and_restaurant(
             group_id=branch_data.group_id,
             restaurant_id=branch_data.restaurant_id,
@@ -280,14 +291,13 @@ class RestaurantBranchService:
                 message=f"الفرع بين المجموعة '{branch_data.group_id}' والمطعم '{branch_data.restaurant_id}' موجود مسبقاً",
             )
 
-        # إنشاء الفرع
+        # ✅ إنشاء الفرع
         data = {
             "group_id": branch_data.group_id,
             "restaurant_id": branch_data.restaurant_id,
         }
 
         branch = await self.repo.create(data=data)
-        await self.session.commit()
 
         logger.info(
             "branch_created_successfully",
@@ -331,7 +341,6 @@ class RestaurantBranchService:
             )
 
         await self.repo.delete(id=branch_id)
-        await self.session.commit()
 
         logger.info(
             "branch_deleted_successfully",

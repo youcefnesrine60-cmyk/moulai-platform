@@ -24,6 +24,7 @@ from httpx import (
     AsyncClient,
     ASGITransport,
 )
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
@@ -33,6 +34,7 @@ from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.models.base import Base
 from app.main import app
 
 
@@ -79,19 +81,23 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 # ==============================================
 
 @pytest.fixture(scope="function")
-async def db_session() -> AsyncGenerator[AsyncSession, None]:
+async def db_session(
+    cleanup_test_database: None,
+) -> AsyncGenerator[AsyncSession, None]:
     """
     إنشاء جلسة قاعدة بيانات اختبارية.
     
-    ✅ تستخدم فقط في إعدادات الاختبارات (setup)
+    ✅ rollback بعد كل اختبار لضمان عزل البيانات
     
     Yields:
         AsyncGenerator[AsyncSession, None]: جلسة قاعدة البيانات
     """
     async with TestingSessionLocal() as session:
-        yield session
-        await session.rollback()
-        await session.close()
+        try:
+            yield session
+        finally:
+            await session.rollback()
+            await session.close()
 
 
 # ==============================================
@@ -99,24 +105,30 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 # ==============================================
 
 @pytest.fixture(scope="function")
-async def client() -> AsyncGenerator[AsyncClient, None]:
+async def client(
+    cleanup_test_database: None,
+) -> AsyncGenerator[AsyncClient, None]:
     """
     إنشاء عميل اختبار HTTP مع جلسة قاعدة بيانات مستقلة لكل طلب.
     
     ✅ كل طلب HTTP يحصل على جلسة DB جديدة
-    ✅ إزالة session.begin() لتجنب تعارض المعاملات
+    ✅ rollback بعد كل طلب لضمان عزل البيانات
     
     Yields:
         AsyncGenerator[AsyncClient, None]: عميل HTTP
     """
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         async with TestingSessionLocal() as session:
-            yield session
+            try:
+                yield session
+            finally:
+                await session.rollback()
+                await session.close()
 
     app.dependency_overrides[get_db] = override_get_db
 
     transport = ASGITransport(app=app)
-    
+
     async with AsyncClient(
         transport=transport,
         base_url="http://test",
@@ -124,6 +136,39 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
         yield client
 
     app.dependency_overrides.clear()
+
+
+# ==============================================
+# 🔧 TEST DATABASE CLEANUP FIXTURE
+# ==============================================
+
+@pytest.fixture(scope="function")
+async def cleanup_test_database() -> AsyncGenerator[None, None]:
+    """
+    تنظيف قاعدة البيانات التجريبية قبل وبعد كل اختبار.
+    
+    تستخدم واجهات API عمليات commit مستقلة؛ لذلك rollback الجلسة
+    وحده لا يعزل الاختبارات.
+    """
+    import app.models
+
+    table_names = ", ".join(
+        f'"{table.name}"'
+        for table in reversed(Base.metadata.sorted_tables)
+    )
+
+    async def truncate_all_tables() -> None:
+        if not table_names:
+            return
+
+        async with engine.begin() as connection:
+            await connection.execute(
+                text(f"TRUNCATE TABLE {table_names} RESTART IDENTITY CASCADE"),
+            )
+
+    await truncate_all_tables()
+    yield
+    await truncate_all_tables()
 
 
 # ==============================================
@@ -135,13 +180,11 @@ def sample_owner_data() -> Dict[str, Any]:
     """
     بيانات مالك نموذجية للاختبار.
     
-    ✅ تستخدم لإنشاء مالك عبر API
-    
     Returns:
         Dict[str, Any]: بيانات المالك
     """
     unique_id: int = int(time.time() * 1000) % 1000000000
-    
+
     return {
         "chat_id": unique_id,
         "full_name": f"أحمد محمد {unique_id}",
@@ -175,12 +218,13 @@ def sample_restaurant_group_data() -> Dict[str, Any]:
     """
     بيانات مجموعة مطاعم نموذجية للاختبار.
     
+    ✅ لا يحتوي على is_active لأن RestaurantGroup لا يدعمه
+    
     Returns:
         Dict[str, Any]: بيانات المجموعة
     """
     return {
         "name": "مجموعة المطاعم الذهبية",
-        "is_active": True,
     }
 
 
@@ -323,12 +367,13 @@ def sample_group_data() -> Dict[str, Any]:
     """
     بيانات مجموعة نموذجية للاختبار (متوافقة مع الاختبارات القديمة).
     
+    ✅ لا يحتوي على is_active
+    
     Returns:
         Dict[str, Any]: بيانات المجموعة
     """
     return {
         "name": "مجموعة المطاعم الذهبية",
-        "is_active": True,
     }
 
 
@@ -353,7 +398,7 @@ async def create_test_owner(
         Any: كائن المالك المنشأ
     """
     from app.models.owner import Owner
-    
+
     owner = Owner(**owner_data)
     db_session.add(owner)
     await db_session.flush()
@@ -380,7 +425,7 @@ async def create_test_restaurant(
         Any: كائن المطعم المنشأ
     """
     from app.models.restaurant import Restaurant
-    
+
     restaurant = Restaurant(
         **{**restaurant_data, "owner_id": owner_id}
     )
@@ -409,7 +454,7 @@ async def create_test_group(
         Any: كائن المجموعة المنشأ
     """
     from app.models.restaurant_group import RestaurantGroup
-    
+
     group = RestaurantGroup(
         **{**group_data, "owner_id": owner_id}
     )
@@ -438,7 +483,7 @@ async def create_test_branch(
         Any: كائن الفرع المنشأ
     """
     from app.models.restaurant_group import RestaurantBranch
-    
+
     branch = RestaurantBranch(
         group_id=group_id,
         restaurant_id=restaurant_id,

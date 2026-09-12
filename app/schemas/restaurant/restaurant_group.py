@@ -50,7 +50,6 @@ class RestaurantGroupBase(BaseModel):
     Attributes:
         owner_id: معرف المالك
         name: اسم المجموعة
-        is_active: حالة النشاط
     """
     owner_id: int = Field(
         ...,
@@ -64,11 +63,6 @@ class RestaurantGroupBase(BaseModel):
         description="اسم المجموعة",
         json_schema_extra={"example": "مطاعم البحر الأبيض المتوسط"},
         min_length=1,
-    )
-    is_active: bool = Field(
-        True,
-        description="حالة النشاط",
-        json_schema_extra={"example": True},
     )
 
     # ==========================================
@@ -115,8 +109,7 @@ class RestaurantGroupUpdate(BaseModel):
     مخطط تحديث مجموعة المطاعم.
     
     Attributes:
-        name: اسم المجموعة
-        is_active: حالة النشاط
+        name: اسم المجموعة   
     """
     name: Optional[str] = Field(
         None,
@@ -124,12 +117,7 @@ class RestaurantGroupUpdate(BaseModel):
         description="اسم المجموعة",
         json_schema_extra={"example": "مطاعم البحر الأبيض المتوسط"},
     )
-    is_active: Optional[bool] = Field(
-        None,
-        description="حالة النشاط",
-        json_schema_extra={"example": True},
-    )
-
+    
     # ==========================================
     # 🔍 VALIDATORS
     # ==========================================
