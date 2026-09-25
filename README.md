@@ -1,187 +1,79 @@
-# 🚀 MoulAI™ Platform - Agent-as-a-Service
+# MoulAI Platform — Agent-as-a-Service
 
 [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 [![Python 3.14+](https://img.shields.io/badge/Python-3.14+-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-blue.svg)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7.0+-red.svg)](https://redis.io/)
-[![Tests](https://img.shields.io/badge/Tests-45%2F45%20passed-brightgreen.svg)]()
-[![Pydantic](https://img.shields.io/badge/Pydantic%20V2-0%20warnings-brightgreen.svg)]()
-[![Code Quality](https://img.shields.io/badge/Code%20Quality-Production%20Ready-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-45%2F45%20passed-brightgreen.svg)](https://github.com/youcefnesrine60-cmyk/moulai-platform)
 
----
+## Overview
 
-## 📖 Description
+**MoulAI** is a personal SaaS project focused on **Agent-as-a-Service** and the practical integration of AI agents into business workflows.
 
-**MoulAI** is an ambitious personal project to build a multi-sector **Agent-as-a-Service** platform. It enables businesses (restaurants, pharmacies, clinics, retail stores) to seamlessly integrate intelligent AI assistants into their operations, automating customer interactions and business management.
+The platform is being developed as a multi-tenant architecture intended to support multiple business domains, including restaurants, pharmacies, clinics and retail.
 
-> 🇫🇷 **MoulAI** est un projet personnel ambitieux visant à construire une plateforme **Agent-as-a-Service** multisectorielle. Elle permet aux entreprises d'intégrer facilement des assistants IA intelligents dans leurs opérations.
+The project explores backend engineering, API design, database architecture, multilingual natural language processing, AI agent integration, automated testing and SaaS architecture.
 
-> 🇩🇿 **مولاي** هو مشروع شخصي طموح لبناء منصة **الوكيل كخدمة** متعددة القطاعات، تمكن الشركات من دمج مساعدين أذكياء يعملون بالذكاء الاصطناعي في عملياتهم بسهولة.
+> **Project status:** MoulAI is under active development. The repository documents the current implementation and ongoing engineering work.
 
-This project demonstrates my expertise in designing and implementing a complete, scalable, and secure architecture using modern technologies.
+## Technology Stack
 
----
+| Area | Technologies |
+| --- | --- |
+| Backend | Python 3.14+, FastAPI, SQLAlchemy, Pydantic V2 |
+| Database | PostgreSQL 16+, Alembic |
+| Caching | Redis 7.0+ |
+| AI integration | OpenAI API, DeepSeek API |
+| Containerization | Docker, Docker Compose |
+| Deployment | Render |
+| Testing | Pytest, Pytest-Asyncio, Pytest-Cov |
+| Version control | Git, GitHub |
 
-## 🛠️ Technologies Used
+## Architecture and Current Capabilities
 
-| Category | Technologies |
-|----------|--------------|
-| **Backend** | Python 3.14+, FastAPI, SQLAlchemy, Pydantic V2 |
-| **Database** | PostgreSQL 16+, Alembic Migrations |
-| **Caching** | Redis 7.0+ |
-| **AI/ML** | OpenAI API, DeepSeek API |
-| **Containerization** | Docker, Docker Compose |
-| **Deployment** | Render |
-| **Version Control** | Git, GitHub |
-| **Testing** | Pytest, Pytest-Asyncio, Pytest-Cov |
+### Multi-tenant platform
 
----
+- Multi-tenant architecture with data isolation
+- RESTful API layer
+- Database architecture based on PostgreSQL and SQLAlchemy
+- Repository and service layers
+- Authentication and session management
+- Redis-based caching
+- Database migrations with Alembic
 
-## ✨ Key Features
+### AI Agent Core
 
-### 🏗️ Core Platform
-- **Multi-tenant architecture** with strict data isolation
-- **Complete RESTful APIs** (14+ endpoints)
-- **Comprehensive database** (41 tables, 33 SQLAlchemy models)
-- **Production-ready deployment** on Render
-- **Clean code** with **0 Pydantic warnings** (fully migrated to Pydantic V2)
+- Multilingual language detection for Arabic, English and French
+- 13 intent types
+- 10 entity types
+- 12 executable actions with confirmation handling
+- Session, context and conversation-history management
+- AI-assisted classification with fallback pattern matching
+- Integration with OpenAI and DeepSeek APIs
 
-### 🤖 AI Agent Core
-- **Multilingual language detection** (Arabic, English, French)
-- **13 intent types** (order, menu, restaurants, modify, cancel, track, price, offers, complaint, help, greeting, goodbye)
-- **10 entity types** (products, quantities, prices, order IDs, phone numbers, addresses, dates, times, units, customer names)
-- **12 executable actions** with confirmation system
-- **Memory management** (sessions, context, conversation history)
-- **AI-powered classification** with fallback pattern matching
+### Security
 
-### 🔐 Security & Performance
-- **JWT authentication** and session management
-- **Password hashing** (bcrypt)
-- **Rate limiting** and abuse prevention
-- **Redis caching** for performance optimization
+- JWT authentication
+- Password hashing with bcrypt
+- Rate limiting and abuse-prevention mechanisms
+- Session management
+- Redis-backed application services
 
-### 🧪 Testing & Quality
-- **45/45 tests passing** for Restaurant API (100%)
-- **0 Pydantic deprecation warnings** (fully compliant with Pydantic V2)
-- **Production-ready code** with comprehensive docstrings
-- **Full type hints** across all modules
-- **Professional code structure** with consistent style
+## Testing
 
----
+The repository currently includes a restaurant API test suite with **45/45 tests passing**.
 
-## 📊 Project Status
+Test suites include:
 
-| Component | Completion | Status |
-|-----------|------------|--------|
-| Infrastructure | 100% | ✅ Complete |
-| Database | 100% | ✅ Complete |
-| Repositories | 100% | ✅ Complete |
-| Services | 100% | ✅ Complete |
-| API Endpoints | 100% | ✅ Complete |
-| Schemas | 100% | ✅ Complete (0 warnings) |
-| AI Agent Core | 100% | ✅ Complete |
-| Restaurant Tests | 100% | ✅ Complete (45/45) |
-| Channels | 0% | ⏳ Pending |
-| Dashboard | 0% | ⏳ Pending |
-| Subscriptions | 80% | 🔄 In Progress |
-| Verticals | 20% | 🔄 In Progress |
+- Restaurant operations: 16 tests
+- Restaurant groups: 4 tests
+- Restaurant branches: 12 tests
+- Restaurant metrics: 5 tests
+- Order counter: 4 tests
+- Payment settings: 4 tests
 
-### Overall Progress: 90%
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│  🎯 Overall Completion: 90%                                            │
-├─────────────────────────────────────────────────────────────────────────┤
-│  ████████████████████████████████████████████████ 100%  Infrastructure  │
-│  ████████████████████████████████████████████████ 100%  Database        │
-│  ████████████████████████████████████████████████ 100%  Repositories    │
-│  ████████████████████████████████████████████████ 100%  Services        │
-│  ████████████████████████████████████████████████ 100%  API Endpoints   │
-│  ████████████████████████████████████████████████ 100%  Schemas         │
-│  ████████████████████████████████████████████████ 100%  AI Agent Core   │
-│  ████████████████████████████████████████████████ 100%  Restaurant Tests│
-│  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0%  Channels          │
-│  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░   0%  Dashboard         │
-│  ████████████████████████████████████░░░░░░░░░░  80%  Subscriptions     │
-│  ██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  20%  Verticals         │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🗺️ Roadmap
-
-### Phase 1: Foundation ✅ Complete
-- Project setup and architecture design
-- Database schema and models
-- Core infrastructure (FastAPI, SQLAlchemy, PostgreSQL)
-
-### Phase 2: Business Logic ✅ Complete
-- Repository layer (data access)
-- Service layer (business logic)
-- Complete RESTful APIs
-- Pydantic schemas
-
-### Phase 3: AI Agent Core ✅ Complete
-- Multilingual language detection
-- Intent classification (13 intents)
-- Entity extraction (10 entity types)
-- Action execution (12 actions)
-- Memory management
-- AI integration (OpenAI/DeepSeek)
-
-### Phase 4: Restaurant API & Tests ✅ Complete
-- Restaurant CRUD operations
-- Restaurant Groups management
-- Restaurant Branches management
-- Restaurant Metrics tracking
-- Order Counter management
-- Payment Settings management
-- **45/45 tests passing** ✅
-
-### Phase 5: Pydantic V2 Migration ✅ Complete
-- Migrated all schemas to Pydantic V2
-- Replaced `example=` with `json_schema_extra`
-- Replaced `class Config` with `ConfigDict`
-- **0 warnings remaining** ✅
-
-### Phase 6: Database & Models Enhancement ✅ Complete
-- Added `plan_id` to `BranchPricing`
-- Added `owner_id` to `LoyaltyDiscount`
-- Added `restaurant_id` to `Promotion`
-- Established complete relationships across all models
-- **41 tables, 33 SQLAlchemy models** ✅
-
-### Phase 7: Channels 🔄 Next
-- [ ] Telegram Bot integration
-- [ ] Web Chat integration
-- [ ] WhatsApp integration
-
-### Phase 8: Dashboard ⏳ Pending
-- [ ] Restaurant management interface
-- [ ] Order management interface
-- [ ] Analytics and reporting
-
-### Phase 9: Subscriptions ⏳ Pending
-- [ ] Payment gateways (Stripe, PayPal)
-- [ ] Plan management (Basic, Pro, Enterprise)
-- [ ] Billing and invoicing
-
-### Phase 10: Verticals ⏳ Pending
-- [ ] Restaurant template ✅ Complete
-- [ ] Pharmacy template
-- [ ] Clinic template
-
-### Phase 11: Performance & Monitoring ⏳ Pending
-- [ ] Redis caching optimization
-- [ ] Performance monitoring
-- [ ] Enhanced logging
-- [ ] Query optimization
-
----
-
-## 🧪 Testing
+### Running tests
 
 ```bash
 # Run all tests
@@ -190,31 +82,79 @@ pytest tests/ -v
 # Run with coverage
 pytest tests/ --cov=app
 
-# Run specific test suite
+# Run the restaurant test suite
 pytest tests/api/v1/restaurant/test_restaurants.py -v
 ```
 
-### Test Results Summary
+## Project Structure
 
-| Test Suite | Status |
-|-----------|--------|
-| `test_restaurants.py` | ✅ 16/16 Passed |
-| `test_groups.py` | ✅ 4/4 Passed |
-| `test_branches.py` | ✅ 12/12 Passed |
-| `test_metrics.py` | ✅ 5/5 Passed |
-| `test_order_counter.py` | ✅ 4/4 Passed |
-| `test_payment_settings.py` | ✅ 4/4 Passed |
-| **Total** | **✅ 45/45 Passed** |
+```
+moulai-platform/
+├── app/
+│   ├── agent/          # AI Agent Core
+│   │   ├── language/   # Language Detection
+│   │   ├── nlu/        # Natural Language Understanding
+│   │   ├── executor/   # Action Execution
+│   │   ├── memory/     # Memory Management
+│   │   └── prompts/    # Prompt Templates
+│   ├── api/            # API Endpoints
+│   │   └── v1/
+│   ├── core/           # Core Components
+│   ├── models/         # Database Models
+│   ├── repositories/   # Data Access Layer
+│   ├── schemas/        # Pydantic Schemas
+│   └── services/       # Business Logic
+├── tests/              # Automated Tests
+├── alembic/            # Database Migrations
+├── README.md
+└── LICENSE
+```
 
-**Execution Time:** ~12 minutes  
-**Pydantic Warnings:** 0  
-**Code Quality:** Production Ready
+## Project Metrics
 
----
+The current implementation includes:
 
-## 🚀 Quick Start
+| Metric | Current value |
+| --- | ---: |
+| SQLAlchemy models | 33 |
+| Database tables | 41 |
+| Services | 17+ |
+| API endpoints | 14+ |
+| Pydantic schema files | 23+ |
+| Automated tests | 45 |
+| Database migrations | 17+ |
+| Supported languages | 3 |
+
+These figures describe the current repository state and may change as development continues.
+
+## Development Roadmap
+
+### Current foundation
+
+- Core project architecture
+- Database schema and models
+- Repository and service layers
+- REST API layer
+- Pydantic schemas
+- AI Agent Core
+- Restaurant API
+- Automated testing
+
+### In progress and planned
+
+- Telegram integration
+- Web chat integration
+- WhatsApp integration
+- Management dashboard
+- Analytics and reporting
+- Subscription and billing capabilities
+- Additional business verticals
+- Performance monitoring and optimization
+
+## Quick Start
 
 ### Prerequisites
+
 - Python 3.14+
 - PostgreSQL 16+
 - Redis 7.0+
@@ -224,183 +164,81 @@ pytest tests/api/v1/restaurant/test_restaurants.py -v
 
 ```bash
 # Clone the repository
-git clone https://github.com/youcefnesrine60-cmyk/dzeatery-bot.git
-cd dzeatery-bot
+git clone https://github.com/youcefnesrine60-cmyk/moulai-platform.git
+cd moulai-platform
 
-# Create virtual environment
+# Create a virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Activate it
+# Windows PowerShell:
+.\.venv\Scripts\Activate.ps1
+
+# Linux/macOS:
+source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure environment
+# Configure environment variables
 cp .env.example .env
-# Edit .env with your configuration
 
-# Run database migrations
+# Apply database migrations
 alembic upgrade head
 
-# Start the server
+# Start the development server
 uvicorn app.main:app --reload
 ```
 
-### Environment Variables
+### Environment configuration
+
+Create a local `.env` file from `.env.example` and provide your own configuration values.
+
+Example structure:
 
 ```env
-# Database
-DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/db
+DATABASE_URL=your-database-url
+REDIS_URL=your-redis-url
 
-# Redis
-REDIS_URL=redis://localhost:6379/0
+OPENAI_API_KEY=your-api-key
+OPENAI_BASE_URL=your-ai-base-url
+AI_MODEL=your-ai-model
 
-# AI
-OPENAI_API_KEY=My-api-key
-OPENAI_BASE_URL=https://api.deepseek.com/v1
-AI_MODEL=deepseek-chat
-
-# Security
 SECRET_KEY=your-secret-key
-
-# Telegram
 BOT_TOKEN=your-telegram-bot-token
 ```
 
----
+Do not commit secrets, API keys, tokens or private configuration files to the repository.
 
-## 📁 Project Structure
+## Author
 
-```
-MoulAI Platform/
-├── app/
-│   ├── agent/          # AI Agent Core
-│   │   ├── language/   # Language Detection
-│   │   ├── nlu/        # Natural Language Understanding
-│   │   ├── executor/   # Action Execution
-│   │   ├── memory/     # Memory Management
-│   │   └── prompts/    # Prompt Templates
-│   ├── api/            # API Endpoints (14+ endpoints)
-│   │   └── v1/
-│   │       ├── admin/                # Admin API
-│   │       ├── owners/               # Owners API
-│   │       ├── orders/               # Orders API
-│   │       ├── payments/             # Payments API
-│   │       ├── products/             # Products API
-│   │       ├── categories/           # Categories API
-│   │       ├── branches/             # Branches API
-│   │       ├── option_groups/        # Option Groups API
-│   │       ├── product_options/      # Product Options API
-│   │       ├── order_items/          # Order Items API
-│   │       ├── registration_request/ # Registration Requests API
-│   │       ├── users/                # Users API
-│   │       └── restaurant/           # Restaurant API
-│   │           ├── restaurants/      # CRUD operations
-│   │           ├── groups/           # Groups management
-│   │           ├── branches/         # Branches management
-│   │           ├── metrics/          # Metrics tracking
-│   │           ├── order_counter/    # Order counter
-│   │           └── payment_setting/  # Payment settings
-│   ├── core/           # Core Components
-│   ├── models/         # Database Models (33 models)
-│   ├── repositories/   # Data Access Layer
-│   ├── schemas/        # Pydantic Schemas (100% V2 compliant)
-│   └── services/       # Business Logic (17+ services)
-├── tests/              # Tests
-│   └── api/
-│       └── v1/
-│           └── restaurant/  # Restaurant tests (45/45 passed)
-├── alembic/            # Database Migrations (17+ migrations)
-├── README.md           # Documentation
-└── LICENSE             # License
-```
+**Nesrine YOUCEF**
 
----
+- GitHub: https://github.com/youcefnesrine60-cmyk
+- LinkedIn: https://linkedin.com/in/nesrine-youcef-data-engineer
 
-## 📈 Project Statistics
-
-| Metric | Value |
-|--------|-------|
-| **Files** | 150+ files |
-| **Lines of Code** | 20,000+ lines |
-| **SQLAlchemy Models** | 33 models |
-| **Database Tables** | 41 tables |
-| **Services** | 17+ services |
-| **API Endpoints** | 14+ endpoints |
-| **Pydantic Schemas** | 23+ schema files |
-| **Tests** | 45 tests (all passing) |
-| **Database Migrations** | 17+ migrations |
-| **Supported Languages** | 3 languages (AR, FR, EN) |
-| **Pydantic Warnings** | **0** ✅ |
-
----
-
-## 🎯 Recent Achievements
-
-### ✅ Pydantic V2 Full Migration
-- All schemas migrated to Pydantic V2
-- `example=` → `json_schema_extra={"example": ...}`
-- `class Config` → `model_config = ConfigDict(from_attributes=True)`
-- **0 deprecation warnings remaining**
-
-### ✅ Complete Restaurant API Tests
-- 45/45 tests passing (100%)
-- Full CRUD coverage
-- Error handling validated
-- Statistics endpoints working
-- Groups, Branches, Metrics, Order Counter, Payment Settings all tested
-
-### ✅ Database Enhancement
-- Added `plan_id` to `BranchPricing` (linked to `SubscriptionPlan`)
-- Added `owner_id` to `LoyaltyDiscount` (linked to `Owner`)
-- Added `restaurant_id` to `Promotion` (linked to `Restaurant`)
-- Complete relationship integrity across all models
-
-### ✅ Code Quality
-- Professional code structure
-- Comprehensive docstrings
-- Full type hints
-- Production-ready patterns
-- Consistent style across all files
-
----
-
-## 👩‍💻 Author
-
-**Youcef Nesrine**
-
-- GitHub: [youcefnesrine60-cmyk](https://github.com/youcefnesrine60-cmyk)
-- Email: youcefnesrine60@gmail.com
-- LinkedIn: [linkedin.com/in/youcef-nesrine-66a92a431](http://www.linkedin.com/in/youcef-nesrine-66a92a431)
-
----
-
-## 📄 License
+## License
 
 This project is licensed under the **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License**.
 
-- ✅ You are free to **view, fork, and study** the code.
-- ❌ You may **NOT** use it for **commercial purposes**.
-- ❌ You may **NOT** modify or create derivative works.
+- You may view, fork and study the code under the terms of the license.
+- Commercial use is not permitted under this license.
+- Derivative works are not permitted under this license.
 
-For more details, see the full [LICENSE](LICENSE) file.
+See [LICENSE](LICENSE) for the complete terms.
 
----
+## Acknowledgments
 
-## 🙏 Acknowledgments
+MoulAI is built with and benefits from the following technologies and projects:
 
-- **FastAPI** - For the amazing web framework
-- **SQLAlchemy** - For the powerful ORM
-- **Pydantic** - For the robust data validation
-- **OpenAI/DeepSeek** - For the AI capabilities
-- **PostgreSQL** - For the reliable database
-- **Redis** - For the fast caching
-
----
-
-## 📬 Contact
-
-If you have any questions or would like to discuss this project, feel free to reach out!
+- FastAPI
+- SQLAlchemy
+- Pydantic
+- PostgreSQL
+- Redis
+- OpenAI API
+- DeepSeek API
 
 ---
 
-*Made with ❤️ by Youcef Nesrine*
+*MoulAI is a personal project under active development.*
