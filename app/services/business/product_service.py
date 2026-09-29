@@ -1,14 +1,22 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 🍔 PRODUCT SERVICE
-# Business Logic Layer
-# منطق الأعمال للمنتجات
+# Business Logic Layer - منطق الأعمال للمنتجات
 #
-# إنشاء منتج
-# قراءة المنتج
-# قراءة منتجات المطعم
-# تحديث المنتج
-# تفعيل/إلغاء تفعيل المنتج
-# حذف المنتج
+# - إنشاء منتج
+# - قراءة المنتج
+# - قراءة منتجات المطعم
+# - تحديث المنتج
+# - تفعيل/إلغاء تفعيل المنتج
+# - حذف المنتج
+#
+# Async SQLAlchemy Version
 # ==============================================
 
 from typing import (
@@ -18,40 +26,37 @@ from typing import (
     Optional,
 )
 
+from sqlalchemy import (
+    func,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
-# ✅ استيراد الاستثناءات
 from app.core.exceptions import (
     ConflictError,
     NotFoundError,
     ValidationError,
 )
-
-# ✅ استيراد دوال الأمان
-from app.core.security import (
-    sanitize_input,
-)
-
 from app.core.logger import logger
+from app.core.security import sanitize_input
+from app.models.order_item import OrderItem
 from app.models.product import Product
-from app.models.restaurant_metric import RestaurantMetric
-from app.repositories.base import BaseRepository
 from app.repositories.products_repo import ProductRepository
+from app.repositories.restaurant.restaurant_metrics_repo import (
+    RestaurantMetricsRepository,
+)
+from app.schemas.product import (
+    ProductAvailabilityUpdate,
+    ProductCreate,
+    ProductListResponse,
+    ProductResponse,
+    ProductSummary,
+    ProductUpdate,
+)
 from app.services.business.feature_usage_counter_engine import (
     decrease_usage,
     increase_usage,
 )
-
-# ✅ استيراد المخططات
-from app.schemas.product import (
-    ProductCreate,
-    ProductResponse,
-    ProductUpdate,
-    ProductAvailabilityUpdate,
-    ProductListResponse,
-    ProductSummary,
-)
-
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -61,14 +66,12 @@ PRODUCT_FEATURE_ID = 1
 MAX_PRODUCTS_PER_RESTAURANT = 100
 MAX_PRODUCT_PRICE = 10000000.0  # 10,000,000 DZD
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
 
 ProductData = Dict[str, Any]
 ProductList = List[Product]
-
 
 # ==============================================
 # 🍔 PRODUCT SERVICE
@@ -78,13 +81,13 @@ ProductList = List[Product]
 class ProductService:
     """
     خدمة المنتجات - تدير منطق الأعمال للمنتجات.
-    
+
     مسؤولة عن:
         - إنشاء وإدارة المنتجات
         - تحديث حالة التوفر
         - تحديث مقاييس المطعم
         - إدارة عداد استخدام الميزات
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع المنتجات
@@ -97,14 +100,45 @@ class ProductService:
     ) -> None:
         """
         تهيئة خدمة المنتجات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         self.session = session
         self.repo = ProductRepository(session)
-        # استخدام BaseRepository مباشرة مع نموذج RestaurantMetric
-        self.metrics_repo = BaseRepository(RestaurantMetric, session)
+        self.metrics_repo = RestaurantMetricsRepository(session)
+
+    # ==========================================
+    # 🛠️ PRIVATE HELPERS
+    # ==========================================
+
+    # ==============================================
+    # COUNT ORDERS BY PRODUCT
+    # ==============================================
+
+    async def _count_orders_by_product(
+        self,
+        *,
+        product_id: int,
+    ) -> int:
+        """
+        حساب عدد الطلبات المرتبطة بمنتج معين.
+
+        ✅ استخدام SQLAlchemy مباشرة عبر OrderItem
+
+        Args:
+            product_id: معرف المنتج
+
+        Returns:
+            عدد الطلبات المرتبطة
+        """
+        result = await self.session.execute(
+            select(func.count())
+            .select_from(OrderItem)
+            .where(OrderItem.product_id == product_id),
+        )
+
+        return result.scalar_one() or 0
 
     # ==========================================
     # 📖 QUERIES
@@ -121,13 +155,13 @@ class ProductService:
     ) -> ProductResponse:
         """
         الحصول على منتج بالمعرف.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             ProductResponse: بيانات المنتج
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المنتج
         """
@@ -136,9 +170,7 @@ class ProductService:
             extra={"product_id": product_id},
         )
 
-        product = await self.repo.get_by_id(
-            id=product_id,
-        )
+        product = await self.repo.get_by_id(id=product_id)
 
         if not product:
             raise NotFoundError(
@@ -161,13 +193,13 @@ class ProductService:
     ) -> ProductListResponse:
         """
         الحصول على منتجات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_available: جلب المنتجات المتاحة فقط
-            
+
         Returns:
             ProductListResponse: قائمة المنتجات مع الإحصائيات
         """
@@ -194,7 +226,7 @@ class ProductService:
         )
 
         return ProductListResponse(
-            items=[ProductResponse.model_validate(product) for product in products],
+            items=[ProductResponse.model_validate(p) for p in products],
             total=total,
             skip=skip,
             limit=limit,
@@ -214,13 +246,13 @@ class ProductService:
     ) -> ProductListResponse:
         """
         الحصول على منتجات تصنيف معين.
-        
+
         Args:
             category_id: معرف التصنيف
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_available: جلب المنتجات المتاحة فقط
-            
+
         Returns:
             ProductListResponse: قائمة المنتجات مع الإحصائيات
         """
@@ -247,7 +279,7 @@ class ProductService:
         )
 
         return ProductListResponse(
-            items=[ProductResponse.model_validate(product) for product in products],
+            items=[ProductResponse.model_validate(p) for p in products],
             total=total,
             skip=skip,
             limit=limit,
@@ -267,13 +299,13 @@ class ProductService:
     ) -> ProductListResponse:
         """
         البحث عن منتجات.
-        
+
         Args:
             query: نص البحث
             restaurant_id: معرف المطعم (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ProductListResponse: قائمة المنتجات مع الإحصائيات
         """
@@ -282,7 +314,7 @@ class ProductService:
         logger.info(
             "product_service_search",
             extra={
-                "query": clean_query,
+                "search_query": clean_query,
                 "restaurant_id": restaurant_id,
                 "skip": skip,
                 "limit": limit,
@@ -299,7 +331,7 @@ class ProductService:
         total = len(products)
 
         return ProductListResponse(
-            items=[ProductResponse.model_validate(product) for product in products],
+            items=[ProductResponse.model_validate(p) for p in products],
             total=total,
             skip=skip,
             limit=limit,
@@ -316,10 +348,10 @@ class ProductService:
     ) -> Optional[Product]:
         """
         الحصول على منتج مع جميع علاقاته.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             Optional[Product]: كائن Product مع العلاقات أو None
         """
@@ -348,11 +380,11 @@ class ProductService:
     ) -> int:
         """
         حساب عدد منتجات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             only_available: حساب المنتجات المتاحة فقط
-            
+
         Returns:
             int: عدد المنتجات
         """
@@ -373,11 +405,11 @@ class ProductService:
     ) -> int:
         """
         حساب عدد منتجات تصنيف معين.
-        
+
         Args:
             category_id: معرف التصنيف
             only_available: حساب المنتجات المتاحة فقط
-            
+
         Returns:
             int: عدد المنتجات
         """
@@ -397,10 +429,10 @@ class ProductService:
     ) -> ProductSummary:
         """
         الحصول على ملخص المنتجات لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             ProductSummary: ملخص المنتجات
         """
@@ -421,26 +453,33 @@ class ProductService:
 
         unavailable = total - available
 
-        # الحصول على المنتجات
+        # ✅ الحصول على المنتجات لحساب الأسعار
         products = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
-            limit=1000,
+            limit=10000,
             only_available=False,
         )
 
-        # حساب متوسط السعر
         total_price = 0.0
+        min_price = 0.0
+        max_price = 0.0
 
-        for product in products:
-            total_price += product.price
+        if products:
+            prices = [float(p.price) for p in products]
+            total_price = sum(prices)
+            min_price = min(prices)
+            max_price = max(prices)
 
-        average_price = total_price / len(products) if products else 0.0
+        avg_price = total_price / len(products) if products else 0.0
 
         return ProductSummary(
             total_products=total,
             available_products=available,
             unavailable_products=unavailable,
-            average_price=average_price,
+            total_price=round(total_price, 2),
+            avg_price=round(avg_price, 2),
+            min_price=round(min_price, 2),
+            max_price=round(max_price, 2),
         )
 
     # ==========================================
@@ -455,37 +494,39 @@ class ProductService:
         self,
         *,
         product_data: ProductCreate,
-        skip_feature_check: bool = False,
+        restaurant_id: int,
     ) -> ProductResponse:
         """
         إنشاء منتج جديد.
-        
+
         Args:
             product_data: بيانات المنتج
-            skip_feature_check: تخطي التحقق من الميزة (للاستخدام الداخلي)
-            
+            restaurant_id: معرف المطعم
+
         Returns:
             ProductResponse: بيانات المنتج المنشأ
-            
+
         Raises:
             ConflictError: إذا كان الاسم مكرراً للمطعم
             ValidationError: إذا كانت البيانات غير صالحة
-            NotFoundError: إذا لم يتم العثور على التصنيف أو المطعم
         """
-        # تنظيف البيانات
         name = sanitize_input(product_data.name)
-        description = sanitize_input(product_data.description) if product_data.description else None
+        description = (
+            sanitize_input(product_data.description)
+            if product_data.description
+            else None
+        )
 
         logger.info(
             "product_service_create",
             extra={
-                "restaurant_id": product_data.restaurant_id,
+                "restaurant_id": restaurant_id,
                 "product_name": name,
                 "price": product_data.price,
             },
         )
 
-        # التحقق من صحة السعر
+        # 1️⃣ التحقق من صحة السعر
         if product_data.price <= 0:
             raise ValidationError(
                 message="سعر المنتج يجب أن يكون أكبر من الصفر",
@@ -493,28 +534,34 @@ class ProductService:
 
         if product_data.price > MAX_PRODUCT_PRICE:
             raise ValidationError(
-                message=f"سعر المنتج يتجاوز الحد الأقصى المسموح به ({MAX_PRODUCT_PRICE})",
+                message=(
+                    f"سعر المنتج يتجاوز الحد الأقصى المسموح به "
+                    f"({MAX_PRODUCT_PRICE})"
+                ),
             )
 
-        # التحقق من الحد الأقصى للمنتجات
+        # 2️⃣ التحقق من الحد الأقصى للمنتجات
         current_count = await self.count_by_restaurant(
-            restaurant_id=product_data.restaurant_id,
+            restaurant_id=restaurant_id,
             only_available=False,
         )
 
         if current_count >= MAX_PRODUCTS_PER_RESTAURANT:
             raise ValidationError(
-                message=f"تجاوزت الحد الأقصى للمنتجات ({MAX_PRODUCTS_PER_RESTAURANT})",
+                message=(
+                    f"تجاوزت الحد الأقصى للمنتجات "
+                    f"({MAX_PRODUCTS_PER_RESTAURANT})"
+                ),
                 details={
-                    "restaurant_id": product_data.restaurant_id,
+                    "restaurant_id": restaurant_id,
                     "current_count": current_count,
                     "max_allowed": MAX_PRODUCTS_PER_RESTAURANT,
                 },
             )
 
-        # التحقق من عدم وجود منتج بنفس الاسم للمطعم
+        # 3️⃣ التحقق من عدم وجود منتج بنفس الاسم
         existing = await self.repo.get_by_name(
-            restaurant_id=product_data.restaurant_id,
+            restaurant_id=restaurant_id,
             name=name,
         )
 
@@ -523,17 +570,9 @@ class ProductService:
                 message=f"المنتج '{name}' موجود بالفعل لهذا المطعم",
             )
 
-        # التحقق من الميزة (Feature Guard)
-        # TODO: إعادة تفعيل require_feature بعد اكتمال النظام
-        # if not skip_feature_check:
-        #     await require_feature(
-        #         restaurant_id=restaurant_id,
-        #         feature_id=PRODUCT_FEATURE_ID,
-        #     )
-
-        # إنشاء المنتج
+        # 4️⃣ إنشاء المنتج
         data: ProductData = {
-            "restaurant_id": product_data.restaurant_id,
+            "restaurant_id": restaurant_id,
             "category_id": product_data.category_id,
             "name": name,
             "description": description,
@@ -545,15 +584,16 @@ class ProductService:
 
         product = await self.repo.create(data=data)
 
-        # زيادة عداد استخدام الميزة
+        # 5️⃣ زيادة عداد استخدام الميزة (مع session)
         await increase_usage(
-            restaurant_id=product_data.restaurant_id,
+            session=self.session,
+            restaurant_id=restaurant_id,
             feature_id=PRODUCT_FEATURE_ID,
         )
 
-        # تحديث مقاييس المطعم
+        # 6️⃣ تحديث مقاييس المطعم
         await self._update_restaurant_metrics(
-            restaurant_id=product_data.restaurant_id,
+            restaurant_id=restaurant_id,
             action="product_created",
         )
 
@@ -561,7 +601,7 @@ class ProductService:
             "product_created_successfully",
             extra={
                 "product_id": product.id,
-                "restaurant_id": product_data.restaurant_id,
+                "restaurant_id": restaurant_id,
             },
         )
 
@@ -579,51 +619,54 @@ class ProductService:
     ) -> ProductResponse:
         """
         تحديث منتج.
-        
+
         Args:
             product_id: معرف المنتج
             update_data: بيانات التحديث
-            
+
         Returns:
             ProductResponse: بيانات المنتج المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المنتج
             ConflictError: إذا كان الاسم مكرراً
-            ValidationError: إذا كانت البيانات غير صالحة
         """
         logger.info(
             "product_service_update",
             extra={
                 "product_id": product_id,
-                "fields": list(update_data.model_dump(exclude_unset=True).keys()),
+                "update_fields": list(
+                    update_data.model_dump(exclude_unset=True).keys()
+                ),
             },
         )
 
-        # التحقق من وجود المنتج
-        existing = await self.repo.get_by_id(id=product_id)
+        # 1️⃣ التحقق من وجود المنتج
+        existing_product = await self.repo.get_by_id(id=product_id)
 
-        if not existing:
+        if not existing_product:
             raise NotFoundError(
                 message=f"المنتج بـ ID '{product_id}' غير موجود",
             )
 
-        # تحضير بيانات التحديث
+        # 2️⃣ تحضير بيانات التحديث
         updates = update_data.model_dump(exclude_unset=True)
 
-        # تنظيف البيانات
+        # 3️⃣ تنظيف البيانات
         if "name" in updates:
             updates["name"] = sanitize_input(updates["name"])
 
-            # التحقق من عدم وجود اسم مكرر
             duplicate = await self.repo.get_by_name(
-                restaurant_id=existing.restaurant_id,
+                restaurant_id=existing_product.restaurant_id,
                 name=updates["name"],
             )
 
             if duplicate and duplicate.id != product_id:
                 raise ConflictError(
-                    message=f"المنتج '{updates['name']}' موجود بالفعل لهذا المطعم",
+                    message=(
+                        f"المنتج '{updates['name']}' "
+                        f"موجود بالفعل لهذا المطعم"
+                    ),
                 )
 
         if "description" in updates:
@@ -637,10 +680,13 @@ class ProductService:
 
             if updates["price"] > MAX_PRODUCT_PRICE:
                 raise ValidationError(
-                    message=f"سعر المنتج يتجاوز الحد الأقصى المسموح به ({MAX_PRODUCT_PRICE})",
+                    message=(
+                        f"سعر المنتج يتجاوز الحد الأقصى المسموح به "
+                        f"({MAX_PRODUCT_PRICE})"
+                    ),
                 )
 
-        # تحديث المنتج
+        # 4️⃣ تحديث المنتج
         product = await self.repo.update(
             id=product_id,
             data=updates,
@@ -673,14 +719,14 @@ class ProductService:
     ) -> ProductResponse:
         """
         تحديث حالة توفر المنتج.
-        
+
         Args:
             product_id: معرف المنتج
             availability_data: بيانات حالة التوفر
-            
+
         Returns:
             ProductResponse: بيانات المنتج المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المنتج
         """
@@ -723,13 +769,13 @@ class ProductService:
     ) -> ProductResponse:
         """
         تفعيل المنتج.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             ProductResponse: بيانات المنتج المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المنتج
         """
@@ -756,13 +802,13 @@ class ProductService:
     ) -> ProductResponse:
         """
         إلغاء تفعيل المنتج.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             ProductResponse: بيانات المنتج المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المنتج
         """
@@ -789,10 +835,10 @@ class ProductService:
     ) -> None:
         """
         حذف منتج.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المنتج
             ValidationError: إذا كان المنتج مرتبطاً بطلبات
@@ -811,8 +857,8 @@ class ProductService:
 
         restaurant_id = product.restaurant_id
 
-        # التحقق من عدم وجود طلبات مرتبطة
-        orders_count = await self.repo.count_orders_by_product(
+        # 1️⃣ التحقق من عدم وجود طلبات مرتبطة
+        orders_count = await self._count_orders_by_product(
             product_id=product_id,
         )
 
@@ -825,17 +871,18 @@ class ProductService:
                 },
             )
 
-        # حذف المنتج
+        # 2️⃣ حذف المنتج
         await self.repo.delete(id=product_id)
 
-        # تحديث مقاييس المطعم
+        # 3️⃣ تحديث مقاييس المطعم
         await self._update_restaurant_metrics(
             restaurant_id=restaurant_id,
             action="product_deleted",
         )
 
-        # تقليل عداد استخدام الميزة
+        # 4️⃣ تقليل عداد استخدام الميزة (مع session)
         await decrease_usage(
+            session=self.session,
             restaurant_id=restaurant_id,
             feature_id=PRODUCT_FEATURE_ID,
         )
@@ -864,37 +911,24 @@ class ProductService:
     ) -> None:
         """
         تحديث مقاييس المطعم.
-        
+
+        ✅ نستخدم RestaurantMetricsRepository
+        ✅ increment/decrement بدلاً من update اليدوي
+
         Args:
             restaurant_id: معرف المطعم
             action: نوع الإجراء (product_created, product_deleted)
         """
         try:
-            # الحصول على المقاييس الحالية
-            metrics = await self.metrics_repo.get_by_id(id=restaurant_id)
-
-            if metrics:
-                # تحديث المقاييس الموجودة
-                if action == "product_created":
-                    await self.metrics_repo.update(
-                        id=restaurant_id,
-                        data={"products_count": metrics.products_count + 1},
-                    )
-                elif action == "product_deleted":
-                    await self.metrics_repo.update(
-                        id=restaurant_id,
-                        data={"products_count": max(0, metrics.products_count - 1)},
-                    )
-            else:
-                # إنشاء مقاييس جديدة
-                await self.metrics_repo.create(
-                    data={
-                        "restaurant_id": restaurant_id,
-                        "products_count": 1 if action == "product_created" else 0,
-                        "categories_count": 0,
-                        "monthly_orders": 0,
-                        "average_order_value": 0,
-                    },
+            if action == "product_created":
+                await self.metrics_repo.increment_products_count(
+                    restaurant_id=restaurant_id,
+                    amount=1,
+                )
+            elif action == "product_deleted":
+                await self.metrics_repo.decrement_products_count(
+                    restaurant_id=restaurant_id,
+                    amount=1,
                 )
 
             logger.info(
@@ -929,7 +963,7 @@ async def create_restaurant_product(
     *,
     restaurant_id: int,
     category_id: int,
-    name: str,
+    product_name: str,
     description: Optional[str],
     price: float,
     image_url: Optional[str] = None,
@@ -938,20 +972,20 @@ async def create_restaurant_product(
 ) -> int:
     """
     إنشاء منتج جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         category_id: معرف التصنيف
-        name: اسم المنتج
+        product_name: اسم المنتج
         description: وصف المنتج
         price: السعر
         image_url: رابط الصورة
         sort_order: ترتيب العرض
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف المنتج
-        
+
     Raises:
         ConflictError: إذا كان الاسم مكرراً
         ValidationError: إذا كانت البيانات غير صالحة
@@ -959,9 +993,8 @@ async def create_restaurant_product(
     service = ProductService(session=session)
 
     product_data = ProductCreate(
-        restaurant_id=restaurant_id,
         category_id=category_id,
-        name=name,
+        name=product_name,
         description=description,
         price=price,
         image_url=image_url,
@@ -970,7 +1003,7 @@ async def create_restaurant_product(
 
     product = await service.create_product(
         product_data=product_data,
-        skip_feature_check=True,
+        restaurant_id=restaurant_id,
     )
 
     return product.id
@@ -987,11 +1020,11 @@ async def get_product(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على منتج بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات المنتج أو None
     """
@@ -1016,12 +1049,12 @@ async def get_products(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على منتجات مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         only_available: جلب المنتجات المتاحة فقط
-        
+
     Returns:
         List[Dict[str, Any]]: قائمة المنتجات
     """
@@ -1042,7 +1075,7 @@ async def get_products(
 async def edit_product(
     *,
     product_id: int,
-    name: str,
+    product_name: str,
     description: Optional[str],
     price: float,
     image_url: Optional[str],
@@ -1051,25 +1084,24 @@ async def edit_product(
 ) -> None:
     """
     تحديث منتج (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
-        name: اسم المنتج
+        product_name: اسم المنتج
         description: وصف المنتج
         price: السعر
         image_url: رابط الصورة
         sort_order: ترتيب العرض
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المنتج
         ConflictError: إذا كان الاسم مكرراً
-        ValidationError: إذا كانت البيانات غير صالحة
     """
     service = ProductService(session=session)
 
     update_data = ProductUpdate(
-        name=name,
+        name=product_name,
         description=description,
         price=price,
         image_url=image_url,
@@ -1098,11 +1130,11 @@ async def enable_product(
 ) -> None:
     """
     تفعيل منتج (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المنتج
     """
@@ -1127,11 +1159,11 @@ async def disable_product(
 ) -> None:
     """
     إلغاء تفعيل منتج (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المنتج
     """
@@ -1156,11 +1188,11 @@ async def remove_product(
 ) -> None:
     """
     حذف منتج (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المنتج
         ValidationError: إذا كان المنتج مرتبطاً بطلبات
@@ -1187,12 +1219,12 @@ async def get_products_count(
 ) -> int:
     """
     حساب عدد منتجات مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         only_available: حساب المنتجات المتاحة فقط
-        
+
     Returns:
         int: عدد المنتجات
     """
@@ -1202,3 +1234,25 @@ async def get_products_count(
         restaurant_id=restaurant_id,
         only_available=only_available,
     )
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "ProductService",
+    "PRODUCT_FEATURE_ID",
+    "MAX_PRODUCTS_PER_RESTAURANT",
+    "MAX_PRODUCT_PRICE",
+    "ProductData",
+    "ProductList",
+    "create_restaurant_product",
+    "get_product",
+    "get_products",
+    "edit_product",
+    "enable_product",
+    "disable_product",
+    "remove_product",
+    "get_products_count",
+]

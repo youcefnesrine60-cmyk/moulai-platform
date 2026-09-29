@@ -114,7 +114,10 @@ async def list_restaurants(
                 skip=skip,
                 limit=limit,
             )
-            total = len(restaurants)
+            total = await service.count_search_restaurants(
+                query=search,
+                include_inactive=not only_active,
+            )
 
         else:
             restaurants = await service.get_all_restaurants(
@@ -122,7 +125,9 @@ async def list_restaurants(
                 limit=limit,
                 only_active=only_active,
             )
-            total = len(restaurants)
+            total = await service.count_all_restaurants(
+                only_active=only_active,
+            )
 
         return RestaurantListResponse(
             items=restaurants,

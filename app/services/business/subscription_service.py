@@ -1,17 +1,28 @@
-#==============================================
-#       💳 SUBSCRIPTION SERVICE
-#       Business Logic Layer
-#       منطق الأعمال للاشتراكات
-#
-#       بناء طبقة الاشتراكات
-#       لتجربة المجانية (trial)
-#       الباقة الشهرية
-#       الباقة السنوية (+ شهرين مجانيين)
-#       حساب تاريخ الانتهاء
-#     منع تكرار التجربة المجانية
-#===============================================
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
 
-from datetime import datetime, timedelta, timezone
+# ==============================================
+# 💳 SUBSCRIPTION SERVICE
+# Business Logic Layer - منطق الأعمال للاشتراكات
+#
+# - إنشاء الاشتراك التجريبي (trial)
+# - إنشاء الاشتراك المدفوع (monthly, yearly)
+# - تفعيل/إلغاء/انتهاء الاشتراك
+# - حساب تاريخ الانتهاء
+# - منع تكرار التجربة المجانية
+#
+# Async SQLAlchemy Version
+# ==============================================
+
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
 from typing import (
     Any,
     Dict,
@@ -28,7 +39,9 @@ from app.repositories.payment_repo import PaymentRepository
 from app.repositories.subscription_plan_repo import (
     SubscriptionPlanRepository,
 )
-from app.repositories.subscription_repo import SubscriptionRepository
+from app.repositories.subscription_repo import (
+    SubscriptionRepository,
+)
 from app.services.business.pricing_service import (
     calculate_subscription_pricing,
 )
@@ -49,13 +62,13 @@ SubscriptionList = List[Subscription]
 class SubscriptionService:
     """
     خدمة الاشتراكات.
-    
+
     مسؤولة عن:
         - إنشاء وإدارة الاشتراكات (تجريبي ومدفوع)
         - تفعيل وإلغاء الاشتراكات
         - حساب التسعير
         - التحقق من صلاحية الاشتراكات
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع الاشتراكات
@@ -70,7 +83,7 @@ class SubscriptionService:
     ) -> None:
         """
         تهيئة خدمة الاشتراكات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -95,10 +108,10 @@ class SubscriptionService:
     ) -> Optional[Subscription]:
         """
         الحصول على اشتراك بالمعرف.
-        
+
         Args:
             subscription_id: معرف الاشتراك
-            
+
         Returns:
             كائن Subscription أو None
         """
@@ -108,7 +121,7 @@ class SubscriptionService:
         )
 
         return await self.repo.get_by_id(
-            subscription_id=subscription_id,
+            id=subscription_id,
         )
 
     # ==============================================
@@ -124,12 +137,12 @@ class SubscriptionService:
     ) -> SubscriptionList:
         """
         الحصول على اشتراكات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الاشتراكات
         """
@@ -159,10 +172,10 @@ class SubscriptionService:
     ) -> Optional[Subscription]:
         """
         الحصول على الاشتراك النشط لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             كائن Subscription أو None
         """
@@ -188,12 +201,12 @@ class SubscriptionService:
     ) -> SubscriptionList:
         """
         الحصول على اشتراكات مالك معين.
-        
+
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الاشتراكات
         """
@@ -225,12 +238,12 @@ class SubscriptionService:
     ) -> SubscriptionList:
         """
         الحصول على اشتراكات حسب الحالة.
-        
+
         Args:
             status: حالة الاشتراك (trial, active, expired, cancelled)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الاشتراكات
         """
@@ -262,16 +275,16 @@ class SubscriptionService:
     ) -> Optional[Dict[str, Any]]:
         """
         الحصول على خطة اشتراك بواسطة الكود.
-        
+
         Args:
             code: كود الخطة (trial, basic, pro, enterprise)
-            
+
         Returns:
             قاموس بيانات الخطة أو None
         """
         logger.info(
             "subscription_service_get_plan_by_code",
-            extra={"code": code},
+            extra={"plan_code": code},
         )
 
         plan = await self.plan_repo.get_by_code(code=code)
@@ -284,8 +297,8 @@ class SubscriptionService:
             "code": plan.code,
             "name": plan.name,
             "description": plan.description,
-            "base_price": plan.base_price,
-            "plan_discount_percent": plan.plan_discount_percent,
+            "base_price": float(plan.base_price),
+            "plan_discount_percent": float(plan.plan_discount_percent),
             "active": plan.active,
         }
 
@@ -306,15 +319,15 @@ class SubscriptionService:
     ) -> Subscription:
         """
         إنشاء اشتراك تجريبي (Trial).
-        
+
         Args:
             owner_id: معرف المالك
             restaurant_id: معرف المطعم
             payment_method: طريقة الدفع
-            
+
         Returns:
             كائن Subscription المنشأ
-            
+
         Raises:
             ValueError: إذا استخدم المالك التجربة مسبقاً
             ValueError: إذا لم يتم العثور على خطة التجربة
@@ -328,10 +341,10 @@ class SubscriptionService:
         )
 
         # 1️⃣ التحقق من عدم استخدام التجربة مسبقاً
-        owner = await self.owner_repo.get_by_id(owner_id=owner_id)
+        owner = await self.owner_repo.get_by_id(id=owner_id)
 
         if not owner:
-            raise ValueError(f"Owner {owner_id} not found")
+            raise ValueError(f"owner_not_found:{owner_id}")
 
         if owner.trial_used:
             raise ValueError("trial_already_used")
@@ -362,7 +375,7 @@ class SubscriptionService:
 
         # 5️⃣ تعيين trial_used = True
         await self.owner_repo.update(
-            owner_id=owner_id,
+            id=owner_id,
             data={"trial_used": True},
         )
 
@@ -400,7 +413,7 @@ class SubscriptionService:
     ) -> SubscriptionResult:
         """
         إنشاء اشتراك مدفوع.
-        
+
         Args:
             owner_id: معرف المالك
             restaurant_id: معرف المطعم
@@ -415,7 +428,7 @@ class SubscriptionService:
             monthly_orders: عدد الطلبات الشهرية
             average_order_value: متوسط قيمة الطلب
             additional_feature_ids: قائمة معرفات الميزات الإضافية
-            
+
         Returns:
             قاموس يحتوي على نتائج الإنشاء
         """
@@ -431,6 +444,7 @@ class SubscriptionService:
 
         # 1️⃣ حساب التسعير
         pricing = await calculate_subscription_pricing(
+            session=self.session,  # ✅ session ممرر
             plan_id=plan_id,
             billing_cycle=billing_cycle,
             payment_method=payment_method,
@@ -497,10 +511,10 @@ class SubscriptionService:
     ) -> Optional[Subscription]:
         """
         تفعيل اشتراك (تغيير الحالة إلى active).
-        
+
         Args:
             subscription_id: معرف الاشتراك
-            
+
         Returns:
             كائن Subscription المحدث أو None
         """
@@ -509,9 +523,7 @@ class SubscriptionService:
             extra={"subscription_id": subscription_id},
         )
 
-        subscription = await self.repo.get_by_id(
-            subscription_id=subscription_id,
-        )
+        subscription = await self.repo.get_by_id(id=subscription_id)
 
         if not subscription:
             return None
@@ -525,7 +537,7 @@ class SubscriptionService:
         # تحديث تاريخ البدء إذا كان None
         if updated and updated.starts_at is None:
             await self.repo.update(
-                subscription_id=subscription_id,
+                id=subscription_id,
                 data={"starts_at": datetime.now(timezone.utc)},
             )
             await self.session.refresh(updated)
@@ -548,10 +560,10 @@ class SubscriptionService:
     ) -> Optional[Subscription]:
         """
         إلغاء اشتراك.
-        
+
         Args:
             subscription_id: معرف الاشتراك
-            
+
         Returns:
             كائن Subscription المحدث أو None
         """
@@ -576,10 +588,10 @@ class SubscriptionService:
     ) -> Optional[Subscription]:
         """
         انتهاء اشتراك.
-        
+
         Args:
             subscription_id: معرف الاشتراك
-            
+
         Returns:
             كائن Subscription المحدث أو None
         """
@@ -608,10 +620,10 @@ class SubscriptionService:
     ) -> int:
         """
         حساب عدد الاشتراكات حسب الحالة.
-        
+
         Args:
             status: حالة الاشتراك
-            
+
         Returns:
             عدد الاشتراكات
         """
@@ -624,7 +636,7 @@ class SubscriptionService:
     async def count_active(self) -> int:
         """
         حساب عدد الاشتراكات النشطة.
-        
+
         Returns:
             عدد الاشتراكات النشطة
         """
@@ -649,13 +661,13 @@ async def create_trial_subscription(
 ) -> int:
     """
     إنشاء اشتراك تجريبي (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         restaurant_id: معرف المطعم
         payment_method: طريقة الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الاشتراك
     """
@@ -693,7 +705,7 @@ async def create_paid_subscription(
 ) -> SubscriptionResult:
     """
     إنشاء اشتراك مدفوع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         restaurant_id: معرف المطعم
@@ -709,7 +721,7 @@ async def create_paid_subscription(
         average_order_value: متوسط قيمة الطلب
         additional_feature_ids: قائمة معرفات الميزات الإضافية
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس نتائج الإنشاء
     """
@@ -738,6 +750,7 @@ async def create_paid_subscription(
 
 async def preview_subscription_pricing(
     *,
+    session: AsyncSession,  # ✅ أضفنا session
     plan_id: int,
     billing_cycle: str,
     payment_method: str,
@@ -752,8 +765,9 @@ async def preview_subscription_pricing(
 ) -> PricingResult:
     """
     معاينة تسعير الاشتراك (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
+        session: جلسة قاعدة البيانات غير المتزامنة
         plan_id: معرف الخطة
         billing_cycle: دورة الفوترة
         payment_method: طريقة الدفع
@@ -765,11 +779,12 @@ async def preview_subscription_pricing(
         monthly_orders: عدد الطلبات الشهرية
         average_order_value: متوسط قيمة الطلب
         additional_feature_ids: قائمة معرفات الميزات الإضافية
-        
+
     Returns:
         قاموس تفاصيل التسعير
     """
     return await calculate_subscription_pricing(
+        session=session,  # ✅ تمرير session
         plan_id=plan_id,
         billing_cycle=billing_cycle,
         payment_method=payment_method,
@@ -782,3 +797,18 @@ async def preview_subscription_pricing(
         average_order_value=average_order_value,
         additional_feature_ids=additional_feature_ids or [],
     )
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "SubscriptionService",
+    "PricingResult",
+    "SubscriptionResult",
+    "SubscriptionList",
+    "create_trial_subscription",
+    "create_paid_subscription",
+    "preview_subscription_pricing",
+]

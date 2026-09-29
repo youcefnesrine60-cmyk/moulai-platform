@@ -7,7 +7,16 @@
 
 # ==============================================
 # 🔢 RESTAURANT ORDER COUNTER SERVICE
-# منطق الأعمال لعداد طلبات المطعم
+# Business Logic Layer - منطق الأعمال لعداد طلبات المطعم
+#
+# - إنشاء عداد طلبات
+# - قراءة عداد طلبات
+# - تحديث عداد طلبات
+# - زيادة عداد طلبات
+# - توليد رقم طلب
+# - إعادة تعيين عداد طلبات
+#
+# Async SQLAlchemy Version
 # ==============================================
 
 from typing import (
@@ -27,14 +36,15 @@ from app.core.logger import logger
 from app.repositories.restaurant.restaurant_order_counters_repo import (
     RestaurantOrderCountersRepository,
 )
-from app.repositories.restaurant.restaurant_repo import RestaurantRepository
+from app.repositories.restaurant.restaurant_repo import (
+    RestaurantRepository,
+)
 from app.schemas.restaurant.restaurant_order_counter import (
-    RestaurantOrderCounterResponse,
-    RestaurantOrderCounterUpdate,
     NextOrderNumberResponse,
     OrderCounterSummary,
+    RestaurantOrderCounterResponse,
+    RestaurantOrderCounterUpdate,
 )
-
 
 # ==============================================
 # 🧩 TYPES
@@ -44,15 +54,15 @@ OrderCounterData = Dict[str, Any]
 OrderCounterUpdateData = Dict[str, Any]
 CounterSummary = Dict[str, Any]
 
-
 # ==============================================
 # 🔢 RESTAURANT ORDER COUNTER SERVICE
 # ==============================================
 
+
 class RestaurantOrderCounterService:
     """
     خدمة عداد طلبات المطعم - تدير منطق الأعمال لعداد الطلبات.
-    
+
     مسؤولة عن:
         - إنشاء عداد طلبات
         - قراءة عداد طلبات
@@ -60,7 +70,7 @@ class RestaurantOrderCounterService:
         - زيادة عداد طلبات
         - توليد رقم طلب
         - إعادة تعيين عداد طلبات
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع عداد الطلبات
@@ -73,7 +83,7 @@ class RestaurantOrderCounterService:
     ) -> None:
         """
         تهيئة خدمة عداد طلبات المطعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -96,13 +106,13 @@ class RestaurantOrderCounterService:
     ) -> RestaurantOrderCounterResponse:
         """
         الحصول على عداد طلبات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantOrderCounterResponse: بيانات عداد الطلبات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العداد
         """
@@ -117,7 +127,10 @@ class RestaurantOrderCounterService:
 
         if not counter:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
         return RestaurantOrderCounterResponse.model_validate(counter)
@@ -133,13 +146,13 @@ class RestaurantOrderCounterService:
     ) -> int:
         """
         الحصول على رقم الطلب الحالي لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             int: آخر رقم طلب
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العداد
         """
@@ -148,19 +161,22 @@ class RestaurantOrderCounterService:
             extra={"restaurant_id": restaurant_id},
         )
 
-        number = await self.repo.get_current_number(
+        counter = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
         )
 
-        if number < 0:
+        if not counter:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
-        return number
+        return counter.last_number
 
     # ==============================================
-    # GET NEXT ORDER NUMBER
+    # GET NEXT ORDER NUMBER (PREVIEW)
     # ==============================================
 
     async def get_next_order_number(
@@ -169,14 +185,14 @@ class RestaurantOrderCounterService:
         restaurant_id: int,
     ) -> NextOrderNumberResponse:
         """
-        الحصول على رقم الطلب التالي لمطعم معين.
-        
+        الحصول على رقم الطلب التالي (دون زيادته).
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             NextOrderNumberResponse: رقم الطلب التالي
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العداد
         """
@@ -191,10 +207,14 @@ class RestaurantOrderCounterService:
 
         if not counter:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
-        next_number = counter.last_number + 1
+        previous_number = counter.last_number
+        next_number = previous_number + 1
         formatted_number = self.build_order_number(
             restaurant_id=restaurant_id,
             sequence=next_number,
@@ -202,8 +222,9 @@ class RestaurantOrderCounterService:
 
         return NextOrderNumberResponse(
             restaurant_id=restaurant_id,
-            next_number=next_number,
-            formatted_number=formatted_number,
+            order_number=formatted_number,
+            sequence=next_number,
+            previous_number=previous_number,
         )
 
     # ==========================================
@@ -221,10 +242,10 @@ class RestaurantOrderCounterService:
     ) -> OrderCounterSummary:
         """
         الحصول على ملخص عداد طلبات مطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             OrderCounterSummary: ملخص العداد
         """
@@ -237,13 +258,24 @@ class RestaurantOrderCounterService:
             restaurant_id=restaurant_id,
         )
 
+        # ✅ إذا لم يوجد عداد → ملخص فارغ
         if not counter:
+            last_order_number = self.build_order_number(
+                restaurant_id=restaurant_id,
+                sequence=0,
+            )
+            next_order_number = self.build_order_number(
+                restaurant_id=restaurant_id,
+                sequence=1,
+            )
+
             return OrderCounterSummary(
                 restaurant_id=restaurant_id,
-                exists=False,
                 total_orders=0,
-                last_order_number=None,
-                next_order_number=None,
+                last_order_number=last_order_number,
+                next_order_number=next_order_number,
+                orders_today=0,
+                orders_this_month=0,
             )
 
         last_order_number = self.build_order_number(
@@ -258,10 +290,11 @@ class RestaurantOrderCounterService:
 
         return OrderCounterSummary(
             restaurant_id=restaurant_id,
-            exists=True,
             total_orders=counter.last_number,
             last_order_number=last_order_number,
             next_order_number=next_order_number,
+            orders_today=0,
+            orders_this_month=0,
         )
 
     # ==========================================
@@ -279,13 +312,13 @@ class RestaurantOrderCounterService:
     ) -> RestaurantOrderCounterResponse:
         """
         تهيئة عداد طلبات جديد لمطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantOrderCounterResponse: بيانات العداد المنشأ
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المطعم
             ConflictError: إذا كان العداد موجوداً مسبقاً
@@ -295,7 +328,7 @@ class RestaurantOrderCounterService:
             extra={"restaurant_id": restaurant_id},
         )
 
-        # التحقق من وجود المطعم
+        # 1️⃣ التحقق من وجود المطعم
         restaurant = await self.restaurant_repo.get_by_id(
             id=restaurant_id,
         )
@@ -305,17 +338,20 @@ class RestaurantOrderCounterService:
                 message=f"المطعم بـ ID '{restaurant_id}' غير موجود",
             )
 
-        # التحقق من عدم وجود عداد مسبق
+        # 2️⃣ التحقق من عدم وجود عداد مسبق
         existing = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
         )
 
         if existing:
             raise ConflictError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' موجود مسبقاً",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"موجود مسبقاً"
+                ),
             )
 
-        # إنشاء عداد جديد
+        # 3️⃣ إنشاء عداد جديد
         counter = await self.repo.create_counter(
             restaurant_id=restaurant_id,
         )
@@ -342,14 +378,14 @@ class RestaurantOrderCounterService:
     ) -> RestaurantOrderCounterResponse:
         """
         تحديث عداد طلبات مطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
             update_data: بيانات التحديث
-            
+
         Returns:
             RestaurantOrderCounterResponse: بيانات العداد المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العداد
             ValidationError: إذا كانت البيانات غير صالحة
@@ -358,30 +394,35 @@ class RestaurantOrderCounterService:
             "order_counter_service_update",
             extra={
                 "restaurant_id": restaurant_id,
-                "fields": list(update_data.model_dump(exclude_unset=True).keys()),
+                "update_fields": list(
+                    update_data.model_dump(exclude_unset=True).keys()
+                ),
             },
         )
 
-        # التحقق من وجود العداد
+        # 1️⃣ التحقق من وجود العداد
         counter = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
         )
 
         if not counter:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
         updates = update_data.model_dump(exclude_unset=True)
 
-        # التحقق من صحة القيمة
+        # 2️⃣ التحقق من صحة القيمة
         if "last_number" in updates:
             if updates["last_number"] < 0:
                 raise ValidationError(
                     message="رقم الطلب لا يمكن أن يكون سالباً",
                 )
 
-        # تحديث العداد
+        # 3️⃣ تحديث العداد
         updated = await self.repo.update(
             id=counter.restaurant_id,
             data=updates,
@@ -389,7 +430,10 @@ class RestaurantOrderCounterService:
 
         if not updated:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
         logger.info(
@@ -410,13 +454,13 @@ class RestaurantOrderCounterService:
     ) -> RestaurantOrderCounterResponse:
         """
         زيادة عداد طلبات مطعم بمقدار 1.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantOrderCounterResponse: بيانات العداد المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العداد
         """
@@ -425,29 +469,35 @@ class RestaurantOrderCounterService:
             extra={"restaurant_id": restaurant_id},
         )
 
-        # التحقق من وجود العداد
+        # 1️⃣ التحقق من وجود العداد
         counter = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
         )
 
         if not counter:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
-        # زيادة العداد
+        # 2️⃣ زيادة العداد
         await self.repo.increment_counter(
             restaurant_id=restaurant_id,
         )
 
-        # جلب العداد المحدث
+        # 3️⃣ جلب العداد المحدث
         updated = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
         )
 
         if not updated:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
         logger.info(
@@ -471,13 +521,13 @@ class RestaurantOrderCounterService:
     ) -> RestaurantOrderCounterResponse:
         """
         إعادة تعيين عداد طلبات مطعم إلى الصفر.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantOrderCounterResponse: بيانات العداد المعاد تعيينه
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العداد
         """
@@ -486,17 +536,20 @@ class RestaurantOrderCounterService:
             extra={"restaurant_id": restaurant_id},
         )
 
-        # التحقق من وجود العداد
+        # 1️⃣ التحقق من وجود العداد
         counter = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
         )
 
         if not counter:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
-        # إعادة تعيين العداد
+        # 2️⃣ إعادة تعيين العداد
         updated = await self.repo.update(
             id=counter.restaurant_id,
             data={"last_number": 0},
@@ -504,7 +557,10 @@ class RestaurantOrderCounterService:
 
         if not updated:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
         logger.info(
@@ -525,13 +581,13 @@ class RestaurantOrderCounterService:
     ) -> NextOrderNumberResponse:
         """
         توليد رقم الطلب التالي لمطعم (يزيد العداد ويعيد الرقم المنسق).
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             NextOrderNumberResponse: رقم الطلب التالي
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العداد
         """
@@ -540,34 +596,39 @@ class RestaurantOrderCounterService:
             extra={"restaurant_id": restaurant_id},
         )
 
-        # التحقق من وجود العداد
+        # 1️⃣ التحقق من وجود العداد
         counter = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
         )
 
         if not counter:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
 
-        # ✅ حفظ الرقم السابق
+        # 2️⃣ حفظ الرقم السابق
         previous_number = counter.last_number
 
-        # توليد الرقم التالي (يزيد العداد تلقائياً)
+        # 3️⃣ توليد الرقم التالي (يزيد العداد تلقائياً)
         order_number = await self.repo.generate_next_order_number(
             restaurant_id=restaurant_id,
         )
 
-        # ✅ الحصول على العداد المحدث
+        # 4️⃣ الحصول على العداد المحدث
         updated = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
         )
 
         if not updated:
             raise NotFoundError(
-                message=f"عداد طلبات المطعم بـ ID '{restaurant_id}' غير موجود",
+                message=(
+                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
+                    f"غير موجود"
+                ),
             )
-
 
         logger.info(
             "order_counter_service_generated_successfully",
@@ -579,9 +640,9 @@ class RestaurantOrderCounterService:
 
         return NextOrderNumberResponse(
             restaurant_id=restaurant_id,
-            order_number=order_number,       # ✅
-            sequence=updated.last_number,    # ✅
-            previous_number=previous_number, # ✅
+            order_number=order_number,
+            sequence=updated.last_number,
+            previous_number=previous_number,
         )
 
     # ==========================================
@@ -599,11 +660,11 @@ class RestaurantOrderCounterService:
     ) -> str:
         """
         بناء رقم طلب منسق.
-        
+
         Args:
             restaurant_id: معرف المطعم
             sequence: رقم التسلسل
-            
+
         Returns:
             str: رقم الطلب المنسق
         """
@@ -611,6 +672,239 @@ class RestaurantOrderCounterService:
             restaurant_id=restaurant_id,
             sequence=sequence,
         )
+
+
+# ==============================================
+# 🔄 COMPATIBILITY FUNCTIONS
+# دوال متوافقة مع الاستيرادات القديمة
+# ==============================================
+
+# ==============================================
+# INITIALIZE ORDER COUNTER (COMPATIBILITY)
+# ==============================================
+
+async def initialize_order_counter(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> None:
+    """
+    تهيئة عداد طلبات جديد لمطعم.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Raises:
+        NotFoundError: إذا لم يتم العثور على المطعم
+        ConflictError: إذا كان العداد موجوداً مسبقاً
+    """
+    service = RestaurantOrderCounterService(session=session)
+
+    await service.initialize_counter(restaurant_id=restaurant_id)
+
+    logger.info(
+        "order_counter_initialized",
+        extra={"restaurant_id": restaurant_id},
+    )
+
+
+# ==============================================
+# GET ORDER COUNTER (COMPATIBILITY)
+# ==============================================
+
+async def get_order_counter(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> Optional[Dict[str, Any]]:
+    """
+    الحصول على عداد طلبات مطعم معين.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        Optional[Dict[str, Any]]: قاموس بيانات العداد أو None
+    """
+    service = RestaurantOrderCounterService(session=session)
+
+    try:
+        counter = await service.get_counter(restaurant_id=restaurant_id)
+        return counter.model_dump()
+    except NotFoundError:
+        return None
+
+
+# ==============================================
+# GENERATE NEXT ORDER NUMBER (COMPATIBILITY)
+# ==============================================
+
+async def generate_next_order_number(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> str:
+    """
+    توليد رقم الطلب التالي لمطعم.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        str: رقم الطلب المنسق
+
+    Raises:
+        NotFoundError: إذا لم يتم العثور على العداد
+    """
+    service = RestaurantOrderCounterService(session=session)
+
+    result = await service.generate_next_order_number(
+        restaurant_id=restaurant_id,
+    )
+
+    return result.order_number
+
+
+# ==============================================
+# GET ORDER COUNTER SUMMARY (COMPATIBILITY)
+# ==============================================
+
+async def get_order_counter_summary(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> Dict[str, Any]:
+    """
+    الحصول على ملخص عداد طلبات مطعم.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        Dict[str, Any]: ملخص العداد
+    """
+    service = RestaurantOrderCounterService(session=session)
+
+    summary = await service.get_counter_summary(
+        restaurant_id=restaurant_id,
+    )
+
+    return summary.model_dump()
+
+
+# ==============================================
+# RESET ORDER COUNTER (COMPATIBILITY)
+# ==============================================
+
+async def reset_order_counter(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> None:
+    """
+    إعادة تعيين عداد طلبات مطعم إلى الصفر.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Raises:
+        NotFoundError: إذا لم يتم العثور على العداد
+    """
+    service = RestaurantOrderCounterService(session=session)
+
+    await service.reset_counter(restaurant_id=restaurant_id)
+
+    logger.info(
+        "order_counter_reset",
+        extra={"restaurant_id": restaurant_id},
+    )
+
+
+# ==============================================
+# INCREMENT ORDER COUNTER (COMPATIBILITY)
+# ==============================================
+
+async def increment_order_counter(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> None:
+    """
+    زيادة عداد طلبات مطعم بمقدار 1.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Raises:
+        NotFoundError: إذا لم يتم العثور على العداد
+    """
+    service = RestaurantOrderCounterService(session=session)
+
+    await service.increment_counter(restaurant_id=restaurant_id)
+
+    logger.info(
+        "order_counter_incremented",
+        extra={"restaurant_id": restaurant_id},
+    )
+
+
+# ==============================================
+# GET CURRENT ORDER NUMBER (COMPATIBILITY)
+# ==============================================
+
+async def get_current_order_number(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> int:
+    """
+    الحصول على رقم الطلب الحالي لمطعم معين.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        int: آخر رقم طلب
+
+    Raises:
+        NotFoundError: إذا لم يتم العثور على العداد
+    """
+    service = RestaurantOrderCounterService(session=session)
+
+    return await service.get_current_number(
+        restaurant_id=restaurant_id,
+    )
+
+
+# ==============================================
+# BUILD ORDER NUMBER (COMPATIBILITY)
+# ==============================================
+
+def build_order_number(
+    restaurant_id: int,
+    sequence: int,
+) -> str:
+    """
+    بناء رقم طلب منسق (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        sequence: رقم التسلسل
+
+    Returns:
+        str: رقم الطلب المنسق
+    """
+    return RestaurantOrderCounterService.build_order_number(
+        restaurant_id=restaurant_id,
+        sequence=sequence,
+    )
 
 
 # ==============================================
@@ -622,4 +916,12 @@ __all__ = [
     "OrderCounterData",
     "OrderCounterUpdateData",
     "CounterSummary",
+    "initialize_order_counter",
+    "get_order_counter",
+    "generate_next_order_number",
+    "get_order_counter_summary",
+    "reset_order_counter",
+    "increment_order_counter",
+    "get_current_order_number",
+    "build_order_number",
 ]

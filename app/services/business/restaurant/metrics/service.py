@@ -7,7 +7,15 @@
 
 # ==============================================
 # 📊 RESTAURANT METRICS SERVICE
-# منطق الأعمال لمقاييس المطعم
+# Business Logic Layer - منطق الأعمال لمقاييس المطعم
+#
+# - تهيئة مقاييس المطعم الجديد
+# - جلب المقاييس
+# - تحديث المقاييس
+# - إعادة تعيين المقاييس
+# - ملخص المقاييس
+#
+# Async SQLAlchemy Version
 # ==============================================
 
 from typing import (
@@ -16,20 +24,21 @@ from typing import (
     Optional,
 )
 
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
 from app.core.logger import logger
-from app.repositories.restaurant.restaurant_metrics_repo import RestaurantMetricsRepository
+from app.repositories.restaurant.restaurant_metrics_repo import (
+    RestaurantMetricsRepository,
+)
 from app.schemas.restaurant.restaurant_metric import (
     RestaurantMetricResponse,
-    RestaurantMetricUpdate,
     RestaurantMetricSummary,
+    RestaurantMetricUpdate,
 )
-
 
 # ==============================================
 # 🧩 TYPES
@@ -37,21 +46,21 @@ from app.schemas.restaurant.restaurant_metric import (
 
 MetricsDict = Dict[str, Any]
 
-
 # ==============================================
 # 📊 RESTAURANT METRICS SERVICE
 # ==============================================
 
+
 class RestaurantMetricsService:
     """
     خدمة مقاييس المطعم - تدير منطق الأعمال لمقاييس المطاعم.
-    
+
     مسؤولة عن:
         - تهيئة مقاييس المطعم الجديد
         - جلب المقاييس
         - تحديث المقاييس
         - إعادة تعيين المقاييس
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع مقاييس المطعم
@@ -63,7 +72,7 @@ class RestaurantMetricsService:
     ) -> None:
         """
         تهيئة خدمة مقاييس المطعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -85,13 +94,13 @@ class RestaurantMetricsService:
     ) -> RestaurantMetricResponse:
         """
         الحصول على مقاييس مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantMetricResponse: بيانات المقاييس
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المقاييس
         """
@@ -106,7 +115,9 @@ class RestaurantMetricsService:
 
         if not metrics:
             raise NotFoundError(
-                message=f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة",
+                message=(
+                    f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة"
+                ),
             )
 
         return RestaurantMetricResponse.model_validate(metrics)
@@ -122,10 +133,10 @@ class RestaurantMetricsService:
     ) -> Optional[MetricsDict]:
         """
         الحصول على مقاييس مطعم معين كقاموس.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             Optional[MetricsDict]: قاموس مقاييس المطعم أو None
         """
@@ -146,7 +157,7 @@ class RestaurantMetricsService:
             "products_count": metrics.products_count,
             "categories_count": metrics.categories_count,
             "monthly_orders": metrics.monthly_orders,
-            "average_order_value": metrics.average_order_value,
+            "average_order_value": float(metrics.average_order_value),
             "created_at": metrics.created_at,
             "updated_at": metrics.updated_at,
         }
@@ -162,36 +173,38 @@ class RestaurantMetricsService:
     ) -> RestaurantMetricSummary:
         """
         الحصول على ملخص مقاييس المطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantMetricSummary: ملخص المقاييس
+
+        Raises:
+            NotFoundError: إذا لم يتم العثور على المقاييس
         """
         logger.info(
             "metrics_service_get_metrics_summary",
             extra={"restaurant_id": restaurant_id},
         )
 
-        metrics = await self.get_metrics(
-            restaurant_id=restaurant_id,
-        )
+        metrics = await self.get_metrics(restaurant_id=restaurant_id)
 
-        # ✅ حساب products_per_category
+        # ✅ حساب products_per_category بأمان
         products_per_category = 0.0
         if metrics.categories_count > 0:
-            products_per_category = metrics.products_count / metrics.categories_count
-
+            products_per_category = (
+                metrics.products_count / metrics.categories_count
+            )
 
         return RestaurantMetricSummary(
             restaurant_id=metrics.restaurant_id,
-            total_products=metrics.products_count,      # ✅
-            total_categories=metrics.categories_count,  # ✅
-            total_orders=metrics.monthly_orders,        # ✅
-            avg_order_value=metrics.average_order_value, # ✅
+            total_products=metrics.products_count,
+            total_categories=metrics.categories_count,
+            total_orders=metrics.monthly_orders,
+            avg_order_value=float(metrics.average_order_value),
             monthly_growth=None,
-            products_per_category=products_per_category, # ✅
+            products_per_category=round(products_per_category, 2),
         )
 
     # ==========================================
@@ -209,13 +222,13 @@ class RestaurantMetricsService:
     ) -> RestaurantMetricResponse:
         """
         تهيئة مقاييس مطعم جديد.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantMetricResponse: بيانات المقاييس المنشأة
-            
+
         Raises:
             ValidationError: إذا كانت المقاييس موجودة مسبقاً
         """
@@ -230,7 +243,10 @@ class RestaurantMetricsService:
 
         if existing:
             raise ValidationError(
-                message=f"مقاييس المطعم بـ ID '{restaurant_id}' موجودة مسبقاً",
+                message=(
+                    f"مقاييس المطعم بـ ID '{restaurant_id}' "
+                    f"موجودة مسبقاً"
+                ),
             )
 
         metrics = await self.repo.create_default(
@@ -256,14 +272,14 @@ class RestaurantMetricsService:
     ) -> RestaurantMetricResponse:
         """
         تحديث مقاييس المطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
             update_data: بيانات التحديث
-            
+
         Returns:
             RestaurantMetricResponse: بيانات المقاييس المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المقاييس
             ValidationError: إذا كانت البيانات غير صالحة
@@ -272,7 +288,9 @@ class RestaurantMetricsService:
             "metrics_service_update",
             extra={
                 "restaurant_id": restaurant_id,
-                "fields": list(update_data.model_dump(exclude_unset=True).keys()),
+                "update_fields": list(
+                    update_data.model_dump(exclude_unset=True).keys()
+                ),
             },
         )
 
@@ -282,12 +300,14 @@ class RestaurantMetricsService:
 
         if not metrics:
             raise NotFoundError(
-                message=f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة",
+                message=(
+                    f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة"
+                ),
             )
 
         updates = update_data.model_dump(exclude_unset=True)
 
-        # التحقق من صحة القيم
+        # ✅ التحقق من صحة القيم
         self._validate_metrics_values(updates)
 
         updated = await self.repo.update(
@@ -297,7 +317,9 @@ class RestaurantMetricsService:
 
         if not updated:
             raise NotFoundError(
-                message=f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة",
+                message=(
+                    f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة"
+                ),
             )
 
         logger.info(
@@ -321,13 +343,13 @@ class RestaurantMetricsService:
     ) -> RestaurantMetricResponse:
         """
         إعادة تعيين مقاييس المطعم إلى الصفر.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantMetricResponse: بيانات المقاييس المعاد تعيينها
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المقاييس
         """
@@ -356,36 +378,137 @@ class RestaurantMetricsService:
 
     def _validate_metrics_values(
         self,
-        updates: Dict[str, Any],
+        updates: MetricsDict,
     ) -> None:
         """
         التحقق من صحة قيم المقاييس.
-        
+
         Args:
             updates: قاموس القيم المراد تحديثها
-            
+
         Raises:
             ValidationError: إذا كانت أي قيمة غير صالحة
         """
-        if "products_count" in updates and updates["products_count"] < 0:
+        if (
+            "products_count" in updates
+            and updates["products_count"] < 0
+        ):
             raise ValidationError(
                 message="عدد المنتجات لا يمكن أن يكون سالباً",
             )
 
-        if "categories_count" in updates and updates["categories_count"] < 0:
+        if (
+            "categories_count" in updates
+            and updates["categories_count"] < 0
+        ):
             raise ValidationError(
                 message="عدد التصنيفات لا يمكن أن يكون سالباً",
             )
 
-        if "monthly_orders" in updates and updates["monthly_orders"] < 0:
+        if (
+            "monthly_orders" in updates
+            and updates["monthly_orders"] < 0
+        ):
             raise ValidationError(
                 message="عدد الطلبات الشهرية لا يمكن أن يكون سالباً",
             )
 
-        if "average_order_value" in updates and updates["average_order_value"] < 0:
+        if (
+            "average_order_value" in updates
+            and updates["average_order_value"] < 0
+        ):
             raise ValidationError(
                 message="متوسط قيمة الطلب لا يمكن أن يكون سالباً",
             )
+
+
+# ==============================================
+# 🔄 COMPATIBILITY FUNCTIONS
+# دوال متوافقة مع الاستيرادات القديمة
+# ==============================================
+
+# ==============================================
+# GET METRICS (COMPATIBILITY)
+# ==============================================
+
+async def get_metrics(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> Optional[MetricsDict]:
+    """
+    الحصول على مقاييس مطعم معين كقاموس.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        Optional[MetricsDict]: قاموس مقاييس المطعم أو None
+    """
+    service = RestaurantMetricsService(session=session)
+
+    return await service.get_metrics_dict(
+        restaurant_id=restaurant_id,
+    )
+
+
+# ==============================================
+# INITIALIZE METRICS (COMPATIBILITY)
+# ==============================================
+
+async def initialize_metrics(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> None:
+    """
+    تهيئة مقاييس مطعم جديد.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Raises:
+        ValidationError: إذا كانت المقاييس موجودة مسبقاً
+    """
+    service = RestaurantMetricsService(session=session)
+
+    await service.initialize_metrics(restaurant_id=restaurant_id)
+
+    logger.info(
+        "metrics_initialized",
+        extra={"restaurant_id": restaurant_id},
+    )
+
+
+# ==============================================
+# RESET METRICS (COMPATIBILITY)
+# ==============================================
+
+async def reset_metrics(
+    *,
+    restaurant_id: int,
+    session: AsyncSession,
+) -> None:
+    """
+    إعادة تعيين مقاييس مطعم معين إلى الصفر.
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Raises:
+        NotFoundError: إذا لم يتم العثور على المقاييس
+    """
+    service = RestaurantMetricsService(session=session)
+
+    await service.reset_metrics(restaurant_id=restaurant_id)
+
+    logger.info(
+        "metrics_reset",
+        extra={"restaurant_id": restaurant_id},
+    )
 
 
 # ==============================================
@@ -395,4 +518,7 @@ class RestaurantMetricsService:
 __all__ = [
     "RestaurantMetricsService",
     "MetricsDict",
+    "get_metrics",
+    "initialize_metrics",
+    "reset_metrics",
 ]

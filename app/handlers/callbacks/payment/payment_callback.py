@@ -23,12 +23,11 @@ from app.repositories.subscription_repo import (
 )
 
 from app.repositories.subscription_features_repo import (
-    create_subscription_feature_tx,
+    SubscriptionFeatureRepository,
 )
 
 from app.repositories.subscription_feature_requests_repo import (
-    get_subscription_feature_requests_tx,
-    delete_subscription_feature_requests_tx,
+    SubscriptionFeatureRequestRepository,
 )
 
 
@@ -137,20 +136,20 @@ async def handle_payment_success(
             )
             return
 
-        requests = await get_subscription_feature_requests_tx(
-            conn=conn,
+        feature_repo = SubscriptionFeatureRepository(session=conn)
+        request_repo = SubscriptionFeatureRequestRepository(session=conn)
+
+        requests = await request_repo.get_by_subscription(
             subscription_id=subscription_id,
         )
 
         for request in requests:
-            await create_subscription_feature_tx(
-                conn=conn,
+            await feature_repo.create_subscription_feature(
                 subscription_id=subscription_id,
-                feature_id=request["feature_id"],
+                feature_id=request.feature_id,
             )
 
-        await delete_subscription_feature_requests_tx(
-            conn=conn,
+        await request_repo.delete_by_subscription(
             subscription_id=subscription_id,
         )
 

@@ -24,7 +24,6 @@ from app.services.business.restaurant.order_counter.service import (
     RestaurantOrderCounterUpdate,
 )
 
-
 # ==============================================
 # 📦 COMPATIBILITY FUNCTIONS
 # ==============================================
@@ -40,6 +39,10 @@ async def initialize_order_counter(
 ) -> None:
     """
     تهيئة عداد طلبات جديد لمطعم (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
     """
     service = RestaurantOrderCounterService(session=session)
 
@@ -62,6 +65,13 @@ async def get_order_counter(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على عداد طلبات مطعم معين (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        Optional[Dict[str, Any]]: قاموس بيانات العداد أو None
     """
     service = RestaurantOrderCounterService(session=session)
 
@@ -84,6 +94,11 @@ async def update_order_counter(
 ) -> None:
     """
     تحديث عداد طلبات مطعم (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        data: بيانات التحديث
+        session: جلسة قاعدة البيانات غير المتزامنة
     """
     service = RestaurantOrderCounterService(session=session)
 
@@ -106,6 +121,13 @@ async def generate_next_order_number(
 ) -> str:
     """
     توليد رقم الطلب التالي لمطعم (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        str: رقم الطلب المنسق
     """
     service = RestaurantOrderCounterService(session=session)
 
@@ -113,7 +135,8 @@ async def generate_next_order_number(
         restaurant_id=restaurant_id,
     )
 
-    return result.formatted_number
+    # ✅ استخدام الحقل الصحيح: order_number (بدلاً من formatted_number)
+    return result.order_number
 
 
 # ==============================================
@@ -127,6 +150,13 @@ async def get_order_counter_summary(
 ) -> Dict[str, Any]:
     """
     الحصول على ملخص عداد طلبات مطعم (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        Dict[str, Any]: ملخص العداد
     """
     service = RestaurantOrderCounterService(session=session)
 
@@ -146,6 +176,10 @@ async def reset_order_counter(
 ) -> None:
     """
     إعادة تعيين عداد طلبات مطعم إلى الصفر (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
     """
     service = RestaurantOrderCounterService(session=session)
 
@@ -168,6 +202,10 @@ async def increment_order_counter(
 ) -> None:
     """
     زيادة عداد طلبات مطعم بمقدار 1 (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
     """
     service = RestaurantOrderCounterService(session=session)
 
@@ -189,6 +227,13 @@ def build_order_number(
 ) -> str:
     """
     بناء رقم طلب منسق (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        sequence: رقم التسلسل
+
+    Returns:
+        str: رقم الطلب المنسق
     """
     return RestaurantOrderCounterService.build_order_number(
         restaurant_id=restaurant_id,
@@ -207,6 +252,13 @@ async def get_current_order_number(
 ) -> int:
     """
     الحصول على رقم الطلب الحالي لمطعم معين (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        int: آخر رقم طلب
     """
     service = RestaurantOrderCounterService(session=session)
 

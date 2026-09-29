@@ -7,6 +7,7 @@
 
 # ==============================================
 # 🚀 MoulAI MAIN APPLICATION
+# التطبيق الرئيسي لمنصة مولاي
 # ==============================================
 
 """التطبيق الرئيسي لمنصة مولاي."""
@@ -21,14 +22,22 @@ from fastapi.middleware.cors import CORSMiddleware
 # 📦 IMPORT ROUTERS
 # ==============================================
 
-# Admin
+# ---------- Admin ----------
 from app.api.v1.admin import (
-    admin_router,
     admin_log_router,
+    admin_router,
     admin_session_router,
 )
 
-# API v1 Routers
+# ---------- Agent ----------
+from app.api.v1.agent import (
+    agent_router,
+    channel_router,
+    conversation_router,
+    message_router,
+)
+
+# ---------- Standalone API v1 ----------
 from app.api.v1.branches import router as branches_router
 from app.api.v1.categories import router as categories_router
 from app.api.v1.option_group import router as option_groups_router
@@ -39,29 +48,41 @@ from app.api.v1.payments import router as payments_router
 from app.api.v1.product_option import router as product_options_router
 from app.api.v1.products import router as products_router
 from app.api.v1.registration_request import router as registration_requests_router
-# Restaurant (جميع الروترات مجمعة في ملف واحد)
-from app.api.v1.restaurant import router as restaurant_router
 from app.api.v1.user import router as users_router
-from app.api.webhook import router as webhook_router
-from app.api.webhook import register_routes
 
+# ---------- Restaurant (المجموعة الرئيسية) ----------
+from app.api.v1.restaurant import router as restaurant_router
+
+# ---------- Webhook ----------
+from app.api.webhook import (
+    register_routes,
+    router as webhook_router,
+)
+
+# ---------- Core ----------
 from app.core.config import settings
-from app.core.database import close_db, init_db
+from app.core.database import (
+    close_db,
+    init_db,
+)
 from app.core.logger import logger
-
 
 # ==============================================
 # 🚀 LIFESPAN MANAGER
 # ==============================================
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     إدارة دورة حياة التطبيق.
-    
+
     - بدء التشغيل: تهيئة قاعدة البيانات وتسجيل المسارات
     - الإغلاق: إغلاق اتصال قاعدة البيانات
-    
+
+    Args:
+        app: تطبيق FastAPI
+
     Yields:
         None: يستمر التطبيق في العمل
     """
@@ -77,10 +98,10 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         },
     )
 
-    # تهيئة قاعدة البيانات
+    # 1️⃣ تهيئة قاعدة البيانات
     await init_db()
 
-    # تسجيل مسارات الكولباك
+    # 2️⃣ تسجيل مسارات الكولباك
     await register_routes()
 
     logger.info(
@@ -97,16 +118,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # 🛑 SHUTDOWN
     # ==========================================
 
-    logger.info(
-        "application_shutting_down",
-    )
+    logger.info("application_shutting_down")
 
     # إغلاق اتصال قاعدة البيانات
     await close_db()
 
-    logger.info(
-        "application_shutdown_complete",
-    )
+    logger.info("application_shutdown_complete")
 
 
 # ==============================================
@@ -123,7 +140,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-
 # ==============================================
 # 🌐 CORS MIDDLEWARE
 # ==============================================
@@ -136,139 +152,152 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # ==============================================
-# 📋 INCLUDE ROUTERS
+# 📋 INCLUDE ROUTERS - /api/v1
 # ==============================================
 
-# ✅ نقاط نهاية المديرين (API v1)
+# ---------- Admin Services ----------
 app.include_router(
     admin_router,
     prefix="/api/v1",
     tags=["Admins"],
 )
 
-# ✅ نقاط نهاية سجل أنشطة المديرين (API v1)
 app.include_router(
     admin_log_router,
     prefix="/api/v1",
     tags=["Admin Logs"],
 )
 
-# ✅ نقاط نهاية جلسات المديرين (API v1)
 app.include_router(
     admin_session_router,
     prefix="/api/v1",
     tags=["Admin Sessions"],
 )
 
-# ✅ نقاط نهاية المطاعم (API v1) - جميع الروترات الفرعية
+# ---------- Agent Services ----------
+app.include_router(
+    agent_router,
+    prefix="/api/v1",
+    tags=["Agents"],
+)
+
+app.include_router(
+    channel_router,
+    prefix="/api/v1",
+    tags=["Channels"],
+)
+
+app.include_router(
+    conversation_router,
+    prefix="/api/v1",
+    tags=["Conversations"],
+)
+
+app.include_router(
+    message_router,
+    prefix="/api/v1",
+    tags=["Messages"],
+)
+
+# ---------- Restaurant (المجموعة الرئيسية - تشمل restaurants, metrics, order_counter, payment_setting, groups, branches) ----------
 app.include_router(
     restaurant_router,
     prefix="/api/v1",
-    tags=["Restaurants"],
+    tags=["Restaurant"],
 )
 
-# ✅ نقاط نهاية المالكين (API v1)
-app.include_router(
-    owners_router,
-    prefix="/api/v1",
-    tags=["Owners"],
-)
-
-# ✅ نقاط نهاية طلبات التسجيل (API v1)
-app.include_router(
-    registration_requests_router,
-    prefix="/api/v1",
-    tags=["Registration Requests"],
-)
-
-# ✅ نقاط نهاية المدفوعات (API v1)
-app.include_router(
-    payments_router,
-    prefix="/api/v1",
-    tags=["Payments"],
-)
-
-# ✅ نقاط نهاية المنتجات (API v1)
+# ---------- Products & Categories & Options ----------
 app.include_router(
     products_router,
     prefix="/api/v1",
     tags=["Products"],
 )
 
-# ✅ نقاط نهاية الفروع (API v1)
-app.include_router(
-    branches_router,
-    prefix="/api/v1",
-    tags=["Branches"],
-)
-
-# ✅ نقاط نهاية التصنيفات (API v1)
 app.include_router(
     categories_router,
     prefix="/api/v1",
     tags=["Categories"],
 )
 
-# ✅ نقاط نهاية الطلبات (API v1)
-app.include_router(
-    orders_router,
-    prefix="/api/v1",
-    tags=["Orders"],
-)
-
-# ✅ نقاط نهاية تفاصيل الطلب (API v1)
-app.include_router(
-    order_items_router,
-    prefix="/api/v1",
-    tags=["Order Items"],
-)
-
-# ✅ نقاط نهاية فروع المطاعم (API v1)
-app.include_router(
-    branches_router,
-    prefix="/api/v1",
-    tags=["Restaurant Branches"],
-)
-
-# ✅ نقاط نهاية مجموعات الخيارات (API v1)
 app.include_router(
     option_groups_router,
     prefix="/api/v1",
     tags=["Option Groups"],
 )
 
-# ✅ نقاط نهاية خيارات المنتج (API v1)
 app.include_router(
     product_options_router,
     prefix="/api/v1",
     tags=["Product Options"],
 )
 
-# ✅ نقاط نهاية المستخدمين (API v1)
+# ---------- Orders & Order Items ----------
+app.include_router(
+    orders_router,
+    prefix="/api/v1",
+    tags=["Orders"],
+)
+
+app.include_router(
+    order_items_router,
+    prefix="/api/v1",
+    tags=["Order Items"],
+)
+
+# ---------- Branches (standalone - فروع المطعم) ----------
+app.include_router(
+    branches_router,
+    prefix="/api/v1",
+    tags=["Branches"],
+)
+
+# ---------- Owners & Registration ----------
+app.include_router(
+    owners_router,
+    prefix="/api/v1",
+    tags=["Owners"],
+)
+
+app.include_router(
+    registration_requests_router,
+    prefix="/api/v1",
+    tags=["Registration Requests"],
+)
+
+# ---------- Payments ----------
+app.include_router(
+    payments_router,
+    prefix="/api/v1",
+    tags=["Payments"],
+)
+
+# ---------- Users ----------
 app.include_router(
     users_router,
     prefix="/api/v1",
     tags=["Users"],
 )
 
-# ✅ Webhook (Telegram)
+# ==============================================
+# 📋 INCLUDE ROUTERS - ROOT (Webhook)
+# ==============================================
+
 app.include_router(
     webhook_router,
     tags=["Webhook"],
 )
 
-
 # ==============================================
 # 🏠 ROOT ENDPOINT
 # ==============================================
+
 
 @app.get("/")
 async def root() -> dict:
     """
     الصفحة الرئيسية للتطبيق.
-    
+
     Returns:
         dict: معلومات عن التطبيق
     """
@@ -285,11 +314,12 @@ async def root() -> dict:
 # ❤️ HEALTH CHECK
 # ==============================================
 
+
 @app.get("/health")
 async def health_check() -> dict:
     """
     التحقق من صحة التطبيق.
-    
+
     Returns:
         dict: حالة التطبيق
     """

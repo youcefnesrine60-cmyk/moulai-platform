@@ -1,49 +1,356 @@
 # ==============================================
-# 💰 FEATURE PRICING REPOSITORY
-# Async Psycopg3 Version
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
-from app.core.db import (
-    execute, 
-    fetch, 
-    fetchrow, 
-    insert_returning_id
+# ==============================================
+# 💰 FEATURE PRICING REPOSITORY
+# عمليات قاعدة البيانات لتسعير الميزات باستخدام SQLAlchemy
+# Async SQLAlchemy Version
+# ==============================================
+
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
 )
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.logger import logger
+from app.models.feature_pricing import FeaturePricing
+from app.repositories.base import BaseRepository
 
 # ==============================================
 # 🧩 TYPES
 # ==============================================
 
-FeaturePricing = dict[str, object]
+FeaturePricingData = Dict[str, Any]
+FeaturePricingUpdateData = Dict[str, Any]
+FeaturePricingList = List[FeaturePricing]
 
 # ==============================================
-# 🧩 BASE SELECT
+# 💰 FEATURE PRICING REPOSITORY
 # ==============================================
 
-_FEATURE_PRICING_SELECT = """
-SELECT
-    id,
-    feature_id,
-    billing_cycle,
-    price,
-    active
-FROM feature_pricing
-"""
 
+class FeaturePricingRepository(
+    BaseRepository[
+        FeaturePricing,
+        FeaturePricingData,
+        FeaturePricingUpdateData,
+    ]
+):
+    """
+    مستودع تسعير الميزات - يوفر عمليات خاصة بتسعير الميزات.
 
-def _row_to_feature_pricing(row) -> FeaturePricing:
-    return {
-        "id": row["id"],
-        "feature_id": row["feature_id"],
-        "billing_cycle": row["billing_cycle"],
-        "price": float(row["price"]),
-        "active": row["active"],
-    }
+    مسؤول عن:
+        - عمليات CRUD الأساسية لتسعير الميزات
+        - البحث حسب الميزة ودورة الفوترة
+        - إدارة حالة النشاط (active)
+        - تحديث السعر
+
+    Attributes:
+        model: نموذج FeaturePricing
+        session: جلسة قاعدة البيانات غير المتزامنة
+    """
+
+    def __init__(
+        self,
+        session: AsyncSession,
+    ) -> None:
+        """
+        تهيئة مستودع تسعير الميزات.
+
+        Args:
+            session: جلسة قاعدة البيانات غير المتزامنة
+        """
+        super().__init__(FeaturePricing, session)
+
+    # ==========================================
+    # 🔍 BASE QUERY
+    # ==========================================
+
+    def _build_base_query(self):
+        """
+        بناء الاستعلام الأساسي لتسعير الميزات.
+
+        Returns:
+            Select: استعلام SQLAlchemy الأساسي
+        """
+        return select(self.model)
+
+    # ==========================================
+    # 📖 QUERIES
+    # ==========================================
+
+    # ==============================================
+    # GET BY FEATURE AND CYCLE
+    # ==============================================
+
+    async def get_by_feature_and_cycle(
+        self,
+        *,
+        feature_id: int,
+        billing_cycle: str,
+        only_active: bool = True,
+    ) -> Optional[FeaturePricing]:
+        """
+        الحصول على تسعير ميزة حسب دورة الفوترة.
+
+        Args:
+            feature_id: معرف الميزة
+            billing_cycle: دورة الفوترة (monthly, yearly)
+            only_active: جلب التسعير النشط فقط
+
+        Returns:
+            كائن FeaturePricing أو None
+        """
+        try:
+            query = (
+                self._build_base_query()
+                .where(
+                    self.model.feature_id == feature_id,
+                    self.model.billing_cycle == billing_cycle,
+                )
+            )
+
+            if only_active:
+                query = query.where(self.model.active.is_(True))
+
+            query = query.limit(1)
+
+            result = await self.session.execute(query)
+
+            return result.scalar_one_or_none()
+
+        except Exception as e:
+            logger.exception(
+                "feature_pricing_repo_get_by_feature_and_cycle_failed",
+                extra={
+                    "feature_id": feature_id,
+                    "billing_cycle": billing_cycle,
+                    "only_active": only_active,
+                    "error": str(e),
+                },
+            )
+            raise
+
+    # ==============================================
+    # GET LIST BY FEATURE
+    # ==============================================
+
+    async def get_list_by_feature(
+        self,
+        *,
+        feature_id: int,
+    ) -> FeaturePricingList:
+        """
+        الحصول على جميع أسعار ميزة معينة.
+
+        Args:
+            feature_id: معرف الميزة
+
+        Returns:
+            قائمة أسعار الميزة
+        """
+        try:
+            query = (
+                self._build_base_query()
+                .where(self.model.feature_id == feature_id)
+                .order_by(self.model.id.asc())
+            )
+
+            result = await self.session.execute(query)
+
+            return list(result.scalars().all())
+
+        except Exception as e:
+            logger.exception(
+                "feature_pricing_repo_get_list_by_feature_failed",
+                extra={
+                    "feature_id": feature_id,
+                    "error": str(e),
+                },
+            )
+            raise
+
+    # ==============================================
+    # GET ALL ACTIVE
+    # ==============================================
+
+    async def get_all_active(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> FeaturePricingList:
+        """
+        الحصول على جميع أسعار الميزات النشطة.
+
+        Args:
+            skip: عدد السجلات للتخطي
+            limit: الحد الأقصى للسجلات
+
+        Returns:
+            قائمة أسعار الميزات النشطة
+        """
+        try:
+            query = (
+                self._build_base_query()
+                .where(self.model.active.is_(True))
+                .order_by(self.model.id.asc())
+                .offset(skip)
+                .limit(limit)
+            )
+
+            result = await self.session.execute(query)
+
+            return list(result.scalars().all())
+
+        except Exception as e:
+            logger.exception(
+                "feature_pricing_repo_get_all_active_failed",
+                extra={"error": str(e)},
+            )
+            raise
+
+    # ==========================================
+    # ✏️ MUTATIONS
+    # ==========================================
+
+    # ==============================================
+    # UPDATE PRICE
+    # ==============================================
+
+    async def update_price(
+        self,
+        *,
+        pricing_id: int,
+        price: float,
+    ) -> Optional[FeaturePricing]:
+        """
+        تحديث سعر ميزة.
+
+        Args:
+            pricing_id: معرف التسعير
+            price: السعر الجديد
+
+        Returns:
+            كائن FeaturePricing المحدث أو None
+        """
+        logger.info(
+            "feature_pricing_repo_update_price",
+            extra={
+                "pricing_id": pricing_id,
+                "price": price,
+            },
+        )
+
+        return await self.update(
+            id=pricing_id,
+            data={"price": price},
+        )
+
+    # ==============================================
+    # ACTIVATE
+    # ==============================================
+
+    async def activate(
+        self,
+        *,
+        pricing_id: int,
+    ) -> Optional[FeaturePricing]:
+        """
+        تفعيل تسعير ميزة.
+
+        Args:
+            pricing_id: معرف التسعير
+
+        Returns:
+            كائن FeaturePricing المحدث أو None
+        """
+        logger.info(
+            "feature_pricing_repo_activate",
+            extra={"pricing_id": pricing_id},
+        )
+
+        return await self.update(
+            id=pricing_id,
+            data={"active": True},
+        )
+
+    # ==============================================
+    # DEACTIVATE
+    # ==============================================
+
+    async def deactivate(
+        self,
+        *,
+        pricing_id: int,
+    ) -> Optional[FeaturePricing]:
+        """
+        إلغاء تفعيل تسعير ميزة.
+
+        Args:
+            pricing_id: معرف التسعير
+
+        Returns:
+            كائن FeaturePricing المحدث أو None
+        """
+        logger.info(
+            "feature_pricing_repo_deactivate",
+            extra={"pricing_id": pricing_id},
+        )
+
+        return await self.update(
+            id=pricing_id,
+            data={"active": False},
+        )
+
+    # ==========================================
+    # 📊 STATISTICS
+    # ==============================================
+
+    # ==============================================
+    # COUNT BY FEATURE
+    # ==============================================
+
+    async def count_by_feature(
+        self,
+        *,
+        feature_id: int,
+        only_active: bool = True,
+    ) -> int:
+        """
+        حساب عدد أسعار ميزة معينة.
+
+        Args:
+            feature_id: معرف الميزة
+            only_active: حساب التسعير النشط فقط
+
+        Returns:
+            عدد الأسعار
+        """
+        filters = {"feature_id": feature_id}
+
+        if only_active:
+            filters["active"] = True
+
+        return await self.count(filters=filters)
 
 
 # ==============================================
-# ➕ CREATE FEATURE PRICING
+# 🔄 COMPATIBILITY FUNCTIONS
+# دوال متوافقة مع الاستيرادات القديمة (Psycopg3)
+# ==============================================
+
+# ==============================================
+# CREATE FEATURE PRICING (COMPATIBILITY)
 # ==============================================
 
 async def create_feature_pricing(
@@ -52,205 +359,286 @@ async def create_feature_pricing(
     billing_cycle: str,
     price: float,
     active: bool = True,
+    session: AsyncSession,
 ) -> int:
+    """
+    إنشاء تسعير ميزة جديدة (دالة متوافقة مع الإصدار القديم).
 
-    pricing_id = await insert_returning_id(
-        """
-        INSERT INTO feature_pricing (
-            feature_id,
-            billing_cycle,
-            price,
-            active
-        )
-        VALUES (%s, %s, %s, %s)
-        RETURNING id
-        """,
-        feature_id,
-        billing_cycle,
-        price,
-        active,
-    )
+    Args:
+        feature_id: معرف الميزة
+        billing_cycle: دورة الفوترة
+        price: السعر
+        active: حالة النشاط
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        معرف التسعير
+    """
+    repo = FeaturePricingRepository(session=session)
+
+    data: FeaturePricingData = {
+        "feature_id": feature_id,
+        "billing_cycle": billing_cycle,
+        "price": price,
+        "active": active,
+    }
+
+    pricing = await repo.create(data=data)
 
     logger.info(
         "feature_pricing_created",
         extra={
-            "pricing_id": pricing_id,
+            "pricing_id": pricing.id,
             "feature_id": feature_id,
+            "billing_cycle": billing_cycle,
         },
     )
 
-    return pricing_id
+    return pricing.id
 
 
 # ==============================================
-# 🔍 GET FEATURE PRICING BY ID
+# GET FEATURE PRICING BY ID (COMPATIBILITY)
 # ==============================================
 
 async def get_feature_pricing_by_id(
     *,
     pricing_id: int,
-) -> FeaturePricing | None:
+    session: AsyncSession,
+) -> Optional[Dict[str, Any]]:
+    """
+    الحصول على تسعير ميزة بالمعرف (دالة متوافقة مع الإصدار القديم).
 
-    row = await fetchrow(
-        _FEATURE_PRICING_SELECT + " WHERE id = %s",
-        pricing_id,
-    )
+    Args:
+        pricing_id: معرف التسعير
+        session: جلسة قاعدة البيانات غير المتزامنة
 
-    return _row_to_feature_pricing(row) if row else None
+    Returns:
+        قاموس بيانات التسعير أو None
+    """
+    repo = FeaturePricingRepository(session=session)
+
+    pricing = await repo.get_by_id(id=pricing_id)
+
+    if not pricing:
+        logger.warning(
+            "feature_pricing_not_found",
+            extra={"pricing_id": pricing_id},
+        )
+        return None
+
+    return {
+        "id": pricing.id,
+        "feature_id": pricing.feature_id,
+        "billing_cycle": pricing.billing_cycle,
+        "price": float(pricing.price),
+        "active": pricing.active,
+    }
 
 
 # ==============================================
-# 🔍 GET FEATURE PRICING (BY FEATURE + CYCLE)
+# GET FEATURE PRICING (COMPATIBILITY)
 # ==============================================
 
 async def get_feature_pricing(
     *,
     feature_id: int,
     billing_cycle: str,
-) -> FeaturePricing | None:
+    session: AsyncSession,
+) -> Optional[Dict[str, Any]]:
+    """
+    الحصول على تسعير ميزة حسب دورة الفوترة (دالة متوافقة مع الإصدار القديم).
 
-    row = await fetchrow(
-        _FEATURE_PRICING_SELECT + """
-        WHERE feature_id = %s
-          AND billing_cycle = %s
-          AND active = TRUE
-        LIMIT 1
-        """,
-        feature_id,
-        billing_cycle,
+    Args:
+        feature_id: معرف الميزة
+        billing_cycle: دورة الفوترة
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        قاموس بيانات التسعير أو None
+    """
+    repo = FeaturePricingRepository(session=session)
+
+    pricing = await repo.get_by_feature_and_cycle(
+        feature_id=feature_id,
+        billing_cycle=billing_cycle,
     )
 
-    return _row_to_feature_pricing(row) if row else None
+    if not pricing:
+        return None
+
+    return {
+        "id": pricing.id,
+        "feature_id": pricing.feature_id,
+        "billing_cycle": pricing.billing_cycle,
+        "price": float(pricing.price),
+        "active": pricing.active,
+    }
 
 
 # ==============================================
-# 🔍 GET FEATURE PRICING LIST
+# GET FEATURE PRICING LIST (COMPATIBILITY)
 # ==============================================
 
 async def get_feature_pricing_list(
     *,
     feature_id: int,
-) -> list[FeaturePricing]:
+    session: AsyncSession,
+) -> List[Dict[str, Any]]:
+    """
+    الحصول على قائمة أسعار ميزة (دالة متوافقة مع الإصدار القديم).
 
-    rows = await fetch(
-        _FEATURE_PRICING_SELECT + """
-        WHERE feature_id = %s
-        ORDER BY id ASC
-        """,
-        feature_id,
-    )
+    Args:
+        feature_id: معرف الميزة
+        session: جلسة قاعدة البيانات غير المتزامنة
 
-    return [_row_to_feature_pricing(row) for row in rows]
+    Returns:
+        قائمة أسعار الميزة
+    """
+    repo = FeaturePricingRepository(session=session)
+
+    pricings = await repo.get_list_by_feature(feature_id=feature_id)
+
+    result = []
+
+    for pricing in pricings:
+        result.append({
+            "id": pricing.id,
+            "feature_id": pricing.feature_id,
+            "billing_cycle": pricing.billing_cycle,
+            "price": float(pricing.price),
+            "active": pricing.active,
+        })
+
+    return result
 
 
 # ==============================================
-# 🔍 GET ALL FEATURE PRICING
+# GET ALL FEATURE PRICING (COMPATIBILITY)
 # ==============================================
 
-async def get_all_feature_pricing() -> list[FeaturePricing]:
+async def get_all_feature_pricing(
+    session: AsyncSession,
+    *,
+    skip: int = 0,
+    limit: int = 100,
+) -> List[Dict[str, Any]]:
+    """
+    الحصول على جميع أسعار الميزات النشطة (دالة متوافقة مع الإصدار القديم).
 
-    rows = await fetch(
-        _FEATURE_PRICING_SELECT + """
-        ORDER BY id ASC
-        """
-    )
+    Args:
+        session: جلسة قاعدة البيانات غير المتزامنة
+        skip: عدد السجلات للتخطي
+        limit: الحد الأقصى للسجلات
 
-    return [_row_to_feature_pricing(row) for row in rows]
+    Returns:
+        قائمة أسعار الميزات
+    """
+    repo = FeaturePricingRepository(session=session)
+
+    pricings = await repo.get_all_active(skip=skip, limit=limit)
+
+    result = []
+
+    for pricing in pricings:
+        result.append({
+            "id": pricing.id,
+            "feature_id": pricing.feature_id,
+            "billing_cycle": pricing.billing_cycle,
+            "price": float(pricing.price),
+            "active": pricing.active,
+        })
+
+    return result
 
 
 # ==============================================
-# ✏️ UPDATE FEATURE PRICE
+# UPDATE FEATURE PRICE (COMPATIBILITY)
 # ==============================================
 
 async def update_feature_price(
     *,
     pricing_id: int,
     price: float,
+    session: AsyncSession,
 ) -> None:
+    """
+    تحديث سعر ميزة (دالة متوافقة مع الإصدار القديم).
 
-    await execute(
-        """
-        UPDATE feature_pricing
-        SET price = %s
-        WHERE id = %s
-        """,
-        price,
-        pricing_id,
-    )
+    Args:
+        pricing_id: معرف التسعير
+        price: السعر الجديد
+        session: جلسة قاعدة البيانات غير المتزامنة
+    """
+    repo = FeaturePricingRepository(session=session)
 
-    logger.info(
-        "feature_price_updated",
-        extra={
-            "pricing_id": pricing_id,
-            "price": price,
-        },
+    await repo.update_price(
+        pricing_id=pricing_id,
+        price=price,
     )
 
 
 # ==============================================
-# ✅ ACTIVATE FEATURE PRICING
+# ACTIVATE FEATURE PRICING (COMPATIBILITY)
 # ==============================================
 
 async def activate_feature_pricing(
     *,
     pricing_id: int,
+    session: AsyncSession,
 ) -> None:
+    """
+    تفعيل تسعير ميزة (دالة متوافقة مع الإصدار القديم).
 
-    await execute(
-        """
-        UPDATE feature_pricing
-        SET active = TRUE
-        WHERE id = %s
-        """,
-        pricing_id,
-    )
+    Args:
+        pricing_id: معرف التسعير
+        session: جلسة قاعدة البيانات غير المتزامنة
+    """
+    repo = FeaturePricingRepository(session=session)
 
-    logger.info(
-        "feature_pricing_activated",
-        extra={"pricing_id": pricing_id},
-    )
+    await repo.activate(pricing_id=pricing_id)
 
 
 # ==============================================
-# ❌ DEACTIVATE FEATURE PRICING
+# DEACTIVATE FEATURE PRICING (COMPATIBILITY)
 # ==============================================
 
 async def deactivate_feature_pricing(
     *,
     pricing_id: int,
+    session: AsyncSession,
 ) -> None:
+    """
+    إلغاء تفعيل تسعير ميزة (دالة متوافقة مع الإصدار القديم).
 
-    await execute(
-        """
-        UPDATE feature_pricing
-        SET active = FALSE
-        WHERE id = %s
-        """,
-        pricing_id,
-    )
+    Args:
+        pricing_id: معرف التسعير
+        session: جلسة قاعدة البيانات غير المتزامنة
+    """
+    repo = FeaturePricingRepository(session=session)
 
-    logger.info(
-        "feature_pricing_deactivated",
-        extra={"pricing_id": pricing_id},
-    )
+    await repo.deactivate(pricing_id=pricing_id)
 
 
 # ==============================================
-# ❌ DELETE FEATURE PRICING
+# DELETE FEATURE PRICING (COMPATIBILITY)
 # ==============================================
 
 async def delete_feature_pricing(
     *,
     pricing_id: int,
+    session: AsyncSession,
 ) -> None:
+    """
+    حذف تسعير ميزة (دالة متوافقة مع الإصدار القديم).
 
-    await execute(
-        """
-        DELETE FROM feature_pricing
-        WHERE id = %s
-        """,
-        pricing_id,
-    )
+    Args:
+        pricing_id: معرف التسعير
+        session: جلسة قاعدة البيانات غير المتزامنة
+    """
+    repo = FeaturePricingRepository(session=session)
+
+    await repo.delete(id=pricing_id)
 
     logger.info(
         "feature_pricing_deleted",

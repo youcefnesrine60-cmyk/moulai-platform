@@ -162,9 +162,13 @@ async def cleanup_test_database() -> AsyncGenerator[None, None]:
             return
 
         async with engine.begin() as connection:
-            await connection.execute(
-                text(f"TRUNCATE TABLE {table_names} RESTART IDENTITY CASCADE"),
-            )
+            for table in reversed(Base.metadata.sorted_tables):
+                await connection.execute(
+                    text(f'DELETE FROM "{table.name}" CASCADE'),
+                )
+                await connection.execute(
+                    text(f'ALTER SEQUENCE IF EXISTS "{table.name}_id_seq" RESTART WITH 1'),
+                )
 
     await truncate_all_tables()
     yield

@@ -370,7 +370,7 @@ MoulAI Platform/
 
 - GitHub: [youcefnesrine60-cmyk](https://github.com/youcefnesrine60-cmyk)
 - Email: youcefnesrine60@gmail.com
-- LinkedIn: [linkedin.com/in/youcef-nesrine-66a92a431](http://www.linkedin.com/in/youcef-nesrine-66a92a431)
+- LinkedIn: [linkedin.com/in/nesrine-youcef-data-engineer](http://www.linkedin.com/in/nesrine-youcef-data-engineer)
 
 ---
 

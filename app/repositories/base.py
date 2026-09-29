@@ -143,18 +143,18 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             instance = self.model(**data)
             self.session.add(instance)
 
-            # ✅ استخدام commit() بدلاً من flush()
+            await self.session.flush()
             await self.session.commit()
 
-            # ✅ refresh بعد commit يعمل بشكل صحيح
-            await self.session.refresh(instance)
+            instance_id = self._get_primary_key_value(instance)
+            refreshed = await self.get_by_id(id=instance_id)
 
             logger.info(
                 f"{self.model.__name__}_created",
-                extra={"id": self._get_primary_key_value(instance)},
+                extra={"id": instance_id},
             )
 
-            return instance
+            return refreshed or instance
 
         except IntegrityError as e:
             await self.session.rollback()
@@ -193,18 +193,21 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             instances = [self.model(**data) for data in data_list]
             self.session.add_all(instances)
 
-            # ✅ استخدام commit()
+            await self.session.flush()
             await self.session.commit()
 
+            refreshed_instances = []
             for instance in instances:
-                await self.session.refresh(instance)
+                instance_id = self._get_primary_key_value(instance)
+                refreshed = await self.get_by_id(id=instance_id)
+                refreshed_instances.append(refreshed or instance)
 
             logger.info(
                 f"{self.model.__name__}_many_created",
                 extra={"count": len(instances)},
             )
 
-            return instances
+            return refreshed_instances
 
         except IntegrityError as e:
             await self.session.rollback()
@@ -442,16 +445,17 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 if hasattr(instance, key) and value is not None:
                     setattr(instance, key, value)
 
-            # ✅ استخدام commit()
+            await self.session.flush()
             await self.session.commit()
-            await self.session.refresh(instance)
+
+            refreshed = await self.get_by_id(id=id)
 
             logger.info(
                 f"{self.model.__name__}_updated",
                 extra={"id": id},
             )
 
-            return instance
+            return refreshed or instance
 
         except Exception as e:
             await self.session.rollback()

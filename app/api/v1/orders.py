@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 📦 ORDERS API
 # نقاط نهاية API للطلبات
 # تدير عمليات إنشاء واستعراض وتحديث وحذف الطلبات
@@ -30,6 +37,7 @@ from app.core.database import get_db
 from app.core.logger import logger
 from app.schemas.order import (
     OrderCreate,
+    OrderItemCreate,
     OrderResponse,
     OrderStatusUpdate,
     OrderSummary,
@@ -313,15 +321,15 @@ async def create_order(
 ) -> OrderResponse:
     """
     إنشاء طلب جديد.
-    
+
     Args:
         data: بيانات الطلب
         service: خدمة الطلبات
         items_service: خدمة عناصر الطلبات
-        
+
     Returns:
         OrderResponse: الطلب المنشأ
-        
+
     Raises:
         HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
@@ -330,31 +338,39 @@ async def create_order(
         extra={
             "restaurant_id": data.restaurant_id,
             "order_type": data.order_type,
+            "items_count": len(data.items) if data.items else 0,
         },
     )
 
     try:
-        # إنشاء الطلب
-        order = await service.create_order(
-            order_data=data,
-        )
+        # 1️⃣ إنشاء الطلب (بدون عناصر أولاً)
+        order = await service.create_order(order_data=data)
 
-        # إضافة عناصر الطلب
+        # 2️⃣ إضافة عناصر الطلب (مع تمرير order_id)
         if data.items:
-            for item_data in data.items:
-                await items_service.add_item(
-                    item_data=item_data,
+            for item_payload in data.items:
+                # ✅ تحويل OrderItemPayload إلى OrderItemCreate
+                # مع إضافة order_id
+                item_data = OrderItemCreate(
+                    order_id=order.id,
+                    product_id=item_payload.product_id,
+                    product_name=item_payload.product_name,
+                    unit_price=item_payload.unit_price,
+                    quantity=item_payload.quantity,
+                    total_price=item_payload.total_price,
+                    options=item_payload.options,
                 )
 
-        # تحديث إجمالي الطلب
-        await service.recalculate_order_total(
-            order_id=order.id,
-        )
+                await items_service.add_item(
+                    item_data=item_data,
+                    order_id=order.id,
+                )
 
-        # جلب الطلب المحدث
-        updated_order = await service.get_by_id(
-            order_id=order.id,
-        )
+        # 3️⃣ إعادة حساب الإجمالي
+        await service.recalculate_order_total(order_id=order.id)
+
+        # 4️⃣ جلب الطلب المحدث
+        updated_order = await service.get_by_id(order_id=order.id)
 
         return updated_order
 

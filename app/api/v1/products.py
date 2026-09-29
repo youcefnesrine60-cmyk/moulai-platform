@@ -1,4 +1,11 @@
 # ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
 # 🍔 PRODUCTS API
 # نقاط نهاية API للمنتجات
 # تدير عمليات إنشاء واستعراض وتحديث وحذف المنتجات
@@ -54,10 +61,10 @@ async def get_product_service(
 ) -> ProductService:
     """
     الحصول على خدمة المنتجات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         ProductService: مثيل من ProductService
     """
@@ -115,7 +122,7 @@ async def list_products(
 ) -> ProductListResponse:
     """
     الحصول على قائمة المنتجات.
-    
+
     Args:
         restaurant_id: معرف المطعم للتصفية
         category_id: معرف التصنيف للتصفية
@@ -124,7 +131,7 @@ async def list_products(
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة المنتجات
-        
+
     Returns:
         ProductListResponse: قائمة المنتجات مع الإحصائيات
     """
@@ -133,7 +140,7 @@ async def list_products(
         extra={
             "restaurant_id": restaurant_id,
             "category_id": category_id,
-            "search": search,
+            "search_query": search,
             "only_available": only_available,
             "skip": skip,
             "limit": limit,
@@ -176,7 +183,7 @@ async def list_products(
                 order_by="name",
             )
             total = await service.repo.count(filters=filters)
-            
+
             result = ProductListResponse(
                 items=[ProductResponse.model_validate(p) for p in products],
                 total=total,
@@ -214,14 +221,14 @@ async def get_product(
 ) -> ProductResponse:
     """
     الحصول على منتج بالمعرف.
-    
+
     Args:
         product_id: معرف المنتج
         service: خدمة المنتجات
-        
+
     Returns:
         ProductResponse: المنتج المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المنتج
     """
@@ -283,15 +290,15 @@ async def create_product(
 ) -> ProductResponse:
     """
     إنشاء منتج جديد.
-    
+
     Args:
         data: بيانات المنتج
         restaurant_id: معرف المطعم
         service: خدمة المنتجات
-        
+
     Returns:
         ProductResponse: المنتج المنشأ
-        
+
     Raises:
         HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
@@ -305,10 +312,9 @@ async def create_product(
     )
 
     try:
-        # إضافة restaurant_id إلى البيانات
-        data.restaurant_id = restaurant_id
         product = await service.create_product(
             product_data=data,
+            restaurant_id=restaurant_id,
         )
         return product
 
@@ -382,15 +388,15 @@ async def update_product(
 ) -> ProductResponse:
     """
     تحديث منتج موجود.
-    
+
     Args:
         product_id: معرف المنتج
         data: بيانات التحديث
         service: خدمة المنتجات
-        
+
     Returns:
         ProductResponse: المنتج المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المنتج أو حدث تعارض
     """
@@ -398,7 +404,7 @@ async def update_product(
         "api_update_product",
         extra={
             "product_id": product_id,
-            "fields": list(data.model_dump(exclude_unset=True).keys()),
+            "update_fields": list(data.model_dump(exclude_unset=True).keys()),
         },
     )
 
@@ -477,15 +483,15 @@ async def update_product_availability(
 ) -> ProductResponse:
     """
     تحديث حالة توفر المنتج.
-    
+
     Args:
         product_id: معرف المنتج
         data: بيانات التحديث
         service: خدمة المنتجات
-        
+
     Returns:
         ProductResponse: المنتج المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المنتج
     """
@@ -547,14 +553,14 @@ async def enable_product(
 ) -> ProductResponse:
     """
     تفعيل منتج.
-    
+
     Args:
         product_id: معرف المنتج
         service: خدمة المنتجات
-        
+
     Returns:
         ProductResponse: المنتج المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المنتج
     """
@@ -564,9 +570,7 @@ async def enable_product(
     )
 
     try:
-        product = await service.enable_product(
-            product_id=product_id,
-        )
+        product = await service.enable_product(product_id=product_id)
         return product
 
     except NotFoundError as e:
@@ -612,14 +616,14 @@ async def disable_product(
 ) -> ProductResponse:
     """
     إلغاء تفعيل منتج.
-    
+
     Args:
         product_id: معرف المنتج
         service: خدمة المنتجات
-        
+
     Returns:
         ProductResponse: المنتج المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المنتج
     """
@@ -629,9 +633,7 @@ async def disable_product(
     )
 
     try:
-        product = await service.disable_product(
-            product_id=product_id,
-        )
+        product = await service.disable_product(product_id=product_id)
         return product
 
     except NotFoundError as e:
@@ -677,11 +679,11 @@ async def delete_product(
 ) -> None:
     """
     حذف منتج.
-    
+
     Args:
         product_id: معرف المنتج
         service: خدمة المنتجات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المنتج أو كان مرتبطاً بطلبات
     """
@@ -757,14 +759,14 @@ async def get_product_summary(
 ) -> ProductSummary:
     """
     الحصول على ملخص المنتجات.
-    
+
     Args:
         restaurant_id: معرف المطعم
         service: خدمة المنتجات
-        
+
     Returns:
         ProductSummary: ملخص المنتجات
-        
+
     Raises:
         HTTPException: إذا حدث خطأ
     """
@@ -798,7 +800,7 @@ async def get_product_summary(
 # ==============================================
 
 @router.get(
-    "/restaurant/{restaurant_id",
+    "/restaurant/{restaurant_id}",  # ✅ تم إصلاح القوس المفقود
     response_model=ProductListResponse,
     summary="منتجات المطعم",
     description="الحصول على منتجات مطعم معين",
@@ -825,14 +827,14 @@ async def get_restaurant_products(
 ) -> ProductListResponse:
     """
     الحصول على منتجات مطعم معين.
-    
+
     Args:
         restaurant_id: معرف المطعم
         only_available: جلب المنتجات المتاحة فقط
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة المنتجات
-        
+
     Returns:
         ProductListResponse: قائمة المنتجات مع الإحصائيات
     """
@@ -901,14 +903,14 @@ async def get_category_products(
 ) -> ProductListResponse:
     """
     الحصول على منتجات تصنيف معين.
-    
+
     Args:
         category_id: معرف التصنيف
         only_available: جلب المنتجات المتاحة فقط
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة المنتجات
-        
+
     Returns:
         ProductListResponse: قائمة المنتجات مع الإحصائيات
     """
@@ -962,14 +964,14 @@ async def get_product_with_details(
 ) -> ProductResponse:
     """
     الحصول على منتج محدد مع جميع علاقاته.
-    
+
     Args:
         product_id: معرف المنتج
         service: خدمة المنتجات
-        
+
     Returns:
         ProductResponse: المنتج المطلوب مع العلاقات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المنتج
     """
@@ -980,6 +982,12 @@ async def get_product_with_details(
 
     try:
         product = await service.get_with_details(product_id=product_id)
+
+        if not product:
+            raise NotFoundError(
+                message=f"المنتج بـ ID '{product_id}' غير موجود",
+            )
+
         return ProductResponse.model_validate(product)
 
     except NotFoundError as e:
@@ -1006,3 +1014,12 @@ async def get_product_with_details(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب تفاصيل المنتج",
         )
+
+
+# ==============================================
+# 📋 EXPORTS
+# ==============================================
+
+__all__ = [
+    "router",
+]

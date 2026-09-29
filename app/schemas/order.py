@@ -26,16 +26,102 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
 
 OrderData = Dict[str, Any]
 OrderUpdateData = Dict[str, Any]
-OrderItemPayload = Dict[str, Any]
-OrderOptionPayload = Dict[str, Any]
 OrderListData = List[Dict[str, Any]]
+
+# ==============================================
+# 📦 OPTION PAYLOAD
+# ==============================================
+
+class OrderOptionPayload(BaseModel):
+    """
+    مخطط خيار عنصر الطلب (Payload).
+
+    يُستخدم داخل `OrderItemPayload` عند إنشاء طلب مع عناصره.
+
+    Attributes:
+        option_group_name: اسم مجموعة الخيارات
+        option_name: اسم الخيار
+        additional_price: السعر الإضافي
+    """
+    option_group_name: str = Field(
+        ...,
+        max_length=255,
+        description="اسم مجموعة الخيارات",
+        json_schema_extra={"example": "حجم"},
+    )
+    option_name: str = Field(
+        ...,
+        max_length=255,
+        description="اسم الخيار",
+        json_schema_extra={"example": "كبير"},
+    )
+    additional_price: float = Field(
+        0,
+        ge=0,
+        description="السعر الإضافي",
+        json_schema_extra={"example": 5.00},
+    )
+
+
+# ==============================================
+# 📦 ITEM PAYLOAD
+# ==============================================
+
+class OrderItemPayload(BaseModel):
+    """
+    مخطط عنصر الطلب (Payload).
+
+    يُستخدم داخل `OrderCreate` عند إنشاء طلب مع عناصره.
+
+    Attributes:
+        product_id: معرف المنتج
+        product_name: اسم المنتج
+        unit_price: سعر الوحدة
+        quantity: الكمية
+        total_price: السعر الإجمالي
+        options: قائمة الخيارات (اختياري)
+    """
+    product_id: int = Field(
+        ...,
+        ge=1,
+        description="معرف المنتج",
+        json_schema_extra={"example": 1},
+    )
+    product_name: str = Field(
+        ...,
+        min_length=1,
+        max_length=255,
+        description="اسم المنتج",
+        json_schema_extra={"example": "بيتزا مارغريتا"},
+    )
+    unit_price: float = Field(
+        ...,
+        gt=0,
+        description="سعر الوحدة",
+        json_schema_extra={"example": 25.00},
+    )
+    quantity: int = Field(
+        ...,
+        gt=0,
+        description="الكمية",
+        json_schema_extra={"example": 2},
+    )
+    total_price: float = Field(
+        ...,
+        gt=0,
+        description="السعر الإجمالي",
+        json_schema_extra={"example": 50.00},
+    )
+    options: Optional[List[OrderOptionPayload]] = Field(
+        None,
+        description="قائمة خيارات العنصر",
+    )
 
 
 # ==============================================
@@ -45,9 +131,9 @@ OrderListData = List[Dict[str, Any]]
 class OrderBase(BaseModel):
     """
     المخطط الأساسي للطلب.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات الطلب.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         branch_id: معرف الفرع
@@ -183,13 +269,13 @@ class OrderBase(BaseModel):
     def validate_order_type(cls, value: str) -> str:
         """
         التحقق من صحة نوع الطلب.
-        
+
         Args:
             value: نوع الطلب
-            
+
         Returns:
             str: نوع الطلب المدقق
-            
+
         Raises:
             ValueError: إذا كان النوع غير صالح
         """
@@ -205,13 +291,13 @@ class OrderBase(BaseModel):
     def validate_status(cls, value: str) -> str:
         """
         التحقق من صحة حالة الطلب.
-        
+
         Args:
             value: حالة الطلب
-            
+
         Returns:
             str: حالة الطلب المدققة
-            
+
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
@@ -239,7 +325,7 @@ class OrderBase(BaseModel):
 class OrderCreate(BaseModel):
     """
     مخطط إنشاء طلب جديد.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         branch_id: معرف الفرع (اختياري)
@@ -339,24 +425,6 @@ class OrderCreate(BaseModel):
     items: Optional[List[OrderItemPayload]] = Field(
         None,
         description="قائمة عناصر الطلب",
-        json_schema_extra={
-            "example": [
-                {
-                    "product_id": 1,
-                    "product_name": "بيتزا مارغريتا",
-                    "unit_price": 25.00,
-                    "quantity": 2,
-                    "total_price": 50.00,
-                    "options": [
-                        {
-                            "option_group_name": "حجم",
-                            "option_name": "كبير",
-                            "additional_price": 5.00,
-                        }
-                    ],
-                }
-            ]
-        },
     )
 
     # ==========================================
@@ -368,13 +436,13 @@ class OrderCreate(BaseModel):
     def validate_order_type(cls, value: str) -> str:
         """
         التحقق من صحة نوع الطلب.
-        
+
         Args:
             value: نوع الطلب
-            
+
         Returns:
             str: نوع الطلب المدقق
-            
+
         Raises:
             ValueError: إذا كان النوع غير صالح
         """
@@ -387,14 +455,15 @@ class OrderCreate(BaseModel):
 
 
 # ==============================================
-# 📥 CREATE ORDER ITEM SCHEMA
+# 📥 CREATE ORDER ITEM SCHEMA 
 # ==============================================
 
 class OrderItemCreate(BaseModel):
     """
     مخطط إنشاء عنصر طلب.
-    
+
     Attributes:
+        order_id: معرف الطلب
         product_id: معرف المنتج
         product_name: اسم المنتج
         unit_price: سعر الوحدة
@@ -402,6 +471,12 @@ class OrderItemCreate(BaseModel):
         total_price: السعر الإجمالي
         options: قائمة الخيارات (اختياري)
     """
+    order_id: int = Field(  # ← ← ← أضفنا هذا
+        ...,
+        description="معرف الطلب",
+        json_schema_extra={"example": 1},
+        ge=1,
+    )
     product_id: int = Field(
         ...,
         description="معرف المنتج",
@@ -436,15 +511,6 @@ class OrderItemCreate(BaseModel):
     options: Optional[List[OrderOptionPayload]] = Field(
         None,
         description="قائمة الخيارات",
-        json_schema_extra={
-            "example": [
-                {
-                    "option_group_name": "حجم",
-                    "option_name": "كبير",
-                    "additional_price": 5.00,
-                }
-            ]
-        },
     )
 
 
@@ -455,7 +521,7 @@ class OrderItemCreate(BaseModel):
 class OrderUpdate(BaseModel):
     """
     مخطط تحديث الطلب - جميع الحقول اختيارية.
-    
+
     Attributes:
         branch_id: معرف الفرع
         table_id: معرف الطاولة
@@ -546,7 +612,7 @@ class OrderUpdate(BaseModel):
 class OrderStatusUpdate(BaseModel):
     """
     مخطط تحديث حالة الطلب.
-    
+
     Attributes:
         status: الحالة الجديدة
         note: ملاحظة إضافية
@@ -579,13 +645,13 @@ class OrderStatusUpdate(BaseModel):
     def validate_status(cls, value: str) -> str:
         """
         التحقق من صحة حالة الطلب.
-        
+
         Args:
             value: حالة الطلب
-            
+
         Returns:
             str: حالة الطلب المدققة
-            
+
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
@@ -613,7 +679,7 @@ class OrderStatusUpdate(BaseModel):
 class OrderResponse(OrderBase):
     """
     مخطط استجابة الطلب - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف الطلب
         created_at: تاريخ الإنشاء
@@ -644,9 +710,7 @@ class OrderResponse(OrderBase):
 class OrderListResponse(BaseModel):
     """
     مخطط استجابة قائمة الطلبات.
-    
-    يحتوي على قائمة الطلبات مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة الطلبات
         total: العدد الإجمالي
@@ -686,7 +750,7 @@ class OrderListResponse(BaseModel):
 class OrderWithItemsResponse(OrderResponse):
     """
     مخطط استجابة الطلب مع عناصره.
-    
+
     Attributes:
         items: قائمة عناصر الطلب
         payments: قائمة مدفوعات الطلب
@@ -715,9 +779,7 @@ class OrderWithItemsResponse(OrderResponse):
 class OrderSummary(BaseModel):
     """
     مخطط ملخص الطلبات.
-    
-    يحتوي على إحصائيات موجزة عن الطلبات.
-    
+
     Attributes:
         total_orders: إجمالي عدد الطلبات
         pending_orders: عدد الطلبات المعلقة
@@ -806,6 +868,11 @@ class OrderSummary(BaseModel):
 # ==============================================
 
 __all__ = [
+    # Payloads
+    "OrderOptionPayload",
+    "OrderItemPayload",
+
+    # Order
     "OrderBase",
     "OrderCreate",
     "OrderItemCreate",
@@ -815,9 +882,9 @@ __all__ = [
     "OrderListResponse",
     "OrderWithItemsResponse",
     "OrderSummary",
+
+    # Types
     "OrderData",
     "OrderUpdateData",
-    "OrderItemPayload",
-    "OrderOptionPayload",
     "OrderListData",
 ]

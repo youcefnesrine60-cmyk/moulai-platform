@@ -259,6 +259,39 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
             )
             raise
 
+    async def count_search(
+        self,
+        *,
+        query: str,
+        include_inactive: bool = False,
+    ) -> int:
+        """احسب العدد الإجمالي لنتائج البحث قبل الترقيم."""
+        try:
+            stmt = select(func.count()).select_from(self.model).where(
+                or_(
+                    self.model.name.ilike(f"%{query}%"),
+                    self.model.type.ilike(f"%{query}%"),
+                    self.model.wilaya.ilike(f"%{query}%"),
+                )
+            )
+
+            if not include_inactive:
+                stmt = stmt.where(self.model.is_active == True)
+
+            result = await self.session.execute(stmt)
+            return result.scalar_one() or 0
+
+        except Exception as e:
+            logger.exception(
+                "restaurant_repo_search_count_failed",
+                extra={
+                    "query": query,
+                    "include_inactive": include_inactive,
+                    "error": str(e),
+                },
+            )
+            raise
+
     # ==============================================
     # GET WITH RELATIONS
     # ==============================================

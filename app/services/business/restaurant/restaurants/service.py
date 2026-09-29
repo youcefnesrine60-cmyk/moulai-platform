@@ -283,6 +283,18 @@ class RestaurantService:
 
         return [RestaurantResponse.model_validate(r) for r in restaurants]
 
+    async def count_search_restaurants(
+        self,
+        *,
+        query: str,
+        include_inactive: bool = False,
+    ) -> int:
+        """عدد المطاعم المطابقة للنص قبل الترقيم."""
+        return await self.repo.count_search(
+            query=query,
+            include_inactive=include_inactive,
+        )
+
     # ==============================================
     # GET ALL RESTAURANTS
     # ==============================================
@@ -350,6 +362,17 @@ class RestaurantService:
             int: عدد المطاعم
         """
         return await self.repo.count_by_owner(owner_id=owner_id)
+
+    async def count_all_restaurants(
+        self,
+        *,
+        only_active: bool = True,
+    ) -> int:
+        """عدد كل المطاعم بعد تطبيق الفلاتر قبل الترقيم."""
+        filters = {}
+        if only_active:
+            filters["is_active"] = True
+        return await self.repo.count(filters=filters)
 
     # ==============================================
     # COUNT RESTAURANTS BY WILAYA

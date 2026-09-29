@@ -20,14 +20,19 @@ from typing import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.restaurant.restaurant_group import (
+    RestaurantBranchBulkCreate,
     RestaurantGroupCreate,
     RestaurantGroupUpdate,
-    RestaurantBranchBulkCreate,
 )
-from app.services.business.restaurant.groups.handlers import RestaurantGroupEventHandlers
-from app.services.business.restaurant.groups.branch_handlers import RestaurantBranchEventHandlers
-from app.services.business.restaurant.groups.service import RestaurantGroupService
-
+from app.services.business.restaurant.groups.branch_handlers import (
+    RestaurantBranchEventHandlers,
+)
+from app.services.business.restaurant.groups.handlers import (
+    RestaurantGroupEventHandlers,
+)
+from app.services.business.restaurant.groups.service import (
+    RestaurantGroupService,
+)
 
 # ==============================================
 # 📦 GROUP OPERATIONS (COMPATIBILITY)
@@ -42,11 +47,17 @@ async def create_group(
     owner_id: int,
     name: str,
     session: AsyncSession,
-    is_active: bool = True,
 ) -> int:
     """
     إنشاء مجموعة مطاعم جديدة (دالة متوافقة مع الإصدار القديم).
-    
+
+    ⚠️ RestaurantGroup لا يحتوي على is_active — تم إزالتها.
+
+    Args:
+        owner_id: معرف المالك
+        name: اسم المجموعة
+        session: جلسة قاعدة البيانات غير المتزامنة
+
     Returns:
         int: معرف المجموعة المنشأة
     """
@@ -55,7 +66,6 @@ async def create_group(
     group_data = RestaurantGroupCreate(
         owner_id=owner_id,
         name=name,
-        is_active=is_active,
     )
 
     group = await handlers.create_group(group_data=group_data)
@@ -74,6 +84,13 @@ async def get_group(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مجموعة مطاعم بالمعرف (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        group_id: معرف المجموعة
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        Optional[Dict[str, Any]]: قاموس بيانات المجموعة أو None
     """
     service = RestaurantGroupService(session=session)
 
@@ -96,12 +113,21 @@ async def get_groups_by_owner(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على مجموعات المطاعم لمالك معين (دالة متوافقة مع الإصدار القديم).
+
+    ⚠️ only_active مهمل — RestaurantGroup لا يحتوي على is_active.
+
+    Args:
+        owner_id: معرف المالك
+        session: جلسة قاعدة البيانات غير المتزامنة
+        only_active: مهمل (للتوافق فقط)
+
+    Returns:
+        List[Dict[str, Any]]: قائمة المجموعات
     """
     service = RestaurantGroupService(session=session)
 
     result = await service.get_by_owner(
         owner_id=owner_id,
-        only_active=only_active,
     )
 
     return [g.model_dump() for g in result.items]
@@ -119,6 +145,11 @@ async def update_group(
 ) -> None:
     """
     تحديث مجموعة مطاعم (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        group_id: معرف المجموعة
+        data: بيانات التحديث
+        session: جلسة قاعدة البيانات غير المتزامنة
     """
     handlers = RestaurantGroupEventHandlers(session=session)
 
@@ -142,6 +173,11 @@ async def delete_group(
 ) -> None:
     """
     حذف مجموعة مطاعم (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        group_id: معرف المجموعة
+        session: جلسة قاعدة البيانات غير المتزامنة
+        permanent: حذف نهائي
     """
     handlers = RestaurantGroupEventHandlers(session=session)
 
@@ -162,6 +198,12 @@ async def toggle_group_active(
 ) -> None:
     """
     تبديل حالة المجموعة (نشط/غير نشط) (دالة متوافقة مع الإصدار القديم).
+
+    ⚠️ RestaurantGroup لا يحتوي على is_active — عملية no-op.
+
+    Args:
+        group_id: معرف المجموعة
+        session: جلسة قاعدة البيانات غير المتزامنة
     """
     handlers = RestaurantGroupEventHandlers(session=session)
 
@@ -184,6 +226,14 @@ async def add_branches_to_group(
 ) -> List[Dict[str, Any]]:
     """
     إضافة فروع مطاعم إلى مجموعة (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        group_id: معرف المجموعة
+        restaurant_ids: قائمة معرفات المطاعم
+        session: جلسة قاعدة البيانات غير المتزامنة
+
+    Returns:
+        List[Dict[str, Any]]: قائمة الفروع المُنشأة
     """
     handlers = RestaurantBranchEventHandlers(session=session)
 
@@ -209,6 +259,11 @@ async def remove_branch_from_group(
 ) -> None:
     """
     إزالة فرع مطعم من مجموعة (دالة متوافقة مع الإصدار القديم).
+
+    Args:
+        group_id: معرف المجموعة
+        restaurant_id: معرف المطعم
+        session: جلسة قاعدة البيانات غير المتزامنة
     """
     handlers = RestaurantBranchEventHandlers(session=session)
 
@@ -223,7 +278,6 @@ async def remove_branch_from_group(
 # ==============================================
 
 __all__ = [
-
     # Group Operations
     "create_group",
     "get_group",
