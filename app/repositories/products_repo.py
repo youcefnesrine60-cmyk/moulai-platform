@@ -18,6 +18,7 @@ from typing import (
 
 from sqlalchemy import (
     and_,
+    or_,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -315,23 +316,16 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
             قائمة المنتجات
         """
         try:
-            conditions = [
-                self.model.name.ilike(f"%{query}%"),
-                self.model.description.ilike(f"%{query}%"),
-            ]
-
-            if restaurant_id is not None:
-                conditions.append(
-                    self.model.restaurant_id == restaurant_id,
-                )
-
-            stmt = (
-                select(self.model)
-                .where(and_(*conditions))
-                .where(self.model.is_available == True)
-                .offset(skip)
-                .limit(limit)
+            stmt = select(self.model).where(
+                or_(
+                    self.model.name.ilike(f"%{query}%"),
+                    self.model.description.ilike(f"%{query}%"),
+                ),
+                self.model.is_available == True,
             )
+            if restaurant_id is not None:
+                stmt = stmt.where(self.model.restaurant_id == restaurant_id)
+            stmt = stmt.offset(skip).limit(limit)
 
             result = await self.session.execute(stmt)
 

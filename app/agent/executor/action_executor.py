@@ -155,6 +155,67 @@ class ActionExecutor:
 
         # 4️⃣ التحقق من الحاجة للتأكيد
         if action.requires_confirmation:
+            if self.confirmation_handler is None:
+                prepare = getattr(action, "prepare", None)
+                if prepare:
+                    try:
+                        preview = await prepare(params=params, context=context)
+                    except Exception as e:
+                        logger.exception(
+                            "executor_action_preparation_failed",
+                            extra={"action": action.name, "error": str(e)},
+                        )
+                        return self._create_error_result(
+                            action=action.name,
+                            message="تعذر إعداد العملية لمراجعتها.",
+                            error=str(e),
+                        )
+                    if not preview.success:
+                        return {
+                            "success": False,
+                            "action": action.name,
+                            "message": preview.message,
+                            "data": preview.data or {},
+                            "requires_confirmation": True,
+                            "confirmed": False,
+                            "error": preview.error,
+                        }
+                    params.update(preview.data or {})
+                    confirmation_message = preview.message
+                    language_prompt = {
+                        "ar": "\n\nهل تؤكد الطلب؟ (نعم/لا)",
+                        "fr": "\n\nConfirmer cette commande ? (Oui/Non)",
+                        "en": "\n\nConfirm this order? (Yes/No)",
+                    }
+                    confirmation_message += language_prompt.get(language, language_prompt["en"])
+                else:
+                    confirmation_message = self._build_confirmation_message(
+                        action=action,
+                        params=params,
+                    )
+                return {
+                    "success": True,
+                    "action": action.name,
+                    "message": confirmation_message,
+                    "data": {
+                        "pending_confirmation": True,
+                        "params": {
+                            key: value
+                            for key, value in params.items()
+                            if key not in {"history", "context", "request_context", "session_id"}
+                        },
+                        "context": {
+                            "user_id": context.get("user_id") if context else None,
+                            "channel": context.get("channel") if context else None,
+                            "language": language,
+                            "request_context": context.get("request_context", {}) if context else {},
+                        },
+                    },
+                    "requires_confirmation": True,
+                    "confirmed": False,
+                    "error": None,
+                }
+
             # طلب تأكيد من المستخدم
             confirmed = await self._request_confirmation(
                 action=action,
@@ -313,12 +374,12 @@ class ActionExecutor:
                 # في حالة فشل المعالج، نرفض التنفيذ
                 return False
 
-        # إذا لم يكن هناك معالج، نفترض الموافقة (للتطوير)
+        # لا يجوز تنفيذ إجراء يتطلب تأكيداً دون موافقة صريحة.
         logger.warning(
             "executor_no_confirmation_handler",
             extra={"action": action.name},
         )
-        return True
+        return False
 
     def _build_confirmation_message(
         self,

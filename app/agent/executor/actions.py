@@ -11,6 +11,7 @@
 # ==============================================
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import (
     Any,
     Awaitable,
@@ -20,7 +21,89 @@ from typing import (
     Optional,
 )
 
+from sqlalchemy import or_, select
+
+from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
+from app.models.loyalty_discount import Promotion
+from app.models.order import Order
+from app.models.restaurant import Restaurant
+from app.models.user import User
+from app.repositories.order_status_history_repo import OrderStatusHistoryRepository
+from app.repositories.orders_repo import OrdersRepository
+from app.repositories.products_repo import ProductRepository
+from app.repositories.user_repo import UserRepository
+from app.services.business.orders.create import create_order_with_items
+
+
+def _request_context(context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    if not context:
+        return {}
+    return context.get("request_context", {})
+
+
+def _restaurant_id(
+    *,
+    params: Dict[str, Any],
+    context: Optional[Dict[str, Any]],
+) -> Optional[int]:
+    value = params.get("restaurant_id") or _request_context(context).get("restaurant_id")
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _chat_id(context: Optional[Dict[str, Any]]) -> Optional[int]:
+    if not context:
+        return None
+    value = context.get("user_id") or _request_context(context).get("chat_id")
+    try:
+        return int(value) if value is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+async def _find_products(
+    *,
+    product_name: Optional[str],
+    restaurant_id: Optional[int],
+) -> list[Any]:
+    if not product_name:
+        return []
+    async with AsyncSessionLocal() as session:
+        repository = ProductRepository(session=session)
+        products = await repository.search(
+            query=str(product_name).strip(),
+            restaurant_id=restaurant_id,
+            limit=20,
+        )
+        return [
+            product for product in products
+            if product.restaurant and product.restaurant.is_active
+        ]
+
+
+async def _find_owned_order(
+    *,
+    chat_id: int,
+    order_number: Optional[Any],
+    session: Any,
+) -> Optional[Order]:
+    statement = (
+        select(Order)
+        .join(User, Order.user_id == User.id)
+        .where(User.chat_id == chat_id)
+    )
+    if order_number is not None:
+        reference = str(order_number).strip()
+        conditions = [Order.order_number == reference]
+        if reference.isdigit():
+            conditions.append(Order.id == int(reference))
+        statement = statement.where(or_(*conditions))
+    return (await session.execute(
+        statement.order_by(Order.created_at.desc()).limit(1),
+    )).scalar_one_or_none()
 
 # ==============================================
 # 🧩 TYPES
@@ -130,6 +213,68 @@ class OrderFoodAction(BaseAction):
             priority=10,
         )
 
+    async def prepare(
+        self,
+        *,
+        params: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> ActionResponse:
+        chat_id = _chat_id(context)
+        restaurant_id = _restaurant_id(params=params, context=context)
+        product_name = params.get("product_name")
+        try:
+            quantity = int(params.get("quantity", 1))
+        except (TypeError, ValueError):
+            quantity = 0
+        if not chat_id or quantity <= 0 or (not product_name and not params.get("product_id")):
+            return ActionResponse(False, "أحتاج إلى المنتج والكمية قبل إعداد الطلب.", error="missing_order_details")
+
+        async with AsyncSessionLocal() as session:
+            user = await UserRepository(session=session).get_by_chat_id(chat_id=chat_id)
+            if not user or not user.consent:
+                return ActionResponse(
+                    False,
+                    "يرجى الموافقة على شروط الاستخدام قبل إنشاء طلب.",
+                    error="customer_consent_required",
+                )
+
+        if params.get("product_id"):
+            async with AsyncSessionLocal() as session:
+                product = await ProductRepository(session=session).get_by_id(id=int(params["product_id"]))
+                products = [product] if product and product.is_available else []
+                if product and restaurant_id and product.restaurant_id != restaurant_id:
+                    products = []
+                if product:
+                    restaurant = await session.get(Restaurant, product.restaurant_id)
+                    if not restaurant or not restaurant.is_active:
+                        products = []
+        else:
+            products = await _find_products(
+                product_name=str(product_name),
+                restaurant_id=restaurant_id,
+            )
+        if not products:
+            return ActionResponse(False, "لم أجد منتجاً متاحاً بهذا الاسم.", error="product_not_found")
+        if len(products) > 1:
+            return ActionResponse(False, "يوجد أكثر من منتج مطابق. حدّد المنتج والمطعم.", error="ambiguous_product")
+
+        product = products[0]
+        unit_price = float(product.price)
+        total = unit_price * quantity
+        return ActionResponse(
+            True,
+            f"الطلب: {quantity} × {product.name}\nسعر الوحدة: {unit_price:.2f} دج\nالإجمالي: {total:.2f} دج",
+            data={
+                "product_id": product.id,
+                "product_name": product.name,
+                "restaurant_id": product.restaurant_id,
+                "user_id": user.id,
+                "quantity": quantity,
+                "quoted_unit_price": unit_price,
+                "quoted_total": total,
+            },
+        )
+
     async def execute(
         self,
         *,
@@ -155,19 +300,119 @@ class OrderFoodAction(BaseAction):
             },
         )
 
-        # TODO: تنفيذ منطق الطلب الفعلي
-        # - التحقق من توفر المنتج
-        # - إنشاء الطلب
-        # - إضافة العناصر
+        chat_id = _chat_id(context)
+        product_name = params.get("product_name")
+        restaurant_id = _restaurant_id(params=params, context=context)
+        try:
+            quantity = int(params.get("quantity", 1))
+        except (TypeError, ValueError):
+            quantity = 0
+        if not chat_id or quantity <= 0 or (not product_name and not params.get("product_id")):
+            return ActionResponse(
+                success=False,
+                message="لا أملك معلومات كافية لإنشاء الطلب. اذكر المنتج والكمية أولاً.",
+                error="missing_order_details",
+            )
+
+        async with AsyncSessionLocal() as session:
+            repository = ProductRepository(session=session)
+            if params.get("product_id"):
+                product = await repository.get_by_id(id=int(params["product_id"]))
+                products = [product] if product and product.is_available else []
+                if product and restaurant_id and product.restaurant_id != restaurant_id:
+                    products = []
+                if product:
+                    restaurant = await session.get(Restaurant, product.restaurant_id)
+                    if not restaurant or not restaurant.is_active:
+                        products = []
+            else:
+                products = await repository.search(
+                    query=str(product_name).strip(),
+                    restaurant_id=restaurant_id,
+                    limit=20,
+                )
+            if not products:
+                return ActionResponse(
+                    success=False,
+                    message="لم أجد منتجاً متاحاً بهذا الاسم. تحقق من الاسم أو اختر مطعماً أولاً.",
+                    error="product_not_found",
+                )
+            if len(products) > 1:
+                choices = "\n".join(
+                    f"- {product.name} ({product.price:.2f} دج)"
+                    for product in products[:8]
+                )
+                return ActionResponse(
+                    success=False,
+                    message=f"وجدت أكثر من منتج مطابق. حدّد المنتج والمطعم:\n{choices}",
+                    error="ambiguous_product",
+                )
+
+            product = products[0]
+            quoted_price = params.get("quoted_unit_price")
+            if quoted_price is not None and abs(float(quoted_price) - float(product.price)) > 0.000001:
+                return ActionResponse(
+                    success=False,
+                    message="تغير سعر المنتج منذ إعداد الطلب. لم يتم إنشاء الطلب؛ أعد المحاولة لمراجعة السعر الجديد.",
+                    error="product_price_changed",
+                )
+            user = await UserRepository(session=session).get_by_chat_id(chat_id=chat_id)
+            if not user or not user.consent:
+                return ActionResponse(
+                    success=False,
+                    message="يرجى الموافقة على شروط الاستخدام قبل إنشاء طلب.",
+                    error="customer_consent_required",
+                )
+
+            order_type = params.get("order_type", "takeaway")
+            delivery_address = params.get("delivery_address")
+            if order_type == "delivery" and not delivery_address:
+                return ActionResponse(
+                    success=False,
+                    message="أرسل عنوان التوصيل قبل تأكيد طلب التوصيل.",
+                    error="missing_delivery_address",
+                )
+
+            unit_price = float(product.price)
+            subtotal = unit_price * quantity
+            order_id = await create_order_with_items(
+                restaurant_id=product.restaurant_id,
+                branch_id=None,
+                table_id=None,
+                employee_id=None,
+                user_id=user.id,
+                order_type=order_type,
+                customer_name=None,
+                customer_phone=None,
+                delivery_address=delivery_address,
+                customer_note=params.get("customer_note"),
+                subtotal_amount=subtotal,
+                discount_amount=0,
+                tax_amount=0,
+                delivery_amount=0,
+                total_amount=subtotal,
+                items=[{
+                    "product_id": product.id,
+                    "product_name": product.name,
+                    "unit_price": unit_price,
+                    "quantity": quantity,
+                    "total_price": subtotal,
+                }],
+                session=session,
+            )
+            order = await session.get(Order, order_id)
+            order_number = order.order_number if order else str(order_id)
 
         return ActionResponse(
             success=True,
-            message=f"تم طلب {params.get('quantity', 1)} × {params.get('product_name', 'المنتج')} بنجاح",
+            message=f"تم إنشاء الطلب رقم {order_number}: {quantity} × {product.name}، الإجمالي {subtotal:.2f} دج.",
             data={
-                "order_id": "ORDER-12345",
-                "product_name": params.get("product_name"),
-                "quantity": params.get("quantity"),
-                "total_price": 100.00,
+                "order_id": order_id,
+                "order_number": order_number,
+                "product_id": product.id,
+                "product_name": product.name,
+                "quantity": quantity,
+                "total_price": subtotal,
             },
         )
 
@@ -213,21 +458,41 @@ class ViewMenuAction(BaseAction):
             },
         )
 
-        # TODO: تنفيذ منطق عرض القائمة الفعلي
-        # - جلب المنتجات من قاعدة البيانات
-        # - تصفية حسب التصنيف أو البحث
-
-        return ActionResponse(
-            success=True,
-            message="📋 **القائمة**\n\n1. بيتزا مارغريتا - 1500 دج\n2. برجر لحم - 1200 دج\n3. شاورما - 800 دج",
-            data={
-                "items": [
-                    {"name": "بيتزا مارغريتا", "price": 1500},
-                    {"name": "برجر لحم", "price": 1200},
-                    {"name": "شاورما", "price": 800},
-                ],
-            },
-        )
+        restaurant_id = _restaurant_id(params=params, context=context)
+        async with AsyncSessionLocal() as session:
+            if not restaurant_id:
+                result = await session.execute(
+                    select(Restaurant).where(Restaurant.is_active == True).order_by(Restaurant.name),
+                )
+                restaurants = result.scalars().all()
+                if not restaurants:
+                    return ActionResponse(False, "لا توجد مطاعم متاحة حالياً.", error="restaurants_not_found")
+                lines = [f"{restaurant.id}. {restaurant.name} - {restaurant.wilaya}" for restaurant in restaurants]
+                return ActionResponse(
+                    True,
+                    "اختر مطعماً لعرض قائمته:\n" + "\n".join(lines),
+                    data={"restaurants": [{"id": r.id, "name": r.name} for r in restaurants]},
+                )
+            repository = ProductRepository(session=session)
+            products = await repository.get_by_restaurant_id(
+                restaurant_id=restaurant_id,
+                only_available=True,
+                category_id=params.get("category_id"),
+                limit=100,
+            )
+            if params.get("search"):
+                products = [
+                    product for product in products
+                    if str(params["search"]).casefold() in str(product.name).casefold()
+                ]
+            if not products:
+                return ActionResponse(False, "لا توجد منتجات متاحة في هذا المطعم حالياً.", error="menu_empty")
+            items = [{"id": p.id, "name": p.name, "price": p.price} for p in products]
+            message = "📋 القائمة الفعلية:\n" + "\n".join(
+                f"{item['id']}. {item['name']} - {item['price']:.2f} دج"
+                for item in items
+            )
+            return ActionResponse(True, message, data={"items": items})
 
 
 # ==============================================
@@ -271,18 +536,23 @@ class ViewRestaurantsAction(BaseAction):
             },
         )
 
-        # TODO: تنفيذ منطق عرض المطاعم الفعلي
-
+        async with AsyncSessionLocal() as session:
+            statement = select(Restaurant).where(Restaurant.is_active == True)
+            if params.get("location"):
+                statement = statement.where(Restaurant.wilaya.ilike(f"%{params['location']}%"))
+            restaurants = (await session.execute(statement.order_by(Restaurant.name))).scalars().all()
+        data = [
+            {"id": restaurant.id, "name": restaurant.name, "location": restaurant.wilaya}
+            for restaurant in restaurants
+        ]
+        if not data:
+            return ActionResponse(False, "لا توجد مطاعم متاحة حالياً.", error="restaurants_not_found")
         return ActionResponse(
-            success=True,
-            message="🏪 **المطاعم المتاحة**\n\n1. مطعم البيتزا السريعة - الجزائر\n2. برجر هاوس - وهران\n3. شاورما الشام - قسنطينة",
-            data={
-                "restaurants": [
-                    {"name": "مطعم البيتزا السريعة", "location": "الجزائر"},
-                    {"name": "برجر هاوس", "location": "وهران"},
-                    {"name": "شاورما الشام", "location": "قسنطينة"},
-                ],
-            },
+            True,
+            "🏪 المطاعم المتاحة:\n" + "\n".join(
+                f"{r['id']}. {r['name']} - {r['location']}" for r in data
+            ),
+            data={"restaurants": data},
         )
 
 
@@ -299,7 +569,7 @@ class ModifyOrderAction(BaseAction):
         super().__init__(
             name="modify_order",
             description="تعديل طلب موجود",
-            requires_confirmation=True,
+            requires_confirmation=False,
             priority=8,
         )
 
@@ -327,15 +597,10 @@ class ModifyOrderAction(BaseAction):
             },
         )
 
-        # TODO: تنفيذ منطق تعديل الطلب الفعلي
-
         return ActionResponse(
-            success=True,
-            message=f"تم تعديل الطلب #{params.get('order_id', 'غير معروف')} بنجاح",
-            data={
-                "order_id": params.get("order_id"),
-                "changes": params.get("changes"),
-            },
+            success=False,
+            message="تعديل عناصر الطلب عبر المحادثة غير متاح حالياً. لم يتم تغيير الطلب.",
+            error="order_modification_not_supported",
         )
 
 
@@ -380,16 +645,41 @@ class CancelOrderAction(BaseAction):
             },
         )
 
-        # TODO: تنفيذ منطق إلغاء الطلب الفعلي
-
-        return ActionResponse(
-            success=True,
-            message=f"تم إلغاء الطلب #{params.get('order_id', 'غير معروف')} بنجاح",
-            data={
-                "order_id": params.get("order_id"),
-                "reason": params.get("reason"),
-            },
-        )
+        chat_id = _chat_id(context)
+        if not chat_id:
+            return ActionResponse(False, "تعذر التحقق من ملكية الطلب.", error="user_not_found")
+        async with AsyncSessionLocal() as session:
+            order = await _find_owned_order(
+                chat_id=chat_id,
+                order_number=params.get("order_id"),
+                session=session,
+            )
+            if not order:
+                return ActionResponse(False, "لم أجد هذا الطلب ضمن طلبات حسابك.", error="order_not_found")
+            if order.status not in {"pending", "confirmed"}:
+                return ActionResponse(
+                    False,
+                    f"لا يمكن إلغاء الطلب في حالته الحالية ({order.status}).",
+                    error="order_not_cancellable",
+                )
+            previous_status = order.status
+            await OrdersRepository(session=session).update(
+                id=order.id,
+                data={"status": "cancelled"},
+            )
+            await OrderStatusHistoryRepository(session=session).create(
+                data={
+                    "order_id": order.id,
+                    "status": "cancelled",
+                    "employee_id": None,
+                    "note": params.get("reason") or "تم الإلغاء بواسطة العميل عبر الوكيل",
+                },
+            )
+            return ActionResponse(
+                True,
+                f"تم إلغاء الطلب رقم {order.order_number}.",
+                data={"order_id": order.id, "order_number": order.order_number, "previous_status": previous_status},
+            )
 
 
 # ==============================================
@@ -430,15 +720,25 @@ class TrackOrderAction(BaseAction):
             extra={"order_id": params.get("order_id")},
         )
 
-        # TODO: تنفيذ منطق تتبع الطلب الفعلي
-
+        chat_id = _chat_id(context)
+        if not chat_id:
+            return ActionResponse(False, "تعذر التحقق من طلبات هذا الحساب.", error="user_not_found")
+        async with AsyncSessionLocal() as session:
+            order = await _find_owned_order(
+                chat_id=chat_id,
+                order_number=params.get("order_id"),
+                session=session,
+            )
+        if not order:
+            return ActionResponse(False, "لم أجد طلباً مطابقاً ضمن طلبات حسابك.", error="order_not_found")
         return ActionResponse(
-            success=True,
-            message=f"📦 **حالة الطلب #{params.get('order_id', 'غير معروف')}**\n\nالحالة: قيد التحضير\nالوقت المتوقع: 15 دقيقة",
+            True,
+            f"📦 الطلب رقم {order.order_number}\nالحالة الفعلية: {order.status}\nالإجمالي: {order.total_amount:.2f} دج",
             data={
-                "order_id": params.get("order_id"),
-                "status": "preparing",
-                "estimated_time": "15 دقيقة",
+                "order_id": order.id,
+                "order_number": order.order_number,
+                "status": order.status,
+                "total_amount": order.total_amount,
             },
         )
 
@@ -481,15 +781,24 @@ class AskPriceAction(BaseAction):
             extra={"product_name": params.get("product_name")},
         )
 
-        # TODO: تنفيذ منطق الاستفسار عن السعر الفعلي
-
+        restaurant_id = _restaurant_id(params=params, context=context)
+        products = await _find_products(
+            product_name=params.get("product_name"),
+            restaurant_id=restaurant_id,
+        )
+        if not products:
+            return ActionResponse(False, "لم أجد هذا المنتج في القائمة المتاحة.", error="product_not_found")
+        if len(products) > 1:
+            return ActionResponse(
+                False,
+                "يوجد أكثر من منتج مطابق. حدّد المطعم أو الاسم الكامل.",
+                error="ambiguous_product",
+            )
+        product = products[0]
         return ActionResponse(
-            success=True,
-            message=f"💰 **سعر {params.get('product_name', 'المنتج')}**\n\nالسعر: 1500 دج",
-            data={
-                "product_name": params.get("product_name"),
-                "price": 1500.00,
-            },
+            True,
+            f"سعر {product.name} هو {product.price:.2f} دج.",
+            data={"product_id": product.id, "product_name": product.name, "price": product.price},
         )
 
 
@@ -528,17 +837,33 @@ class AskOfferAction(BaseAction):
         """
         logger.info("action_ask_offer_executed")
 
-        # TODO: تنفيذ منطق الاستفسار عن العروض الفعلي
-
+        restaurant_id = _restaurant_id(params=params, context=context)
+        now = datetime.now()
+        statement = select(Promotion).where(Promotion.active == True)
+        if restaurant_id:
+            statement = statement.where(
+                or_(Promotion.restaurant_id == restaurant_id, Promotion.restaurant_id.is_(None)),
+            )
+        async with AsyncSessionLocal() as session:
+            promotions = (await session.execute(statement.order_by(Promotion.name))).scalars().all()
+        promotions = [
+            promotion for promotion in promotions
+            if (promotion.starts_at is None or promotion.starts_at <= now)
+            and (promotion.expires_at is None or promotion.expires_at >= now)
+        ]
+        if not promotions:
+            return ActionResponse(False, "لا توجد عروض سارية حالياً.", error="offers_not_found")
+        offers = [
+            {"id": p.id, "name": p.name, "discount_percent": p.discount_percent}
+            for p in promotions
+        ]
         return ActionResponse(
-            success=True,
-            message="🎁 **العروض الحالية**\n\n1. عرض العائلة: 2 بيتزا + مشروب = 2500 دج\n2. عرض الغداء: برجر + مشروب = 1200 دج",
-            data={
-                "offers": [
-                    {"name": "عرض العائلة", "price": 2500},
-                    {"name": "عرض الغداء", "price": 1200},
-                ],
-            },
+            True,
+            "🎁 العروض السارية:\n" + "\n".join(
+                f"- {offer['name']}: خصم {offer['discount_percent']:.2f}%"
+                for offer in offers
+            ),
+            data={"offers": offers},
         )
 
 
@@ -720,16 +1045,10 @@ class ComplaintAction(BaseAction):
             },
         )
 
-        # TODO: تنفيذ منطق معالجة الشكوى الفعلي
-
         return ActionResponse(
-            success=True,
-            message="تم تسجيل شكواك وسيتم التواصل معك قريباً لحل المشكلة. 🙏",
-            data={
-                "complaint_id": "CMP-12345",
-                "order_id": params.get("order_id"),
-                "issue": params.get("issue"),
-            },
+            success=False,
+            message="تسجيل الشكاوى غير متاح حالياً. لم يتم إنشاء بلاغ.",
+            error="complaint_registration_not_supported",
         )
 
 

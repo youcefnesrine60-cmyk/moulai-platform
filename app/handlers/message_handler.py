@@ -5,22 +5,25 @@
 from app.core.logger import logger
 from app.core.state_dispatcher import StateDispatcher
 from app.core.security.captcha_manager import CaptchaManager
+from app.agent.engine import agent_engine
 
 from app.handlers.captcha_handler import handle_captcha
 
 from app.helpers.ui_helpers import send_main_menu
 from app.helpers.navigation import go_back
 from app.helpers.state_helper import (
-    append_to_state_list, 
-    update_state_field
+    append_to_state_list,
 )
 from app.helpers.ui_manager import UIManager
 
 from app.repositories.state_repo import (
-    delete_state, 
-    get_state
+    delete_state,
+    get_state,
+    set_state,
 )
+from app.agent.executor.actions import action_registry
 from app.services.telegram import delete_message
+from app.services.telegram import send_message
 from app.states.owner_states import OwnerStates
 
 
@@ -138,123 +141,121 @@ async def handle_message(
 
     state = await get_state(chat_id=chat_id)
 
-    if not state:
-        logger.info(
-            "state_not_found",
-            extra={
-                "chat_id": chat_id,
-            },
+    if state and state.get("flow") == "agent_confirmation":
+        answer = text.casefold().strip()
+        if answer in {"نعم", "اي", "أيوه", "yes", "oui", "ok", "okay", "d'accord"}:
+            action = action_registry.get(state.get("action", ""))
+            resume_state = state.get("resume_state")
+            if resume_state:
+                await set_state(chat_id=chat_id, state=resume_state)
+            else:
+                await delete_state(chat_id=chat_id)
+            if not action:
+                await send_message(
+                    chat_id=chat_id,
+                    text="تعذر تنفيذ العملية. الرجاء المحاولة مجدداً.",
+                )
+                return
+            try:
+                result = await action.execute(
+                    params=state.get("params", {}),
+                    context=state.get("context", {}),
+                )
+                await send_message(chat_id=chat_id, text=result.message)
+            except Exception:
+                logger.exception(
+                    "agent_confirmed_action_failed",
+                    extra={"chat_id": chat_id, "action": action.name},
+                )
+                await send_message(
+                    chat_id=chat_id,
+                    text="تعذر تنفيذ العملية. لم يتم تأكيد نجاحها.",
+                )
+            return
+
+        if answer in {"لا", "non", "no"}:
+            resume_state = state.get("resume_state")
+            if resume_state:
+                await set_state(chat_id=chat_id, state=resume_state)
+            else:
+                await delete_state(chat_id=chat_id)
+            await send_message(chat_id=chat_id, text="تم إلغاء العملية.")
+            return
+
+        await send_message(
+            chat_id=chat_id,
+            text="الرجاء الإجابة بنعم أو لا لتأكيد العملية.",
         )
         return
 
-    # ==========================================
-    # 🚫 PREVENT MANUAL INPUT
-    # ==========================================
-
-    if state.get("step") in (
-        OwnerStates.TYPE,
-        OwnerStates.CONFIRM,
+    if state and (
+        state.get("flow") == "owner"
+        or (state.get("flow") == "customer" and text.isdigit())
     ):
-        logger.warning(
-            "manual_text_in_button_step",
+        logger.info(
+            "state_dispatch_started",
             extra={
                 "chat_id": chat_id,
-                "step": state["step"],
+                "flow": state.get("flow"),
+                "step": state.get("step"),
             },
         )
-
-        await delete_message(
+        await StateDispatcher.dispatch(
             chat_id=chat_id,
+            text=text,
+            state=state,
             message_id=message_id,
-        )
-
-        await UIManager.edit(
-            chat_id=chat_id,
-            message_id=message_id,
-            text="❌ الرجاء استعمال الأزرار فقط.",
-            reply_markup=None,
         )
         return
 
-    # ==========================================
-    # 📝 تخزين معرف رسالة المستخدم حسب الخطوة (قبل التوجيه)
-    # ==========================================
-
-    current_step = state.get("step")
-
-    if current_step == OwnerStates.NAME:
-        await update_state_field(
-            chat_id=chat_id,
-            key="user_message_id_name",
-            value=message_id,
-        )
-        logger.debug(
-            "user_message_id_name_stored",
-            extra={
-                "chat_id": chat_id,
-                "message_id": message_id,
-            },
-        )
-    elif current_step == OwnerStates.RESTAURANT:
-        await update_state_field(
-            chat_id=chat_id,
-            key="user_message_id_restaurant",
-            value=message_id,
-        )
-        logger.debug(
-            "user_message_id_restaurant_stored",
-            extra={
-                "chat_id": chat_id,
-                "message_id": message_id,
-            },
-        )
-    elif current_step == OwnerStates.WILAYA:
-        await update_state_field(
-            chat_id=chat_id,
-            key="user_message_id_wilaya",
-            value=message_id,
-        )
-        logger.debug(
-            "user_message_id_wilaya_stored",
-            extra={
-                "chat_id": chat_id,
-                "message_id": message_id,
-            },
-        )
-    elif current_step == OwnerStates.PHONE:
-        await update_state_field(
-            chat_id=chat_id,
-            key="user_message_id_phone",
-            value=message_id,
-        )
-    elif current_step == OwnerStates.LOCATION:
-        await update_state_field(
-            chat_id=chat_id,
-            key="user_message_id_location",
-            value=message_id,
-        )
-    elif current_step == OwnerStates.TYPE:
-        await update_state_field(
-            chat_id=chat_id,
-            key="user_message_id_type",
-            value=message_id,
-        )
-
-    # ==========================================
-    # 🚀 DISPATCH STATE
-    # ==========================================
+    if not text:
+        return
 
     logger.info(
-        "state_dispatch_started",
-        extra={
-            "chat_id": chat_id,
-            "step": state.get("step"),
-        },
+        "agent_message_dispatch_started",
+        extra={"chat_id": chat_id},
     )
 
-    await StateDispatcher.dispatch(
-        chat_id=chat_id,
-        text=text,
-        state=state,
-        message_id=message_id,
+    result = await agent_engine.process(
+        user_id=chat_id,
+        message=text,
+        session_id=f"telegram_{chat_id}",
+        channel="telegram",
+        context={
+            "chat_id": chat_id,
+            "restaurant_id": state.get("restaurant_id") if state else None,
+        },
     )
+    action_result = result.get("action_result", {})
+    if action_result.get("data", {}).get("pending_confirmation"):
+        resume_state = None
+        if state and state.get("flow") == "customer":
+            resume_state = {
+                "flow": "customer",
+                "step": state.get("step"),
+                "restaurant_id": state.get("restaurant_id"),
+                "restaurant_name": state.get("restaurant_name"),
+                "cart": state.get("cart", []),
+                "products": [
+                    product if isinstance(product, dict) else {
+                        "id": getattr(product, "id", None),
+                        "name": getattr(product, "name", None),
+                        "price": getattr(product, "price", None),
+                    }
+                    for product in state.get("products", [])
+                ],
+            }
+        await set_state(
+            chat_id=chat_id,
+            state={
+                "flow": "agent_confirmation",
+                "action": action_result.get("action"),
+                "params": action_result["data"].get("params", {}),
+                "context": action_result["data"].get("context", {}),
+                "resume_state": resume_state,
+            },
+        )
+    response = result.get("response")
+    if response:
+        await send_message(chat_id=chat_id, text=response)
+    return

@@ -59,6 +59,7 @@ async def create_restaurant_order(
     branch_id: Optional[int],
     table_id: Optional[int],
     employee_id: Optional[int],
+    user_id: Optional[int] = None,
     order_number: str,
     order_type: str,
     customer_name: Optional[str],
@@ -132,14 +133,13 @@ async def create_restaurant_order(
     orders_repo = OrdersRepository(session=session)
 
     data: Dict[str, Any] = {
+        "user_id": user_id,
         "restaurant_id": restaurant_id,
         "branch_id": branch_id,
         "table_id": table_id,
         "employee_id": employee_id,
         "order_number": order_number,
         "order_type": order_type,
-        "customer_name": customer_name,
-        "customer_phone": customer_phone,
         "delivery_address": delivery_address,
         "customer_note": customer_note,
         "status": "pending",
@@ -148,7 +148,6 @@ async def create_restaurant_order(
         "tax_amount": tax_amount,
         "delivery_amount": delivery_amount,
         "total_amount": total_amount,
-        "is_paid": False,
     }
 
     order = await orders_repo.create(data=data)
@@ -201,6 +200,7 @@ async def create_order_with_items(
     branch_id: Optional[int],
     table_id: Optional[int],
     employee_id: Optional[int],
+    user_id: Optional[int] = None,
     order_type: str,
     customer_name: Optional[str],
     customer_phone: Optional[str],
@@ -297,14 +297,13 @@ async def create_order_with_items(
 
     # 4️⃣ إنشاء الطلب
     order_data: Dict[str, Any] = {
+        "user_id": user_id,
         "restaurant_id": restaurant_id,
         "branch_id": branch_id,
         "table_id": table_id,
         "employee_id": employee_id,
         "order_number": order_number,
         "order_type": order_type,
-        "customer_name": customer_name,
-        "customer_phone": customer_phone,
         "delivery_address": delivery_address,
         "customer_note": customer_note,
         "status": "pending",
@@ -313,7 +312,6 @@ async def create_order_with_items(
         "tax_amount": tax_amount,
         "delivery_amount": delivery_amount,
         "total_amount": total_amount,
-        "is_paid": False,
     }
 
     order = await orders_repo.create(data=order_data)

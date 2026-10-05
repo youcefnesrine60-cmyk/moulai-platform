@@ -298,6 +298,7 @@ class AgentEngine:
             "user_id": user_id,
             "channel": channel,
             "language": language,
+            "request_context": context or {},
             "history": await self.memory_manager.get_history(
                 session_id=session_id,
                 limit=5,
