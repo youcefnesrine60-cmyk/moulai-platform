@@ -52,13 +52,14 @@ SYSTEM_PROMPTS: PromptMap = {
 📌 **صلاحياتك:**
 1. عرض قائمة المطاعم والمنتجات
 2. طلب وجبات/منتجات
-3. تعديل أو إلغاء الطلبات
+3. إلغاء الطلبات
 4. الاستفسار عن الأسعار والعروض
 5. تقديم المساعدة والدعم
 
 📌 **تعليمات السلوك:**
 - كن مهذباً ومحترماً
 - استخدم اللغة العربية الفصحى أو العامية حسب سياق المحادثة
+- تعديل الطلبات وتسجيل الشكاوى غير متاحين حالياً؛ لا تدّعِ إتمامهما أو إنشاء بلاغ، وأخبر العميل بذلك بوضوح
 - إذا لم تعرف الإجابة، اعتذر واطلب توضيحاً
 - لا تقدم معلومات غير دقيقة
 - احرص على مساعدة العميل بأفضل طريقة ممكنة
@@ -77,13 +78,14 @@ Help customers order food, inquire about products, manage orders, and resolve cu
 📌 **Your Permissions:**
 1. View the list of restaurants and products
 2. Order meals/products
-3. Modify or cancel orders
+3. Cancel orders
 4. Inquire about prices and offers
 5. Provide help and support
 
 📌 **Behavior Guidelines:**
 - Be polite and respectful
 - Use the user's language
+- Order modifications and complaint ticket creation are not available yet; never claim they were completed, and tell the customer clearly
 - If you don't know the answer, apologize and ask for clarification
 - Don't provide inaccurate information
 - Help the customer in the best way possible
@@ -102,13 +104,14 @@ Aider les clients à commander de la nourriture, s'informer sur les produits, g�
 📌 **Vos Autorisations:**
 1. Afficher la liste des restaurants et des produits
 2. Commander des repas/produits
-3. Modifier ou annuler des commandes
+3. Annuler des commandes
 4. S'informer sur les prix et les offres
 5. Fournir de l'aide et du soutien
 
 📌 **Règles de Comportement:**
 - Soyez poli et respectueux
 - Utilisez la langue de l'utilisateur
+- La modification des commandes et la création de tickets de réclamation ne sont pas encore disponibles ; ne prétendez jamais qu'elles ont été effectuées et informez clairement le client
 - Si vous ne connaissez pas la réponse, excusez-vous et demandez des clarifications
 - Ne fournissez pas d'informations inexactes
 - Aidez le client de la meilleure façon possible
@@ -415,6 +418,16 @@ ERROR_PROMPTS: MultiLangPromptMap = {
         "en": "An error occurred while executing the request. Please try again.",
         "fr": "Une erreur est survenue lors de l'exécution de la demande. Veuillez réessayer.",
     },
+    "order_modification_not_supported": {
+        "ar": "تعديل الطلبات عبر المحادثة غير متاح حالياً. لم يتم تغيير الطلب.",
+        "en": "Order modifications are not available yet. The order was not changed.",
+        "fr": "La modification des commandes n'est pas encore disponible. La commande n'a pas été modifiée.",
+    },
+    "complaint_registration_not_supported": {
+        "ar": "تسجيل الشكاوى غير متاح حالياً. لم يتم إنشاء بلاغ.",
+        "en": "Complaint registration is not available yet. No ticket was created.",
+        "fr": "L'enregistrement des réclamations n'est pas encore disponible. Aucun ticket n'a été créé.",
+    },
     "not_found": {
         "ar": "عذراً، لم نتمكن من العثور على ما تبحث عنه.",
         "en": "Sorry, we couldn't find what you're looking for.",
@@ -447,11 +460,6 @@ SUCCESS_PROMPTS: MultiLangPromptMap = {
         "en": "✅ Your order has been created successfully! Order ID: {order_id}",
         "fr": "✅ Votre commande a été créée avec succès! ID de commande: {order_id}",
     },
-    "order_updated": {
-        "ar": "✅ تم تحديث طلبك بنجاح!",
-        "en": "✅ Your order has been updated successfully!",
-        "fr": "✅ Votre commande a été mise à jour avec succès!",
-    },
     "order_cancelled": {
         "ar": "❌ تم إلغاء طلبك بنجاح.",
         "en": "❌ Your order has been cancelled successfully.",
@@ -471,11 +479,6 @@ SUCCESS_PROMPTS: MultiLangPromptMap = {
         "ar": "🎁 العروض المتاحة: {offers}",
         "en": "🎁 Available offers: {offers}",
         "fr": "🎁 Offres disponibles: {offers}",
-    },
-    "complaint_submitted": {
-        "ar": "✅ تم تسجيل شكواك وسيتم التواصل معك قريباً.",
-        "en": "✅ Your complaint has been recorded and we will contact you soon.",
-        "fr": "✅ Votre réclamation a été enregistrée et nous vous contacterons bientôt.",
     },
 }
 
@@ -680,10 +683,14 @@ def get_success_prompt(
         },
     )
 
-    success_dict = SUCCESS_PROMPTS.get(
-        success_type,
-        SUCCESS_PROMPTS["order_created"],
-    )
+    success_dict = SUCCESS_PROMPTS.get(success_type)
+    if success_dict is None:
+        logger.warning(
+            "unknown_success_prompt_type",
+            extra={"success_type": success_type, "language": language},
+        )
+        return get_error_prompt("action_failed", language)
+
     template = success_dict.get(language, success_dict["ar"])
 
     return template.format(**kwargs) if kwargs else template

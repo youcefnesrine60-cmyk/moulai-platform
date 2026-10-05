@@ -47,10 +47,13 @@ The project explores backend engineering, API design, database architecture, mul
 - Multilingual language detection for Arabic, English and French
 - 13 intent types
 - 10 entity types
-- 12 executable actions with confirmation handling
+- 12 registered action handlers with confirmation handling
+- `modify_order` and `complaint` are recognized intents, but their handlers are placeholders: order changes are not applied and complaints do not create tickets
 - Session, context and conversation-history management
 - AI-assisted classification with fallback pattern matching
 - Integration with OpenAI and DeepSeek APIs
+
+Recognizing an intent does not mean the corresponding workflow is operational. In particular, **Modify Order** and **Complaint** are not available MVP features.
 
 ### Security
 

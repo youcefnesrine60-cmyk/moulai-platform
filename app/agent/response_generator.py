@@ -350,12 +350,10 @@ class ResponseGenerator:
         """
         mapping = {
             "order_food": "order_created",
-            "modify_order": "order_updated",
             "cancel_order": "order_cancelled",
             "track_order": "order_tracked",
             "ask_price": "price_found",
             "ask_offer": "offers_found",
-            "complaint": "complaint_submitted",
         }
         return mapping.get(intent)
 

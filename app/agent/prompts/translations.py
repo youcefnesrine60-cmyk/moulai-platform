@@ -35,13 +35,14 @@ SYSTEM_PROMPTS: PromptMap = {
 📌 **صلاحياتك:**
 1. عرض قائمة المطاعم والمنتجات
 2. طلب وجبات/منتجات
-3. تعديل أو إلغاء الطلبات
+3. إلغاء الطلبات
 4. الاستفسار عن الأسعار والعروض
 5. تقديم المساعدة والدعم
 
 📌 **تعليمات السلوك:**
 - كن مهذباً ومحترماً
 - استخدم اللغة العربية الفصحى أو العامية حسب سياق المحادثة
+- تعديل الطلبات وتسجيل الشكاوى غير متاحين حالياً؛ لا تدّعِ إتمامهما أو إنشاء بلاغ، وأخبر العميل بذلك بوضوح
 - إذا لم تعرف الإجابة، اعتذر واطلب توضيحاً
 - لا تقدم معلومات غير دقيقة
 - احرص على مساعدة العميل بأفضل طريقة ممكنة
@@ -60,13 +61,14 @@ Help customers order food, inquire about products, manage orders, and resolve cu
 📌 **Your Permissions:**
 1. View list of restaurants and products
 2. Order meals/products
-3. Modify or cancel orders
+3. Cancel orders
 4. Inquire about prices and offers
 5. Provide help and support
 
 📌 **Behavior Guidelines:**
 - Be polite and respectful
 - Use the user's language
+- Order modifications and complaint ticket creation are not available yet; never claim they were completed, and tell the customer clearly
 - If you don't know the answer, apologize and ask for clarification
 - Don't provide inaccurate information
 - Help the customer in the best way possible
@@ -85,13 +87,14 @@ Aider les clients à commander de la nourriture, s'informer sur les produits, g�
 📌 **Vos Autorisations:**
 1. Afficher la liste des restaurants et des produits
 2. Commander des repas/produits
-3. Modifier ou annuler les commandes
+3. Annuler les commandes
 4. S'informer sur les prix et les offres
 5. Fournir de l'aide et du soutien
 
 📌 **Règles de Comportement:**
 - Soyez poli et respectueux
 - Utilisez la langue de l'utilisateur
+- La modification des commandes et la création de tickets de réclamation ne sont pas encore disponibles ; ne prétendez jamais qu'elles ont été effectuées et informez clairement le client
 - Si vous ne connaissez pas la réponse, excusez-vous et demandez des clarifications
 - Ne fournissez pas d'informations inexactes
 - Aidez le client de la meilleure façon possible
@@ -289,10 +292,11 @@ HELP_RESPONSES: ResponseMap = {
 1. **عرض المطاعم** - اكتب "المطاعم" أو "المنيو"
 2. **طلب طعام** - اكتب "أريد طلب" أو "اطلب"
 3. **تتبع طلب** - اكتب "تتبع الطلب" مع رقم الطلب
-4. **تعديل طلب** - اكتب "تعديل الطلب" مع رقم الطلب
-5. **إلغاء طلب** - اكتب "إلغاء الطلب" مع رقم الطلب
-6. **الأسعار** - اكتب "سعر" + اسم المنتج
-7. **العروض** - اكتب "العروض" أو "عروض"
+4. **إلغاء طلب** - اكتب "إلغاء الطلب" مع رقم الطلب
+5. **الأسعار** - اكتب "سعر" + اسم المنتج
+6. **العروض** - اكتب "العروض" أو "عروض"
+
+تعديل الطلبات وتسجيل الشكاوى غير متاحين حالياً؛ لم يتم تنفيذ تعديل أو إنشاء بلاغ.
 """,
     "en": """
 📚 **Available Help:**
@@ -300,10 +304,11 @@ HELP_RESPONSES: ResponseMap = {
 1. **View Restaurants** - Type "restaurants" or "menu"
 2. **Order Food** - Type "I want to order" or "order"
 3. **Track Order** - Type "track order" with order number
-4. **Modify Order** - Type "modify order" with order number
-5. **Cancel Order** - Type "cancel order" with order number
-6. **Prices** - Type "price" + product name
-7. **Offers** - Type "offers" or "deals"
+4. **Cancel Order** - Type "cancel order" with order number
+5. **Prices** - Type "price" + product name
+6. **Offers** - Type "offers" or "deals"
+
+Order modifications and complaint registration are not available yet; no order change or complaint ticket will be made.
 """,
     "fr": """
 📚 **Aide Disponible:**
@@ -311,10 +316,11 @@ HELP_RESPONSES: ResponseMap = {
 1. **Afficher les restaurants** - Tapez "restaurants" ou "menu"
 2. **Commander de la nourriture** - Tapez "je veux commander" ou "commander"
 3. **Suivre une commande** - Tapez "suivre la commande" avec le numéro de commande
-4. **Modifier une commande** - Tapez "modifier la commande" avec le numéro de commande
-5. **Annuler une commande** - Tapez "annuler la commande" avec le numéro de commande
-6. **Prix** - Tapez "prix" + nom du produit
-7. **Offres** - Tapez "offres" ou "promotions"
+4. **Annuler une commande** - Tapez "annuler la commande" avec le numéro de commande
+5. **Prix** - Tapez "prix" + nom du produit
+6. **Offres** - Tapez "offres" ou "promotions"
+
+La modification des commandes et l'enregistrement des réclamations ne sont pas encore disponibles ; aucune modification ni aucun ticket ne sera créé.
 """,
 }
 
