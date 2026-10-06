@@ -11,6 +11,7 @@ from typing import (
     Tuple,
 )
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # ✅ استيراد الاستثناءات
@@ -53,6 +54,37 @@ async def change_order_status(
     note: Optional[str] = None,
     session: AsyncSession,
 ) -> Order:
+    previous_defer_commits = session.info.get("defer_repository_commit")
+    had_transaction = session.in_transaction()
+    session.info["defer_repository_commit"] = True
+    transaction = session.begin_nested() if had_transaction else session.begin()
+    try:
+        async with transaction:
+            order, changed = await _change_order_status_in_transaction(
+                order_id=order_id,
+                new_status=new_status,
+                employee_id=employee_id,
+                note=note,
+                session=session,
+            )
+        if had_transaction and changed:
+            await session.commit()
+        return order
+    finally:
+        if previous_defer_commits is None:
+            session.info.pop("defer_repository_commit", None)
+        else:
+            session.info["defer_repository_commit"] = previous_defer_commits
+
+
+async def _change_order_status_in_transaction(
+    *,
+    order_id: int,
+    new_status: str,
+    employee_id: Optional[int] = None,
+    note: Optional[str] = None,
+    session: AsyncSession,
+) -> Tuple[Order, bool]:
     """
     تغيير حالة الطلب.
     
@@ -91,7 +123,13 @@ async def change_order_status(
 
     # 2️⃣ جلب الطلب
     orders_repo = OrdersRepository(session=session)
-    order = await orders_repo.get_by_id(order_id=order_id)
+    order = (
+        await session.execute(
+            select(Order)
+            .where(Order.id == order_id)
+            .with_for_update(),
+        )
+    ).scalar_one_or_none()
 
     if not order:
         logger.error(
@@ -113,7 +151,7 @@ async def change_order_status(
                 "status": new_status,
             },
         )
-        return order
+        return order, False
 
     # 4️⃣ التحقق من إمكانية الانتقال
     if not can_transition(old_status, new_status):
@@ -148,8 +186,9 @@ async def change_order_status(
     await history_repo.create(
         data={
             "order_id": order_id,
-            "status": new_status,
-            "employee_id": employee_id,
+            "old_status": old_status,
+            "new_status": new_status,
+            "changed_by_employee_id": employee_id,
             "note": note or f"تم تغيير الحالة من '{get_status_display_name(old_status)}' إلى '{get_status_display_name(new_status)}'",
         },
     )
@@ -165,7 +204,7 @@ async def change_order_status(
         },
     )
 
-    return updated_order
+    return updated_order, True
 
 
 # ==============================================

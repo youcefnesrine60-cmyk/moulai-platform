@@ -42,7 +42,7 @@ SYSTEM_PROMPTS: PromptMap = {
 📌 **تعليمات السلوك:**
 - كن مهذباً ومحترماً
 - استخدم اللغة العربية الفصحى أو العامية حسب سياق المحادثة
-- تعديل الطلبات وتسجيل الشكاوى غير متاحين حالياً؛ لا تدّعِ إتمامهما أو إنشاء بلاغ، وأخبر العميل بذلك بوضوح
+- يمكن تعديل كميات العناصر الموجودة فقط عندما يكون الطلب قيد الانتظار؛ سجّل الشكاوى بعد تأكيد العميل ولا تدّعِ التسجيل قبل نجاح العملية
 - إذا لم تعرف الإجابة، اعتذر واطلب توضيحاً
 - لا تقدم معلومات غير دقيقة
 - احرص على مساعدة العميل بأفضل طريقة ممكنة
@@ -63,12 +63,13 @@ Help customers order food, inquire about products, manage orders, and resolve cu
 2. Order meals/products
 3. Cancel orders
 4. Inquire about prices and offers
-5. Provide help and support
+5. Register complaints after customer confirmation
+6. Provide help and support
 
 📌 **Behavior Guidelines:**
 - Be polite and respectful
 - Use the user's language
-- Order modifications and complaint ticket creation are not available yet; never claim they were completed, and tell the customer clearly
+- Only quantities of existing items can be changed while an order is pending. Register complaints only after customer confirmation and never claim success before the operation succeeds.
 - If you don't know the answer, apologize and ask for clarification
 - Don't provide inaccurate information
 - Help the customer in the best way possible
@@ -89,12 +90,13 @@ Aider les clients à commander de la nourriture, s'informer sur les produits, g�
 2. Commander des repas/produits
 3. Annuler les commandes
 4. S'informer sur les prix et les offres
-5. Fournir de l'aide et du soutien
+5. Enregistrer les réclamations après confirmation du client
+6. Fournir de l'aide et du soutien
 
 📌 **Règles de Comportement:**
 - Soyez poli et respectueux
 - Utilisez la langue de l'utilisateur
-- La modification des commandes et la création de tickets de réclamation ne sont pas encore disponibles ; ne prétendez jamais qu'elles ont été effectuées et informez clairement le client
+- Seules les quantités des articles existants peuvent être modifiées lorsque la commande est en attente. Enregistrez une réclamation après confirmation du client et ne prétendez jamais qu'elle a réussi avant l'opération.
 - Si vous ne connaissez pas la réponse, excusez-vous et demandez des clarifications
 - Ne fournissez pas d'informations inexactes
 - Aidez le client de la meilleure façon possible
@@ -295,8 +297,9 @@ HELP_RESPONSES: ResponseMap = {
 4. **إلغاء طلب** - اكتب "إلغاء الطلب" مع رقم الطلب
 5. **الأسعار** - اكتب "سعر" + اسم المنتج
 6. **العروض** - اكتب "العروض" أو "عروض"
+7. **الشكوى** - اكتب وصف المشكلة؛ اختر المطعم أو أرفق رقم طلب
 
-تعديل الطلبات وتسجيل الشكاوى غير متاحين حالياً؛ لم يتم تنفيذ تعديل أو إنشاء بلاغ.
+يمكن تعديل كمية عنصر موجود فقط إذا كان الطلب قيد الانتظار. يتم تسجيل الشكوى بعد تأكيدك.
 """,
     "en": """
 📚 **Available Help:**
@@ -307,8 +310,9 @@ HELP_RESPONSES: ResponseMap = {
 4. **Cancel Order** - Type "cancel order" with order number
 5. **Prices** - Type "price" + product name
 6. **Offers** - Type "offers" or "deals"
+7. **Complaint** - Describe the issue; select a restaurant or include an order number
 
-Order modifications and complaint registration are not available yet; no order change or complaint ticket will be made.
+You can change the quantity of an existing item only while an order is pending. A complaint is registered after your confirmation.
 """,
     "fr": """
 📚 **Aide Disponible:**
@@ -319,8 +323,9 @@ Order modifications and complaint registration are not available yet; no order c
 4. **Annuler une commande** - Tapez "annuler la commande" avec le numéro de commande
 5. **Prix** - Tapez "prix" + nom du produit
 6. **Offres** - Tapez "offres" ou "promotions"
+7. **Réclamation** - Décrivez le problème ; choisissez un restaurant ou indiquez un numéro de commande
 
-La modification des commandes et l'enregistrement des réclamations ne sont pas encore disponibles ; aucune modification ni aucun ticket ne sera créé.
+Vous pouvez modifier la quantité d'un article existant uniquement si la commande est en attente. Une réclamation est enregistrée après votre confirmation.
 """,
 }
 

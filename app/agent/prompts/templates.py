@@ -54,12 +54,13 @@ SYSTEM_PROMPTS: PromptMap = {
 2. طلب وجبات/منتجات
 3. إلغاء الطلبات
 4. الاستفسار عن الأسعار والعروض
-5. تقديم المساعدة والدعم
+5. تسجيل الشكاوى بعد تأكيد العميل
+6. تقديم المساعدة والدعم
 
 📌 **تعليمات السلوك:**
 - كن مهذباً ومحترماً
 - استخدم اللغة العربية الفصحى أو العامية حسب سياق المحادثة
-- تعديل الطلبات وتسجيل الشكاوى غير متاحين حالياً؛ لا تدّعِ إتمامهما أو إنشاء بلاغ، وأخبر العميل بذلك بوضوح
+- يمكن تعديل كميات العناصر الموجودة فقط عندما يكون الطلب قيد الانتظار؛ سجّل الشكاوى بعد تأكيد العميل ولا تدّعِ التسجيل قبل نجاح العملية
 - إذا لم تعرف الإجابة، اعتذر واطلب توضيحاً
 - لا تقدم معلومات غير دقيقة
 - احرص على مساعدة العميل بأفضل طريقة ممكنة
@@ -80,12 +81,13 @@ Help customers order food, inquire about products, manage orders, and resolve cu
 2. Order meals/products
 3. Cancel orders
 4. Inquire about prices and offers
-5. Provide help and support
+5. Register complaints after customer confirmation
+6. Provide help and support
 
 📌 **Behavior Guidelines:**
 - Be polite and respectful
 - Use the user's language
-- Order modifications and complaint ticket creation are not available yet; never claim they were completed, and tell the customer clearly
+- Only quantities of existing items can be changed while an order is pending. Register complaints only after customer confirmation and never claim success before the operation succeeds.
 - If you don't know the answer, apologize and ask for clarification
 - Don't provide inaccurate information
 - Help the customer in the best way possible
@@ -106,12 +108,13 @@ Aider les clients à commander de la nourriture, s'informer sur les produits, g�
 2. Commander des repas/produits
 3. Annuler des commandes
 4. S'informer sur les prix et les offres
-5. Fournir de l'aide et du soutien
+5. Enregistrer les réclamations après confirmation du client
+6. Fournir de l'aide et du soutien
 
 📌 **Règles de Comportement:**
 - Soyez poli et respectueux
 - Utilisez la langue de l'utilisateur
-- La modification des commandes et la création de tickets de réclamation ne sont pas encore disponibles ; ne prétendez jamais qu'elles ont été effectuées et informez clairement le client
+- Seules les quantités des articles existants peuvent être modifiées lorsque la commande est en attente. Enregistrez une réclamation après confirmation du client et ne prétendez jamais qu'elle a réussi avant l'opération.
 - Si vous ne connaissez pas la réponse, excusez-vous et demandez des clarifications
 - Ne fournissez pas d'informations inexactes
 - Aidez le client de la meilleure façon possible
@@ -418,15 +421,75 @@ ERROR_PROMPTS: MultiLangPromptMap = {
         "en": "An error occurred while executing the request. Please try again.",
         "fr": "Une erreur est survenue lors de l'exécution de la demande. Veuillez réessayer.",
     },
-    "order_modification_not_supported": {
-        "ar": "تعديل الطلبات عبر المحادثة غير متاح حالياً. لم يتم تغيير الطلب.",
-        "en": "Order modifications are not available yet. The order was not changed.",
-        "fr": "La modification des commandes n'est pas encore disponible. La commande n'a pas été modifiée.",
+    "complaint_description_required": {
+        "ar": "اكتب وصفاً مختصراً للمشكلة قبل تسجيل الشكوى.",
+        "en": "Please describe the issue before submitting a complaint.",
+        "fr": "Veuillez décrire le problème avant d'envoyer la réclamation.",
     },
-    "complaint_registration_not_supported": {
-        "ar": "تسجيل الشكاوى غير متاح حالياً. لم يتم إنشاء بلاغ.",
-        "en": "Complaint registration is not available yet. No ticket was created.",
-        "fr": "L'enregistrement des réclamations n'est pas encore disponible. Aucun ticket n'a été créé.",
+    "invalid_complaint_description": {
+        "ar": "يجب ألا يتجاوز وصف الشكوى 5000 حرف.",
+        "en": "The complaint description must be 5,000 characters or fewer.",
+        "fr": "La description de la réclamation ne doit pas dépasser 5 000 caractères.",
+    },
+    "complaint_restaurant_required": {
+        "ar": "اختر المطعم أو أرفق رقم طلبك حتى أتمكن من توجيه الشكوى.",
+        "en": "Select a restaurant or provide an order number so I can route your complaint.",
+        "fr": "Choisissez un restaurant ou indiquez un numéro de commande pour orienter votre réclamation.",
+    },
+    "complaint_restaurant_not_found": {
+        "ar": "لم أتمكن من العثور على المطعم المحدد.",
+        "en": "I couldn't find the selected restaurant.",
+        "fr": "Je n'ai pas trouvé le restaurant sélectionné.",
+    },
+    "complaint_order_restaurant_mismatch": {
+        "ar": "الطلب لا ينتمي إلى المطعم المحدد.",
+        "en": "That order does not belong to the selected restaurant.",
+        "fr": "Cette commande n'appartient pas au restaurant sélectionné.",
+    },
+    "customer_consent_required": {
+        "ar": "يرجى الموافقة على شروط الاستخدام قبل إرسال الشكوى.",
+        "en": "Please accept the terms of use before submitting a complaint.",
+        "fr": "Veuillez accepter les conditions d'utilisation avant d'envoyer une réclamation.",
+    },
+    "missing_order_id": {
+        "ar": "أرسل رقم الطلب أولاً.",
+        "en": "Please provide the order number first.",
+        "fr": "Veuillez d'abord fournir le numéro de commande.",
+    },
+    "order_not_found": {
+        "ar": "لم أجد هذا الطلب ضمن طلبات حسابك.",
+        "en": "I couldn't find that order in your account.",
+        "fr": "Je n'ai pas trouvé cette commande dans votre compte.",
+    },
+    "order_not_cancellable": {
+        "ar": "لا يمكن إلغاء الطلب في حالته الحالية.",
+        "en": "This order can't be cancelled in its current status.",
+        "fr": "Cette commande ne peut pas être annulée dans son état actuel.",
+    },
+    "user_not_found": {
+        "ar": "تعذر التحقق من حسابك. يرجى المحاولة مرة أخرى.",
+        "en": "We couldn't verify your account. Please try again.",
+        "fr": "Nous n'avons pas pu vérifier votre compte. Veuillez réessayer.",
+    },
+    "order_not_modifiable": {
+        "ar": "لا يمكن تعديل الطلب إلا عندما يكون قيد الانتظار.",
+        "en": "An order can only be modified while it is pending.",
+        "fr": "Une commande ne peut être modifiée que lorsqu'elle est en attente.",
+    },
+    "order_item_not_found": {
+        "ar": "لم أجد هذا المنتج ضمن عناصر الطلب.",
+        "en": "I couldn't find that item in the order.",
+        "fr": "Je n'ai pas trouvé cet article dans la commande.",
+    },
+    "order_item_ambiguous": {
+        "ar": "يوجد أكثر من عنصر مطابق. اذكر اسم المنتج بوضوح.",
+        "en": "More than one item matches. Please specify the product name.",
+        "fr": "Plusieurs articles correspondent. Veuillez préciser le nom du produit.",
+    },
+    "invalid_order_quantity": {
+        "ar": "أدخل كمية جديدة بين 1 و100.",
+        "en": "Enter a new quantity between 1 and 100.",
+        "fr": "Indiquez une nouvelle quantité entre 1 et 100.",
     },
     "not_found": {
         "ar": "عذراً، لم نتمكن من العثور على ما تبحث عنه.",
@@ -464,6 +527,16 @@ SUCCESS_PROMPTS: MultiLangPromptMap = {
         "ar": "❌ تم إلغاء طلبك بنجاح.",
         "en": "❌ Your order has been cancelled successfully.",
         "fr": "❌ Votre commande a été annulée avec succès.",
+    },
+    "order_updated": {
+        "ar": "✅ تم تحديث كمية {product_name} في الطلب {order_number} إلى {quantity}.",
+        "en": "✅ Updated {product_name} in order {order_number} to quantity {quantity}.",
+        "fr": "✅ La quantité de {product_name} dans la commande {order_number} est maintenant {quantity}.",
+    },
+    "complaint_registered": {
+        "ar": "✅ تم تسجيل شكواك. رقم البلاغ: {complaint_id}.",
+        "en": "✅ Your complaint has been registered. Ticket number: {complaint_id}.",
+        "fr": "✅ Votre réclamation a été enregistrée. Numéro du ticket : {complaint_id}.",
     },
     "order_tracked": {
         "ar": "📦 حالة طلبك: {status}",

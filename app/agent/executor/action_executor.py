@@ -168,7 +168,7 @@ class ActionExecutor:
                         return self._create_error_result(
                             action=action.name,
                             message="تعذر إعداد العملية لمراجعتها.",
-                            error=str(e),
+                            error="action_failed",
                         )
                     if not preview.success:
                         return {
@@ -279,7 +279,7 @@ class ActionExecutor:
             return self._create_error_result(
                 action=action.name,
                 message="حدث خطأ أثناء تنفيذ الطلب. يرجى المحاولة مرة أخرى.",
-                error=str(e),
+                error="action_failed",
             )
 
     # ==========================================

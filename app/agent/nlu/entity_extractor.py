@@ -287,6 +287,7 @@ class EntityExtractor:
 
         # 1️⃣ استخراج أرقام الطلبات
         order_patterns = [
+            r'\b(RST\d+-\d{6})\b',
             r'#?(\d{4,8})',
             r'رقم\s*الطلب\s*[#:]?\s*(\d+)',
             r'order\s*[#:]?\s*(\d+)',
@@ -294,7 +295,7 @@ class EntityExtractor:
         ]
 
         for pattern in order_patterns:
-            match = re.search(pattern, text)
+            match = re.search(pattern, text, re.IGNORECASE)
             if match:
                 entities.append({
                     "type": "order_id",
@@ -305,17 +306,21 @@ class EntityExtractor:
 
         # 2️⃣ استخراج الكميات
         quantity_patterns = [
-            # العربية
+            r'(?:quantity|qty)\s*(?:to|of)?\s*(\d+)',
+            r'(?:change|set|make|update)\b.*\bquantity\b.*?\bto\s*(\d+)',
+            r'(?:quantité)\s*(?:à|a|de)?\s*(\d+)',
+            r'(?:chang\w*|modifi\w*|mett\w*)\s+(?:la\s+)?quantité.*?(?:à|a)\s*(\d+)',
+            r'(?:الكمية|عدد الحبات)\s*(?:إلى|الى)?\s*(\d+)',
+            r'(?:كمية)\s*.+?(?:إلى|الى)\s*(\d+)',
+            r'(?:اجعل|خلي|بدلها)\s*(?:الكمية\s*)?(?:إلى|الى)?\s*(\d+)',
             r'(\d+)\s*(?:كيلو|كغم|غرام|قطعة|حبة|وحدة|كوب|ملعقة)',
             r'(\d+)\s*(?:kg|g|piece|unit|cup|spoon)',
             r'(\d+)\s*(?:kg|g|pièce|unité|cuillère)',
-            r'(?:أريد|اطلب|اريد|ابغى|بدي|order|commander)\s*(\d+)',
             r'(\d+)\s*(?:بيتزا|برجر|شاورما|وجبة|pizza|burger|repas)',
-            r'(\d+)\s*$',
         ]
 
         for pattern in quantity_patterns:
-            match = re.search(pattern, text)
+            match = re.search(pattern, text, re.IGNORECASE)
             if match:
                 entities.append({
                     "type": "quantity",
@@ -348,7 +353,7 @@ class EntityExtractor:
 
         # 4️⃣ استخراج أسماء المنتجات
         product_patterns = [
-            r'(?:اطلب|اريد|ابغى|بدي|order|commander)\s*(.+?)(?:\s*$|\.|،)',
+            r'(?:اطلب|اريد|ابغى|بدي|order|commander)\s*(?!(?:#?RST\d+-\d{6}|#?\d{4,8}\b))(.+?)(?:\s*$|\.|،)',
             r'(بيتزا|برجر|شاورما|فطيرة|كوكا|عصير|مشروب)',
             r'(pizza|burger|shawarma|drink|juice|coffee|tea)',
         ]

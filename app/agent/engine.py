@@ -296,6 +296,7 @@ class AgentEngine:
         action_context: ActionContext = {
             "session_id": session_id,
             "user_id": user_id,
+            "message": message,
             "channel": channel,
             "language": language,
             "request_context": context or {},

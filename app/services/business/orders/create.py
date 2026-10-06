@@ -18,12 +18,14 @@ from typing import (
     Optional,
 )
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # ✅ استيراد الاستثناءات
-from app.core.exceptions import ValidationError
+from app.core.exceptions import NotFoundError, ValidationError
 
 from app.core.logger import logger
+from app.models.restaurant import Restaurant
 from app.repositories.order_item_options_repo import (
     OrderItemOptionsRepository,
 )
@@ -54,6 +56,78 @@ OrderItemOptionPayload = Dict[str, Any]
 # ==============================================
 
 async def create_restaurant_order(
+    *,
+    restaurant_id: int,
+    branch_id: Optional[int],
+    table_id: Optional[int],
+    employee_id: Optional[int],
+    user_id: Optional[int] = None,
+    order_number: str,
+    order_type: str,
+    customer_name: Optional[str],
+    customer_phone: Optional[str],
+    delivery_address: Optional[str],
+    customer_note: Optional[str],
+    subtotal_amount: float = 0,
+    discount_amount: float = 0,
+    tax_amount: float = 0,
+    delivery_amount: float = 0,
+    total_amount: float = 0,
+    session: AsyncSession,
+) -> int:
+    previous_defer_commits = session.info.get("defer_repository_commit")
+    had_transaction = session.in_transaction()
+    session.info["defer_repository_commit"] = True
+    transaction = session.begin_nested() if had_transaction else session.begin()
+    try:
+        async with transaction:
+            restaurant_result = await session.execute(
+                select(Restaurant)
+                .where(Restaurant.id == restaurant_id)
+                .with_for_update(),
+            )
+            if not restaurant_result.scalar_one_or_none():
+                raise NotFoundError(message=f"المطعم بـ ID '{restaurant_id}' غير موجود")
+
+            if not order_number or not order_number.strip():
+                counters_repo = RestaurantOrderCountersRepository(session=session)
+                if not await counters_repo.get_by_restaurant_id(restaurant_id=restaurant_id):
+                    await counters_repo.create_counter(restaurant_id=restaurant_id)
+                order_number = await counters_repo.generate_next_order_number(
+                    restaurant_id=restaurant_id,
+                )
+
+            order_id = await _create_restaurant_order_in_transaction(
+                restaurant_id=restaurant_id,
+                branch_id=branch_id,
+                table_id=table_id,
+                employee_id=employee_id,
+                user_id=user_id,
+                order_number=order_number,
+                order_type=order_type,
+                customer_name=customer_name,
+                customer_phone=customer_phone,
+                delivery_address=delivery_address,
+                customer_note=customer_note,
+                subtotal_amount=subtotal_amount,
+                discount_amount=discount_amount,
+                tax_amount=tax_amount,
+                delivery_amount=delivery_amount,
+                total_amount=total_amount,
+                session=session,
+            )
+
+        if had_transaction:
+            await session.commit()
+        return order_id
+    finally:
+        if previous_defer_commits is None:
+            session.info.pop("defer_repository_commit", None)
+        else:
+            session.info["defer_repository_commit"] = previous_defer_commits
+
+
+async def _create_restaurant_order_in_transaction(
     *,
     restaurant_id: int,
     branch_id: Optional[int],
@@ -159,14 +233,16 @@ async def create_restaurant_order(
     await history_repo.create(
         data={
             "order_id": order_id,
-            "status": "pending",
-            "employee_id": employee_id,
+            "old_status": None,
+            "new_status": "pending",
+            "changed_by_employee_id": employee_id,
             "note": f"تم إنشاء الطلب #{order_number}",
         },
     )
 
     # 4️⃣ زيادة عداد استخدام الميزة
     await increase_usage(
+        session=session,
         restaurant_id=restaurant_id,
         feature_id=ORDERS_FEATURE_ID,
     )
@@ -195,6 +271,61 @@ async def create_restaurant_order(
 # ==============================================
 
 async def create_order_with_items(
+    *,
+    restaurant_id: int,
+    branch_id: Optional[int],
+    table_id: Optional[int],
+    employee_id: Optional[int],
+    user_id: Optional[int] = None,
+    order_type: str,
+    customer_name: Optional[str],
+    customer_phone: Optional[str],
+    delivery_address: Optional[str],
+    customer_note: Optional[str],
+    subtotal_amount: float,
+    discount_amount: float,
+    tax_amount: float,
+    delivery_amount: float,
+    total_amount: float,
+    items: List[OrderItemPayload],
+    session: AsyncSession,
+) -> int:
+    previous_defer_commits = session.info.get("defer_repository_commit")
+    had_transaction = session.in_transaction()
+    session.info["defer_repository_commit"] = True
+    transaction = session.begin_nested() if had_transaction else session.begin()
+    try:
+        async with transaction:
+            order_id = await _create_order_with_items_in_transaction(
+                restaurant_id=restaurant_id,
+                branch_id=branch_id,
+                table_id=table_id,
+                employee_id=employee_id,
+                user_id=user_id,
+                order_type=order_type,
+                customer_name=customer_name,
+                customer_phone=customer_phone,
+                delivery_address=delivery_address,
+                customer_note=customer_note,
+                subtotal_amount=subtotal_amount,
+                discount_amount=discount_amount,
+                tax_amount=tax_amount,
+                delivery_amount=delivery_amount,
+                total_amount=total_amount,
+                items=items,
+                session=session,
+            )
+        if had_transaction:
+            await session.commit()
+        return order_id
+    finally:
+        if previous_defer_commits is None:
+            session.info.pop("defer_repository_commit", None)
+        else:
+            session.info["defer_repository_commit"] = previous_defer_commits
+
+
+async def _create_order_with_items_in_transaction(
     *,
     restaurant_id: int,
     branch_id: Optional[int],
@@ -270,6 +401,16 @@ async def create_order_with_items(
             "items_count": len(items),
         },
     )
+
+    restaurant = (
+        await session.execute(
+            select(Restaurant)
+            .where(Restaurant.id == restaurant_id)
+            .with_for_update(),
+        )
+    ).scalar_one_or_none()
+    if not restaurant:
+        raise NotFoundError(message=f"المطعم بـ ID '{restaurant_id}' غير موجود")
 
     # 2️⃣ إنشاء الطلب
     orders_repo = OrdersRepository(session=session)
@@ -369,8 +510,9 @@ async def create_order_with_items(
     await history_repo.create(
         data={
             "order_id": order_id,
-            "status": "pending",
-            "employee_id": employee_id,
+            "old_status": None,
+            "new_status": "pending",
+            "changed_by_employee_id": employee_id,
             "note": f"تم إنشاء الطلب #{order_number} مع {len(items)} عنصر",
         },
     )
@@ -384,6 +526,7 @@ async def create_order_with_items(
 
     # 9️⃣ زيادة عداد استخدام الميزة
     await increase_usage(
+        session=session,
         restaurant_id=restaurant_id,
         feature_id=ORDERS_FEATURE_ID,
     )
@@ -470,11 +613,9 @@ async def _update_restaurant_metrics(
             },
         )
 
-    except Exception as e:
-        logger.warning(
+    except Exception:
+        logger.exception(
             "restaurant_metrics_update_failed",
-            extra={
-                "restaurant_id": restaurant_id,
-                "error": str(e),
-            },
+            extra={"restaurant_id": restaurant_id},
         )
+        raise

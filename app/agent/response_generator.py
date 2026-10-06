@@ -320,6 +320,9 @@ class ResponseGenerator:
         if not action_result:
             return None
 
+        if (action_result.data or {}).get("pending_confirmation"):
+            return action_result.message
+
         if not action_result.success:
             return get_error_prompt(
                 error_type=action_result.error or "unknown",
@@ -351,7 +354,9 @@ class ResponseGenerator:
         mapping = {
             "order_food": "order_created",
             "cancel_order": "order_cancelled",
+            "modify_order": "order_updated",
             "track_order": "order_tracked",
+            "complaint": "complaint_registered",
             "ask_price": "price_found",
             "ask_offer": "offers_found",
         }

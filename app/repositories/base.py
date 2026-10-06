@@ -144,7 +144,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             self.session.add(instance)
 
             await self.session.flush()
-            await self.session.commit()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.commit()
 
             instance_id = self._get_primary_key_value(instance)
             refreshed = await self.get_by_id(id=instance_id)
@@ -157,14 +158,16 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return refreshed or instance
 
         except IntegrityError as e:
-            await self.session.rollback()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.rollback()
             logger.warning(
                 f"{self.model.__name__}_create_integrity_error",
                 extra={"error": str(e)},
             )
             raise
         except Exception as e:
-            await self.session.rollback()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_create_failed",
                 extra={"error": str(e)},
@@ -194,7 +197,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             self.session.add_all(instances)
 
             await self.session.flush()
-            await self.session.commit()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.commit()
 
             refreshed_instances = []
             for instance in instances:
@@ -210,14 +214,16 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return refreshed_instances
 
         except IntegrityError as e:
-            await self.session.rollback()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.rollback()
             logger.warning(
                 f"{self.model.__name__}_create_many_integrity_error",
                 extra={"error": str(e)},
             )
             raise
         except Exception as e:
-            await self.session.rollback()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_create_many_failed",
                 extra={"error": str(e)},
@@ -446,7 +452,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                     setattr(instance, key, value)
 
             await self.session.flush()
-            await self.session.commit()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.commit()
 
             refreshed = await self.get_by_id(id=id)
 
@@ -458,7 +465,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return refreshed or instance
 
         except Exception as e:
-            await self.session.rollback()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_update_failed",
                 extra={
@@ -500,8 +508,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
             await self.session.delete(instance)
 
-            # ✅ استخدام commit()
-            await self.session.commit()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.commit()
 
             logger.info(
                 f"{self.model.__name__}_deleted",
@@ -511,7 +519,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return True
 
         except Exception as e:
-            await self.session.rollback()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_delete_failed",
                 extra={
@@ -553,8 +562,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             for instance in instances:
                 await self.session.delete(instance)
 
-            # ✅ استخدام commit()
-            await self.session.commit()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.commit()
 
             logger.info(
                 f"{self.model.__name__}_many_deleted",
@@ -564,7 +573,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return len(instances)
 
         except Exception as e:
-            await self.session.rollback()
+            if not self.session.info.get("defer_repository_commit"):
+                await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_delete_many_failed",
                 extra={"error": str(e)},

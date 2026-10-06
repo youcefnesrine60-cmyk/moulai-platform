@@ -20,20 +20,23 @@ from typing import (
     List,
     Optional,
 )
-
 from sqlalchemy import or_, select
 
+from app.core.exceptions import NotFoundError, ValidationError
 from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
 from app.models.loyalty_discount import Promotion
 from app.models.order import Order
 from app.models.restaurant import Restaurant
-from app.models.user import User
-from app.repositories.order_status_history_repo import OrderStatusHistoryRepository
-from app.repositories.orders_repo import OrdersRepository
 from app.repositories.products_repo import ProductRepository
 from app.repositories.user_repo import UserRepository
 from app.services.business.orders.create import create_order_with_items
+from app.services.business.orders.customer import (
+    cancel_customer_order,
+    change_customer_order_item_quantity,
+    get_customer_order,
+)
+from app.services.business.complaints import create_customer_complaint
 
 
 def _request_context(context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -83,27 +86,6 @@ async def _find_products(
             if product.restaurant and product.restaurant.is_active
         ]
 
-
-async def _find_owned_order(
-    *,
-    chat_id: int,
-    order_number: Optional[Any],
-    session: Any,
-) -> Optional[Order]:
-    statement = (
-        select(Order)
-        .join(User, Order.user_id == User.id)
-        .where(User.chat_id == chat_id)
-    )
-    if order_number is not None:
-        reference = str(order_number).strip()
-        conditions = [Order.order_number == reference]
-        if reference.isdigit():
-            conditions.append(Order.id == int(reference))
-        statement = statement.where(or_(*conditions))
-    return (await session.execute(
-        statement.order_by(Order.created_at.desc()).limit(1),
-    )).scalar_one_or_none()
 
 # ==============================================
 # 🧩 TYPES
@@ -400,6 +382,7 @@ class OrderFoodAction(BaseAction):
                 }],
                 session=session,
             )
+            await session.commit()
             order = await session.get(Order, order_id)
             order_number = order.order_number if order else str(order_id)
 
@@ -569,7 +552,7 @@ class ModifyOrderAction(BaseAction):
         super().__init__(
             name="modify_order",
             description="تعديل طلب موجود",
-            requires_confirmation=False,
+            requires_confirmation=True,
             priority=8,
         )
 
@@ -597,10 +580,54 @@ class ModifyOrderAction(BaseAction):
             },
         )
 
+        chat_id = _chat_id(context)
+        if not chat_id:
+            return ActionResponse(False, "تعذر التحقق من ملكية الطلب.", error="user_not_found")
+        order_reference = params.get("order_id")
+        if order_reference is None or not str(order_reference).strip():
+            return ActionResponse(False, "أرسل رقم الطلب الذي تريد تعديله.", error="missing_order_id")
+        try:
+            quantity = int(params.get("quantity"))
+        except (TypeError, ValueError):
+            quantity = 0
+        if quantity <= 0:
+            return ActionResponse(False, "أرسل الكمية الجديدة المطلوبة.", error="invalid_order_quantity")
+
+        async with AsyncSessionLocal() as session:
+            try:
+                order, item = await change_customer_order_item_quantity(
+                    chat_id=chat_id,
+                    order_reference=order_reference,
+                    product_name=params.get("product_name"),
+                    quantity=quantity,
+                    session=session,
+                )
+            except NotFoundError:
+                return ActionResponse(
+                    False,
+                    "لم أجد هذا الطلب ضمن طلبات حسابك.",
+                    error="order_not_found",
+                )
+            except ValidationError as error:
+                error_codes = {
+                    "ORDER_NOT_MODIFIABLE": "order_not_modifiable",
+                    "ORDER_ITEM_NOT_FOUND": "order_item_not_found",
+                    "ORDER_ITEM_AMBIGUOUS": "order_item_ambiguous",
+                    "INVALID_ORDER_QUANTITY": "invalid_order_quantity",
+                }
+                error_code = error_codes.get(error.error_code or "", "action_failed")
+                return ActionResponse(False, error.message, error=error_code)
+
         return ActionResponse(
-            success=False,
-            message="تعديل عناصر الطلب عبر المحادثة غير متاح حالياً. لم يتم تغيير الطلب.",
-            error="order_modification_not_supported",
+            True,
+            f"تم تحديث كمية {item.product_name} في الطلب رقم {order.order_number} إلى {item.quantity}. الإجمالي الجديد: {order.total_amount:.2f} دج.",
+            data={
+                "order_id": order.id,
+                "order_number": order.order_number,
+                "product_name": item.product_name,
+                "quantity": item.quantity,
+                "total_amount": order.total_amount,
+            },
         )
 
 
@@ -648,38 +675,38 @@ class CancelOrderAction(BaseAction):
         chat_id = _chat_id(context)
         if not chat_id:
             return ActionResponse(False, "تعذر التحقق من ملكية الطلب.", error="user_not_found")
-        async with AsyncSessionLocal() as session:
-            order = await _find_owned_order(
-                chat_id=chat_id,
-                order_number=params.get("order_id"),
-                session=session,
+        order_number = params.get("order_id")
+        if order_number is None or not str(order_number).strip():
+            return ActionResponse(
+                False,
+                "أرسل رقم الطلب الذي تريد إلغاءه.",
+                error="missing_order_id",
             )
-            if not order:
-                return ActionResponse(False, "لم أجد هذا الطلب ضمن طلبات حسابك.", error="order_not_found")
-            if order.status not in {"pending", "confirmed"}:
+        async with AsyncSessionLocal() as session:
+            try:
+                order, previous_status = await cancel_customer_order(
+                    chat_id=chat_id,
+                    order_reference=order_number,
+                    reason=params.get("reason"),
+                    session=session,
+                )
+            except NotFoundError:
                 return ActionResponse(
                     False,
-                    f"لا يمكن إلغاء الطلب في حالته الحالية ({order.status}).",
+                    "لم أجد هذا الطلب ضمن طلبات حسابك.",
+                    error="order_not_found",
+                )
+            except ValidationError:
+                return ActionResponse(
+                    False,
+                    "لا يمكن إلغاء الطلب في حالته الحالية.",
                     error="order_not_cancellable",
                 )
-            previous_status = order.status
-            await OrdersRepository(session=session).update(
-                id=order.id,
-                data={"status": "cancelled"},
-            )
-            await OrderStatusHistoryRepository(session=session).create(
-                data={
-                    "order_id": order.id,
-                    "status": "cancelled",
-                    "employee_id": None,
-                    "note": params.get("reason") or "تم الإلغاء بواسطة العميل عبر الوكيل",
-                },
-            )
-            return ActionResponse(
-                True,
-                f"تم إلغاء الطلب رقم {order.order_number}.",
-                data={"order_id": order.id, "order_number": order.order_number, "previous_status": previous_status},
-            )
+        return ActionResponse(
+            True,
+            f"تم إلغاء الطلب رقم {order.order_number}.",
+            data={"order_id": order.id, "order_number": order.order_number, "previous_status": previous_status},
+        )
 
 
 # ==============================================
@@ -723,10 +750,17 @@ class TrackOrderAction(BaseAction):
         chat_id = _chat_id(context)
         if not chat_id:
             return ActionResponse(False, "تعذر التحقق من طلبات هذا الحساب.", error="user_not_found")
+        order_number = params.get("order_id")
+        if order_number is None or not str(order_number).strip():
+            return ActionResponse(
+                False,
+                "أرسل رقم الطلب الذي تريد تتبعه.",
+                error="missing_order_id",
+            )
         async with AsyncSessionLocal() as session:
-            order = await _find_owned_order(
+            order = await get_customer_order(
                 chat_id=chat_id,
-                order_number=params.get("order_id"),
+                order_reference=order_number,
                 session=session,
             )
         if not order:
@@ -910,12 +944,13 @@ class HelpAction(BaseAction):
 1. **طلب طعام** - اكتب "أريد طلب" أو "اطلب"
 2. **عرض القائمة** - اكتب "القائمة" أو "المنيو"
 3. **عرض المطاعم** - اكتب "المطاعم"
-4. **إلغاء طلب** - اكتب "إلغاء الطلب" + رقم الطلب
-5. **تتبع طلب** - اكتب "تتبع الطلب" + رقم الطلب
-6. **الأسعار** - اكتب "سعر" + اسم المنتج
-7. **العروض** - اكتب "العروض"
+4. **تعديل الكمية** - اكتب "تعديل الكمية" + رقم الطلب + اسم المنتج + الكمية الجديدة (للطلبات قيد الانتظار)
+5. **إلغاء طلب** - اكتب "إلغاء الطلب" + رقم الطلب
+6. **تتبع طلب** - اكتب "تتبع الطلب" + رقم الطلب
+7. **الأسعار** - اكتب "سعر" + اسم المنتج
+8. **العروض** - اكتب "العروض"
 
-تعديل الطلبات وتسجيل الشكاوى غير متاحين حالياً؛ لم يتم تنفيذ تعديل أو إنشاء بلاغ.
+9. **تقديم شكوى** - اكتب وصف المشكلة، ثم اختر المطعم أو أرفق رقم الطلب.
 """,
             data={},
         )
@@ -1017,9 +1052,57 @@ class ComplaintAction(BaseAction):
     def __init__(self) -> None:
         super().__init__(
             name="complaint",
-            description="معالجة شكوى",
-            requires_confirmation=False,
+            description="تسجيل شكوى",
+            requires_confirmation=True,
             priority=9,
+        )
+
+    async def prepare(
+        self,
+        *,
+        params: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> ActionResponse:
+        description = (
+            params.get("description")
+            or params.get("issue")
+            or params.get("message")
+            or (context.get("message") if context else None)
+        )
+        if not isinstance(description, str) or not description.strip():
+            return ActionResponse(
+                False,
+                "اكتب وصفاً مختصراً للمشكلة قبل تسجيل الشكوى.",
+                error="complaint_description_required",
+            )
+
+        description = description.strip()
+        if len(description) > 5000:
+            return ActionResponse(
+                False,
+                "يجب ألا يتجاوز وصف الشكوى 5000 حرف.",
+                error="invalid_complaint_description",
+            )
+        order_reference = params.get("order_id")
+        restaurant_id = _restaurant_id(params={}, context=context)
+        if restaurant_id is None and not order_reference:
+            return ActionResponse(
+                False,
+                "اختر المطعم أو أرفق رقم طلبك حتى أتمكن من توجيه الشكوى.",
+                error="complaint_restaurant_required",
+            )
+
+        language = params.get("language", "ar")
+        preview = description if len(description) <= 300 else description[:297] + "..."
+        confirmation_messages = {
+            "ar": f"سأسجل شكوى بهذا الوصف:\n{preview}\n\nهل تؤكد؟ (نعم/لا)",
+            "en": f"I will register this complaint:\n{preview}\n\nConfirm? (Yes/No)",
+            "fr": f"Je vais enregistrer cette réclamation :\n{preview}\n\nConfirmer ? (Oui/Non)",
+        }
+        return ActionResponse(
+            True,
+            confirmation_messages.get(language, confirmation_messages["en"]),
+            data={"description": description},
         )
 
     async def execute(
@@ -1042,14 +1125,67 @@ class ComplaintAction(BaseAction):
             "action_complaint_executed",
             extra={
                 "order_id": params.get("order_id"),
-                "issue": params.get("issue"),
+                "restaurant_id": _restaurant_id(params={}, context=context),
             },
         )
+        chat_id = _chat_id(context)
+        if not chat_id:
+            return ActionResponse(False, "تعذر التحقق من حسابك.", error="user_not_found")
 
+        description = (
+            params.get("description")
+            or params.get("issue")
+            or params.get("message")
+            or (context.get("message") if context else None)
+        )
+        if not isinstance(description, str) or not description.strip():
+            return ActionResponse(
+                False,
+                "اكتب وصفاً مختصراً للمشكلة قبل تسجيل الشكوى.",
+                error="complaint_description_required",
+            )
+
+        async with AsyncSessionLocal() as session:
+            try:
+                complaint = await create_customer_complaint(
+                    chat_id=chat_id,
+                    restaurant_id=_restaurant_id(params={}, context=context),
+                    order_reference=params.get("order_id"),
+                    description=description,
+                    session=session,
+                )
+            except NotFoundError as error:
+                error_code = (
+                    "order_not_found"
+                    if error.error_code == "ORDER_NOT_FOUND"
+                    else "user_not_found"
+                    if error.error_code == "USER_NOT_FOUND"
+                    else "complaint_restaurant_not_found"
+                )
+                return ActionResponse(False, error.message, error=error_code)
+            except ValidationError as error:
+                error_codes = {
+                    "CUSTOMER_CONSENT_REQUIRED": "customer_consent_required",
+                    "INVALID_COMPLAINT_DESCRIPTION": "invalid_complaint_description",
+                    "COMPLAINT_ORDER_RESTAURANT_MISMATCH": "complaint_order_restaurant_mismatch",
+                    "COMPLAINT_RESTAURANT_REQUIRED": "complaint_restaurant_required",
+                }
+                return ActionResponse(
+                    False,
+                    error.message,
+                    error=error_codes.get(error.error_code or "", "action_failed"),
+                )
+
+        complaint_messages = {
+            "ar": f"تم تسجيل الشكوى بنجاح. رقم البلاغ: {complaint.id}.",
+            "en": f"Your complaint has been registered. Ticket number: {complaint.id}.",
+            "fr": f"Votre réclamation a été enregistrée. Numéro du ticket : {complaint.id}.",
+        }
+        language = params.get("language", "ar")
         return ActionResponse(
-            success=False,
-            message="تسجيل الشكاوى غير متاح حالياً. لم يتم إنشاء بلاغ.",
-            error="complaint_registration_not_supported",
+            True,
+            complaint_messages.get(language, complaint_messages["en"]),
+            data={"complaint_id": complaint.id},
         )
 
 

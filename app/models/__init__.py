@@ -67,6 +67,7 @@ from .restaurant_metric import RestaurantMetric
 from .restaurant_order_counter import RestaurantOrderCounter
 from .restaurant_payment_setting import RestaurantPaymentSetting
 from .payment import Payment
+from .complaint import Complaint
 
 
 # ==============================================
@@ -143,4 +144,5 @@ __all__ = [
     # Payments
     "Payment",
     "RestaurantPaymentSetting",
+    "Complaint",
 ]

@@ -48,12 +48,12 @@ The project explores backend engineering, API design, database architecture, mul
 - 13 intent types
 - 10 entity types
 - 12 registered action handlers with confirmation handling
-- `modify_order` and `complaint` are recognized intents, but their handlers are placeholders: order changes are not applied and complaints do not create tickets
+- `modify_order` supports changing the quantity of an existing item on pending orders; `complaint` creates an open, restaurant-scoped ticket linked to the customer and optionally to one of their orders, after confirmation
 - Session, context and conversation-history management
 - AI-assisted classification with fallback pattern matching
 - Integration with OpenAI and DeepSeek APIs
 
-Recognizing an intent does not mean the corresponding workflow is operational. In particular, **Modify Order** and **Complaint** are not available MVP features.
+Intent recognition does not imply full workflow support. Modify Order is limited to quantities of existing items on pending orders; complaint tickets are persisted as open records and still need a restaurant-side review/handling workflow.
 
 ### Security
 
