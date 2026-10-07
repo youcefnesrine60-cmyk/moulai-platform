@@ -62,6 +62,13 @@ class Owner(BaseModel):
         index=True,
         comment="معرف المستخدم في تيليجرام",
     )
+    auth_subject = Column(
+        String(255),
+        unique=True,
+        index=True,
+        nullable=True,
+        comment="Stable subject identifier from the trusted identity provider",
+    )
     full_name = Column(
         String(255),
         comment="الاسم الكامل للمالك",

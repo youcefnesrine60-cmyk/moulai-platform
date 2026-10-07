@@ -117,7 +117,9 @@ async def get_order_timeline(
 
     for item in timeline:
         enriched_item = dict(item)
-        enriched_item["status_display"] = get_status_display_name(item.get("status", "unknown"))
+        enriched_item["status_display"] = get_status_display_name(
+            item.get("new_status", item.get("status", "unknown")),
+        )
         enriched_timeline.append(enriched_item)
 
     logger.info(
@@ -163,7 +165,7 @@ async def get_last_status(
             "get_last_status_found",
             extra={
                 "order_id": order_id,
-                "status": last_status.status,
+                "status": last_status.new_status,
                 "created_at": last_status.created_at,
             },
         )

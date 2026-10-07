@@ -57,11 +57,26 @@ Intent recognition does not imply full workflow support. Modify Order is limited
 
 ### Security
 
-- JWT authentication
+- OIDC JWT authentication for the Orders API, with issuer, audience and JWKS signature validation
+- Restaurant access is authorized against the authenticated owner's database-linked identity
 - Password hashing with bcrypt
 - Rate limiting and abuse-prevention mechanisms
 - Session management
 - Redis-backed application services
+
+### Orders API identity setup
+
+Set `OIDC_ISSUER`, `OIDC_AUDIENCE`, and `OIDC_JWKS_URL` to the trusted identity
+provider's HTTPS values. The Orders API accepts only RS256 or ES256 tokens with
+valid signature, issuer, audience, expiration, and subject claims. Missing
+provider configuration fails closed with HTTP 503.
+
+Apply the Alembic migrations, then provision each owner's stable identity-provider
+`sub` in the unique `owners.auth_subject` column through a trusted administrative
+process. The Orders and Order Items APIs accept the same verified owner
+identity. An authenticated owner may select a restaurant by ID, but each order
+and item operation checks ownership in the database; a client-supplied
+restaurant or order ID is never accepted as proof of access.
 
 ## Testing
 

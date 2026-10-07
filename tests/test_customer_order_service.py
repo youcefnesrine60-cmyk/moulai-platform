@@ -156,3 +156,58 @@ async def test_customer_cancellation_updates_status_and_history_atomically():
     assert session.added[0].old_status == "pending"
     assert session.added[0].new_status == "cancelled"
     assert session.transaction.committed is True
+
+
+@pytest.mark.asyncio
+async def test_customer_cancellation_replay_is_rejected_without_duplicate_history():
+    order = SimpleNamespace(id=17, order_number="RST1-000017", status="cancelled")
+    session = FakeSession([ScalarResult(order)])
+
+    with pytest.raises(ValidationError) as exc_info:
+        await cancel_customer_order(
+            chat_id=425,
+            order_reference=order.order_number,
+            reason="Retry",
+            session=session,
+        )
+
+    assert exc_info.value.error_code == "ORDER_NOT_CANCELLABLE"
+    assert session.added == []
+    assert session.transaction.rolled_back is True
+
+
+@pytest.mark.asyncio
+async def test_replaying_same_quantity_change_does_not_double_charge():
+    order = SimpleNamespace(
+        id=17,
+        order_number="RST1-000017",
+        status="pending",
+        discount_amount=0.0,
+        tax_amount=0.0,
+        delivery_amount=0.0,
+        subtotal_amount=100.0,
+        total_amount=100.0,
+    )
+    item = SimpleNamespace(
+        id=21,
+        order_id=17,
+        product_name="Pizza",
+        unit_price=50.0,
+        quantity=2,
+        total_price=100.0,
+    )
+
+    for _ in range(2):
+        session = FakeSession([ScalarResult(order), ListResult([item])])
+        await change_customer_order_item_quantity(
+            chat_id=425,
+            order_reference=order.order_number,
+            product_name="Pizza",
+            quantity=3,
+            session=session,
+        )
+        assert session.transaction.committed is True
+
+    assert item.quantity == 3
+    assert item.total_price == 150.0
+    assert order.total_amount == 150.0

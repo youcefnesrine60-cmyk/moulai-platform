@@ -28,6 +28,7 @@ from app.repositories.order_status_history_repo import (
 )
 from app.services.business.orders.constants import (
     can_transition,
+    get_allowed_transitions,
     is_valid_status,
     get_status_display_name,
 )
@@ -60,15 +61,13 @@ async def change_order_status(
     transaction = session.begin_nested() if had_transaction else session.begin()
     try:
         async with transaction:
-            order, changed = await _change_order_status_in_transaction(
+            order, _ = await _change_order_status_in_transaction(
                 order_id=order_id,
                 new_status=new_status,
                 employee_id=employee_id,
                 note=note,
                 session=session,
             )
-        if had_transaction and changed:
-            await session.commit()
         return order
     finally:
         if previous_defer_commits is None:
@@ -162,13 +161,13 @@ async def _change_order_status_in_transaction(
                 "order_number": order.order_number,
                 "old_status": old_status,
                 "new_status": new_status,
-                "allowed_transitions": list(can_transition(old_status)),
+                "allowed_transitions": list(get_allowed_transitions(old_status)),
             },
         )
 
     # 5️⃣ تحديث حالة الطلب
     updated_order = await orders_repo.update(
-        order_id=order_id,
+        id=order_id,
         data={"status": new_status},
     )
 
@@ -319,7 +318,7 @@ async def update_order(
 
     # 1️⃣ جلب الطلب
     orders_repo = OrdersRepository(session=session)
-    order = await orders_repo.get_by_id(order_id=order_id)
+    order = await orders_repo.get_by_id(id=order_id)
 
     if not order:
         logger.error(
@@ -346,7 +345,7 @@ async def update_order(
 
     # 4️⃣ تحديث الطلب
     updated_order = await orders_repo.update(
-        order_id=order_id,
+        id=order_id,
         data=data,
     )
 

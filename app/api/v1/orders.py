@@ -26,6 +26,12 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import (
+    get_current_owner,
+    require_owned_order,
+    require_owned_restaurant,
+    OwnerPrincipal,
+)
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
     ConflictError,
@@ -115,13 +121,15 @@ async def get_order_items_service(
 )
 async def list_orders(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     restaurant_id: Optional[int] = Query(
         None,
         description="معرف المطعم",
         ge=1,
     ),
-    status: Optional[str] = Query(
+    status_filter: Optional[str] = Query(
         None,
+        alias="status",
         description="حالة الطلب",
         min_length=1,
         max_length=50,
@@ -144,7 +152,7 @@ async def list_orders(
     
     Args:
         restaurant_id: معرف المطعم للتصفية
-        status: حالة الطلب للتصفية
+        status_filter: حالة الطلب للتصفية
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة الطلبات
@@ -156,7 +164,7 @@ async def list_orders(
         "api_list_orders",
         extra={
             "restaurant_id": restaurant_id,
-            "status": status,
+            "status": status_filter,
             "skip": skip,
             "limit": limit,
         },
@@ -167,11 +175,16 @@ async def list_orders(
             raise ValidationError(
                 message="معرف المطعم مطلوب",
             )
+        await require_owned_restaurant(
+            restaurant_id=restaurant_id,
+            owner=owner,
+            session=service.session,
+        )
 
-        if status is not None:
+        if status_filter is not None:
             result = await service.get_by_status(
                 restaurant_id=restaurant_id,
-                status=status,
+                status=status_filter,
                 skip=skip,
                 limit=limit,
             )
@@ -184,6 +197,8 @@ async def list_orders(
 
         return result
 
+    except HTTPException:
+        raise
     except ValidationError as e:
         logger.warning(
             "api_list_orders_validation_error",
@@ -216,6 +231,7 @@ async def list_orders(
 )
 async def get_order(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Path(..., ge=1, description="معرف الطلب"),
     service: OrderService = Depends(get_order_service),
     items_service: OrderItemsService = Depends(get_order_items_service),
@@ -237,6 +253,12 @@ async def get_order(
     logger.info(
         "api_get_order",
         extra={"order_id": order_id},
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -315,6 +337,7 @@ async def get_order(
 )
 async def create_order(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     data: OrderCreate,
     service: OrderService = Depends(get_order_service),
     items_service: OrderItemsService = Depends(get_order_items_service),
@@ -340,6 +363,12 @@ async def create_order(
             "order_type": data.order_type,
             "items_count": len(data.items) if data.items else 0,
         },
+    )
+
+    await require_owned_restaurant(
+        restaurant_id=data.restaurant_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -436,6 +465,7 @@ async def create_order(
 )
 async def update_order(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Path(..., ge=1, description="معرف الطلب"),
     data: OrderUpdate,
     service: OrderService = Depends(get_order_service),
@@ -460,6 +490,12 @@ async def update_order(
             "order_id": order_id,
             "fields": list(data.model_dump(exclude_unset=True).keys()),
         },
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -519,6 +555,7 @@ async def update_order(
 )
 async def update_order_status(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Path(..., ge=1, description="معرف الطلب"),
     data: OrderStatusUpdate,
     service: OrderService = Depends(get_order_service),
@@ -544,6 +581,12 @@ async def update_order_status(
             "new_status": data.status,
             "employee_id": data.employee_id,
         },
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -603,6 +646,7 @@ async def update_order_status(
 )
 async def complete_order_endpoint(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Path(..., ge=1, description="معرف الطلب"),
     employee_id: Optional[int] = Query(
         None,
@@ -634,6 +678,12 @@ async def complete_order_endpoint(
             "order_id": order_id,
             "employee_id": employee_id,
         },
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -694,6 +744,7 @@ async def complete_order_endpoint(
 )
 async def cancel_order_endpoint(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Path(..., ge=1, description="معرف الطلب"),
     employee_id: Optional[int] = Query(
         None,
@@ -726,6 +777,12 @@ async def cancel_order_endpoint(
             "employee_id": employee_id,
             "reason": reason,
         },
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -786,6 +843,7 @@ async def cancel_order_endpoint(
 )
 async def mark_order_paid_endpoint(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Path(..., ge=1, description="معرف الطلب"),
     payment_id: int = Query(
         ...,
@@ -811,6 +869,12 @@ async def mark_order_paid_endpoint(
             "order_id": order_id,
             "payment_id": payment_id,
         },
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -870,6 +934,7 @@ async def mark_order_paid_endpoint(
 )
 async def delete_order(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Path(..., ge=1, description="معرف الطلب"),
     permanent: bool = Query(
         False,
@@ -894,6 +959,12 @@ async def delete_order(
             "order_id": order_id,
             "permanent": permanent,
         },
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -960,6 +1031,7 @@ async def delete_order(
 )
 async def get_order_summary(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     restaurant_id: int = Query(
         ...,
         description="معرف المطعم",
@@ -983,6 +1055,12 @@ async def get_order_summary(
     logger.info(
         "api_get_order_summary",
         extra={"restaurant_id": restaurant_id},
+    )
+
+    await require_owned_restaurant(
+        restaurant_id=restaurant_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:

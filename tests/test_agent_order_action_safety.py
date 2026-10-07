@@ -134,6 +134,68 @@ async def test_modify_order_requires_confirmation_and_calls_business_service(mon
 
 
 @pytest.mark.asyncio
+async def test_track_order_returns_only_customer_scoped_order(monkeypatch):
+    order = SimpleNamespace(
+        id=17,
+        order_number="RST1-000017",
+        status="preparing",
+        total_amount=850.0,
+    )
+
+    class Session:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, traceback):
+            return False
+
+    monkeypatch.setattr(actions, "AsyncSessionLocal", Session)
+    lookup = AsyncMock(return_value=order)
+    monkeypatch.setattr(actions, "get_customer_order", lookup)
+
+    result = await TrackOrderAction().execute(
+        params={"order_id": "RST1-000017"},
+        context={"user_id": 425},
+    )
+
+    assert result.success is True
+    assert result.data["status"] == "preparing"
+    lookup.assert_awaited_once()
+    assert lookup.await_args.kwargs["chat_id"] == 425
+    assert lookup.await_args.kwargs["order_reference"] == "RST1-000017"
+
+
+@pytest.mark.asyncio
+async def test_executor_stages_mutation_until_user_confirmation():
+    registry = ActionRegistry()
+    action = ModifyOrderAction()
+    registry.register(action)
+    executor = ActionExecutor(registry=registry)
+
+    result = await executor.execute(
+        intent_result={
+            "intent": "modify_order",
+            "confidence": 1.0,
+            "entities": {
+                "order_id": "RST1-000017",
+                "product_name": "Pizza",
+                "quantity": 3,
+            },
+            "language": "en",
+        },
+        context={
+            "user_id": 425,
+            "request_context": {"restaurant_id": 1},
+        },
+    )
+
+    assert result["success"] is True
+    assert result["data"]["pending_confirmation"] is True
+    assert result["confirmed"] is False
+    assert result["data"]["params"]["order_id"] == "RST1-000017"
+
+
+@pytest.mark.asyncio
 async def test_executor_does_not_return_raw_exception_details():
     class FailingAction(BaseAction):
         def __init__(self):

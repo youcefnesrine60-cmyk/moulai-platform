@@ -5,6 +5,7 @@
 
 from typing import Optional
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # ✅ استيراد الاستثناءات
@@ -14,6 +15,7 @@ from app.core.exceptions import (
 )
 
 from app.core.logger import logger
+from app.models.order import Order
 from app.repositories.orders_repo import OrdersRepository
 from app.services.business.orders.update import change_order_status
 
@@ -61,30 +63,33 @@ async def cancel_order(
         },
     )
 
-    # 1️⃣ التحقق من وجود الطلب
-    orders_repo = OrdersRepository(session=session)
-    order = await orders_repo.get_by_id(id=order_id)
+    had_transaction = session.in_transaction()
+    transaction = session.begin_nested() if had_transaction else session.begin()
+    async with transaction:
+        order = (
+            await session.execute(
+                select(Order)
+                .where(Order.id == order_id)
+                .with_for_update(),
+            )
+        ).scalar_one_or_none()
+        if not order:
+            logger.error(
+                "cancel_order_order_not_found",
+                extra={"order_id": order_id},
+            )
+            raise NotFoundError(
+                message=f"الطلب بـ ID '{order_id}' غير موجود",
+            )
 
-    if not order:
-        logger.error(
-            "cancel_order_order_not_found",
-            extra={"order_id": order_id},
-        )
-        raise NotFoundError(
-            message=f"الطلب بـ ID '{order_id}' غير موجود",
-        )
-
-    # 2️⃣ التحقق من إمكانية إلغاء الطلب
-    current_status = order.status
-
-    if current_status in NON_CANCELLABLE_STATUSES:
+        current_status = order.status
         if current_status == "cancelled":
             raise ValidationError(
                 message=f"الطلب #{order_id} ملغى بالفعل",
             )
-        else:
+        if current_status not in CANCELLABLE_STATUSES:
             raise ValidationError(
-                message=f"لا يمكن إلغاء الطلب #{order_id} لأنه في حالة '{current_status}'",
+                message=f"لا يمكن إلغاء الطلب #{order_id} في حالة '{current_status}'",
                 details={
                     "order_id": order_id,
                     "current_status": current_status,
@@ -92,38 +97,23 @@ async def cancel_order(
                 },
             )
 
-    if current_status not in CANCELLABLE_STATUSES:
-        raise ValidationError(
-            message=f"لا يمكن إلغاء الطلب #{order_id} في حالة '{current_status}'",
-            details={
-                "order_id": order_id,
-                "current_status": current_status,
-                "allowed_statuses": CANCELLABLE_STATUSES,
-            },
+        if order.is_paid:
+            logger.info(
+                "cancel_order_paid_order",
+                extra={
+                    "order_id": order_id,
+                    "payment_status": order.payment_status,
+                },
+            )
+
+        note = reason or f"تم إلغاء الطلب بواسطة {'الموظف' if employee_id else 'النظام'}"
+        await change_order_status(
+            order_id=order_id,
+            new_status="cancelled",
+            employee_id=employee_id,
+            note=note,
+            session=session,
         )
-
-    # 3️⃣ التحقق من أن الطلب ليس مدفوعاً بالفعل (اختياري)
-    # إذا كان الطلب مدفوعاً، قد تحتاج إلى معالجة استرداد المبلغ
-    if order.is_paid:
-        logger.info(
-            "cancel_order_paid_order",
-            extra={
-                "order_id": order_id,
-                "payment_status": order.payment_status,
-            },
-        )
-        # يمكن إضافة منطق لاسترداد المبلغ هنا
-
-    # 4️⃣ تغيير حالة الطلب إلى cancelled
-    note = reason or f"تم إلغاء الطلب بواسطة {'الموظف' if employee_id else 'النظام'}"
-
-    await change_order_status(
-        order_id=order_id,
-        new_status="cancelled",
-        employee_id=employee_id,
-        note=note,
-        session=session,
-    )
 
     logger.info(
         "order_cancelled_successfully",

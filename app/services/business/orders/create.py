@@ -117,8 +117,6 @@ async def create_restaurant_order(
                 session=session,
             )
 
-        if had_transaction:
-            await session.commit()
         return order_id
     finally:
         if previous_defer_commits is None:
@@ -315,8 +313,6 @@ async def create_order_with_items(
                 items=items,
                 session=session,
             )
-        if had_transaction:
-            await session.commit()
         return order_id
     finally:
         if previous_defer_commits is None:

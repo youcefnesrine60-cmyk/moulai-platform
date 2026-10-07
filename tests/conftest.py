@@ -81,9 +81,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 # ==============================================
 
 @pytest.fixture(scope="function")
-async def db_session(
-    cleanup_test_database: None,
-) -> AsyncGenerator[AsyncSession, None]:
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     إنشاء جلسة قاعدة بيانات اختبارية.
     
@@ -105,9 +103,7 @@ async def db_session(
 # ==============================================
 
 @pytest.fixture(scope="function")
-async def client(
-    cleanup_test_database: None,
-) -> AsyncGenerator[AsyncClient, None]:
+async def client() -> AsyncGenerator[AsyncClient, None]:
     """
     إنشاء عميل اختبار HTTP مع جلسة قاعدة بيانات مستقلة لكل طلب.
     
@@ -142,7 +138,7 @@ async def client(
 # 🔧 TEST DATABASE CLEANUP FIXTURE
 # ==============================================
 
-@pytest.fixture(scope="function")
+@pytest.fixture(autouse=True, scope="function")
 async def cleanup_test_database() -> AsyncGenerator[None, None]:
     """
     تنظيف قاعدة البيانات التجريبية قبل وبعد كل اختبار.

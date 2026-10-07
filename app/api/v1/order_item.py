@@ -16,6 +16,12 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    require_owned_order,
+    require_owned_order_item,
+)
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
     ConflictError,
@@ -103,6 +109,7 @@ async def get_order_item_options_service(
 )
 async def list_order_items(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Query(
         ...,
         description="معرف الطلب",
@@ -140,6 +147,12 @@ async def list_order_items(
             "skip": skip,
             "limit": limit,
         },
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -188,6 +201,7 @@ async def list_order_items(
 )
 async def get_order_item(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_item_id: int = Path(..., ge=1, description="معرف تفاصيل الطلب"),
     service: OrderItemsService = Depends(get_order_items_service),
     options_service: OrderItemOptionsService = Depends(get_order_item_options_service),
@@ -209,6 +223,12 @@ async def get_order_item(
     logger.info(
         "api_get_order_item",
         extra={"order_item_id": order_item_id},
+    )
+
+    await require_owned_order_item(
+        order_item_id=order_item_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -257,6 +277,7 @@ async def get_order_item(
 )
 async def create_order_item(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     data: OrderItemCreate,
     service: OrderItemsService = Depends(get_order_items_service),
 ) -> OrderItemResponse:
@@ -280,6 +301,12 @@ async def create_order_item(
             "product_id": data.product_id,
             "quantity": data.quantity,
         },
+    )
+
+    await require_owned_order(
+        order_id=data.order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -351,6 +378,7 @@ async def create_order_item(
 )
 async def update_order_item_quantity(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_item_id: int = Path(..., ge=1, description="معرف تفاصيل الطلب"),
     quantity: int = Query(
         ...,
@@ -380,6 +408,12 @@ async def update_order_item_quantity(
             "order_item_id": order_item_id,
             "quantity": quantity,
         },
+    )
+
+    await require_owned_order_item(
+        order_item_id=order_item_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -439,6 +473,7 @@ async def update_order_item_quantity(
 )
 async def update_order_item_unit_price(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_item_id: int = Path(..., ge=1, description="معرف تفاصيل الطلب"),
     unit_price: float = Query(
         ...,
@@ -467,6 +502,12 @@ async def update_order_item_unit_price(
             "order_item_id": order_item_id,
             "unit_price": unit_price,
         },
+    )
+
+    await require_owned_order_item(
+        order_item_id=order_item_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -526,6 +567,7 @@ async def update_order_item_unit_price(
 )
 async def delete_order_item(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_item_id: int = Path(..., ge=1, description="معرف تفاصيل الطلب"),
     service: OrderItemsService = Depends(get_order_items_service),
 ) -> None:
@@ -542,6 +584,12 @@ async def delete_order_item(
     logger.info(
         "api_delete_order_item",
         extra={"order_item_id": order_item_id},
+    )
+
+    await require_owned_order_item(
+        order_item_id=order_item_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -592,6 +640,7 @@ async def delete_order_item(
 )
 async def delete_all_order_items(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Path(..., ge=1, description="معرف الطلب"),
     service: OrderItemsService = Depends(get_order_items_service),
 ) -> None:
@@ -608,6 +657,12 @@ async def delete_all_order_items(
     logger.info(
         "api_delete_all_order_items",
         extra={"order_id": order_id},
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -658,6 +713,7 @@ async def delete_all_order_items(
 )
 async def get_order_items_summary(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     order_id: int = Query(
         ...,
         description="معرف الطلب",
@@ -681,6 +737,12 @@ async def get_order_items_summary(
     logger.info(
         "api_get_order_items_summary",
         extra={"order_id": order_id},
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -728,6 +790,7 @@ async def get_order_items_summary(
 )
 async def create_order_items_batch(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     items: List[OrderItemCreate],
     service: OrderItemsService = Depends(get_order_items_service),
 ) -> OrderItemListResponse:
@@ -766,6 +829,12 @@ async def create_order_items_batch(
             "order_id": order_id,
             "count": len(items),
         },
+    )
+
+    await require_owned_order(
+        order_id=order_id,
+        owner=owner,
+        session=service.session,
     )
 
     created_items = []

@@ -173,6 +173,18 @@ class Settings(BaseSettings):
         description="المفتاح السري للتطبيق",
         min_length=32,
     )
+    OIDC_ISSUER: Optional[str] = Field(
+        default=None,
+        description="Issuer URL for the trusted OpenID Connect provider",
+    )
+    OIDC_AUDIENCE: Optional[str] = Field(
+        default=None,
+        description="Expected audience for API access tokens",
+    )
+    OIDC_JWKS_URL: Optional[str] = Field(
+        default=None,
+        description="HTTPS URL of the trusted provider's JWKS endpoint",
+    )
 
     # ==========================================
     # 🌐 CORS
