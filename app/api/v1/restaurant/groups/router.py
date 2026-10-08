@@ -124,7 +124,7 @@ async def create_restaurant_group(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -389,7 +389,7 @@ async def update_restaurant_group(
             extra={"group_id": group_id, "error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:

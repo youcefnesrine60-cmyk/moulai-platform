@@ -1,3 +1,5 @@
+from app.repositories.orders_repo import lock_order
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # 💳 ORDER PAYMENTS SERVICE
 # Business Logic Layer
@@ -11,6 +13,8 @@
 # التحقق من حالة الدفعة
 # جلب طرق الدفع المسموح بها
 # ==============================================
+
+import math
 
 from typing import (
     Any,
@@ -43,7 +47,7 @@ from app.repositories.restaurant.restaurant_payment_settings_repo import (
 )
 
 # ✅ استيراد المخططات
-from app.schemas.payment import (
+from app.schemas.order_payment import (
     PaymentCreate,
     PaymentResponse,
     PaymentStatusUpdate,
@@ -122,6 +126,14 @@ class OrderPaymentsService:
     # ==============================================
     # GET ALLOWED PAYMENT METHODS
     # ==============================================
+
+    async def _locked_payment(self, payment_id):
+        payment = await self.repo.get_by_id(id=payment_id)
+        if payment is None:
+            raise NotFoundError(message="Payment not found")
+        await lock_order(order_id=payment.order_id, session=self.session)
+        await self.session.refresh(payment, attribute_names=["payment_status", "amount", "paid_at"])
+        return payment
 
     async def _get_allowed_payment_methods(
         self,
@@ -491,6 +503,7 @@ class OrderPaymentsService:
     # CREATE PAYMENT
     # ==============================================
 
+    @transactional_order
     async def create_payment(
         self,
         *,
@@ -509,6 +522,12 @@ class OrderPaymentsService:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كانت البيانات غير صالحة
         """
+        order = await lock_order(order_id=payment_data.order_id, session=self.session)
+        if order is None:
+            raise NotFoundError(message="Order not found")
+        if order.status == "cancelled":
+            raise ValidationError(message="Cannot pay a cancelled order")
+
         logger.info(
             "order_payments_service_create_payment",
             extra={
@@ -519,7 +538,7 @@ class OrderPaymentsService:
         )
 
         # التحقق من صحة المبلغ
-        if payment_data.amount <= 0:
+        if not math.isfinite(payment_data.amount) or payment_data.amount <= 0:
             raise ValidationError(
                 message="مبلغ الدفع يجب أن يكون أكبر من الصفر",
             )
@@ -572,6 +591,7 @@ class OrderPaymentsService:
     # UPDATE PAYMENT STATUS
     # ==============================================
 
+    @transactional_order
     async def update_payment_status(
         self,
         *,
@@ -600,7 +620,7 @@ class OrderPaymentsService:
             },
         )
 
-        payment = await self.repo.get_by_id(id=payment_id)
+        payment = await self._locked_payment(payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -639,6 +659,7 @@ class OrderPaymentsService:
     # CONFIRM PAYMENT
     # ==============================================
 
+    @transactional_order
     async def confirm_payment(
         self,
         *,
@@ -662,7 +683,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self.repo.get_by_id(id=payment_id)
+        payment = await self._locked_payment(payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -694,6 +715,7 @@ class OrderPaymentsService:
     # FAIL PAYMENT
     # ==============================================
 
+    @transactional_order
     async def fail_payment(
         self,
         *,
@@ -717,7 +739,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self.repo.get_by_id(id=payment_id)
+        payment = await self._locked_payment(payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -749,6 +771,7 @@ class OrderPaymentsService:
     # CANCEL PAYMENT
     # ==============================================
 
+    @transactional_order
     async def cancel_payment(
         self,
         *,
@@ -772,7 +795,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self.repo.get_by_id(id=payment_id)
+        payment = await self._locked_payment(payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -804,6 +827,7 @@ class OrderPaymentsService:
     # REFUND PAYMENT
     # ==============================================
 
+    @transactional_order
     async def refund_payment(
         self,
         *,
@@ -827,7 +851,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self.repo.get_by_id(id=payment_id)
+        payment = await self._locked_payment(payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -862,6 +886,7 @@ class OrderPaymentsService:
     # DELETE PAYMENT
     # ==============================================
 
+    @transactional_order
     async def delete_payment(
         self,
         *,
@@ -882,7 +907,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self.repo.get_by_id(id=payment_id)
+        payment = await self._locked_payment(payment_id)
 
         if not payment:
             raise NotFoundError(

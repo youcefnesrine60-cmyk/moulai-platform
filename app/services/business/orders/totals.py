@@ -1,3 +1,4 @@
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # 📦 ORDERS SERVICE - TOTALS
 # حساب الإجماليات 
@@ -33,6 +34,23 @@ OrderTotalsWithOptions = Tuple[float, float, float, float, float, float]
 # 🧮 CALCULATE ORDER TOTALS
 # ==============================================
 
+
+def compute_order_totals(*, subtotal, discount=0, tax=0, delivery=0) -> OrderTotals:
+    """Single arithmetic rule shared by customer and restaurant operations."""
+    import math
+    try:
+        subtotal, discount, tax, delivery = map(float, (subtotal, discount, tax, delivery))
+    except (TypeError, ValueError) as exc:
+        raise ValidationError(message="Invalid order amounts") from exc
+    if any(not math.isfinite(value) or value < 0 for value in (subtotal, discount, tax, delivery)):
+        raise ValidationError(message="Invalid order amounts")
+    total = subtotal - discount + tax + delivery
+    if total < 0:
+        raise ValidationError(message="Discount exceeds the payable amount")
+    return tuple(round(value, 2) for value in (subtotal, discount, tax, delivery, total))
+
+
+@transactional_order
 async def calculate_order_totals(
     *,
     order_id: int,
@@ -98,7 +116,9 @@ async def calculate_order_totals(
     delivery = float(order.delivery_amount or 0)
 
     # 6️⃣ حساب المجموع الكلي
-    total = subtotal - discount + tax + delivery
+    subtotal, discount, tax, delivery, total = compute_order_totals(
+        subtotal=subtotal, discount=discount, tax=tax, delivery=delivery,
+    )
 
     # 7️⃣ تحديث إجماليات الطلب
     await orders_repo.update(
@@ -133,6 +153,7 @@ async def calculate_order_totals(
 # 💰 UPDATE ORDER TOTALS
 # ==============================================
 
+@transactional_order
 async def update_order_totals(
     *,
     order_id: int,
@@ -172,30 +193,12 @@ async def update_order_totals(
     )
 
     # 1️⃣ التحقق من صحة القيم
-    if subtotal_amount < 0:
-        raise ValidationError(
-            message="المجموع الفرعي لا يمكن أن يكون سالباً",
-        )
-
-    if discount_amount < 0:
-        raise ValidationError(
-            message="مبلغ الخصم لا يمكن أن يكون سالباً",
-        )
-
-    if tax_amount < 0:
-        raise ValidationError(
-            message="مبلغ الضريبة لا يمكن أن يكون سالباً",
-        )
-
-    if delivery_amount < 0:
-        raise ValidationError(
-            message="مبلغ التوصيل لا يمكن أن يكون سالباً",
-        )
-
-    if total_amount < 0:
-        raise ValidationError(
-            message="المجموع الكلي لا يمكن أن يكون سالباً",
-        )
+    import math
+    if not math.isfinite(float(total_amount)) or total_amount < 0:
+        raise ValidationError(message="Invalid total amount")
+    subtotal_amount, discount_amount, tax_amount, delivery_amount, total_amount = compute_order_totals(
+        subtotal=subtotal_amount, discount=discount_amount,
+        tax=tax_amount, delivery=delivery_amount)
 
     # 2️⃣ جلب الطلب
     orders_repo = OrdersRepository(session=session)
@@ -250,6 +253,7 @@ async def update_order_totals(
 # 🔄 RECALCULATE ORDER TOTALS
 # ==============================================
 
+@transactional_order
 async def recalculate_order_totals(
     *,
     order_id: int,

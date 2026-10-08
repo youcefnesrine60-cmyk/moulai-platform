@@ -1,3 +1,4 @@
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -38,6 +39,7 @@ from app.services.business.orders import (
 
     # Create
     create_restaurant_order,
+    create_order_with_items,
 
     # Read
     get_restaurant_order,
@@ -272,6 +274,7 @@ class OrderService:
     # CREATE ORDER
     # ==============================================
 
+    @transactional_order
     async def create_order(
         self,
         *,
@@ -289,26 +292,17 @@ class OrderService:
         Raises:
             ValidationError: إذا كانت البيانات غير صالحة
         """
-        order_id = await create_restaurant_order(
-            restaurant_id=order_data.restaurant_id,
-            branch_id=order_data.branch_id,
-            table_id=order_data.table_id,
-            employee_id=order_data.employee_id,
-            order_number="",  # سيتم توليده تلقائياً
-            order_type=order_data.order_type,
-            customer_name=order_data.customer_name,
-            customer_phone=order_data.customer_phone,
-            delivery_address=order_data.delivery_address,
-            customer_note=order_data.customer_note,
-            subtotal_amount=order_data.subtotal_amount,
-            discount_amount=order_data.discount_amount,
-            tax_amount=order_data.tax_amount,
-            delivery_amount=order_data.delivery_amount,
-            total_amount=order_data.total_amount,
-            session=self.session,
-        )
+        values = order_data.model_dump(exclude={"items"})
+        if order_data.items:
+            order_id = await create_order_with_items(
+                **values, items=[item.model_dump() for item in order_data.items],
+                session=self.session,
+            )
+        else:
+            order_id = await create_restaurant_order(
+                **values, order_number="", session=self.session,
+            )
 
-        # جلب الطلب المنشأ
         order = await get_restaurant_order(
             order_id=order_id,
             session=self.session,
@@ -320,6 +314,7 @@ class OrderService:
     # UPDATE ORDER
     # ==============================================
 
+    @transactional_order
     async def update_order(
         self,
         *,
@@ -358,6 +353,7 @@ class OrderService:
     # UPDATE ORDER STATUS
     # ==============================================
 
+    @transactional_order
     async def update_order_status(
         self,
         *,
@@ -392,6 +388,7 @@ class OrderService:
     # COMPLETE ORDER
     # ==============================================
 
+    @transactional_order
     async def complete_order(
         self,
         *,
@@ -432,6 +429,7 @@ class OrderService:
     # CANCEL ORDER
     # ==============================================
 
+    @transactional_order
     async def cancel_order(
         self,
         *,
@@ -472,6 +470,7 @@ class OrderService:
     # MARK AS PAID
     # ==============================================
 
+    @transactional_order
     async def mark_as_paid(
         self,
         *,
@@ -509,6 +508,7 @@ class OrderService:
     # DELETE ORDER
     # ==============================================
 
+    @transactional_order
     async def delete_order(
         self,
         *,
@@ -536,6 +536,7 @@ class OrderService:
     # RECALCULATE ORDER TOTAL
     # ==============================================
 
+    @transactional_order
     async def recalculate_order_total(
         self,
         *,

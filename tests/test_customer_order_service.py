@@ -45,12 +45,16 @@ class ListResult:
 
 class FakeSession:
     def __init__(self, query_results):
+        self.info = {}
         self.query_results = iter(query_results)
         self.transaction = FakeTransaction()
         self.added = []
 
     def begin(self):
         return self.transaction
+
+    def in_transaction(self):
+        return False
 
     async def execute(self, statement):
         return next(self.query_results)
@@ -211,3 +215,14 @@ async def test_replaying_same_quantity_change_does_not_double_charge():
     assert item.quantity == 3
     assert item.total_price == 150.0
     assert order.total_amount == 150.0
+
+
+@pytest.fixture(autouse=True)
+def append_history_to_fake_session(monkeypatch):
+    from app.repositories.order_status_history_repo import OrderStatusHistoryRepository
+    async def create(self, *, data):
+        record = OrderStatusHistory(**data)
+        self.session.add(record)
+        await self.session.flush()
+        return record
+    monkeypatch.setattr(OrderStatusHistoryRepository, "create", create)

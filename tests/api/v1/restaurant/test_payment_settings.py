@@ -7,7 +7,9 @@
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import event, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.models.restaurant_payment_setting import RestaurantPaymentSetting
 
 from app.models.owner import Owner
 from app.models.restaurant import Restaurant
@@ -40,10 +42,10 @@ class TestPaymentSettingsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
         """
         # إنشاء مالك
+        # Seed IDs are retained after commit; do not reopen an idle read transaction.
         self.owner = Owner(**sample_owner_data)
         db_session.add(self.owner)
         await db_session.commit()
-        await db_session.refresh(self.owner)
 
         # إنشاء مطعم
         self.restaurant = Restaurant(
@@ -51,7 +53,6 @@ class TestPaymentSettingsAPI:
         )
         db_session.add(self.restaurant)
         await db_session.commit()
-        await db_session.refresh(self.restaurant)
 
         self.restaurant_id = self.restaurant.id
 
@@ -126,6 +127,7 @@ class TestPaymentSettingsAPI:
     async def test_update_payment_methods(
         self,
         client: AsyncClient,
+        db_session: AsyncSession,
         sample_payment_settings_data,
     ) -> None:
         """
@@ -143,16 +145,32 @@ class TestPaymentSettingsAPI:
         await client.post("/api/v1/restaurant-payment-settings/", json=create_data)
 
         # تحديث طرق الدفع
-        response = await client.patch(
-            f"/api/v1/restaurant-payment-settings/{self.restaurant_id}/methods",
-            params={"allow_ccp": True, "allow_paypal": True}
-        )
-        
+        statements = []
+        def record_sql(connection, cursor, statement, parameters, context, executemany):
+            statements.append(statement.lower())
+        engine = db_session.bind.sync_engine
+        event.listen(engine, "before_cursor_execute", record_sql)
+        try:
+            response = await client.patch(
+                f"/api/v1/restaurant-payment-settings/{self.restaurant_id}/methods",
+                params={"allow_ccp": True, "allow_paypal": True},
+            )
+        finally:
+            event.remove(engine, "before_cursor_execute", record_sql)
+
         assert response.status_code == 200
         
         data = response.json()
         assert data["allow_ccp"] is True
         assert data["allow_paypal"] is True
+
+        # Updating settings must not traverse the restaurant/catalog graph.
+        assert not any("from products" in sql or "from restaurants" in sql
+                       or "from categories" in sql for sql in statements)
+        persisted = (await db_session.execute(select(
+            RestaurantPaymentSetting.allow_ccp, RestaurantPaymentSetting.allow_paypal
+        ).where(RestaurantPaymentSetting.restaurant_id == self.restaurant_id))).one()
+        assert tuple(persisted) == (True, True)
 
     # ==============================================
     # TEST ENABLE PAYMENT METHOD

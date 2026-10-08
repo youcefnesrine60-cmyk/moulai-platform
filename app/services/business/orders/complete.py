@@ -1,3 +1,6 @@
+from app.repositories.orders_repo import lock_order
+from app.services.business.orders.constants import ALLOWED_TRANSITIONS
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # 📦 ORDERS SERVICE - COMPLETE
 # إكمال الطلب (complete_order)
@@ -22,7 +25,7 @@ from app.services.business.orders.update import change_order_status
 # ==============================================
 
 # الحالات التي يمكن إكمالها
-COMPLETABLE_STATUSES = {"delivering", "ready", "confirmed"}
+COMPLETABLE_STATUSES = {state for state, targets in ALLOWED_TRANSITIONS.items() if "completed" in targets}
 
 # الحالات التي لا يمكن إكمالها
 NON_COMPLETABLE_STATUSES = {"pending", "cancelled", "completed"}
@@ -32,6 +35,7 @@ NON_COMPLETABLE_STATUSES = {"pending", "cancelled", "completed"}
 # ✅ COMPLETE ORDER
 # ==============================================
 
+@transactional_order
 async def complete_order(
     *,
     order_id: int,
@@ -142,6 +146,7 @@ async def complete_order(
 # ✅ COMPLETE ORDER WITH DELIVERY CONFIRMATION
 # ==============================================
 
+@transactional_order
 async def complete_order_with_delivery_confirmation(
     *,
     order_id: int,
@@ -198,6 +203,8 @@ async def complete_order_with_delivery_confirmation(
     # 3️⃣ إكمال الطلب مع ملاحظة التسليم
     note = delivery_note or "تم تسليم الطلب وتأكيد الاستلام"
 
+    await change_order_status(order_id=order_id, new_status="delivered",
+                              employee_id=employee_id, note=note, session=session)
     await complete_order(
         order_id=order_id,
         employee_id=employee_id,
@@ -218,6 +225,7 @@ async def complete_order_with_delivery_confirmation(
 # ✅ BULK COMPLETE ORDERS
 # ==============================================
 
+@transactional_order
 async def bulk_complete_orders(
     *,
     order_ids: list[int],

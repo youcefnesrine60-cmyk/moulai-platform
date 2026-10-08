@@ -104,6 +104,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         # افتراضياً: id
         return "id"
 
+    def _select(self):
+        return select(self.model).options(*getattr(self, "query_options", ()))
+
     def _get_primary_key_value(
         self,
         instance: ModelType,
@@ -144,7 +147,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             self.session.add(instance)
 
             await self.session.flush()
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.commit()
 
             instance_id = self._get_primary_key_value(instance)
@@ -158,7 +161,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return refreshed or instance
 
         except IntegrityError as e:
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.rollback()
             logger.warning(
                 f"{self.model.__name__}_create_integrity_error",
@@ -166,7 +169,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             )
             raise
         except Exception as e:
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_create_failed",
@@ -197,7 +200,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             self.session.add_all(instances)
 
             await self.session.flush()
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.commit()
 
             refreshed_instances = []
@@ -214,7 +217,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return refreshed_instances
 
         except IntegrityError as e:
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.rollback()
             logger.warning(
                 f"{self.model.__name__}_create_many_integrity_error",
@@ -222,7 +225,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             )
             raise
         except Exception as e:
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_create_many_failed",
@@ -260,7 +263,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             pk_column = getattr(self.model, self._primary_key_name)
 
             result = await self.session.execute(
-                select(self.model).where(pk_column == id),
+                self._select().where(pk_column == id),
             )
 
             return result.scalar_one_or_none()
@@ -452,7 +455,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                     setattr(instance, key, value)
 
             await self.session.flush()
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.commit()
 
             refreshed = await self.get_by_id(id=id)
@@ -465,7 +468,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return refreshed or instance
 
         except Exception as e:
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_update_failed",
@@ -508,7 +511,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
             await self.session.delete(instance)
 
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.commit()
 
             logger.info(
@@ -519,7 +522,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return True
 
         except Exception as e:
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_delete_failed",
@@ -562,7 +565,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             for instance in instances:
                 await self.session.delete(instance)
 
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.commit()
 
             logger.info(
@@ -573,7 +576,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return len(instances)
 
         except Exception as e:
-            if not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_delete_many_failed",

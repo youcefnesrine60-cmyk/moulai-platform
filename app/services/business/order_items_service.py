@@ -1,3 +1,7 @@
+from app.repositories.orders_repo import lock_order
+from app.services.business.orders.helpers import check_order_editable
+from app.services.business.orders.items import add_item_to_order, remove_item_from_order, change_item_amounts, _recalculate_order_total
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -59,8 +63,6 @@ from app.schemas.order_item import (
 # ==============================================
 
 MAX_ITEMS_PER_ORDER = 50
-MAX_QUANTITY_PER_ITEM = 100
-MIN_QUANTITY_PER_ITEM = 1
 
 
 # ==============================================
@@ -334,6 +336,14 @@ class OrderItemsService:
     # ADD ITEM
     # ==============================================
 
+    @transactional_order
+    async def add_items(self, *, items):
+        if not items or len({item.order_id for item in items}) != 1:
+            raise ValidationError(message="Items must belong to one order")
+        created = [await self.add_item(item_data=item) for item in items]
+        return OrderItemListResponse(items=created, total=len(created), skip=0, limit=len(created))
+
+    @transactional_order
     async def add_item(
         self,
         *,
@@ -353,91 +363,11 @@ class OrderItemsService:
             ConflictError: إذا كان المنتج مكرراً في الطلب
             ValidationError: إذا كانت البيانات غير صالحة
         """
-        logger.info(
-            "order_items_service_add_item",
-            extra={
-                "order_id": item_data.order_id,
-                "product_id": item_data.product_id,
-                "quantity": item_data.quantity,
-            },
-        )
-
-        # التحقق من صحة البيانات
-        if item_data.quantity < MIN_QUANTITY_PER_ITEM:
-            raise ValidationError(
-                message=f"الكمية يجب أن تكون على الأقل {MIN_QUANTITY_PER_ITEM}",
-            )
-
-        if item_data.quantity > MAX_QUANTITY_PER_ITEM:
-            raise ValidationError(
-                message=f"الكمية تتجاوز الحد الأقصى المسموح به ({MAX_QUANTITY_PER_ITEM})",
-            )
-
-        if item_data.unit_price < 0:
-            raise ValidationError(
-                message="سعر الوحدة لا يمكن أن يكون سالباً",
-            )
-
-        # التحقق من عدد العناصر في الطلب
-        current_count = await self.count_by_order(
-            order_id=item_data.order_id,
-        )
-
-        if current_count >= MAX_ITEMS_PER_ORDER:
-            raise ValidationError(
-                message=f"تجاوزت الحد الأقصى لعناصر الطلب ({MAX_ITEMS_PER_ORDER})",
-                details={
-                    "order_id": item_data.order_id,
-                    "current_count": current_count,
-                    "max_allowed": MAX_ITEMS_PER_ORDER,
-                },
-            )
-
-        # التحقق من عدم وجود منتج مكرر في الطلب
-        existing = await self.repo.get_by_product_and_order(
-            order_id=item_data.order_id,
-            product_id=item_data.product_id,
-        )
-
-        if existing:
-            raise ConflictError(
-                message=f"المنتج '{item_data.product_name}' موجود بالفعل في الطلب",
-                details={
-                    "order_id": item_data.order_id,
-                    "product_id": item_data.product_id,
-                    "existing_item_id": existing.id,
-                },
-            )
-
-        # حساب السعر الإجمالي
-        total_price = item_data.unit_price * item_data.quantity
-
-        # إنشاء عنصر الطلب
-        data: OrderItemData = {
-            "order_id": item_data.order_id,
-            "product_id": item_data.product_id,
-            "product_name": sanitize_input(item_data.product_name),
-            "unit_price": item_data.unit_price,
-            "quantity": item_data.quantity,
-            "total_price": total_price,
-        }
-
-        item = await self.repo.create(data=data)
-
-        logger.info(
-            "order_item_added_successfully",
-            extra={
-                "order_item_id": item.id,
-                "order_id": item_data.order_id,
-            },
-        )
-
+        values = item_data.model_dump()
+        item = await add_item_to_order(**values, session=self.session)
         return OrderItemResponse.model_validate(item)
 
-    # ==============================================
-    # UPDATE QUANTITY
-    # ==============================================
-
+    @transactional_order
     async def update_quantity(
         self,
         *,
@@ -458,64 +388,11 @@ class OrderItemsService:
             NotFoundError: إذا لم يتم العثور على العنصر
             ValidationError: إذا كانت الكمية غير صالحة
         """
-        logger.info(
-            "order_items_service_update_quantity",
-            extra={
-                "order_item_id": order_item_id,
-                "quantity": quantity,
-            },
-        )
+        item = await change_item_amounts(order_item_id=order_item_id,
+            quantity=quantity, session=self.session)
+        return OrderItemResponse.model_validate(item)
 
-        # التحقق من صحة الكمية
-        if quantity < MIN_QUANTITY_PER_ITEM:
-            raise ValidationError(
-                message=f"الكمية يجب أن تكون على الأقل {MIN_QUANTITY_PER_ITEM}",
-            )
-
-        if quantity > MAX_QUANTITY_PER_ITEM:
-            raise ValidationError(
-                message=f"الكمية تتجاوز الحد الأقصى المسموح به ({MAX_QUANTITY_PER_ITEM})",
-            )
-
-        # الحصول على العنصر الحالي
-        item = await self.repo.get_by_id(id=order_item_id)
-
-        if not item:
-            raise NotFoundError(
-                message=f"عنصر الطلب بـ ID '{order_item_id}' غير موجود",
-            )
-
-        # حساب السعر الإجمالي الجديد
-        unit_price = item.unit_price
-        total_price = unit_price * quantity
-
-        # تحديث الكمية
-        updated = await self.repo.update_quantity(
-            order_item_id=order_item_id,
-            quantity=quantity,
-            total_price=total_price,
-        )
-
-        if not updated:
-            raise NotFoundError(
-                message=f"عنصر الطلب بـ ID '{order_item_id}' غير موجود",
-            )
-
-        logger.info(
-            "order_item_quantity_updated_successfully",
-            extra={
-                "order_item_id": order_item_id,
-                "quantity": quantity,
-                "total_price": total_price,
-            },
-        )
-
-        return OrderItemResponse.model_validate(updated)
-
-    # ==============================================
-    # UPDATE UNIT PRICE
-    # ==============================================
-
+    @transactional_order
     async def update_unit_price(
         self,
         *,
@@ -536,57 +413,11 @@ class OrderItemsService:
             NotFoundError: إذا لم يتم العثور على العنصر
             ValidationError: إذا كان السعر غير صالح
         """
-        logger.info(
-            "order_items_service_update_unit_price",
-            extra={
-                "order_item_id": order_item_id,
-                "unit_price": unit_price,
-            },
-        )
+        item = await change_item_amounts(order_item_id=order_item_id,
+            unit_price=unit_price, session=self.session)
+        return OrderItemResponse.model_validate(item)
 
-        if unit_price < 0:
-            raise ValidationError(
-                message="سعر الوحدة لا يمكن أن يكون سالباً",
-            )
-
-        item = await self.repo.get_by_id(id=order_item_id)
-
-        if not item:
-            raise NotFoundError(
-                message=f"عنصر الطلب بـ ID '{order_item_id}' غير موجود",
-            )
-
-        # حساب السعر الإجمالي الجديد
-        total_price = unit_price * item.quantity
-
-        updated = await self.repo.update(
-            id=order_item_id,
-            data={
-                "unit_price": unit_price,
-                "total_price": total_price,
-            },
-        )
-
-        if not updated:
-            raise NotFoundError(
-                message=f"عنصر الطلب بـ ID '{order_item_id}' غير موجود",
-            )
-
-        logger.info(
-            "order_item_unit_price_updated_successfully",
-            extra={
-                "order_item_id": order_item_id,
-                "unit_price": unit_price,
-                "total_price": total_price,
-            },
-        )
-
-        return OrderItemResponse.model_validate(updated)
-
-    # ==============================================
-    # REMOVE ITEM
-    # ==============================================
-
+    @transactional_order
     async def remove_item(
         self,
         *,
@@ -601,29 +432,13 @@ class OrderItemsService:
         Raises:
             NotFoundError: إذا لم يتم العثور على العنصر
         """
-        logger.info(
-            "order_items_service_remove_item",
-            extra={"order_item_id": order_item_id},
-        )
-
         item = await self.repo.get_by_id(id=order_item_id)
+        if item is None:
+            raise NotFoundError(message="Order item not found")
+        await remove_item_from_order(order_id=item.order_id,
+            order_item_id=order_item_id, session=self.session)
 
-        if not item:
-            raise NotFoundError(
-                message=f"عنصر الطلب بـ ID '{order_item_id}' غير موجود",
-            )
-
-        await self.repo.delete(id=order_item_id)
-
-        logger.info(
-            "order_item_removed_successfully",
-            extra={"order_item_id": order_item_id},
-        )
-
-    # ==============================================
-    # REMOVE ALL ITEMS
-    # ==============================================
-
+    @transactional_order
     async def remove_all_items(
         self,
         *,
@@ -641,6 +456,11 @@ class OrderItemsService:
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
         """
+        order = await lock_order(order_id=order_id, session=self.session)
+        if order is None:
+            raise NotFoundError(message="Order not found")
+        check_order_editable(order)
+
         logger.info(
             "order_items_service_remove_all_items",
             extra={"order_id": order_id},
@@ -671,4 +491,5 @@ class OrderItemsService:
             },
         )
 
+        await _recalculate_order_total(order_id=order_id, session=self.session)
         return deleted_count

@@ -1,3 +1,4 @@
+from sqlalchemy.orm import raiseload, selectinload
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -71,6 +72,8 @@ class OrderItemOptionsRepository(
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         super().__init__(OrderItemOption, session)
+        self.commit_on_write = False
+        self.query_options = [raiseload("*")]
 
     # ==========================================
     # 📖 QUERIES
@@ -79,6 +82,13 @@ class OrderItemOptionsRepository(
     # ==============================================
     # GET BY ORDER ITEM ID
     # ==============================================
+
+    async def get_by_name(self, *, order_item_id, option_group_name, option_name):
+        return (await self.session.execute(self._select().where(
+            self.model.order_item_id == order_item_id,
+            self.model.option_group_name == option_group_name,
+            self.model.option_name == option_name,
+        ).limit(1))).scalar_one_or_none()
 
     async def get_by_order_item_id(
         self,
@@ -100,7 +110,7 @@ class OrderItemOptionsRepository(
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.order_item_id == order_item_id)
                 .order_by(self.model.id.asc())
                 .offset(skip)
@@ -143,7 +153,7 @@ class OrderItemOptionsRepository(
         """
         try:
             result = await self.session.execute(
-                select(self.model)
+                self._select()
                 .where(
                     self.model.order_item_id == order_item_id,
                     self.model.option_name == option_name,

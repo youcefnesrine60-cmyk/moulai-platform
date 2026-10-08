@@ -1,3 +1,5 @@
+from app.repositories.orders_repo import lock_order
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # 📦 ORDERS SERVICE - DELETE
 # حذف الطلب (remove_order)
@@ -22,6 +24,7 @@ from app.services.business.orders.constants import is_editable_status
 # ❌ DELETE ORDER
 # ==============================================
 
+@transactional_order
 async def remove_order(
     *,
     order_id: int,
@@ -50,7 +53,7 @@ async def remove_order(
 
     # 1️⃣ التحقق من وجود الطلب
     orders_repo = OrdersRepository(session=session)
-    order = await orders_repo.get_by_id(id=order_id)
+    order = await lock_order(order_id=order_id, session=session)
 
     if not order:
         logger.error(
@@ -123,34 +126,8 @@ async def _delete_order_permanently(
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
     """
-    # 1️⃣ حذف خيارات عناصر الطلب
-    items_repo = OrderItemsRepository(session=session)
-    items = await items_repo.get_by_order_id(order_id=order_id)
-
-    for item in items:
-        # حذف خيارات العنصر
-        options_repo = session.get_repo("OrderItemOptionsRepository")
-        await options_repo.delete_by_order_item(item.id)
-
-    # 2️⃣ حذف عناصر الطلب
-    await items_repo.delete_by_order(order_id=order_id)
-
-    # 3️⃣ حذف مدفوعات الطلب
-    payments_repo = OrderPaymentsRepository(session=session)
-    await payments_repo.delete_by_order(order_id=order_id)
-
-    # 4️⃣ حذف سجل تاريخ الحالة
-    history_repo = OrderStatusHistoryRepository(session=session)
-    await history_repo.delete_by_order(order_id=order_id)
-
-    # 5️⃣ حذف الطلب نفسه
-    orders_repo = OrdersRepository(session=session)
-    await orders_repo.delete(id=order_id)
-
-    logger.info(
-        "order_permanently_deleted",
-        extra={"order_id": order_id},
-    )
+    # ORM/database cascades own child deletion; the use case owns the transaction.
+    await OrdersRepository(session=session).delete(id=order_id)
 
 
 # ==============================================
@@ -169,27 +146,9 @@ async def _delete_order_logically(
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
     """
-    orders_repo = OrdersRepository(session=session)
-
-    # تحديث حالة الطلب إلى cancelled وتعيين is_active = False
-    await orders_repo.update(
-        id=order_id,
-        data={
-            "is_active": False,
-            "status": "cancelled",
-        },
-    )
-
-    # إضافة سجل تاريخ الحالة
-    history_repo = OrderStatusHistoryRepository(session=session)
-    await history_repo.create(
-        data={
-            "order_id": order_id,
-            "status": "cancelled",
-            "employee_id": None,
-            "note": "تم حذف الطلب منطقياً",
-        },
-    )
+    from app.services.business.orders.update import change_order_status
+    await change_order_status(order_id=order_id, new_status="cancelled",
+                              note="Order deleted", session=session)
 
     logger.info(
         "order_logically_deleted",
@@ -201,6 +160,7 @@ async def _delete_order_logically(
 # ❌ DELETE ALL ORDERS FOR RESTAURANT
 # ==============================================
 
+@transactional_order
 async def delete_restaurant_orders(
     *,
     restaurant_id: int,
@@ -299,6 +259,7 @@ async def delete_restaurant_orders(
 # ❌ DELETE ORDERS BY STATUS
 # ==============================================
 
+@transactional_order
 async def delete_orders_by_status(
     *,
     restaurant_id: int,

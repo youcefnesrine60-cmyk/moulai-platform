@@ -1,3 +1,9 @@
+from app.repositories.orders_repo import lock_order
+from app.services.business.orders.pricing import (
+    catalog_item, item_total, validate_quantity,
+    MAX_ITEMS_PER_ORDER, MIN_QUANTITY, MAX_QUANTITY,
+)
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # 📦 ORDERS SERVICE - ITEMS
 # إدارة عناصر الطلب 
@@ -27,14 +33,12 @@ from app.repositories.order_item_options_repo import (
 from app.repositories.order_items_repo import OrderItemsRepository
 from app.repositories.orders_repo import OrdersRepository
 from app.services.business.orders.helpers import check_order_editable
+from app.services.business.orders.totals import compute_order_totals
 
 # ==============================================
 # 🧩 CONSTANTS
 # ==============================================
 
-MAX_ITEMS_PER_ORDER = 50
-MIN_QUANTITY = 1
-MAX_QUANTITY = 100
 
 
 # ==============================================
@@ -49,6 +53,7 @@ OrderItemList = List[OrderItem]
 # ➕ ADD ITEM TO ORDER
 # ==============================================
 
+@transactional_order
 async def add_item_to_order(
     *,
     order_id: int,
@@ -91,7 +96,7 @@ async def add_item_to_order(
 
     # 1️⃣ جلب الطلب للتحقق
     orders_repo = OrdersRepository(session=session)
-    order = await orders_repo.get_by_id(id=order_id)
+    order = await lock_order(order_id=order_id, session=session)
 
     if not order:
         logger.error(
@@ -105,16 +110,10 @@ async def add_item_to_order(
     # 2️⃣ التحقق من إمكانية التعديل
     check_order_editable(order)
 
-    # 3️⃣ التحقق من الكمية
-    if quantity < MIN_QUANTITY:
-        raise ValidationError(
-            message=f"الكمية يجب أن تكون على الأقل {MIN_QUANTITY}",
-        )
-
-    if quantity > MAX_QUANTITY:
-        raise ValidationError(
-            message=f"الكمية تتجاوز الحد الأقصى المسموح به ({MAX_QUANTITY})",
-        )
+    normalized = await catalog_item(restaurant_id=order.restaurant_id,
+        payload=dict(product_id=product_id, quantity=quantity, options=options), session=session)
+    product_name, unit_price, total_price = (normalized["product_name"],
+        normalized["unit_price"], normalized["total_price"])
 
     # 4️⃣ التحقق من عدد العناصر في الطلب
     items_repo = OrderItemsRepository(session=session)
@@ -203,6 +202,7 @@ async def add_item_to_order(
 # ❌ REMOVE ITEM FROM ORDER
 # ==============================================
 
+@transactional_order
 async def remove_item_from_order(
     *,
     order_id: int,
@@ -231,7 +231,7 @@ async def remove_item_from_order(
 
     # 1️⃣ جلب الطلب للتحقق
     orders_repo = OrdersRepository(session=session)
-    order = await orders_repo.get_by_id(id=order_id)
+    order = await lock_order(order_id=order_id, session=session)
 
     if not order:
         logger.error(
@@ -438,52 +438,9 @@ async def _recalculate_order_total(
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
     """
-    try:
-        # حساب المجموع الفرعي
-        subtotal = await get_order_items_subtotal(
-            order_id=order_id,
-            session=session,
-        )
-
-        # جلب الطلب
-        orders_repo = OrdersRepository(session=session)
-        order = await orders_repo.get_by_id(id=order_id)
-
-        if order:
-            # حساب الإجمالي
-            discount = order.discount_amount or 0
-            tax = order.tax_amount or 0
-            delivery = order.delivery_amount or 0
-
-            total = subtotal - discount + tax + delivery
-
-            # تحديث الطلب
-            await orders_repo.update(
-                id=order_id,
-                data={
-                    "subtotal_amount": round(subtotal, 2),
-                    "total_amount": round(total, 2),
-                },
-            )
-
-            logger.info(
-                "order_total_recalculated",
-                extra={
-                    "order_id": order_id,
-                    "subtotal": subtotal,
-                    "total": total,
-                },
-            )
-
-    except Exception as e:
-        logger.error(
-            "recalculate_order_total_failed",
-            extra={
-                "order_id": order_id,
-                "error": str(e),
-            },
-        )
-        raise
+    from app.services.business.orders.totals import calculate_order_totals
+    await session.flush()
+    await calculate_order_totals(order_id=order_id, session=session)
 
 
 # ==============================================
@@ -529,3 +486,23 @@ async def add_item_to_order_compat(
         session=session,
     )
     return item.id
+
+@transactional_order
+async def change_item_amounts(*, order_item_id, session, quantity=None, unit_price=None):
+    from sqlalchemy import select
+    from app.models.order import Order
+    items_repo = OrderItemsRepository(session=session)
+    item = await items_repo.get_by_id(id=order_item_id)
+    if item is None:
+        raise NotFoundError(message="Order item not found")
+    order = await lock_order(order_id=item.order_id, session=session)
+    if order is None:
+        raise NotFoundError(message="Order not found")
+    check_order_editable(order)
+    new_quantity = item.quantity if quantity is None else quantity
+    new_price = item.unit_price if unit_price is None else unit_price
+    total = item_total(new_price, new_quantity)
+    updated = await items_repo.update(id=item.id, data=dict(
+        quantity=new_quantity, unit_price=new_price, total_price=total))
+    await _recalculate_order_total(order_id=order.id, session=session)
+    return updated

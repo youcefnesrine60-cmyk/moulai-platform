@@ -102,3 +102,4 @@ Thumbs.db
 # 🌐 Web files
 # ========================
 *.map.html
+.cache/pytest/

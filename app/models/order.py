@@ -61,6 +61,8 @@ class Order(BaseModel):
         status_history: سجل حالات الطلب
     """
     __tablename__ = "orders"
+    # Fetch server-generated timestamps during flush for async DTO serialization.
+    __mapper_args__ = {"eager_defaults": True}
     
     # ==========================================
     # 🗂️ COLUMNS
@@ -194,7 +196,7 @@ class Order(BaseModel):
     # المستخدم
     user = relationship(
         "User", 
-        back_populates="orders"
+        back_populates="orders", lazy="selectin"
     )
     # المطعم
     restaurant = relationship(
@@ -234,6 +236,34 @@ class Order(BaseModel):
     # 📝 REPRESENTATION
     # ==========================================
     
+    @property
+    def customer_name(self):
+        return self.user.customer_name if self.user else None
+
+    @property
+    def customer_phone(self):
+        return self.user.customer_phone if self.user else None
+
+    @property
+    def is_paid(self):
+        paid = sum(float(p.amount) for p in self.payments if p.payment_status == "paid")
+        return float(self.total_amount or 0) > 0 and round(paid, 2) >= round(float(self.total_amount), 2)
+
+    @property
+    def payment_status(self):
+        if self.is_paid:
+            return "paid"
+        statuses = {p.payment_status for p in self.payments}
+        if "paid" in statuses:
+            return "partial"
+        if "pending" in statuses:
+            return "pending"
+        if "refunded" in statuses:
+            return "refunded"
+        if "failed" in statuses:
+            return "failed"
+        return None
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج

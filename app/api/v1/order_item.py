@@ -349,7 +349,7 @@ async def create_order_item(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -444,7 +444,7 @@ async def update_order_item_quantity(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -538,7 +538,7 @@ async def update_order_item_unit_price(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -840,18 +840,7 @@ async def create_order_items_batch(
     created_items = []
 
     try:
-        for item_data in items:
-            item = await service.add_item(
-                item_data=item_data,
-            )
-            created_items.append(item)
-
-        return OrderItemListResponse(
-            items=[OrderItemResponse.model_validate(item) for item in created_items],
-            total=len(created_items),
-            skip=0,
-            limit=len(created_items),
-        )
+        return await service.add_items(items=items)
 
     except NotFoundError as e:
         logger.warning(
@@ -886,7 +875,7 @@ async def create_order_items_batch(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:

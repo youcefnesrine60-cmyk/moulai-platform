@@ -1,3 +1,4 @@
+from sqlalchemy.orm import raiseload
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -53,6 +54,13 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
         model: نموذج Product
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    async def get_for_order(self, *, product_id, restaurant_id):
+        return (await self.session.execute(
+            select(self.model).options(raiseload("*")).where(self.model.id == product_id,
+                self.model.restaurant_id == restaurant_id)
+            .with_for_update(of=self.model).execution_options(populate_existing=True)
+        )).scalar_one_or_none()
 
     def __init__(
         self,

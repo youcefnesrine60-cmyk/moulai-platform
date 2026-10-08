@@ -10,7 +10,7 @@ from typing import (
     Optional,
 )
 
-from sqlalchemy import select
+from sqlalchemy.orm import raiseload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import logger
@@ -61,6 +61,8 @@ class RestaurantPaymentSettingsRepository(
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         super().__init__(RestaurantPaymentSetting, session)
+        # Scalar payment settings do not require the restaurant/catalog graph.
+        self.query_options = [raiseload("*")]
 
     # ==========================================
     # 📖 QUERIES
@@ -86,7 +88,7 @@ class RestaurantPaymentSettingsRepository(
         """
         try:
             result = await self.session.execute(
-                select(self.model)
+                self._select()
                 .where(self.model.restaurant_id == restaurant_id)
                 .limit(1),
             )

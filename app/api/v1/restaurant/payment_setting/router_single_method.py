@@ -104,7 +104,7 @@ async def enable_payment_method(
             extra={"restaurant_id": restaurant_id, "error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -164,7 +164,7 @@ async def disable_payment_method(
             extra={"restaurant_id": restaurant_id, "error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:

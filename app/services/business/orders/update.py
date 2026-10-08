@@ -1,3 +1,4 @@
+from app.repositories.orders_repo import lock_order
 # ==============================================
 # 📦 ORDERS SERVICE - UPDATE
 # تحديث الطلب 
@@ -10,6 +11,8 @@ from typing import (
     Optional,
     Tuple,
 )
+
+from app.services.business.orders.transaction import transactional_order
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,6 +50,7 @@ OrderUpdateData = Dict[str, Any]
 # 🔄 CHANGE ORDER STATUS
 # ==============================================
 
+@transactional_order
 async def change_order_status(
     *,
     order_id: int,
@@ -55,25 +59,11 @@ async def change_order_status(
     note: Optional[str] = None,
     session: AsyncSession,
 ) -> Order:
-    previous_defer_commits = session.info.get("defer_repository_commit")
-    had_transaction = session.in_transaction()
-    session.info["defer_repository_commit"] = True
-    transaction = session.begin_nested() if had_transaction else session.begin()
-    try:
-        async with transaction:
-            order, _ = await _change_order_status_in_transaction(
-                order_id=order_id,
-                new_status=new_status,
-                employee_id=employee_id,
-                note=note,
-                session=session,
-            )
-        return order
-    finally:
-        if previous_defer_commits is None:
-            session.info.pop("defer_repository_commit", None)
-        else:
-            session.info["defer_repository_commit"] = previous_defer_commits
+    order, _ = await _change_order_status_in_transaction(
+        order_id=order_id, new_status=new_status, employee_id=employee_id,
+        note=note, session=session,
+    )
+    return order
 
 
 async def _change_order_status_in_transaction(
@@ -122,13 +112,7 @@ async def _change_order_status_in_transaction(
 
     # 2️⃣ جلب الطلب
     orders_repo = OrdersRepository(session=session)
-    order = (
-        await session.execute(
-            select(Order)
-            .where(Order.id == order_id)
-            .with_for_update(),
-        )
-    ).scalar_one_or_none()
+    order = await lock_order(order_id=order_id, session=session)
 
     if not order:
         logger.error(
@@ -139,76 +123,28 @@ async def _change_order_status_in_transaction(
             message=f"الطلب بـ ID '{order_id}' غير موجود",
         )
 
+    return await transition_locked_order(
+        order=order, new_status=new_status, employee_id=employee_id,
+        note=note, session=session,
+    )
+
+
+async def transition_locked_order(*, order, new_status, session,
+                                  employee_id=None, note=None):
+    """Apply one legal transition to an already locked, authorized order."""
     old_status = order.status
-
-    # 3️⃣ إذا كانت الحالة نفسها، لا تفعل شيئاً
     if old_status == new_status:
-        logger.info(
-            "change_order_status_same_status",
-            extra={
-                "order_id": order_id,
-                "status": new_status,
-            },
-        )
         return order, False
-
-    # 4️⃣ التحقق من إمكانية الانتقال
     if not can_transition(old_status, new_status):
-        raise ValidationError(
-            message=f"لا يمكن تغيير حالة الطلب #{order.order_number} من '{get_status_display_name(old_status)}' إلى '{get_status_display_name(new_status)}'",
-            details={
-                "order_id": order_id,
-                "order_number": order.order_number,
-                "old_status": old_status,
-                "new_status": new_status,
-                "allowed_transitions": list(get_allowed_transitions(old_status)),
-            },
-        )
+        raise ValidationError(message=f"Cannot change order from {old_status} to {new_status}")
+    order.status = new_status
+    await OrderStatusHistoryRepository(session=session).create(data={
+        "order_id": order.id, "old_status": old_status, "new_status": new_status,
+        "changed_by_employee_id": employee_id, "note": note,
+    })
+    await session.flush()
+    return order, True
 
-    # 5️⃣ تحديث حالة الطلب
-    updated_order = await orders_repo.update(
-        id=order_id,
-        data={"status": new_status},
-    )
-
-    if not updated_order:
-        logger.error(
-            "change_order_status_update_failed",
-            extra={"order_id": order_id},
-        )
-        raise NotFoundError(
-            message=f"الطلب بـ ID '{order_id}' غير موجود",
-        )
-
-    # 6️⃣ إنشاء سجل في تاريخ الحالة
-    history_repo = OrderStatusHistoryRepository(session=session)
-    await history_repo.create(
-        data={
-            "order_id": order_id,
-            "old_status": old_status,
-            "new_status": new_status,
-            "changed_by_employee_id": employee_id,
-            "note": note or f"تم تغيير الحالة من '{get_status_display_name(old_status)}' إلى '{get_status_display_name(new_status)}'",
-        },
-    )
-
-    logger.info(
-        "order_status_changed_successfully",
-        extra={
-            "order_id": order_id,
-            "order_number": order.order_number,
-            "old_status": old_status,
-            "new_status": new_status,
-            "employee_id": employee_id,
-        },
-    )
-
-    return updated_order, True
-
-
-# ==============================================
-# 💰 UPDATE ORDER TOTALS (WRAPPER)
-# ==============================================
 
 async def update_order_totals(
     *,
@@ -287,6 +223,7 @@ async def recalculate_order_totals(
 # ✅ UPDATE ORDER
 # ==============================================
 
+@transactional_order
 async def update_order(
     *,
     order_id: int,
@@ -318,7 +255,7 @@ async def update_order(
 
     # 1️⃣ جلب الطلب
     orders_repo = OrdersRepository(session=session)
-    order = await orders_repo.get_by_id(id=order_id)
+    order = await lock_order(order_id=order_id, session=session)
 
     if not order:
         logger.error(
@@ -342,6 +279,25 @@ async def update_order(
             },
         )
         del data["status"]
+
+    if {"customer_name", "customer_phone"}.intersection(data):
+        raise ValidationError(message="Customer identity belongs to the customer profile")
+    if "restaurant_id" in data or "user_id" in data:
+        raise ValidationError(message="Order ownership cannot be changed")
+    if "branch_id" in data:
+        from app.services.business.orders.create import validate_branch
+        await validate_branch(restaurant_id=order.restaurant_id,
+                              branch_id=data["branch_id"], session=session)
+    amount_fields = {"subtotal_amount", "discount_amount", "tax_amount", "delivery_amount", "total_amount"}
+    if amount_fields.intersection(data):
+        from app.services.business.orders.totals import compute_order_totals
+        subtotal, discount, tax, delivery, total = compute_order_totals(
+            subtotal=data.get("subtotal_amount", order.subtotal_amount),
+            discount=data.get("discount_amount", order.discount_amount or 0),
+            tax=data.get("tax_amount", order.tax_amount or 0),
+            delivery=data.get("delivery_amount", order.delivery_amount or 0))
+        data.update(subtotal_amount=subtotal, discount_amount=discount,
+                    tax_amount=tax, delivery_amount=delivery, total_amount=total)
 
     # 4️⃣ تحديث الطلب
     updated_order = await orders_repo.update(
@@ -374,6 +330,7 @@ async def update_order(
 # 📝 UPDATE ORDER CUSTOMER INFO
 # ==============================================
 
+@transactional_order
 async def update_order_customer_info(
     *,
     order_id: int,

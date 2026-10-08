@@ -27,6 +27,12 @@ class FakeSession:
         self.transaction = FakeTransaction()
         self.outer_commits = 0
 
+    def get_transaction(self):
+        return SimpleNamespace(sync_transaction=SimpleNamespace(origin=None))
+
+    async def flush(self):
+        pass
+
     def in_transaction(self):
         return self.active_transaction
 
@@ -342,7 +348,7 @@ async def test_create_order_with_items_rolls_back_partial_order_when_item_is_inv
             session=session,
         )
 
-    assert len(created_orders) == 1
+    assert len(created_orders) == 0  # Validate catalog items before writes.
     assert session.transaction.rolled_back is True
     assert session.info == {}
 
@@ -353,3 +359,26 @@ async def _restaurant_result():
             return SimpleNamespace(id=3)
 
     return Result()
+
+
+@pytest.fixture(autouse=True)
+def catalog_for_aggregate_unit_tests(monkeypatch):
+    async def catalog_item(*, payload, **kwargs):
+        if not payload.get("product_id"):
+            raise ValidationError(message="\u0645\u0639\u0631\u0641 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u0637\u0644\u0648\u0628")
+        return payload.copy()
+    monkeypatch.setattr(order_creation, "catalog_item", catalog_item)
+
+
+@pytest.fixture(autouse=True)
+def item_workflow_for_aggregate_unit_tests(monkeypatch):
+    async def add_item(*, order_id, session, **payload):
+        values = dict(payload)
+        options = values.pop("options", [])
+        item = await order_creation.OrderItemsRepository(session=session).create(
+            data=dict(values, order_id=order_id))
+        for option in options:
+            await order_creation.OrderItemOptionsRepository(session=session).create(
+                data=dict(option, order_item_id=item.id))
+        return item
+    monkeypatch.setattr(order_creation, "add_item_to_order", add_item)

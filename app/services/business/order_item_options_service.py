@@ -1,3 +1,4 @@
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # 🎛 ORDER ITEM OPTIONS SERVICE
 # Business Logic Layer
@@ -291,6 +292,7 @@ class OrderItemOptionsService:
     # ADD OPTION
     # ==============================================
 
+    @transactional_order
     async def add_option(
         self,
         *,
@@ -396,6 +398,7 @@ class OrderItemOptionsService:
     # REMOVE OPTION
     # ==============================================
 
+    @transactional_order
     async def remove_option(
         self,
         *,
@@ -433,6 +436,7 @@ class OrderItemOptionsService:
     # REMOVE ALL OPTIONS
     # ==============================================
 
+    @transactional_order
     async def remove_all_options(
         self,
         *,
@@ -486,6 +490,7 @@ class OrderItemOptionsService:
     # UPDATE OPTION PRICE
     # ==============================================
 
+    @transactional_order
     async def update_option_price(
         self,
         *,
@@ -555,6 +560,7 @@ class OrderItemOptionsService:
     # UPDATE OPTION NAME
     # ==============================================
 
+    @transactional_order
     async def update_option_name(
         self,
         *,

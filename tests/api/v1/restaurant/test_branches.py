@@ -48,10 +48,10 @@ class TestRestaurantBranchesAPI:
         self.sample_group_data = sample_group_data
 
         # إنشاء مالك
+        # Seed IDs are retained after commit; do not reopen an idle read transaction.
         self.owner = Owner(**sample_owner_data)
         db_session.add(self.owner)
         await db_session.flush()  # ✅ flush بدلاً من commit
-        await db_session.refresh(self.owner)
 
         # إنشاء مطعم
         self.restaurant = Restaurant(
@@ -59,7 +59,6 @@ class TestRestaurantBranchesAPI:
         )
         db_session.add(self.restaurant)
         await db_session.flush()  # ✅ flush بدلاً من commit
-        await db_session.refresh(self.restaurant)
 
         # إنشاء مجموعة
         self.group = RestaurantGroup(
@@ -67,7 +66,6 @@ class TestRestaurantBranchesAPI:
         )
         db_session.add(self.group)
         await db_session.flush()  # ✅ flush بدلاً من commit
-        await db_session.refresh(self.group)
 
         # تعمل طلبات API بجلسة مستقلة، لذا يجب تثبيت بيانات الإعداد
         # قبل أن تحاول تلك الجلسة قراءتها.

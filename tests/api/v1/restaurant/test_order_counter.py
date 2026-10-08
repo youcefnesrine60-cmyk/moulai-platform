@@ -40,10 +40,10 @@ class TestOrderCounterAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
         """
         # إنشاء مالك
+        # Seed IDs are retained after commit; do not reopen an idle read transaction.
         self.owner = Owner(**sample_owner_data)
         db_session.add(self.owner)
         await db_session.commit()
-        await db_session.refresh(self.owner)
 
         # إنشاء مطعم
         self.restaurant = Restaurant(
@@ -51,7 +51,6 @@ class TestOrderCounterAPI:
         )
         db_session.add(self.restaurant)
         await db_session.commit()
-        await db_session.refresh(self.restaurant)
 
         self.restaurant_id = self.restaurant.id
 

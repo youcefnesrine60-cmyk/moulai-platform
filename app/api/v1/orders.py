@@ -295,7 +295,7 @@ async def get_order(
             is_paid=order.is_paid,
             created_at=order.created_at,
             updated_at=order.updated_at,
-            items=items_result.items,
+            items=[item.model_dump() for item in items_result],
         )
 
     except NotFoundError as e:
@@ -372,36 +372,7 @@ async def create_order(
     )
 
     try:
-        # 1️⃣ إنشاء الطلب (بدون عناصر أولاً)
-        order = await service.create_order(order_data=data)
-
-        # 2️⃣ إضافة عناصر الطلب (مع تمرير order_id)
-        if data.items:
-            for item_payload in data.items:
-                # ✅ تحويل OrderItemPayload إلى OrderItemCreate
-                # مع إضافة order_id
-                item_data = OrderItemCreate(
-                    order_id=order.id,
-                    product_id=item_payload.product_id,
-                    product_name=item_payload.product_name,
-                    unit_price=item_payload.unit_price,
-                    quantity=item_payload.quantity,
-                    total_price=item_payload.total_price,
-                    options=item_payload.options,
-                )
-
-                await items_service.add_item(
-                    item_data=item_data,
-                    order_id=order.id,
-                )
-
-        # 3️⃣ إعادة حساب الإجمالي
-        await service.recalculate_order_total(order_id=order.id)
-
-        # 4️⃣ جلب الطلب المحدث
-        updated_order = await service.get_by_id(order_id=order.id)
-
-        return updated_order
+        return await service.create_order(order_data=data)
 
     except NotFoundError as e:
         logger.warning(
@@ -436,7 +407,7 @@ async def create_order(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -526,7 +497,7 @@ async def update_order(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -617,7 +588,7 @@ async def update_order_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -715,7 +686,7 @@ async def complete_order_endpoint(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -814,7 +785,7 @@ async def cancel_order_endpoint(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -905,7 +876,7 @@ async def mark_order_paid_endpoint(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -994,7 +965,7 @@ async def delete_order(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:

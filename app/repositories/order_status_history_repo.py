@@ -1,3 +1,4 @@
+from sqlalchemy.orm import raiseload, selectinload
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -72,6 +73,8 @@ class OrderStatusHistoryRepository(
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         super().__init__(OrderStatusHistory, session)
+        self.commit_on_write = False
+        self.query_options = [raiseload("*")]
 
     # ==========================================
     # 📖 QUERIES
@@ -80,6 +83,11 @@ class OrderStatusHistoryRepository(
     # ==============================================
     # GET BY ORDER ID
     # ==============================================
+
+    async def delete_by_order(self, *, order_id):
+        from sqlalchemy import delete
+        result = await self.session.execute(delete(self.model).where(self.model.order_id == order_id))
+        return result.rowcount
 
     async def get_by_order_id(
         self,
@@ -101,7 +109,7 @@ class OrderStatusHistoryRepository(
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.order_id == order_id)
                 .order_by(self.model.id.asc())
                 .offset(skip)
@@ -142,7 +150,7 @@ class OrderStatusHistoryRepository(
         """
         try:
             result = await self.session.execute(
-                select(self.model)
+                self._select()
                 .where(self.model.order_id == order_id)
                 .order_by(self.model.id.desc())
                 .limit(1),

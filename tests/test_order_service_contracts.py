@@ -47,6 +47,12 @@ class FakeSession:
     def begin_nested(self):
         return self.transaction
 
+    def get_transaction(self):
+        return SimpleNamespace(sync_transaction=SimpleNamespace(origin=None))
+
+    async def flush(self):
+        pass
+
     def in_transaction(self):
         return self.active_transaction
 
@@ -95,7 +101,7 @@ async def test_status_change_updates_order_and_history_in_same_transaction(monke
 
     assert changed is order
     assert order.status == "confirmed"
-    assert updates == [(17, {"status": "confirmed"})]
+    assert updates == []  # Tracked order mutation; the unit of work flushes it.
     assert histories == [{
         "order_id": 17,
         "old_status": "pending",
@@ -185,12 +191,11 @@ async def test_update_order_uses_repository_primary_key_signature(monkeypatch):
     result = await update.update_order(
         order_id=17,
         data={"customer_note": "No onions", "status": "cancelled"},
-        session=object(),
+        session=FakeSession(result=order),
     )
 
     assert result is order
-    assert calls[0] == ("get", 17)
-    assert calls[1] == ("update", 17, {"customer_note": "No onions"})
+    assert calls == [("update", 17, {"customer_note": "No onions"})]
 
 
 @pytest.mark.asyncio
@@ -236,7 +241,7 @@ async def test_calculate_order_totals_includes_options_and_rounds(monkeypatch):
 
     result = await totals.calculate_order_totals(
         order_id=17,
-        session=object(),
+        session=FakeSession(),
         include_options=True,
     )
 
@@ -282,7 +287,7 @@ async def test_update_totals_rejects_each_negative_component(field, value, monke
     with pytest.raises(ValidationError):
         await totals.update_order_totals(
             order_id=17,
-            session=object(),
+            session=FakeSession(),
             **values,
         )
 
@@ -312,7 +317,7 @@ async def test_update_totals_rejects_locked_order(monkeypatch):
             tax_amount=0,
             delivery_amount=0,
             total_amount=100,
-            session=object(),
+            session=FakeSession(),
         )
 
 
@@ -333,7 +338,7 @@ async def test_read_orders_always_scopes_pagination_and_status_to_restaurant(mon
 
     result = await read.get_orders(
         restaurant_id=8,
-        session=object(),
+        session=FakeSession(),
         skip=10,
         limit=5,
         status="pending",
@@ -407,7 +412,7 @@ async def test_get_orders_by_status_rejects_invalid_status_before_repository(mon
         await read.get_orders_by_status(
             restaurant_id=8,
             status="unknown",
-            session=object(),
+            session=FakeSession(),
         )
 
 
@@ -470,28 +475,23 @@ async def test_cancel_order_uses_savepoint_when_caller_owns_transaction(monkeypa
 
 @pytest.mark.asyncio
 async def test_cancel_order_with_refund_requires_payment_and_delegates_cancellation(monkeypatch):
-    order = SimpleNamespace(is_paid=True)
-
-    class OrdersRepository:
-        def __init__(self, *, session):
-            pass
-
-        async def get_by_id(self, *, id):
-            assert id == 17
-            return order
-
-    monkeypatch.setattr(cancel, "OrdersRepository", OrdersRepository)
+    from app.services.business.order_payments_service import OrderPaymentsService
+    order = SimpleNamespace(is_paid=True, payments=[SimpleNamespace(id=42, payment_status="paid")])
+    refund = AsyncMock()
+    monkeypatch.setattr(OrderPaymentsService, "refund_payment", refund)
     monkeypatch.setattr(cancel, "cancel_order", AsyncMock())
 
     await cancel.cancel_order_with_refund(
         order_id=17,
         employee_id=5,
         reason="Customer request",
-        session=object(),
+        session=FakeSession(result=order),
     )
 
     cancel.cancel_order.assert_awaited_once()
     assert cancel.cancel_order.await_args.kwargs["reason"] == "Customer request"
+
+    refund.assert_awaited_once_with(payment_id=42)
 
 
 @pytest.mark.asyncio
@@ -552,12 +552,12 @@ async def test_status_history_reached_status_validates_and_returns_repository_re
 
     assert await status_history.get_orders_reached_status(
         status="ready",
-        session=object(),
+        session=FakeSession(),
     ) == [17, 21]
     assert calls == ["ready"]
 
     with pytest.raises(ValidationError):
         await status_history.get_orders_reached_status(
             status="unknown",
-            session=object(),
+            session=FakeSession(),
         )

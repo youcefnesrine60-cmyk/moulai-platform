@@ -30,7 +30,7 @@ from app.models.order import Order
 from app.models.restaurant import Restaurant
 from app.repositories.products_repo import ProductRepository
 from app.repositories.user_repo import UserRepository
-from app.services.business.orders.create import create_order_with_items
+from app.services.business.orders.placement import quote_customer_order, place_customer_order
 from app.services.business.orders.customer import (
     cancel_customer_order,
     change_customer_order_item_quantity,
@@ -55,6 +55,23 @@ def _restaurant_id(
         return int(value) if value is not None else None
     except (TypeError, ValueError):
         return None
+
+
+
+def _order_restaurant_scope(params, context):
+    """The channel's restaurant takes precedence over extracted entities.
+
+    A missing scope denotes the global customer account; an invalid supplied
+    scope fails closed by matching no restaurant.
+    """
+    request = _request_context(context)
+    value = request.get("restaurant_id", params.get("restaurant_id"))
+    if value is None:
+        return None
+    try:
+        return int(value) if not isinstance(value, bool) and int(value) > 0 else 0
+    except (TypeError, ValueError):
+        return 0
 
 
 def _chat_id(context: Optional[Dict[str, Any]]) -> Optional[int]:
@@ -195,214 +212,37 @@ class OrderFoodAction(BaseAction):
             priority=10,
         )
 
-    async def prepare(
-        self,
-        *,
-        params: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> ActionResponse:
-        chat_id = _chat_id(context)
-        restaurant_id = _restaurant_id(params=params, context=context)
-        product_name = params.get("product_name")
+    def _order_arguments(self, params, context):
+        return dict(chat_id=_chat_id(context), product_name=params.get("product_name"),
+                    product_id=params.get("product_id"), quantity=params.get("quantity", 1),
+                    restaurant_id=_order_restaurant_scope(params, context))
+
+    async def prepare(self, *, params, context=None):
         try:
-            quantity = int(params.get("quantity", 1))
-        except (TypeError, ValueError):
-            quantity = 0
-        if not chat_id or quantity <= 0 or (not product_name and not params.get("product_id")):
-            return ActionResponse(False, "أحتاج إلى المنتج والكمية قبل إعداد الطلب.", error="missing_order_details")
-
-        async with AsyncSessionLocal() as session:
-            user = await UserRepository(session=session).get_by_chat_id(chat_id=chat_id)
-            if not user or not user.consent:
-                return ActionResponse(
-                    False,
-                    "يرجى الموافقة على شروط الاستخدام قبل إنشاء طلب.",
-                    error="customer_consent_required",
-                )
-
-        if params.get("product_id"):
             async with AsyncSessionLocal() as session:
-                product = await ProductRepository(session=session).get_by_id(id=int(params["product_id"]))
-                products = [product] if product and product.is_available else []
-                if product and restaurant_id and product.restaurant_id != restaurant_id:
-                    products = []
-                if product:
-                    restaurant = await session.get(Restaurant, product.restaurant_id)
-                    if not restaurant or not restaurant.is_active:
-                        products = []
-        else:
-            products = await _find_products(
-                product_name=str(product_name),
-                restaurant_id=restaurant_id,
-            )
-        if not products:
-            return ActionResponse(False, "لم أجد منتجاً متاحاً بهذا الاسم.", error="product_not_found")
-        if len(products) > 1:
-            return ActionResponse(False, "يوجد أكثر من منتج مطابق. حدّد المنتج والمطعم.", error="ambiguous_product")
+                quote = await quote_customer_order(
+                    **self._order_arguments(params, context), session=session)
+        except (NotFoundError, ValidationError) as error:
+            return ActionResponse(False, error.message, error=error.error_code)
+        return ActionResponse(True,
+            f"{quote['quantity']} x {quote['product_name']} : {quote['quoted_total']:.2f} DZD",
+            data=quote)
 
-        product = products[0]
-        unit_price = float(product.price)
-        total = unit_price * quantity
-        return ActionResponse(
-            True,
-            f"الطلب: {quantity} × {product.name}\nسعر الوحدة: {unit_price:.2f} دج\nالإجمالي: {total:.2f} دج",
-            data={
-                "product_id": product.id,
-                "product_name": product.name,
-                "restaurant_id": product.restaurant_id,
-                "user_id": user.id,
-                "quantity": quantity,
-                "quoted_unit_price": unit_price,
-                "quoted_total": total,
-            },
-        )
-
-    async def execute(
-        self,
-        *,
-        params: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-    ) -> ActionResponse:
-        """
-        تنفيذ طلب طعام.
-        
-        Args:
-            params: معاملات الطلب (product_name, quantity, options, etc.)
-            context: سياق التنفيذ
-            
-        Returns:
-            ActionResponse: نتيجة التنفيذ
-        """
-        logger.info(
-            "action_order_food_executed",
-            extra={
-                "product_name": params.get("product_name"),
-                "quantity": params.get("quantity"),
-                "options": params.get("options"),
-            },
-        )
-
-        chat_id = _chat_id(context)
-        product_name = params.get("product_name")
-        restaurant_id = _restaurant_id(params=params, context=context)
+    async def execute(self, *, params, context=None):
         try:
-            quantity = int(params.get("quantity", 1))
-        except (TypeError, ValueError):
-            quantity = 0
-        if not chat_id or quantity <= 0 or (not product_name and not params.get("product_id")):
-            return ActionResponse(
-                success=False,
-                message="لا أملك معلومات كافية لإنشاء الطلب. اذكر المنتج والكمية أولاً.",
-                error="missing_order_details",
-            )
+            async with AsyncSessionLocal() as session:
+                result = await place_customer_order(
+                    **self._order_arguments(params, context), session=session,
+                    quoted_unit_price=params.get("quoted_unit_price"),
+                    order_type=params.get("order_type", "takeaway"),
+                    delivery_address=params.get("delivery_address"),
+                    customer_note=params.get("customer_note"))
+        except (NotFoundError, ValidationError) as error:
+            return ActionResponse(False, error.message, error=error.error_code)
+        return ActionResponse(True,
+            f"Order {result['order_number']}: {result['quantity']} x {result['product_name']}, {result['total_price']:.2f} DZD",
+            data=result)
 
-        async with AsyncSessionLocal() as session:
-            repository = ProductRepository(session=session)
-            if params.get("product_id"):
-                product = await repository.get_by_id(id=int(params["product_id"]))
-                products = [product] if product and product.is_available else []
-                if product and restaurant_id and product.restaurant_id != restaurant_id:
-                    products = []
-                if product:
-                    restaurant = await session.get(Restaurant, product.restaurant_id)
-                    if not restaurant or not restaurant.is_active:
-                        products = []
-            else:
-                products = await repository.search(
-                    query=str(product_name).strip(),
-                    restaurant_id=restaurant_id,
-                    limit=20,
-                )
-            if not products:
-                return ActionResponse(
-                    success=False,
-                    message="لم أجد منتجاً متاحاً بهذا الاسم. تحقق من الاسم أو اختر مطعماً أولاً.",
-                    error="product_not_found",
-                )
-            if len(products) > 1:
-                choices = "\n".join(
-                    f"- {product.name} ({product.price:.2f} دج)"
-                    for product in products[:8]
-                )
-                return ActionResponse(
-                    success=False,
-                    message=f"وجدت أكثر من منتج مطابق. حدّد المنتج والمطعم:\n{choices}",
-                    error="ambiguous_product",
-                )
-
-            product = products[0]
-            quoted_price = params.get("quoted_unit_price")
-            if quoted_price is not None and abs(float(quoted_price) - float(product.price)) > 0.000001:
-                return ActionResponse(
-                    success=False,
-                    message="تغير سعر المنتج منذ إعداد الطلب. لم يتم إنشاء الطلب؛ أعد المحاولة لمراجعة السعر الجديد.",
-                    error="product_price_changed",
-                )
-            user = await UserRepository(session=session).get_by_chat_id(chat_id=chat_id)
-            if not user or not user.consent:
-                return ActionResponse(
-                    success=False,
-                    message="يرجى الموافقة على شروط الاستخدام قبل إنشاء طلب.",
-                    error="customer_consent_required",
-                )
-
-            order_type = params.get("order_type", "takeaway")
-            delivery_address = params.get("delivery_address")
-            if order_type == "delivery" and not delivery_address:
-                return ActionResponse(
-                    success=False,
-                    message="أرسل عنوان التوصيل قبل تأكيد طلب التوصيل.",
-                    error="missing_delivery_address",
-                )
-
-            unit_price = float(product.price)
-            subtotal = unit_price * quantity
-            order_id = await create_order_with_items(
-                restaurant_id=product.restaurant_id,
-                branch_id=None,
-                table_id=None,
-                employee_id=None,
-                user_id=user.id,
-                order_type=order_type,
-                customer_name=None,
-                customer_phone=None,
-                delivery_address=delivery_address,
-                customer_note=params.get("customer_note"),
-                subtotal_amount=subtotal,
-                discount_amount=0,
-                tax_amount=0,
-                delivery_amount=0,
-                total_amount=subtotal,
-                items=[{
-                    "product_id": product.id,
-                    "product_name": product.name,
-                    "unit_price": unit_price,
-                    "quantity": quantity,
-                    "total_price": subtotal,
-                }],
-                session=session,
-            )
-            await session.commit()
-            order = await session.get(Order, order_id)
-            order_number = order.order_number if order else str(order_id)
-
-        return ActionResponse(
-            success=True,
-            message=f"تم إنشاء الطلب رقم {order_number}: {quantity} × {product.name}، الإجمالي {subtotal:.2f} دج.",
-            data={
-                "order_id": order_id,
-                "order_number": order_number,
-                "product_id": product.id,
-                "product_name": product.name,
-                "quantity": quantity,
-                "total_price": subtotal,
-            },
-        )
-
-
-# ==============================================
-# 📋 VIEW MENU ACTION
-# ==============================================
 
 class ViewMenuAction(BaseAction):
     """
@@ -597,6 +437,7 @@ class ModifyOrderAction(BaseAction):
             try:
                 order, item = await change_customer_order_item_quantity(
                     chat_id=chat_id,
+                    restaurant_id=_order_restaurant_scope(params, context),
                     order_reference=order_reference,
                     product_name=params.get("product_name"),
                     quantity=quantity,
@@ -686,6 +527,7 @@ class CancelOrderAction(BaseAction):
             try:
                 order, previous_status = await cancel_customer_order(
                     chat_id=chat_id,
+                    restaurant_id=_order_restaurant_scope(params, context),
                     order_reference=order_number,
                     reason=params.get("reason"),
                     session=session,
@@ -760,6 +602,7 @@ class TrackOrderAction(BaseAction):
         async with AsyncSessionLocal() as session:
             order = await get_customer_order(
                 chat_id=chat_id,
+                restaurant_id=_order_restaurant_scope(params, context),
                 order_reference=order_number,
                 session=session,
             )

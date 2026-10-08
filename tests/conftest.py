@@ -30,7 +30,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
 )
-from sqlalchemy.pool import NullPool
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -47,7 +46,13 @@ TEST_DATABASE_URL = settings.DATABASE_URL + "_test"
 engine = create_async_engine(
     TEST_DATABASE_URL,
     echo=False,
-    poolclass=NullPool,
+    pool_size=5,
+    max_overflow=0,
+    pool_pre_ping=True,
+    connect_args={"timeout": 60, "command_timeout": 60,
+                  "server_settings": {"lock_timeout": "5000",
+                                      # Fixtures keep transactions open between API requests.
+                                      "idle_in_transaction_session_timeout": "0"}},
 )
 
 TestingSessionLocal = async_sessionmaker(
@@ -57,6 +62,13 @@ TestingSessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
+
+@pytest.fixture(autouse=True, scope="session")
+async def dispose_test_engine():
+    # All async tests share one loop, so pooled connections remain loop-safe.
+    yield
+    await engine.dispose()
 
 
 # ==============================================
@@ -139,13 +151,17 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 # ==============================================
 
 @pytest.fixture(autouse=True, scope="function")
-async def cleanup_test_database() -> AsyncGenerator[None, None]:
+async def cleanup_test_database(request: pytest.FixtureRequest) -> AsyncGenerator[None, None]:
     """
     تنظيف قاعدة البيانات التجريبية قبل وبعد كل اختبار.
     
     تستخدم واجهات API عمليات commit مستقلة؛ لذلك rollback الجلسة
     وحده لا يعزل الاختبارات.
     """
+    if not {"db_session", "client"}.intersection(request.fixturenames):
+        yield
+        return
+
     import app.models
 
     table_names = ", ".join(
@@ -158,13 +174,9 @@ async def cleanup_test_database() -> AsyncGenerator[None, None]:
             return
 
         async with engine.begin() as connection:
-            for table in reversed(Base.metadata.sorted_tables):
-                await connection.execute(
-                    text(f'DELETE FROM "{table.name}" CASCADE'),
-                )
-                await connection.execute(
-                    text(f'ALTER SEQUENCE IF EXISTS "{table.name}_id_seq" RESTART WITH 1'),
-                )
+            await connection.execute(
+                text(f"TRUNCATE TABLE {table_names} RESTART IDENTITY CASCADE"),
+            )
 
     await truncate_all_tables()
     yield

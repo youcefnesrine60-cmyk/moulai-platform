@@ -1,3 +1,6 @@
+from app.services.business.orders.pricing import item_total
+from app.services.business.orders.update import transition_locked_order
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -22,7 +25,8 @@ from app.core.exceptions import NotFoundError, ValidationError
 from app.models.order import Order
 from app.models.order_item import OrderItem, OrderStatusHistory
 from app.models.user import User
-from app.services.business.orders.items import MAX_QUANTITY, MIN_QUANTITY
+from app.services.business.orders.pricing import validate_quantity
+from app.services.business.orders.totals import compute_order_totals
 
 # ==============================================
 # 📋 TYPE ALIASES
@@ -63,6 +67,7 @@ async def get_customer_order(
     order_reference: OrderReference,
     session: AsyncSession,
     lock: bool = False,
+    restaurant_id: Optional[int] = None,
 ) -> Optional[Order]:
     """
     جلب طلب العميل بناءً على معرف المحادثة ومرجع الطلب.
@@ -90,7 +95,9 @@ async def get_customer_order(
         .limit(1)
     )
     if lock:
-        statement = statement.with_for_update(of=Order)
+        statement = statement.with_for_update(of=Order).execution_options(populate_existing=True)
+    if restaurant_id is not None:
+        statement = statement.where(Order.restaurant_id == restaurant_id)
 
     result = await session.execute(statement)
     return result.scalar_one_or_none()
@@ -101,12 +108,14 @@ async def get_customer_order(
 # إلغاء طلب العميل مع تسجيل سبب الإلغاء
 # ==============================================
 
+@transactional_order
 async def cancel_customer_order(
     *,
     chat_id: int,
     order_reference: OrderReference,
     reason: Optional[str],
     session: AsyncSession,
+    restaurant_id: Optional[int] = None,
 ) -> tuple[Order, str]:
     """
     إلغاء طلب العميل مع التحقق من الحالة وتسجيل السبب.
@@ -124,37 +133,30 @@ async def cancel_customer_order(
         NotFoundError: إذا لم يتم العثور على الطلب.
         ValidationError: إذا كانت حالة الطلب لا تسمح بالإلغاء.
     """
-    async with session.begin():
-        order = await get_customer_order(
-            chat_id=chat_id,
-            order_reference=order_reference,
-            session=session,
-            lock=True,
+    order = await get_customer_order(
+        chat_id=chat_id,
+        order_reference=order_reference,
+        session=session,
+        lock=True,
+        restaurant_id=restaurant_id,
+    )
+    if not order:
+        raise NotFoundError(
+            message="لم أجد هذا الطلب ضمن طلبات حسابك.",
+            error_code="ORDER_NOT_FOUND",
         )
-        if not order:
-            raise NotFoundError(
-                message="لم أجد هذا الطلب ضمن طلبات حسابك.",
-                error_code="ORDER_NOT_FOUND",
-            )
-        if order.status not in {"pending", "confirmed"}:
-            raise ValidationError(
-                message="لا يمكن إلغاء الطلب في حالته الحالية.",
-                details={"status": order.status},
-                error_code="ORDER_NOT_CANCELLABLE",
-            )
+    if order.status not in {"pending", "confirmed"}:
+        raise ValidationError(
+            message="لا يمكن إلغاء الطلب في حالته الحالية.",
+            details={"status": order.status},
+            error_code="ORDER_NOT_CANCELLABLE",
+        )
 
-        previous_status = order.status
-        order.status = "cancelled"
-        session.add(
-            OrderStatusHistory(
-                order_id=order.id,
-                old_status=previous_status,
-                new_status="cancelled",
-                changed_by_employee_id=None,
-                note=reason or "تم الإلغاء بواسطة العميل عبر الوكيل",
-            )
-        )
-        await session.flush()
+    previous_status = order.status
+    await transition_locked_order(
+        order=order, new_status="cancelled", session=session,
+        note=reason or "Cancelled by customer via agent",
+    )
 
     logger.info(
         "Customer order cancelled",
@@ -174,6 +176,7 @@ async def cancel_customer_order(
 # تعديل كمية عنصر في طلب العميل
 # ==============================================
 
+@transactional_order
 async def change_customer_order_item_quantity(
     *,
     chat_id: int,
@@ -181,6 +184,7 @@ async def change_customer_order_item_quantity(
     product_name: ProductName,
     quantity: Quantity,
     session: AsyncSession,
+    restaurant_id: Optional[int] = None,
 ) -> tuple[Order, OrderItem]:
     """
     تعديل كمية عنصر محدد في طلب العميل.
@@ -199,80 +203,73 @@ async def change_customer_order_item_quantity(
         ValidationError: إذا كانت الكمية غير صالحة أو الطلب غير قابل للتعديل.
         NotFoundError: إذا لم يتم العثور على الطلب أو العنصر.
     """
-    if (
-        isinstance(quantity, bool)
-        or not isinstance(quantity, int)
-        or not MIN_QUANTITY <= quantity <= MAX_QUANTITY
-    ):
+    validate_quantity(quantity)
+
+    order = await get_customer_order(
+        chat_id=chat_id,
+        order_reference=order_reference,
+        session=session,
+        lock=True,
+        restaurant_id=restaurant_id,
+    )
+    if not order:
+        raise NotFoundError(
+            message="لم أجد هذا الطلب ضمن طلبات حسابك.",
+            error_code="ORDER_NOT_FOUND",
+        )
+    if order.status != "pending":
         raise ValidationError(
-            message=f"الكمية يجب أن تكون بين {MIN_QUANTITY} و{MAX_QUANTITY}.",
-            details={"quantity": quantity},
-            error_code="INVALID_ORDER_QUANTITY",
+            message="لا يمكن تعديل الطلب إلا عندما تكون حالته قيد الانتظار.",
+            details={"status": order.status},
+            error_code="ORDER_NOT_MODIFIABLE",
         )
 
-    async with session.begin():
-        order = await get_customer_order(
-            chat_id=chat_id,
-            order_reference=order_reference,
-            session=session,
-            lock=True,
-        )
-        if not order:
-            raise NotFoundError(
-                message="لم أجد هذا الطلب ضمن طلبات حسابك.",
-                error_code="ORDER_NOT_FOUND",
-            )
-        if order.status != "pending":
-            raise ValidationError(
-                message="لا يمكن تعديل الطلب إلا عندما تكون حالته قيد الانتظار.",
-                details={"status": order.status},
-                error_code="ORDER_NOT_MODIFIABLE",
-            )
+    result = await session.execute(
+        select(OrderItem).where(OrderItem.order_id == order.id),
+    )
+    items = list(result.scalars().all())
+    if isinstance(product_name, str) and product_name.strip():
+        normalized_name = product_name.strip().casefold()
+        matching_items = [
+            item
+            for item in items
+            if item.product_name.strip().casefold() == normalized_name
+        ]
+    elif len(items) == 1:
+        matching_items = items
+    else:
+        matching_items = []
 
-        result = await session.execute(
-            select(OrderItem).where(OrderItem.order_id == order.id),
+    if not matching_items:
+        error_code = (
+            "ORDER_ITEM_AMBIGUOUS"
+            if len(items) > 1 and not product_name
+            else "ORDER_ITEM_NOT_FOUND"
         )
-        items = list(result.scalars().all())
-        if isinstance(product_name, str) and product_name.strip():
-            normalized_name = product_name.strip().casefold()
-            matching_items = [
-                item
-                for item in items
-                if item.product_name.strip().casefold() == normalized_name
-            ]
-        elif len(items) == 1:
-            matching_items = items
-        else:
-            matching_items = []
-
-        if not matching_items:
-            error_code = (
-                "ORDER_ITEM_AMBIGUOUS"
-                if len(items) > 1 and not product_name
-                else "ORDER_ITEM_NOT_FOUND"
-            )
-            raise ValidationError(
-                message="حدّد اسم المنتج الموجود في الطلب الذي تريد تعديل كميته.",
-                error_code=error_code,
-            )
-        if len(matching_items) > 1:
-            raise ValidationError(
-                message="يوجد أكثر من عنصر مطابق في الطلب؛ يرجى تحديده بدقة.",
-                error_code="ORDER_ITEM_AMBIGUOUS",
-            )
-
-        item = matching_items[0]
-        item.quantity = quantity
-        item.total_price = round(float(item.unit_price) * quantity, 2)
-        subtotal = round(
-            sum(float(order_item.total_price) for order_item in items), 2
+        raise ValidationError(
+            message="حدّد اسم المنتج الموجود في الطلب الذي تريد تعديل كميته.",
+            error_code=error_code,
         )
-        discount = float(order.discount_amount or 0)
-        tax = float(order.tax_amount or 0)
-        delivery = float(order.delivery_amount or 0)
-        order.subtotal_amount = subtotal
-        order.total_amount = round(subtotal - discount + tax + delivery, 2)
-        await session.flush()
+    if len(matching_items) > 1:
+        raise ValidationError(
+            message="يوجد أكثر من عنصر مطابق في الطلب؛ يرجى تحديده بدقة.",
+            error_code="ORDER_ITEM_AMBIGUOUS",
+        )
+
+    item = matching_items[0]
+    item.quantity = quantity
+    item.total_price = item_total(item.unit_price, quantity)
+    subtotal = round(
+        sum(float(order_item.total_price) for order_item in items), 2
+    )
+    discount = float(order.discount_amount or 0)
+    tax = float(order.tax_amount or 0)
+    delivery = float(order.delivery_amount or 0)
+    totals = compute_order_totals(
+        subtotal=subtotal, discount=discount, tax=tax, delivery=delivery,
+    )
+    order.subtotal_amount, order.total_amount = totals[0], totals[4]
+    await session.flush()
 
     logger.info(
         "Customer order item quantity changed",

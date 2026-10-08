@@ -1,3 +1,4 @@
+from sqlalchemy.orm import raiseload, selectinload
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -73,6 +74,8 @@ class OrderPaymentsRepository(
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         super().__init__(OrderPayment, session)
+        self.commit_on_write = False
+        self.query_options = [raiseload("*")]
 
     # ==========================================
     # 📖 QUERIES
@@ -102,7 +105,7 @@ class OrderPaymentsRepository(
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.order_id == order_id)
                 .order_by(self.model.id.asc())
                 .offset(skip)
@@ -143,7 +146,7 @@ class OrderPaymentsRepository(
         """
         try:
             result = await self.session.execute(
-                select(self.model)
+                self._select()
                 .where(self.model.transaction_reference == transaction_reference)
                 .limit(1),
             )
@@ -184,7 +187,7 @@ class OrderPaymentsRepository(
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.payment_status == payment_status)
                 .order_by(self.model.created_at.desc())
                 .offset(skip)

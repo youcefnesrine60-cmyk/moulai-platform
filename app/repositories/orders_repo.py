@@ -1,3 +1,4 @@
+from sqlalchemy.orm import raiseload, selectinload
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -67,6 +68,8 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         super().__init__(Order, session)
+        self.commit_on_write = False
+        self.query_options = [raiseload("*"), selectinload(Order.payments).raiseload("*"), selectinload(Order.user).raiseload("*")]
 
     # ==========================================
     # 📖 QUERIES
@@ -75,6 +78,14 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     # ==============================================
     # GET BY ORDER NUMBER
     # ==============================================
+
+    async def get_with_relations(self, *, order_id):
+        from app.models.order_item import OrderItem
+        return (await self.session.execute(self._select().where(Order.id == order_id).options(
+            selectinload(Order.items).raiseload("*"),
+            selectinload(Order.items).selectinload(OrderItem.options).raiseload("*"),
+            selectinload(Order.status_history).raiseload("*"),
+        ))).scalar_one_or_none()
 
     async def get_by_order_number(
         self,
@@ -94,7 +105,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         """
         try:
             result = await self.session.execute(
-                select(self.model)
+                self._select()
                 .where(
                     and_(
                         self.model.restaurant_id == restaurant_id,
@@ -141,7 +152,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
             قائمة الطلبات
         """
         try:
-            query = select(self.model).where(
+            query = self._select().where(
                 self.model.restaurant_id == restaurant_id,
             )
 
@@ -189,7 +200,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
             قائمة الطلبات
         """
         try:
-            query = select(self.model).where(self.model.status == status)
+            query = self._select().where(self.model.status == status)
 
             if restaurant_id is not None:
                 query = query.where(self.model.restaurant_id == restaurant_id)
@@ -235,7 +246,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.branch_id == branch_id)
                 .order_by(self.model.created_at.desc())
                 .offset(skip)
@@ -281,7 +292,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
             قائمة الطلبات
         """
         try:
-            query = select(self.model).where(
+            query = self._select().where(
                 self.model.customer_phone == customer_phone,
             )
 
@@ -344,7 +355,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
                 )
 
             stmt = (
-                select(self.model)
+                self._select()
                 .where(*conditions)
                 .order_by(self.model.created_at.desc())
                 .offset(skip)
@@ -1103,3 +1114,8 @@ async def update_order_status_tx(
         order_id=order_id,
         status=status,
     )
+
+async def lock_order(*, order_id, session):
+    """Lock the aggregate before checking rules or mutating its children."""
+    return (await session.execute(OrdersRepository(session=session)._select().where(Order.id == order_id)
+                                  .with_for_update(of=Order).execution_options(populate_existing=True))).scalar_one_or_none()

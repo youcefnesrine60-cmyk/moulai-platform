@@ -1,3 +1,4 @@
+from sqlalchemy.orm import raiseload, selectinload
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -65,6 +66,8 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         super().__init__(OrderItem, session)
+        self.commit_on_write = False
+        self.query_options = [raiseload("*"), selectinload(OrderItem.options).raiseload("*")]
 
     # ==========================================
     # 📖 QUERIES
@@ -73,6 +76,14 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
     # ==============================================
     # GET BY ORDER ID
     # ==============================================
+
+    async def get_with_options(self, *, order_item_id):
+        return await self.get_by_id(id=order_item_id)
+
+    async def get_by_product_and_order(self, *, order_id, product_id):
+        return (await self.session.execute(self._select().where(
+            self.model.order_id == order_id, self.model.product_id == product_id
+        ).limit(1))).scalar_one_or_none()
 
     async def get_by_order_id(
         self,
@@ -94,7 +105,7 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.order_id == order_id)
                 .order_by(self.model.id.asc())
                 .offset(skip)
@@ -139,7 +150,7 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.product_id == product_id)
                 .order_by(self.model.created_at.desc())
                 .offset(skip)

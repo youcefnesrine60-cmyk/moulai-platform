@@ -60,3 +60,24 @@ async def test_repository_update_keeps_default_commit_behavior():
     await repository.update(id=1, data={"status": "cancelled"})
 
     assert session.commits == 1
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('repository_name', ['OrdersRepository', 'OrderItemsRepository',
+    'OrderItemOptionsRepository', 'OrderStatusHistoryRepository', 'OrderPaymentsRepository'])
+async def test_order_repositories_never_commit_or_rollback_the_callers_transaction(repository_name):
+    from app.repositories.orders_repo import OrdersRepository
+    from app.repositories.order_items_repo import OrderItemsRepository
+    from app.repositories.order_item_options_repo import OrderItemOptionsRepository
+    from app.repositories.order_status_history_repo import OrderStatusHistoryRepository
+    from app.repositories.order_payments_repo import OrderPaymentsRepository
+    repository_type = locals()[repository_name]
+    session = FakeSession(defer_commit=False)
+    repository = repository_type(session=session)
+    entity = SimpleNamespace(status='pending')
+    async def get_by_id(*, id):
+        return entity
+    repository.get_by_id = get_by_id
+    await repository.update(id=1, data={'status': 'confirmed'})
+    assert session.flushes == 1
+    assert session.commits == 0
+    assert session.rollbacks == 0

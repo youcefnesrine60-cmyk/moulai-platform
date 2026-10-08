@@ -1,3 +1,5 @@
+from app.repositories.orders_repo import lock_order
+from app.services.business.orders.transaction import transactional_order
 # ==============================================
 # 📦 ORDERS SERVICE - CANCEL
 # إلغاء الطلب (cancel_order)
@@ -34,6 +36,7 @@ NON_CANCELLABLE_STATUSES = {"completed", "delivered", "cancelled"}
 # ❌ CANCEL ORDER
 # ==============================================
 
+@transactional_order
 async def cancel_order(
     *,
     order_id: int,
@@ -63,57 +66,48 @@ async def cancel_order(
         },
     )
 
-    had_transaction = session.in_transaction()
-    transaction = session.begin_nested() if had_transaction else session.begin()
-    async with transaction:
-        order = (
-            await session.execute(
-                select(Order)
-                .where(Order.id == order_id)
-                .with_for_update(),
-            )
-        ).scalar_one_or_none()
-        if not order:
-            logger.error(
-                "cancel_order_order_not_found",
-                extra={"order_id": order_id},
-            )
-            raise NotFoundError(
-                message=f"الطلب بـ ID '{order_id}' غير موجود",
-            )
-
-        current_status = order.status
-        if current_status == "cancelled":
-            raise ValidationError(
-                message=f"الطلب #{order_id} ملغى بالفعل",
-            )
-        if current_status not in CANCELLABLE_STATUSES:
-            raise ValidationError(
-                message=f"لا يمكن إلغاء الطلب #{order_id} في حالة '{current_status}'",
-                details={
-                    "order_id": order_id,
-                    "current_status": current_status,
-                    "allowed_statuses": CANCELLABLE_STATUSES,
-                },
-            )
-
-        if order.is_paid:
-            logger.info(
-                "cancel_order_paid_order",
-                extra={
-                    "order_id": order_id,
-                    "payment_status": order.payment_status,
-                },
-            )
-
-        note = reason or f"تم إلغاء الطلب بواسطة {'الموظف' if employee_id else 'النظام'}"
-        await change_order_status(
-            order_id=order_id,
-            new_status="cancelled",
-            employee_id=employee_id,
-            note=note,
-            session=session,
+    order = await lock_order(order_id=order_id, session=session)
+    if not order:
+        logger.error(
+            "cancel_order_order_not_found",
+            extra={"order_id": order_id},
         )
+        raise NotFoundError(
+            message=f"الطلب بـ ID '{order_id}' غير موجود",
+        )
+
+    current_status = order.status
+    if current_status == "cancelled":
+        raise ValidationError(
+            message=f"الطلب #{order_id} ملغى بالفعل",
+        )
+    if current_status not in CANCELLABLE_STATUSES:
+        raise ValidationError(
+            message=f"لا يمكن إلغاء الطلب #{order_id} في حالة '{current_status}'",
+            details={
+                "order_id": order_id,
+                "current_status": current_status,
+                "allowed_statuses": CANCELLABLE_STATUSES,
+            },
+        )
+
+    if order.is_paid:
+        logger.info(
+            "cancel_order_paid_order",
+            extra={
+                "order_id": order_id,
+                "payment_status": order.payment_status,
+            },
+        )
+
+    note = reason or f"تم إلغاء الطلب بواسطة {'الموظف' if employee_id else 'النظام'}"
+    await change_order_status(
+        order_id=order_id,
+        new_status="cancelled",
+        employee_id=employee_id,
+        note=note,
+        session=session,
+    )
 
     logger.info(
         "order_cancelled_successfully",
@@ -129,6 +123,7 @@ async def cancel_order(
 # ❌ CANCEL ORDER WITH REFUND
 # ==============================================
 
+@transactional_order
 async def cancel_order_with_refund(
     *,
     order_id: int,
@@ -159,8 +154,7 @@ async def cancel_order_with_refund(
     )
 
     # 1️⃣ التحقق من وجود الطلب
-    orders_repo = OrdersRepository(session=session)
-    order = await orders_repo.get_by_id(id=order_id)
+    order = await lock_order(order_id=order_id, session=session)
 
     if not order:
         logger.error(
@@ -189,8 +183,12 @@ async def cancel_order_with_refund(
         session=session,
     )
 
-    # 4️⃣ معالجة استرداد المبلغ (يمكن إضافة منطق خاص)
-    # TODO: استدعاء خدمة الدفع لاسترداد المبلغ
+    # Record the refund in the internal ledger; gateway settlement is separate.
+    from app.services.business.order_payments_service import OrderPaymentsService
+    payment_service = OrderPaymentsService(session=session)
+    for payment in order.payments:
+        if payment.payment_status == "paid":
+            await payment_service.refund_payment(payment_id=payment.id)
 
     logger.info(
         "order_cancelled_with_refund_successfully",
@@ -205,6 +203,7 @@ async def cancel_order_with_refund(
 # ❌ BULK CANCEL ORDERS
 # ==============================================
 
+@transactional_order
 async def bulk_cancel_orders(
     *,
     order_ids: list[int],
