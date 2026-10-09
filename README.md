@@ -5,7 +5,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-blue.svg)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7.0+-red.svg)](https://redis.io/)
-[![Tests](https://img.shields.io/badge/Tests-45%2F45%20passed-brightgreen.svg)](https://github.com/youcefnesrine60-cmyk/moulai-platform)
+[![Tests](https://img.shields.io/badge/Tests-181%2F181%20passed-brightgreen.svg)](https://github.com/youcefnesrine60-cmyk/moulai-platform)
 
 ## Overview
 
@@ -59,6 +59,8 @@ Intent recognition does not imply full workflow support. Modify Order is limited
 
 - OIDC JWT authentication for the Orders API, with issuer, audience and JWKS signature validation
 - Restaurant access is authorized against the authenticated owner's database-linked identity
+- Payment endpoints are scoped to the authenticated owner; payment, restaurant, and subscription identifiers are never accepted as proof of cross-tenant access
+- Order-payment business operations require the restaurant boundary and enforce it while the order row is locked
 - Password hashing with bcrypt
 - Rate limiting and abuse-prevention mechanisms
 - Session management
@@ -80,25 +82,29 @@ restaurant or order ID is never accepted as proof of access.
 
 ## Testing
 
-The repository currently includes a restaurant API test suite with **45/45 tests passing**.
+The complete automated suite currently passes: **181/181 tests passed** in
+**507.49 seconds**. This run includes API authorization, payment tenant
+isolation, order transactions, PostgreSQL transaction behavior, and the
+restaurant API suites.
 
 Test suites include:
 
-- Restaurant operations: 16 tests
-- Restaurant groups: 4 tests
-- Restaurant branches: 12 tests
-- Restaurant metrics: 5 tests
-- Order counter: 4 tests
-- Payment settings: 4 tests
+- Restaurant API operations, groups, branches, metrics, order counters, and payment settings
+- Order creation, lifecycle, tenant isolation, architecture boundaries, and PostgreSQL transactions
+- Owner-authentication contracts and payment tenant-isolation contracts
+- Agent action safety, entity extraction, customer orders, and complaints
 
 ### Running tests
 
 ```bash
 # Run all tests
-pytest tests/ -v
+pytest tests -q --no-cov
 
 # Run with coverage
 pytest tests/ --cov=app
+
+# Run the payment tenant-isolation contracts
+pytest tests/test_payment_tenant_isolation.py -q --no-cov
 
 # Run the restaurant test suite
 pytest tests/api/v1/restaurant/test_restaurants.py -v
@@ -139,11 +145,19 @@ The current implementation includes:
 | Services | 17+ |
 | API endpoints | 14+ |
 | Pydantic schema files | 23+ |
-| Automated tests | 45 |
+| Automated tests | 181 |
 | Database migrations | 17+ |
 | Supported languages | 3 |
 
 These figures describe the current repository state and may change as development continues.
+
+## Engineering Quality Controls
+
+- Python source files follow a shared module and function-section heading convention.
+- Black formats all project source, tests, scripts, and Alembic migrations.
+- Ruff checks unused imports and duplicate bindings in the maintained code paths.
+- Order creation keeps repository injection seams for isolated transaction tests.
+- Payment and order-payment contracts are covered by tenant-isolation regression tests.
 
 ## Development Roadmap
 
