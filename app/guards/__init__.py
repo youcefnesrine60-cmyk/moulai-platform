@@ -10,6 +10,11 @@
 # طبقة الحماية: اشتراكات + ميزات
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 # ---------- Subscription Guard ----------
 from app.guards.subscription_guard import (
     SubscriptionResult,
@@ -30,7 +35,6 @@ from app.guards.feature_guard import (
     require_feature,
 )
 
-
 # ==============================================
 # 📋 EXPORTS
 # ==============================================
@@ -46,7 +50,6 @@ __all__ = [
     "is_paid_subscription",
     "get_subscription_plan_code",
     "get_subscription_plan_id",
-
     # Feature Guard
     "check_feature_access",
     "require_feature",

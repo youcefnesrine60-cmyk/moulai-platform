@@ -1,8 +1,19 @@
 # ==============================================
-# 💳 SUBSCRIPTION STEP
-# عرض الباقات وحساب سعر الاشتراك لصاحب المحل
-# (بعد موافقة المسؤول على طلب التسجيل)
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / OWNER_HANDLER / SUBSCRIPTION STEP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for subscription step.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from datetime import datetime, timezone
 
@@ -29,11 +40,16 @@ from app.views.subscription_ui import (
     subscription_ui,
 )
 
-
 # ==============================================
 # 💳 SHOW SUBSCRIPTION PLANS (OWNER)
 # عرض الباقات المتاحة لصاحب المحل
 # ==============================================
+
+
+# ==============================================
+# SHOW SUBSCRIPTION PLANS FOR OWNER
+# ==============================================
+
 
 async def show_subscription_plans_for_owner(
     *,
@@ -44,7 +60,7 @@ async def show_subscription_plans_for_owner(
     """
     عرض الباقات المتاحة للاشتراك لصاحب المحل
     بعد موافقة المسؤول على طلب التسجيل
-    
+
     Args:
         chat_id: معرف المستخدم
         owner_id: معرف المالك
@@ -120,6 +136,12 @@ async def show_subscription_plans_for_owner(
 # حساب سعر الاشتراك لصاحب المحل
 # ==============================================
 
+
+# ==============================================
+# CALCULATE SUBSCRIPTION PRICE FOR OWNER
+# ==============================================
+
+
 async def calculate_subscription_price_for_owner(
     *,
     chat_id: int,
@@ -127,7 +149,7 @@ async def calculate_subscription_price_for_owner(
 ) -> None:
     """
     حساب سعر الاشتراك لباقة معينة لصاحب المحل
-    
+
     Args:
         chat_id: معرف المستخدم
         plan_id: معرف الباقة
@@ -206,7 +228,7 @@ async def calculate_subscription_price_for_owner(
         years_with_platform = 0
 
     # ==========================================
-    # 📦 جلب عدد الطلبات الشهرية 
+    # 📦 جلب عدد الطلبات الشهرية
     # ==========================================
 
     # ✅ جلب جميع طلبات المطعم
@@ -216,10 +238,12 @@ async def calculate_subscription_price_for_owner(
 
     # ✅ حساب عدد الطلبات الشهرية (آخر 30 يوماً)
     from datetime import timedelta
+
     thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
 
     monthly_orders = sum(
-        1 for order in orders
+        1
+        for order in orders
         if order.get("created_at") and order["created_at"] >= thirty_days_ago
     )
 
@@ -228,15 +252,11 @@ async def calculate_subscription_price_for_owner(
     # ==========================================
 
     # ✅ حساب متوسط قيمة الطلبات المكتملة
-    completed_orders = [
-        order for order in orders
-        if order.get("status") == "completed"
-    ]
+    completed_orders = [order for order in orders if order.get("status") == "completed"]
 
     if completed_orders:
         total_amount = sum(
-            float(order.get("total_amount", 0))
-            for order in completed_orders
+            float(order.get("total_amount", 0)) for order in completed_orders
         )
         average_order_value = total_amount / len(completed_orders)
     else:

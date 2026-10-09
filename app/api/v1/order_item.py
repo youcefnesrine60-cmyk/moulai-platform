@@ -1,8 +1,19 @@
 # ==============================================
-# 📦 ORDER ITEMS API
-# نقاط نهاية API لتفاصيل الطلب
-# تدير عمليات إنشاء واستعراض وتحديث وحذف تفاصيل الطلب
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / API / V1 / ORDER ITEM
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order item.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import List
 
@@ -22,6 +33,7 @@ from app.api.auth import (
     require_owned_order,
     require_owned_order_item,
 )
+
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
     ConflictError,
@@ -63,19 +75,25 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_order_items_service(
     session: AsyncSession = Depends(get_db),
 ) -> OrderItemsService:
     """
     الحصول على خدمة عناصر الطلبات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OrderItemsService: مثيل من OrderItemsService
     """
     return OrderItemsService(session)
+
+
+# ==============================================
+# GET ORDER ITEM OPTIONS SERVICE
+# ==============================================
 
 
 async def get_order_item_options_service(
@@ -83,10 +101,10 @@ async def get_order_item_options_service(
 ) -> OrderItemOptionsService:
     """
     الحصول على خدمة خيارات عناصر الطلبات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OrderItemOptionsService: مثيل من OrderItemOptionsService
     """
@@ -100,6 +118,7 @@ async def get_order_item_options_service(
 # ==============================================
 # LIST ORDER ITEMS
 # ==============================================
+
 
 @router.get(
     "/",
@@ -130,13 +149,13 @@ async def list_order_items(
 ) -> OrderItemListResponse:
     """
     الحصول على قائمة تفاصيل الطلب لطلب معين.
-    
+
     Args:
         order_id: معرف الطلب
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة عناصر الطلبات
-        
+
     Returns:
         OrderItemListResponse: قائمة تفاصيل الطلب مع الإحصائيات
     """
@@ -193,6 +212,7 @@ async def list_order_items(
 # GET ORDER ITEM BY ID
 # ==============================================
 
+
 @router.get(
     "/{order_item_id}",
     response_model=OrderItemWithOptionsResponse,
@@ -208,15 +228,15 @@ async def get_order_item(
 ) -> OrderItemWithOptionsResponse:
     """
     الحصول على تفاصيل طلب محددة مع خياراتها.
-    
+
     Args:
         order_item_id: معرف تفاصيل الطلب
         service: خدمة عناصر الطلبات
         options_service: خدمة خيارات عناصر الطلبات
-        
+
     Returns:
         OrderItemWithOptionsResponse: تفاصيل الطلب مع الخيارات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على تفاصيل الطلب
     """
@@ -268,6 +288,7 @@ async def get_order_item(
 # CREATE ORDER ITEM
 # ==============================================
 
+
 @router.post(
     "/",
     response_model=OrderItemResponse,
@@ -283,14 +304,14 @@ async def create_order_item(
 ) -> OrderItemResponse:
     """
     إضافة تفاصيل طلب جديدة إلى طلب موجود.
-    
+
     Args:
         data: بيانات تفاصيل الطلب
         service: خدمة عناصر الطلبات
-        
+
     Returns:
         OrderItemResponse: تفاصيل الطلب المنشأة
-        
+
     Raises:
         HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
@@ -370,6 +391,7 @@ async def create_order_item(
 # UPDATE ORDER ITEM QUANTITY
 # ==============================================
 
+
 @router.patch(
     "/{order_item_id}/quantity",
     response_model=OrderItemResponse,
@@ -390,15 +412,15 @@ async def update_order_item_quantity(
 ) -> OrderItemResponse:
     """
     تحديث كمية تفاصيل طلب موجودة.
-    
+
     Args:
         order_item_id: معرف تفاصيل الطلب
         quantity: الكمية الجديدة
         service: خدمة عناصر الطلبات
-        
+
     Returns:
         OrderItemResponse: تفاصيل الطلب المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على تفاصيل الطلب
     """
@@ -465,6 +487,7 @@ async def update_order_item_quantity(
 # UPDATE ORDER ITEM UNIT PRICE
 # ==============================================
 
+
 @router.patch(
     "/{order_item_id}/unit-price",
     response_model=OrderItemResponse,
@@ -484,15 +507,15 @@ async def update_order_item_unit_price(
 ) -> OrderItemResponse:
     """
     تحديث سعر الوحدة لتفاصيل طلب موجودة.
-    
+
     Args:
         order_item_id: معرف تفاصيل الطلب
         unit_price: سعر الوحدة الجديد
         service: خدمة عناصر الطلبات
-        
+
     Returns:
         OrderItemResponse: تفاصيل الطلب المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على تفاصيل الطلب
     """
@@ -559,6 +582,7 @@ async def update_order_item_unit_price(
 # DELETE ORDER ITEM
 # ==============================================
 
+
 @router.delete(
     "/{order_item_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -573,11 +597,11 @@ async def delete_order_item(
 ) -> None:
     """
     حذف تفاصيل طلب موجودة.
-    
+
     Args:
         order_item_id: معرف تفاصيل الطلب
         service: خدمة عناصر الطلبات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على تفاصيل الطلب
     """
@@ -632,6 +656,7 @@ async def delete_order_item(
 # DELETE ALL ORDER ITEMS
 # ==============================================
 
+
 @router.delete(
     "/order/{order_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -646,11 +671,11 @@ async def delete_all_order_items(
 ) -> None:
     """
     حذف جميع تفاصيل طلب معين.
-    
+
     Args:
         order_id: معرف الطلب
         service: خدمة عناصر الطلبات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب
     """
@@ -705,6 +730,7 @@ async def delete_all_order_items(
 # GET ORDER ITEMS SUMMARY
 # ==============================================
 
+
 @router.get(
     "/stats/summary",
     response_model=OrderItemSummary,
@@ -723,14 +749,14 @@ async def get_order_items_summary(
 ) -> OrderItemSummary:
     """
     الحصول على ملخص تفاصيل الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         service: خدمة عناصر الطلبات
-        
+
     Returns:
         OrderItemSummary: ملخص تفاصيل الطلب
-        
+
     Raises:
         HTTPException: إذا حدث خطأ
     """
@@ -781,6 +807,7 @@ async def get_order_items_summary(
 # CREATE ORDER ITEMS BATCH
 # ==============================================
 
+
 @router.post(
     "/batch",
     response_model=OrderItemListResponse,
@@ -796,14 +823,14 @@ async def create_order_items_batch(
 ) -> OrderItemListResponse:
     """
     إضافة عدة تفاصيل طلب دفعة واحدة.
-    
+
     Args:
         items: قائمة بيانات تفاصيل الطلب
         service: خدمة عناصر الطلبات
-        
+
     Returns:
         OrderItemListResponse: قائمة تفاصيل الطلب المنشأة مع الإحصائيات
-        
+
     Raises:
         HTTPException: إذا كانت القائمة فارغة أو حدث خطأ
     """
@@ -836,8 +863,6 @@ async def create_order_items_batch(
         owner=owner,
         session=service.session,
     )
-
-    created_items = []
 
     try:
         return await service.add_items(items=items)

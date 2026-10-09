@@ -1,3 +1,20 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# TEST MODULE - TESTS / TEST COMPLAINT ACTION
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test complaint action.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from types import SimpleNamespace
 
 import pytest
@@ -6,6 +23,10 @@ from app.agent.executor import actions
 from app.agent.executor.actions import ActionResponse, ComplaintAction
 from app.agent.prompts.templates import get_success_prompt
 from app.agent.response_generator import ResponseGenerator
+
+# ==============================================
+# TEST COMPLAINT PREPARE USES MESSAGE AND REQUIRES CONFIRMATION
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -22,6 +43,11 @@ async def test_complaint_prepare_uses_message_and_requires_confirmation():
     assert "Confirm? (Yes/No)" in preview.message
 
 
+# ==============================================
+# TEST COMPLAINT PREPARE REJECTS MISSING DESCRIPTION
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_complaint_prepare_rejects_missing_description():
     preview = await ComplaintAction().prepare(params={}, context={})
@@ -30,17 +56,36 @@ async def test_complaint_prepare_rejects_missing_description():
     assert preview.error == "complaint_description_required"
 
 
+# ==============================================
+# TEST COMPLAINT ACTION PERSISTS WITH AUTHENTICATED CUSTOMER AND CONTEXT TENANT
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_complaint_action_persists_with_authenticated_customer_and_context_tenant(monkeypatch):
+async def test_complaint_action_persists_with_authenticated_customer_and_context_tenant(
+    monkeypatch,
+):
     calls = {}
     session = object()
 
     class SessionContext:
+        # ==============================================
+        #   AENTER
+        # ==============================================
+
         async def __aenter__(self):
             return session
 
+        # ==============================================
+        #   AEXIT
+        # ==============================================
+
         async def __aexit__(self, exc_type, exc, traceback):
             return False
+
+    # ==============================================
+    # CREATE COMPLAINT
+    # ==============================================
 
     async def create_complaint(**kwargs):
         calls.update(kwargs)
@@ -65,6 +110,11 @@ async def test_complaint_action_persists_with_authenticated_customer_and_context
     assert calls["session"] is session
 
 
+# ==============================================
+# TEST PENDING CONFIRMATION IS NOT RENDERED AS COMPLETED SUCCESS
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_pending_confirmation_is_not_rendered_as_completed_success():
     message = "I will register this complaint. Confirm?"
@@ -81,6 +131,11 @@ async def test_pending_confirmation_is_not_rendered_as_completed_success():
 
     assert response == message
     assert "Ticket number" not in response
+
+
+# ==============================================
+# TEST COMPLAINT SUCCESS PROMPT IS LOCALIZED
+# ==============================================
 
 
 def test_complaint_success_prompt_is_localized():

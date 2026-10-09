@@ -1,7 +1,19 @@
 # ==============================================
-# 👑 ADMIN REPOSITORY
-# عمليات قاعدة البيانات للمديرين باستخدام SQLAlchemy
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / ADMIN / ADMIN REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for admin repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from datetime import datetime
 from typing import (
@@ -44,18 +56,22 @@ class AdminRepository(
 ):
     """
     مستودع المديرين - يوفر عمليات خاصة بجدول المديرين.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للمديرين
         - البحث عن المديرين بواسطة chat_id و username
         - التحقق من وجود المديرين
         - إدارة حالة المدير (نشط/غير نشط)
         - تحديث دور المدير
-    
+
     Attributes:
         model: نموذج Admin
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,7 +79,7 @@ class AdminRepository(
     ) -> None:
         """
         تهيئة مستودع المديرين.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -85,11 +101,11 @@ class AdminRepository(
     ) -> Optional[Admin]:
         """
         الحصول على مدير بواسطة معرف الدردشة.
-        
+
         Args:
             chat_id: معرف الدردشة في Telegram
             only_active: جلب المدير النشط فقط
-            
+
         Returns:
             كائن Admin أو None
         """
@@ -130,11 +146,11 @@ class AdminRepository(
     ) -> Optional[Admin]:
         """
         الحصول على مدير بواسطة اسم المستخدم.
-        
+
         Args:
             username: اسم المستخدم
             only_active: جلب المدير النشط فقط
-            
+
         Returns:
             كائن Admin أو None
         """
@@ -175,11 +191,11 @@ class AdminRepository(
     ) -> bool:
         """
         التحقق من وجود مدير.
-        
+
         Args:
             chat_id: معرف الدردشة في Telegram
             only_active: التحقق من المدير النشط فقط
-            
+
         Returns:
             True إذا كان المدير موجوداً، False وإلا
         """
@@ -223,14 +239,14 @@ class AdminRepository(
     ) -> AdminList:
         """
         الحصول على جميع المديرين.
-        
+
         Args:
             only_active: جلب المديرين النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             order_by: حقل الترتيب
             order_desc: ترتيب تنازلي
-            
+
         Returns:
             قائمة المديرين
         """
@@ -280,13 +296,13 @@ class AdminRepository(
     ) -> AdminList:
         """
         الحصول على المديرين بواسطة الدور.
-        
+
         Args:
             role: دور المدير (admin, super_admin, manager)
             only_active: جلب المديرين النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المديرين
         """
@@ -298,9 +314,13 @@ class AdminRepository(
             if only_active:
                 query = query.where(self.model.is_active == True)
 
-            query = query.order_by(
-                self.model.id.asc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.id.asc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -331,13 +351,13 @@ class AdminRepository(
     ) -> AdminList:
         """
         البحث عن المديرين.
-        
+
         Args:
             query: نص البحث (username أو full_name)
             only_active: جلب المديرين النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المديرين
         """
@@ -396,11 +416,11 @@ class AdminRepository(
     ) -> int:
         """
         حساب عدد المديرين حسب الدور.
-        
+
         Args:
             role: دور المدير
             only_active: حساب المديرين النشطين فقط
-            
+
         Returns:
             عدد المديرين
         """
@@ -420,7 +440,7 @@ class AdminRepository(
     ) -> int:
         """
         حساب عدد المديرين النشطين.
-        
+
         Returns:
             عدد المديرين النشطين
         """
@@ -435,7 +455,7 @@ class AdminRepository(
     ) -> int:
         """
         حساب عدد المديرين غير النشطين.
-        
+
         Returns:
             عدد المديرين غير النشطين
         """
@@ -461,7 +481,7 @@ class AdminRepository(
     ) -> Admin:
         """
         إنشاء مدير جديد.
-        
+
         Args:
             chat_id: معرف الدردشة في Telegram
             username: اسم المستخدم
@@ -469,7 +489,7 @@ class AdminRepository(
             role: دور المدير (admin, super_admin, manager)
             password_hash: هاش كلمة المرور (اختياري)
             is_active: حالة المدير
-            
+
         Returns:
             كائن Admin المنشأ
         """
@@ -516,11 +536,11 @@ class AdminRepository(
     ) -> Optional[Admin]:
         """
         تحديث بيانات المدير.
-        
+
         Args:
             admin_id: معرف المدير
             **updates: الحقول المراد تحديثها
-            
+
         Returns:
             كائن Admin المحدث أو None
         """
@@ -534,8 +554,7 @@ class AdminRepository(
 
         # إزالة الحقول الفارغة
         clean_updates: AdminUpdateData = {
-            k: v for k, v in updates.items()
-            if v is not None
+            k: v for k, v in updates.items() if v is not None
         }
 
         if not clean_updates:
@@ -576,11 +595,11 @@ class AdminRepository(
     ) -> Optional[Admin]:
         """
         تحديث دور المدير.
-        
+
         Args:
             admin_id: معرف المدير
             role: الدور الجديد
-            
+
         Returns:
             كائن Admin المحدث أو None
         """
@@ -608,10 +627,10 @@ class AdminRepository(
     ) -> Optional[Admin]:
         """
         تبديل حالة المدير (نشط/غير نشط).
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             كائن Admin المحدث أو None
         """
@@ -657,10 +676,10 @@ class AdminRepository(
     ) -> Optional[Admin]:
         """
         تنشيط المدير.
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             كائن Admin المحدث أو None
         """
@@ -685,10 +704,10 @@ class AdminRepository(
     ) -> Optional[Admin]:
         """
         إلغاء تنشيط المدير.
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             كائن Admin المحدث أو None
         """
@@ -714,11 +733,11 @@ class AdminRepository(
     ) -> Optional[Admin]:
         """
         تحديث هاش كلمة المرور.
-        
+
         Args:
             admin_id: معرف المدير
             password_hash: هاش كلمة المرور الجديد
-            
+
         Returns:
             كائن Admin المحدث أو None
         """
@@ -743,10 +762,10 @@ class AdminRepository(
     ) -> bool:
         """
         حذف المدير (تعيين is_active = False).
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             True إذا تم الحذف، False وإلا
         """
@@ -781,10 +800,10 @@ class AdminRepository(
     ) -> bool:
         """
         حذف المدير نهائياً من قاعدة البيانات.
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             True إذا تم الحذف، False وإلا
         """
@@ -825,6 +844,7 @@ class AdminRepository(
 # CREATE ADMIN (COMPATIBILITY)
 # ==============================================
 
+
 async def create_admin(
     *,
     chat_id: int,
@@ -836,7 +856,7 @@ async def create_admin(
 ) -> int:
     """
     إنشاء مدير جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف الدردشة في Telegram
         username: اسم المستخدم
@@ -844,7 +864,7 @@ async def create_admin(
         role: دور المدير
         password_hash: هاش كلمة المرور
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف المدير
     """
@@ -865,6 +885,7 @@ async def create_admin(
 # GET ADMIN BY CHAT ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_admin_by_chat_id(
     *,
     chat_id: int,
@@ -872,11 +893,11 @@ async def get_admin_by_chat_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مدير بواسطة معرف الدردشة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف الدردشة في Telegram
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات المدير أو None
     """
@@ -907,6 +928,7 @@ async def get_admin_by_chat_id(
 # GET ADMIN BY USERNAME (COMPATIBILITY)
 # ==============================================
 
+
 async def get_admin_by_username(
     *,
     username: str,
@@ -914,11 +936,11 @@ async def get_admin_by_username(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مدير بواسطة اسم المستخدم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         username: اسم المستخدم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات المدير أو None
     """
@@ -949,6 +971,7 @@ async def get_admin_by_username(
 # ADMIN EXISTS (COMPATIBILITY)
 # ==============================================
 
+
 async def admin_exists(
     *,
     chat_id: int,
@@ -956,11 +979,11 @@ async def admin_exists(
 ) -> bool:
     """
     التحقق من وجود مدير (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف الدردشة في Telegram
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         True إذا كان المدير موجوداً، False وإلا
     """
@@ -976,16 +999,17 @@ async def admin_exists(
 # GET ALL ADMINS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_all_admins(
     *,
     session: AsyncSession,
 ) -> AdminDictList:
     """
     الحصول على جميع المديرين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قائمة المديرين
     """
@@ -998,16 +1022,18 @@ async def get_all_admins(
     result = []
 
     for admin in admins:
-        result.append({
-            "id": admin.id,
-            "chat_id": admin.chat_id,
-            "username": admin.username,
-            "full_name": admin.full_name,
-            "role": admin.role,
-            "password_hash": admin.password_hash,
-            "created_at": admin.created_at,
-            "updated_at": admin.updated_at,
-            "is_active": admin.is_active,
-        })
+        result.append(
+            {
+                "id": admin.id,
+                "chat_id": admin.chat_id,
+                "username": admin.username,
+                "full_name": admin.full_name,
+                "role": admin.role,
+                "password_hash": admin.password_hash,
+                "created_at": admin.created_at,
+                "updated_at": admin.updated_at,
+                "is_active": admin.is_active,
+            }
+        )
 
     return result

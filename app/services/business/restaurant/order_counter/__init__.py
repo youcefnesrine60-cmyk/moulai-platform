@@ -9,8 +9,17 @@
 # 🔢 RESTAURANT ORDER COUNTER SERVICES - PACKAGE INIT
 # ==============================================
 
-from app.services.business.restaurant.order_counter.service import RestaurantOrderCounterService
-from app.services.business.restaurant.order_counter.handlers import OrderCounterEventHandlers
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+from app.services.business.restaurant.order_counter.service import (
+    RestaurantOrderCounterService,
+)
+from app.services.business.restaurant.order_counter.handlers import (
+    OrderCounterEventHandlers,
+)
 from app.services.business.restaurant.order_counter.compat import (
     initialize_order_counter,
     get_order_counter,
@@ -22,7 +31,6 @@ from app.services.business.restaurant.order_counter.compat import (
     build_order_number,
     get_current_order_number,
 )
-
 
 # ==============================================
 # 📋 EXPORTS

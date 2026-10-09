@@ -1,12 +1,31 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDERS / ITEMS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for items.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.repositories.orders_repo import lock_order
 from app.services.business.orders.pricing import (
-    catalog_item, item_total, validate_quantity,
-    MAX_ITEMS_PER_ORDER, MIN_QUANTITY, MAX_QUANTITY,
+    catalog_item,
+    item_total,
+    MAX_ITEMS_PER_ORDER,
 )
 from app.services.business.orders.transaction import transactional_order
+
 # ==============================================
 # 📦 ORDERS SERVICE - ITEMS
-# إدارة عناصر الطلب 
+# إدارة عناصر الطلب
 # (add_item_to_order, remove_item_from_order)
 # ==============================================
 
@@ -31,14 +50,11 @@ from app.repositories.order_item_options_repo import (
     OrderItemOptionsRepository,
 )
 from app.repositories.order_items_repo import OrderItemsRepository
-from app.repositories.orders_repo import OrdersRepository
 from app.services.business.orders.helpers import check_order_editable
-from app.services.business.orders.totals import compute_order_totals
 
 # ==============================================
 # 🧩 CONSTANTS
 # ==============================================
-
 
 
 # ==============================================
@@ -52,6 +68,7 @@ OrderItemList = List[OrderItem]
 # ==============================================
 # ➕ ADD ITEM TO ORDER
 # ==============================================
+
 
 @transactional_order
 async def add_item_to_order(
@@ -67,7 +84,7 @@ async def add_item_to_order(
 ) -> OrderItem:
     """
     إضافة عنصر إلى طلب موجود.
-    
+
     Args:
         order_id: معرف الطلب
         product_id: معرف المنتج
@@ -77,10 +94,10 @@ async def add_item_to_order(
         total_price: السعر الإجمالي
         options: قائمة الخيارات (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OrderItem: كائن OrderItem المنشأ
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كانت الكمية غير صالحة أو تم تجاوز الحد الأقصى
@@ -95,7 +112,6 @@ async def add_item_to_order(
     )
 
     # 1️⃣ جلب الطلب للتحقق
-    orders_repo = OrdersRepository(session=session)
     order = await lock_order(order_id=order_id, session=session)
 
     if not order:
@@ -110,10 +126,16 @@ async def add_item_to_order(
     # 2️⃣ التحقق من إمكانية التعديل
     check_order_editable(order)
 
-    normalized = await catalog_item(restaurant_id=order.restaurant_id,
-        payload=dict(product_id=product_id, quantity=quantity, options=options), session=session)
-    product_name, unit_price, total_price = (normalized["product_name"],
-        normalized["unit_price"], normalized["total_price"])
+    normalized = await catalog_item(
+        restaurant_id=order.restaurant_id,
+        payload=dict(product_id=product_id, quantity=quantity, options=options),
+        session=session,
+    )
+    product_name, unit_price, total_price = (
+        normalized["product_name"],
+        normalized["unit_price"],
+        normalized["total_price"],
+    )
 
     # 4️⃣ التحقق من عدد العناصر في الطلب
     items_repo = OrderItemsRepository(session=session)
@@ -202,6 +224,7 @@ async def add_item_to_order(
 # ❌ REMOVE ITEM FROM ORDER
 # ==============================================
 
+
 @transactional_order
 async def remove_item_from_order(
     *,
@@ -211,12 +234,12 @@ async def remove_item_from_order(
 ) -> None:
     """
     حذف عنصر من طلب.
-    
+
     Args:
         order_id: معرف الطلب
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب أو العنصر
         ValidationError: إذا كان الطلب مقفلاً
@@ -230,7 +253,6 @@ async def remove_item_from_order(
     )
 
     # 1️⃣ جلب الطلب للتحقق
-    orders_repo = OrdersRepository(session=session)
     order = await lock_order(order_id=order_id, session=session)
 
     if not order:
@@ -282,6 +304,7 @@ async def remove_item_from_order(
 # 🔍 GET ORDER ITEMS
 # ==============================================
 
+
 async def get_order_items_list(
     *,
     order_id: int,
@@ -291,13 +314,13 @@ async def get_order_items_list(
 ) -> OrderItemList:
     """
     جلب جميع عناصر طلب معين.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         OrderItemList: قائمة عناصر الطلب
     """
@@ -332,6 +355,7 @@ async def get_order_items_list(
 # 🔍 GET ORDER ITEM BY ID
 # ==============================================
 
+
 async def get_order_item_by_id(
     *,
     order_item_id: int,
@@ -339,11 +363,11 @@ async def get_order_item_by_id(
 ) -> Optional[OrderItem]:
     """
     جلب عنصر طلب بالمعرف.
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[OrderItem]: كائن OrderItem أو None
     """
@@ -362,6 +386,7 @@ async def get_order_item_by_id(
 # 🔢 COUNT ORDER ITEMS
 # ==============================================
 
+
 async def count_order_items(
     *,
     order_id: int,
@@ -369,11 +394,11 @@ async def count_order_items(
 ) -> int:
     """
     حساب عدد عناصر طلب معين.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: عدد العناصر
     """
@@ -392,6 +417,7 @@ async def count_order_items(
 # 💰 GET ORDER ITEMS SUBTOTAL
 # ==============================================
 
+
 async def get_order_items_subtotal(
     *,
     order_id: int,
@@ -399,11 +425,11 @@ async def get_order_items_subtotal(
 ) -> float:
     """
     حساب المجموع الفرعي لعناصر طلب معين.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         float: المجموع الفرعي
     """
@@ -426,6 +452,7 @@ async def get_order_items_subtotal(
 # RECALCULATE ORDER TOTAL
 # ==============================================
 
+
 async def _recalculate_order_total(
     *,
     order_id: int,
@@ -433,12 +460,13 @@ async def _recalculate_order_total(
 ) -> None:
     """
     إعادة حساب إجمالي الطلب بناءً على عناصره.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
     """
     from app.services.business.orders.totals import calculate_order_totals
+
     await session.flush()
     await calculate_order_totals(order_id=order_id, session=session)
 
@@ -447,7 +475,13 @@ async def _recalculate_order_total(
 # 🔄 COMPATIBILITY FUNCTIONS
 # ==============================================
 
+
 # دوال التوافق مع الإصدار القديم
+# ==============================================
+# ADD ITEM TO ORDER COMPAT
+# ==============================================
+
+
 async def add_item_to_order_compat(
     *,
     order_id: int,
@@ -461,7 +495,7 @@ async def add_item_to_order_compat(
 ) -> int:
     """
     دالة متوافقة مع الإصدار القديم (تعيد معرف العنصر).
-    
+
     Args:
         order_id: معرف الطلب
         product_id: معرف المنتج
@@ -471,7 +505,7 @@ async def add_item_to_order_compat(
         total_price: السعر الإجمالي
         options: قائمة الخيارات (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف عنصر الطلب
     """
@@ -487,10 +521,17 @@ async def add_item_to_order_compat(
     )
     return item.id
 
+
+# ==============================================
+# CHANGE ITEM AMOUNTS
+# ==============================================
+
+
 @transactional_order
-async def change_item_amounts(*, order_item_id, session, quantity=None, unit_price=None):
-    from sqlalchemy import select
-    from app.models.order import Order
+async def change_item_amounts(
+    *, order_item_id, session, quantity=None, unit_price=None
+):
+
     items_repo = OrderItemsRepository(session=session)
     item = await items_repo.get_by_id(id=order_item_id)
     if item is None:
@@ -502,7 +543,9 @@ async def change_item_amounts(*, order_item_id, session, quantity=None, unit_pri
     new_quantity = item.quantity if quantity is None else quantity
     new_price = item.unit_price if unit_price is None else unit_price
     total = item_total(new_price, new_quantity)
-    updated = await items_repo.update(id=item.id, data=dict(
-        quantity=new_quantity, unit_price=new_price, total_price=total))
+    updated = await items_repo.update(
+        id=item.id,
+        data=dict(quantity=new_quantity, unit_price=new_price, total_price=total),
+    )
     await _recalculate_order_total(order_id=order.id, session=session)
     return updated

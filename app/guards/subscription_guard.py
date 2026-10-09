@@ -12,6 +12,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for subscription guard.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,6 +34,7 @@ SubscriptionResult = Subscription
 # ==============================================
 # ✅ REQUIRE ACTIVE SUBSCRIPTION
 # ==============================================
+
 
 async def require_active_subscription(
     *,
@@ -68,6 +74,7 @@ async def require_active_subscription(
 # 🔍 HAS ACTIVE SUBSCRIPTION
 # ==============================================
 
+
 async def has_active_subscription(
     *,
     session: AsyncSession,
@@ -93,6 +100,7 @@ async def has_active_subscription(
 # ==============================================
 # 🔍 GET ACTIVE SUBSCRIPTION
 # ==============================================
+
 
 async def get_active_subscription(
     *,
@@ -120,6 +128,7 @@ async def get_active_subscription(
 # 🔍 GET VALID SUBSCRIPTION (ALIAS)
 # ==============================================
 
+
 async def get_valid_subscription(
     *,
     session: AsyncSession,
@@ -144,6 +153,7 @@ async def get_valid_subscription(
 # ==============================================
 # 🔍 IS TRIAL SUBSCRIPTION
 # ==============================================
+
 
 async def is_trial_subscription(
     *,
@@ -175,6 +185,7 @@ async def is_trial_subscription(
 # 🔍 IS PAID SUBSCRIPTION
 # ==============================================
 
+
 async def is_paid_subscription(
     *,
     session: AsyncSession,
@@ -204,6 +215,7 @@ async def is_paid_subscription(
 # ==============================================
 # 🔍 GET SUBSCRIPTION PLAN CODE
 # ==============================================
+
 
 async def get_subscription_plan_code(
     *,
@@ -238,6 +250,7 @@ async def get_subscription_plan_code(
 # ==============================================
 # 🔍 GET SUBSCRIPTION PLAN ID
 # ==============================================
+
 
 async def get_subscription_plan_id(
     *,

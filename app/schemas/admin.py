@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها للمديرين
 # ==============================================
 
+"""MoulAI operational module for admin.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -26,7 +31,6 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -41,12 +45,13 @@ RoleDistribution = Dict[str, int]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class AdminBase(BaseModel):
     """
     المخطط الأساسي للمدير.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات المدير.
-    
+
     Attributes:
         chat_id: معرف الدردشة في Telegram
         username: اسم المستخدم
@@ -54,6 +59,7 @@ class AdminBase(BaseModel):
         role: دور المدير
         is_active: حالة النشاط
     """
+
     chat_id: int = Field(
         ...,
         description="معرف الدردشة في Telegram",
@@ -88,10 +94,11 @@ class AdminBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class AdminCreate(BaseModel):
     """
     مخطط إنشاء مدير جديد.
-    
+
     Attributes:
         chat_id: معرف الدردشة في Telegram
         username: اسم المستخدم
@@ -100,6 +107,7 @@ class AdminCreate(BaseModel):
         role: دور المدير (اختياري)
         is_active: حالة النشاط (اختياري)
     """
+
     chat_id: int = Field(
         ...,
         description="معرف الدردشة في Telegram",
@@ -147,13 +155,13 @@ class AdminCreate(BaseModel):
     def validate_username(cls, value: str) -> str:
         """
         التحقق من صحة اسم المستخدم.
-        
+
         Args:
             value: اسم المستخدم
-            
+
         Returns:
             str: اسم المستخدم المحقق
-            
+
         Raises:
             ValueError: إذا كان اسم المستخدم غير صالح
         """
@@ -163,26 +171,28 @@ class AdminCreate(BaseModel):
             raise ValueError("اسم المستخدم لا يمكن أن يحتوي على مسافات")
         return value.strip().lower()
 
+    # ==============================================
+    # VALIDATE ROLE
+    # ==============================================
+
     @field_validator("role")
     @classmethod
     def validate_role(cls, value: str) -> str:
         """
         التحقق من صحة الدور.
-        
+
         Args:
             value: الدور
-            
+
         Returns:
             str: الدور المحقق
-            
+
         Raises:
             ValueError: إذا كان الدور غير صالح
         """
         valid_roles = ["admin", "super_admin", "manager"]
         if value not in valid_roles:
-            raise ValueError(
-                f"الدور يجب أن يكون أحد القيم: {', '.join(valid_roles)}"
-            )
+            raise ValueError(f"الدور يجب أن يكون أحد القيم: {', '.join(valid_roles)}")
         return value
 
 
@@ -190,10 +200,11 @@ class AdminCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class AdminUpdate(BaseModel):
     """
     مخطط تحديث المدير - جميع الحقول اختيارية.
-    
+
     Attributes:
         username: اسم المستخدم
         full_name: الاسم الكامل
@@ -201,6 +212,7 @@ class AdminUpdate(BaseModel):
         role: دور المدير
         is_active: حالة النشاط
     """
+
     username: Optional[str] = Field(
         None,
         min_length=3,
@@ -243,13 +255,13 @@ class AdminUpdate(BaseModel):
     def validate_username(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة اسم المستخدم.
-        
+
         Args:
             value: اسم المستخدم
-            
+
         Returns:
             Optional[str]: اسم المستخدم المحقق
-            
+
         Raises:
             ValueError: إذا كان اسم المستخدم غير صالح
         """
@@ -261,18 +273,22 @@ class AdminUpdate(BaseModel):
             return value.strip().lower()
         return value
 
+    # ==============================================
+    # VALIDATE ROLE
+    # ==============================================
+
     @field_validator("role")
     @classmethod
     def validate_role(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة الدور.
-        
+
         Args:
             value: الدور
-            
+
         Returns:
             Optional[str]: الدور المحقق
-            
+
         Raises:
             ValueError: إذا كان الدور غير صالح
         """
@@ -289,14 +305,16 @@ class AdminUpdate(BaseModel):
 # 🔐 LOGIN SCHEMA
 # ==============================================
 
+
 class AdminLogin(BaseModel):
     """
     مخطط تسجيل دخول المدير.
-    
+
     Attributes:
         username: اسم المستخدم
         password: كلمة المرور
     """
+
     username: str = Field(
         ...,
         description="اسم المستخدم",
@@ -314,10 +332,11 @@ class AdminLogin(BaseModel):
 # 🔐 SESSION SCHEMAS
 # ==============================================
 
+
 class AdminSessionBase(BaseModel):
     """
     المخطط الأساسي لجلسة المدير.
-    
+
     Attributes:
         admin_id: معرف المدير
         session_token: رمز الجلسة
@@ -326,6 +345,7 @@ class AdminSessionBase(BaseModel):
         expires_at: تاريخ انتهاء الجلسة
         is_active: حالة النشاط
     """
+
     admin_id: int = Field(
         ...,
         description="معرف المدير",
@@ -362,7 +382,7 @@ class AdminSessionBase(BaseModel):
 class AdminSessionCreate(BaseModel):
     """
     مخطط إنشاء جلسة مدير جديدة.
-    
+
     Attributes:
         admin_id: معرف المدير
         session_token: رمز الجلسة
@@ -370,6 +390,7 @@ class AdminSessionCreate(BaseModel):
         ip_address: عنوان IP (اختياري)
         user_agent: متصفح المستخدم (اختياري)
     """
+
     admin_id: int = Field(
         ...,
         description="معرف المدير",
@@ -401,12 +422,13 @@ class AdminSessionCreate(BaseModel):
 class AdminSessionUpdate(BaseModel):
     """
     مخطط تحديث جلسة المدير.
-    
+
     Attributes:
         is_active: حالة النشاط
         expires_at: تاريخ انتهاء الجلسة
         last_activity: تاريخ آخر نشاط
     """
+
     is_active: Optional[bool] = Field(
         None,
         description="حالة النشاط",
@@ -425,13 +447,14 @@ class AdminSessionUpdate(BaseModel):
 class AdminSessionResponse(AdminSessionBase):
     """
     مخطط استجابة جلسة المدير.
-    
+
     Attributes:
         id: معرف الجلسة
         last_activity: تاريخ آخر نشاط
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -457,15 +480,17 @@ class AdminSessionResponse(AdminSessionBase):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class AdminResponse(AdminBase):
     """
     مخطط استجابة المدير - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف المدير
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -487,18 +512,20 @@ class AdminResponse(AdminBase):
 # 📋 ADMIN LIST RESPONSE
 # ==============================================
 
+
 class AdminListResponse(BaseModel):
     """
     مخطط استجابة قائمة المديرين.
-    
+
     يحتوي على قائمة المديرين مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة المديرين
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[AdminResponse] = Field(
@@ -526,16 +553,18 @@ class AdminListResponse(BaseModel):
 # 🔐 LOGIN RESPONSE
 # ==============================================
 
+
 class AdminLoginResponse(BaseModel):
     """
     مخطط استجابة تسجيل الدخول.
-    
+
     يحتوي على بيانات المدير وبيانات الجلسة.
-    
+
     Attributes:
         admin: بيانات المدير
         session: بيانات الجلسة
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     admin: AdminResponse = Field(
@@ -552,18 +581,20 @@ class AdminLoginResponse(BaseModel):
 # 📊 ADMIN STATISTICS
 # ==============================================
 
+
 class AdminStatistics(BaseModel):
     """
     مخطط إحصائيات المديرين.
-    
+
     يحتوي على إحصائيات موجزة عن المديرين.
-    
+
     Attributes:
         total: إجمالي عدد المديرين
         active: عدد المديرين النشطين
         inactive: عدد المديرين غير النشطين
         roles: توزيع الأدوار
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total: int = Field(
@@ -598,17 +629,19 @@ class AdminStatistics(BaseModel):
 # 🔐 AUTH RESPONSE
 # ==============================================
 
+
 class AdminAuthResponse(BaseModel):
     """
     مخطط استجابة المصادقة.
-    
+
     يحتوي على بيانات المدير ورمز الجلسة.
-    
+
     Attributes:
         admin: بيانات المدير
         session_token: رمز الجلسة
         expires_at: تاريخ انتهاء الجلسة
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     admin: AdminResponse = Field(
@@ -630,15 +663,17 @@ class AdminAuthResponse(BaseModel):
 # 🔄 TOKEN RESPONSE
 # ==============================================
 
+
 class TokenResponse(BaseModel):
     """
     مخطط استجابة رمز المصادقة (JWT).
-    
+
     Attributes:
         access_token: رمز الوصول
         token_type: نوع الرمز
         expires_in: مدة الصلاحية بالثواني
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     access_token: str = Field(
@@ -663,10 +698,11 @@ class TokenResponse(BaseModel):
 # 🔍 ADMIN SEARCH
 # ==============================================
 
+
 class AdminSearch(BaseModel):
     """
     مخطط البحث عن المديرين.
-    
+
     Attributes:
         query: نص البحث
         only_active: البحث في النشطين فقط
@@ -674,6 +710,7 @@ class AdminSearch(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     query: str = Field(
         ...,
         min_length=1,
@@ -711,15 +748,17 @@ class AdminSearch(BaseModel):
 # 🔐 PERMISSION CHECK
 # ==============================================
 
+
 class AdminPermissionCheck(BaseModel):
     """
     مخطط التحقق من صلاحيات المدير.
-    
+
     Attributes:
         admin_id: معرف المدير
         required_role: الدور المطلوب
         required_permission: الصلاحية المطلوبة
     """
+
     admin_id: int = Field(
         ...,
         description="معرف المدير",
@@ -743,7 +782,7 @@ class AdminPermissionCheck(BaseModel):
 class AdminPermissionResponse(BaseModel):
     """
     مخطط استجابة التحقق من الصلاحيات.
-    
+
     Attributes:
         has_permission: وجود الصلاحية
         admin_id: معرف المدير
@@ -751,6 +790,7 @@ class AdminPermissionResponse(BaseModel):
         is_active: حالة النشاط
         message: رسالة توضيحية
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     has_permission: bool = Field(

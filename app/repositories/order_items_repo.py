@@ -1,4 +1,22 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / ORDER ITEMS REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order items repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy.orm import raiseload, selectinload
+
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -41,19 +59,25 @@ OrderItemList = List[OrderItem]
 # ==============================================
 
 
-class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpdateData]):
+class OrderItemsRepository(
+    BaseRepository[OrderItem, OrderItemData, OrderItemUpdateData]
+):
     """
     مستودع عناصر الطلبات - يوفر عمليات خاصة بعناصر الطلبات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لعناصر الطلبات
         - حساب المجموع الفرعي للطلب
         - حذف عناصر الطلب
-    
+
     Attributes:
         model: نموذج OrderItem
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -61,13 +85,16 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
     ) -> None:
         """
         تهيئة مستودع عناصر الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         super().__init__(OrderItem, session)
         self.commit_on_write = False
-        self.query_options = [raiseload("*"), selectinload(OrderItem.options).raiseload("*")]
+        self.query_options = [
+            raiseload("*"),
+            selectinload(OrderItem.options).raiseload("*"),
+        ]
 
     # ==========================================
     # 📖 QUERIES
@@ -80,10 +107,24 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
     async def get_with_options(self, *, order_item_id):
         return await self.get_by_id(id=order_item_id)
 
+    # ==============================================
+    # GET BY PRODUCT AND ORDER
+    # ==============================================
+
     async def get_by_product_and_order(self, *, order_id, product_id):
-        return (await self.session.execute(self._select().where(
-            self.model.order_id == order_id, self.model.product_id == product_id
-        ).limit(1))).scalar_one_or_none()
+        return (
+            await self.session.execute(
+                self._select()
+                .where(
+                    self.model.order_id == order_id, self.model.product_id == product_id
+                )
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+    # ==============================================
+    # GET BY ORDER ID
+    # ==============================================
 
     async def get_by_order_id(
         self,
@@ -94,12 +135,12 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
     ) -> OrderItemList:
         """
         الحصول على عناصر طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة عناصر الطلب
         """
@@ -139,12 +180,12 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
     ) -> OrderItemList:
         """
         الحصول على عناصر الطلبات لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة عناصر الطلبات
         """
@@ -182,10 +223,10 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
     ) -> int:
         """
         حساب عدد عناصر طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             عدد العناصر
         """
@@ -219,17 +260,18 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
     ) -> float:
         """
         حساب المجموع الفرعي لعناصر طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             المجموع الفرعي
         """
         try:
             result = await self.session.execute(
-                select(func.coalesce(func.sum(self.model.total_price), 0))
-                .where(self.model.order_id == order_id),
+                select(func.coalesce(func.sum(self.model.total_price), 0)).where(
+                    self.model.order_id == order_id
+                ),
             )
 
             return float(result.scalar_one())
@@ -261,12 +303,12 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
     ) -> Optional[OrderItem]:
         """
         تحديث كمية عنصر الطلب.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
             quantity: الكمية الجديدة
             total_price: السعر الإجمالي الجديد
-            
+
         Returns:
             كائن OrderItem المحدث أو None
         """
@@ -299,10 +341,10 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
     ) -> int:
         """
         حذف جميع عناصر طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             عدد العناصر المحذوفة
         """
@@ -345,6 +387,7 @@ class OrderItemsRepository(BaseRepository[OrderItem, OrderItemData, OrderItemUpd
 # CREATE ORDER ITEM (COMPATIBILITY)
 # ==============================================
 
+
 async def create_order_item(
     *,
     order_id: int,
@@ -357,7 +400,7 @@ async def create_order_item(
 ) -> int:
     """
     إنشاء عنصر طلب جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         product_id: معرف المنتج
@@ -366,7 +409,7 @@ async def create_order_item(
         quantity: الكمية
         total_price: السعر الإجمالي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف عنصر الطلب
     """
@@ -398,6 +441,7 @@ async def create_order_item(
 # GET ORDER ITEM (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_item(
     *,
     order_item_id: int,
@@ -405,11 +449,11 @@ async def get_order_item(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على عنصر طلب بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات عنصر الطلب أو None
     """
@@ -436,6 +480,7 @@ async def get_order_item(
 # GET ORDER ITEMS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_items(
     *,
     order_id: int,
@@ -445,13 +490,13 @@ async def get_order_items(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على عناصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة عناصر الطلب
     """
@@ -466,16 +511,18 @@ async def get_order_items(
     result = []
 
     for item in items:
-        result.append({
-            "id": item.id,
-            "order_id": item.order_id,
-            "product_id": item.product_id,
-            "product_name": item.product_name,
-            "unit_price": item.unit_price,
-            "quantity": item.quantity,
-            "total_price": item.total_price,
-            "created_at": item.created_at,
-        })
+        result.append(
+            {
+                "id": item.id,
+                "order_id": item.order_id,
+                "product_id": item.product_id,
+                "product_name": item.product_name,
+                "unit_price": item.unit_price,
+                "quantity": item.quantity,
+                "total_price": item.total_price,
+                "created_at": item.created_at,
+            }
+        )
 
     return result
 
@@ -484,6 +531,7 @@ async def get_order_items(
 # COUNT ORDER ITEMS (COMPATIBILITY)
 # ==============================================
 
+
 async def count_order_items(
     *,
     order_id: int,
@@ -491,11 +539,11 @@ async def count_order_items(
 ) -> int:
     """
     حساب عدد عناصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         عدد العناصر
     """
@@ -508,6 +556,7 @@ async def count_order_items(
 # GET ORDER ITEMS SUBTOTAL (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_items_subtotal(
     *,
     order_id: int,
@@ -515,11 +564,11 @@ async def get_order_items_subtotal(
 ) -> float:
     """
     حساب المجموع الفرعي لعناصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         المجموع الفرعي
     """
@@ -532,6 +581,7 @@ async def get_order_items_subtotal(
 # UPDATE ORDER ITEM QUANTITY (COMPATIBILITY)
 # ==============================================
 
+
 async def update_order_item_quantity(
     *,
     order_item_id: int,
@@ -541,7 +591,7 @@ async def update_order_item_quantity(
 ) -> None:
     """
     تحديث كمية عنصر الطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         quantity: الكمية الجديدة
@@ -566,6 +616,7 @@ async def update_order_item_quantity(
 # DELETE ORDER ITEM (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_order_item(
     *,
     order_item_id: int,
@@ -573,7 +624,7 @@ async def delete_order_item(
 ) -> None:
     """
     حذف عنصر طلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -592,6 +643,7 @@ async def delete_order_item(
 # DELETE ORDER ITEMS (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_order_items(
     *,
     order_id: int,
@@ -599,7 +651,7 @@ async def delete_order_items(
 ) -> None:
     """
     حذف جميع عناصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -622,6 +674,7 @@ async def delete_order_items(
 # CREATE ORDER ITEM TX
 # ==============================================
 
+
 async def create_order_item_tx(
     *,
     conn: AsyncSession,
@@ -634,7 +687,7 @@ async def create_order_item_tx(
 ) -> int:
     """
     إنشاء عنصر طلب جديد (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         order_id: معرف الطلب
@@ -643,7 +696,7 @@ async def create_order_item_tx(
         unit_price: سعر الوحدة
         quantity: الكمية
         total_price: السعر الإجمالي
-        
+
     Returns:
         معرف عنصر الطلب
     """
@@ -675,6 +728,7 @@ async def create_order_item_tx(
 # DELETE ORDER ITEM TX
 # ==============================================
 
+
 async def delete_order_item_tx(
     *,
     conn: AsyncSession,
@@ -682,7 +736,7 @@ async def delete_order_item_tx(
 ) -> None:
     """
     حذف عنصر طلب (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         order_item_id: معرف عنصر الطلب

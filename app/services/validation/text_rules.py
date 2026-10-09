@@ -9,6 +9,11 @@
 # 📏 LIMITS
 # ==============================================
 
+"""MoulAI operational module for text rules.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 MAX_NAME_LENGTH = 50
 
 MAX_WILAYA_LENGTH = 30

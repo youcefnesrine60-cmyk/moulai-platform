@@ -10,6 +10,11 @@
 # منطق الأعمال للقنوات
 # ==============================================
 
+"""MoulAI operational module for channel service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -32,7 +37,6 @@ from app.schemas.agent.channel import (
     ChannelListResponse,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -45,21 +49,26 @@ ChannelStats = Dict[str, Any]
 # 📡 CHANNEL SERVICE
 # ==============================================
 
+
 class ChannelService:
     """
     خدمة القنوات - تدير منطق الأعمال للقنوات.
-    
+
     مسؤول عن:
         - إنشاء وتحديث وحذف القنوات
         - إدارة حالة القناة
         - التحقق من صلاحيات القناة
         - إدارة إعدادات القناة
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع القنوات
         agent_repo: مستودع الوكيل
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -67,7 +76,7 @@ class ChannelService:
     ) -> None:
         """
         تهيئة خدمة القنوات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -91,14 +100,14 @@ class ChannelService:
     ) -> ChannelResponse:
         """
         الحصول على قناة بالمعرف.
-        
+
         Args:
             channel_id: معرف القناة
             include_inactive: تضمين القنوات غير النشطة
-            
+
         Returns:
             ChannelResponse: بيانات القناة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على القناة
         """
@@ -138,13 +147,13 @@ class ChannelService:
     ) -> ChannelListResponse:
         """
         الحصول على قنوات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
             only_active: جلب القنوات النشطة فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ChannelListResponse: قائمة القنوات مع الإحصائيات
         """
@@ -196,12 +205,12 @@ class ChannelService:
     ) -> Optional[ChannelResponse]:
         """
         الحصول على قناة حسب النوع.
-        
+
         Args:
             agent_id: معرف الوكيل
             channel_type: نوع القناة
             only_active: جلب القناة النشطة فقط
-            
+
         Returns:
             Optional[ChannelResponse]: بيانات القناة أو None
         """
@@ -237,11 +246,11 @@ class ChannelService:
     ) -> Optional[ChannelResponse]:
         """
         الحصول على قناة حسب مفتاح التهيئة.
-        
+
         Args:
             config_key: مفتاح التهيئة
             agent_id: معرف الوكيل (اختياري)
-            
+
         Returns:
             Optional[ChannelResponse]: بيانات القناة أو None
         """
@@ -278,14 +287,14 @@ class ChannelService:
     ) -> ChannelListResponse:
         """
         البحث عن القنوات.
-        
+
         Args:
             query: نص البحث
             agent_id: معرف الوكيل (اختياري)
             only_active: جلب القنوات النشطة فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ChannelListResponse: قائمة القنوات مع الإحصائيات
         """
@@ -329,13 +338,13 @@ class ChannelService:
     ) -> ChannelResponse:
         """
         إنشاء قناة جديدة.
-        
+
         Args:
             channel_data: بيانات القناة
-            
+
         Returns:
             ChannelResponse: بيانات القناة المنشأة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
             ConflictError: إذا كانت القناة موجودة مسبقاً
@@ -373,7 +382,9 @@ class ChannelService:
             "agent_id": channel_data.agent_id,
             "type": channel_data.type,
             "name": channel_data.name,
-            "is_active": channel_data.is_active if channel_data.is_active is not None else True,
+            "is_active": (
+                channel_data.is_active if channel_data.is_active is not None else True
+            ),
             "config": channel_data.config or {},
         }
 
@@ -402,14 +413,14 @@ class ChannelService:
     ) -> ChannelResponse:
         """
         تحديث قناة.
-        
+
         Args:
             channel_id: معرف القناة
             update_data: بيانات التحديث
-            
+
         Returns:
             ChannelResponse: بيانات القناة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على القناة
         """
@@ -472,14 +483,14 @@ class ChannelService:
     ) -> ChannelResponse:
         """
         تحديث إعدادات القناة.
-        
+
         Args:
             channel_id: معرف القناة
             config: إعدادات القناة الجديدة
-            
+
         Returns:
             ChannelResponse: بيانات القناة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على القناة
         """
@@ -529,13 +540,13 @@ class ChannelService:
     ) -> ChannelResponse:
         """
         تبديل حالة القناة (نشط/غير نشط).
-        
+
         Args:
             channel_id: معرف القناة
-            
+
         Returns:
             ChannelResponse: بيانات القناة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على القناة
         """
@@ -574,11 +585,11 @@ class ChannelService:
     ) -> None:
         """
         حذف قناة.
-        
+
         Args:
             channel_id: معرف القناة
             permanent: حذف نهائي
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على القناة
         """
@@ -626,14 +637,14 @@ class ChannelService:
     ) -> int:
         """
         حذف جميع قنوات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
             permanent: حذف نهائي
-            
+
         Returns:
             int: عدد القنوات المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
         """
@@ -689,13 +700,13 @@ class ChannelService:
     ) -> ChannelStats:
         """
         الحصول على إحصائيات القنوات لوكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
-            
+
         Returns:
             ChannelStats: إحصائيات القنوات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
         """

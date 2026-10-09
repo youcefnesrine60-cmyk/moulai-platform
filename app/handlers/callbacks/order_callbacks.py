@@ -1,9 +1,19 @@
 # ==============================================
-# 📦 ORDER CALLBACK (FALLBACK)
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
-# المسؤول عن استقبال أي Callback غير معالج
-# واستخراج معرف الطلب من callback_data.
+
 # ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / ORDER CALLBACKS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order callbacks.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -13,22 +23,18 @@ from app.core.middleware.rate_limit import rate_limit
 from app.helpers.ui_manager import UIManager
 from app.services.business.orders import get_restaurant_order
 
+# ==============================================
+# ORDER CALLBACK
+# ==============================================
 
-@rate_limit(
-    limit=5,
-    window=20,
-    key_prefix="orders"
-)
+
+@rate_limit(limit=5, window=20, key_prefix="orders")
 async def order_callback(
-    *,
-    chat_id: int,
-    message_id: int,
-    callback_data: str,
-    match: re.Match[str]
+    *, chat_id: int, message_id: int, callback_data: str, match: re.Match[str]
 ) -> None:
     """
     معالجة أي كولباك متعلق بالطلب (Fallback)
-    
+
     يتم استدعاء هذه الدالة عندما لا يجد الـ Router
     مساراً مخصصاً للكولباك.
     """
@@ -45,14 +51,11 @@ async def order_callback(
     # في حال كانت البيانات غير صحيحة أو لا تحتوي
     # على مجموعة Regex مطابقة.
     # ==========================================
-    
+
     except (ValueError, IndexError):
         logger.warning(
             "invalid_order_callback",
-            extra={
-                "chat_id": chat_id,
-                "callback_data": callback_data
-            }
+            extra={"chat_id": chat_id, "callback_data": callback_data},
         )
         return
 
@@ -61,13 +64,7 @@ async def order_callback(
     # تم اختيار الطلب بنجاح
     # ==========================================
 
-    logger.info(
-        "order_selected",
-        extra={
-            "chat_id": chat_id,
-            "order_id": order_id
-        }
-    )
+    logger.info("order_selected", extra={"chat_id": chat_id, "order_id": order_id})
 
     # ==========================================
     # 📋 جلب بيانات الطلب

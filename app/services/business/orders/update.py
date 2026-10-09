@@ -1,7 +1,25 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDERS / UPDATE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for update.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.repositories.orders_repo import lock_order
+
 # ==============================================
 # 📦 ORDERS SERVICE - UPDATE
-# تحديث الطلب 
+# تحديث الطلب
 # (change_order_status, recalculate_order_totals)
 # ==============================================
 
@@ -14,7 +32,6 @@ from typing import (
 
 from app.services.business.orders.transaction import transactional_order
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # ✅ استيراد الاستثناءات
@@ -31,12 +48,10 @@ from app.repositories.order_status_history_repo import (
 )
 from app.services.business.orders.constants import (
     can_transition,
-    get_allowed_transitions,
     is_valid_status,
-    get_status_display_name,
 )
 from app.services.business.orders.helpers import check_order_editable
-from app.services.business.orders.read import get_restaurant_order  
+from app.services.business.orders.read import get_restaurant_order
 
 # ==============================================
 # 🧩 TYPES
@@ -50,6 +65,7 @@ OrderUpdateData = Dict[str, Any]
 # 🔄 CHANGE ORDER STATUS
 # ==============================================
 
+
 @transactional_order
 async def change_order_status(
     *,
@@ -60,10 +76,18 @@ async def change_order_status(
     session: AsyncSession,
 ) -> Order:
     order, _ = await _change_order_status_in_transaction(
-        order_id=order_id, new_status=new_status, employee_id=employee_id,
-        note=note, session=session,
+        order_id=order_id,
+        new_status=new_status,
+        employee_id=employee_id,
+        note=note,
+        session=session,
     )
     return order
+
+
+# ==============================================
+#  CHANGE ORDER STATUS IN TRANSACTION
+# ==============================================
 
 
 async def _change_order_status_in_transaction(
@@ -76,17 +100,17 @@ async def _change_order_status_in_transaction(
 ) -> Tuple[Order, bool]:
     """
     تغيير حالة الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         new_status: الحالة الجديدة
         employee_id: معرف الموظف (اختياري)
         note: ملاحظة (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Order: الطلب المُحدّث
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كانت الحالة غير صالحة أو الانتقال غير مسموح
@@ -106,12 +130,20 @@ async def _change_order_status_in_transaction(
             message=f"الحالة '{new_status}' غير صالحة",
             details={
                 "new_status": new_status,
-                "valid_statuses": ["pending", "confirmed", "preparing", "ready", "delivering", "delivered", "completed", "cancelled"],
+                "valid_statuses": [
+                    "pending",
+                    "confirmed",
+                    "preparing",
+                    "ready",
+                    "delivering",
+                    "delivered",
+                    "completed",
+                    "cancelled",
+                ],
             },
         )
 
     # 2️⃣ جلب الطلب
-    orders_repo = OrdersRepository(session=session)
     order = await lock_order(order_id=order_id, session=session)
 
     if not order:
@@ -124,26 +156,47 @@ async def _change_order_status_in_transaction(
         )
 
     return await transition_locked_order(
-        order=order, new_status=new_status, employee_id=employee_id,
-        note=note, session=session,
+        order=order,
+        new_status=new_status,
+        employee_id=employee_id,
+        note=note,
+        session=session,
     )
 
 
-async def transition_locked_order(*, order, new_status, session,
-                                  employee_id=None, note=None):
+# ==============================================
+# TRANSITION LOCKED ORDER
+# ==============================================
+
+
+async def transition_locked_order(
+    *, order, new_status, session, employee_id=None, note=None
+):
     """Apply one legal transition to an already locked, authorized order."""
     old_status = order.status
     if old_status == new_status:
         return order, False
     if not can_transition(old_status, new_status):
-        raise ValidationError(message=f"Cannot change order from {old_status} to {new_status}")
+        raise ValidationError(
+            message=f"Cannot change order from {old_status} to {new_status}"
+        )
     order.status = new_status
-    await OrderStatusHistoryRepository(session=session).create(data={
-        "order_id": order.id, "old_status": old_status, "new_status": new_status,
-        "changed_by_employee_id": employee_id, "note": note,
-    })
+    await OrderStatusHistoryRepository(session=session).create(
+        data={
+            "order_id": order.id,
+            "old_status": old_status,
+            "new_status": new_status,
+            "changed_by_employee_id": employee_id,
+            "note": note,
+        }
+    )
     await session.flush()
     return order, True
+
+
+# ==============================================
+# UPDATE ORDER TOTALS
+# ==============================================
 
 
 async def update_order_totals(
@@ -158,7 +211,7 @@ async def update_order_totals(
 ) -> Order:
     """
     تحديث إجماليات الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         subtotal_amount: المجموع الفرعي
@@ -167,10 +220,10 @@ async def update_order_totals(
         delivery_amount: مبلغ التوصيل
         total_amount: المجموع الكلي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Order: الطلب المُحدّث
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كانت القيم غير صالحة أو الطلب مقفلاً
@@ -192,6 +245,7 @@ async def update_order_totals(
 # 🔄 RECALCULATE ORDER TOTALS (WRAPPER)
 # ==============================================
 
+
 async def recalculate_order_totals(
     *,
     order_id: int,
@@ -199,18 +253,20 @@ async def recalculate_order_totals(
 ) -> OrderTotals:
     """
     إعادة حساب إجماليات الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OrderTotals: (subtotal, discount, tax, delivery, total)
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
     """
-    from app.services.business.orders.totals import recalculate_order_totals as recalculate
+    from app.services.business.orders.totals import (
+        recalculate_order_totals as recalculate,
+    )
 
     return await recalculate(
         order_id=order_id,
@@ -223,6 +279,7 @@ async def recalculate_order_totals(
 # ✅ UPDATE ORDER
 # ==============================================
 
+
 @transactional_order
 async def update_order(
     *,
@@ -232,15 +289,15 @@ async def update_order(
 ) -> Order:
     """
     تحديث بيانات الطلب العامة.
-    
+
     Args:
         order_id: معرف الطلب
         data: بيانات التحديث
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Order: الطلب المُحدّث
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كان الطلب مقفلاً
@@ -281,23 +338,42 @@ async def update_order(
         del data["status"]
 
     if {"customer_name", "customer_phone"}.intersection(data):
-        raise ValidationError(message="Customer identity belongs to the customer profile")
+        raise ValidationError(
+            message="Customer identity belongs to the customer profile"
+        )
     if "restaurant_id" in data or "user_id" in data:
         raise ValidationError(message="Order ownership cannot be changed")
     if "branch_id" in data:
         from app.services.business.orders.create import validate_branch
-        await validate_branch(restaurant_id=order.restaurant_id,
-                              branch_id=data["branch_id"], session=session)
-    amount_fields = {"subtotal_amount", "discount_amount", "tax_amount", "delivery_amount", "total_amount"}
+
+        await validate_branch(
+            restaurant_id=order.restaurant_id,
+            branch_id=data["branch_id"],
+            session=session,
+        )
+    amount_fields = {
+        "subtotal_amount",
+        "discount_amount",
+        "tax_amount",
+        "delivery_amount",
+        "total_amount",
+    }
     if amount_fields.intersection(data):
         from app.services.business.orders.totals import compute_order_totals
+
         subtotal, discount, tax, delivery, total = compute_order_totals(
             subtotal=data.get("subtotal_amount", order.subtotal_amount),
             discount=data.get("discount_amount", order.discount_amount or 0),
             tax=data.get("tax_amount", order.tax_amount or 0),
-            delivery=data.get("delivery_amount", order.delivery_amount or 0))
-        data.update(subtotal_amount=subtotal, discount_amount=discount,
-                    tax_amount=tax, delivery_amount=delivery, total_amount=total)
+            delivery=data.get("delivery_amount", order.delivery_amount or 0),
+        )
+        data.update(
+            subtotal_amount=subtotal,
+            discount_amount=discount,
+            tax_amount=tax,
+            delivery_amount=delivery,
+            total_amount=total,
+        )
 
     # 4️⃣ تحديث الطلب
     updated_order = await orders_repo.update(
@@ -330,6 +406,7 @@ async def update_order(
 # 📝 UPDATE ORDER CUSTOMER INFO
 # ==============================================
 
+
 @transactional_order
 async def update_order_customer_info(
     *,
@@ -342,7 +419,7 @@ async def update_order_customer_info(
 ) -> Order:
     """
     تحديث معلومات العميل في الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         customer_name: اسم العميل (اختياري)
@@ -350,10 +427,10 @@ async def update_order_customer_info(
         delivery_address: عنوان التوصيل (اختياري)
         customer_note: ملاحظة العميل (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Order: الطلب المُحدّث
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كان الطلب مقفلاً
@@ -407,7 +484,13 @@ async def update_order_customer_info(
 # 🔄 COMPATIBILITY FUNCTIONS
 # ==============================================
 
+
 # دوال التوافق مع الإصدار القديم
+# ==============================================
+# CHANGE ORDER STATUS COMPAT
+# ==============================================
+
+
 async def change_order_status_compat(
     *,
     order_id: int,
@@ -418,14 +501,14 @@ async def change_order_status_compat(
 ) -> Order:
     """
     دالة متوافقة مع الإصدار القديم (مغلفة).
-    
+
     Args:
         order_id: معرف الطلب
         new_status: الحالة الجديدة
         employee_id: معرف الموظف (اختياري)
         note: ملاحظة (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Order: الطلب المُحدّث
     """
@@ -438,6 +521,11 @@ async def change_order_status_compat(
     )
 
 
+# ==============================================
+# UPDATE ORDER COMPAT
+# ==============================================
+
+
 async def update_order_compat(
     *,
     order_id: int,
@@ -446,12 +534,12 @@ async def update_order_compat(
 ) -> Order:
     """
     دالة متوافقة مع الإصدار القديم (مغلفة).
-    
+
     Args:
         order_id: معرف الطلب
         data: بيانات التحديث
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Order: الطلب المُحدّث
     """

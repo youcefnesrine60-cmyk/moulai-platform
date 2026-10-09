@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 💬 MESSAGE REPOSITORY
 # عمليات قاعدة البيانات للرسائل
 # ==============================================
+
+"""MoulAI operational module for message repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -19,7 +24,6 @@ from typing import (
 
 from sqlalchemy import (
     and_,
-    or_,
     select,
     func,
 )
@@ -28,7 +32,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.logger import logger
 from app.models.agent import Message
 from app.repositories.base import BaseRepository
-
 
 # ==============================================
 # 🧩 TYPES
@@ -43,19 +46,24 @@ MessageList = List[Message]
 # 💬 MESSAGE REPOSITORY
 # ==============================================
 
+
 class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData]):
     """
     مستودع الرسائل - يوفر عمليات خاصة بجدول الرسائل.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للرسائل
         - البحث عن الرسائل حسب المحادثة والدور
         - إدارة محتوى الرسائل والملحقات
-    
+
     Attributes:
         model: نموذج Message
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,7 +71,7 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> None:
         """
         تهيئة مستودع الرسائل.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -86,12 +94,12 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> MessageList:
         """
         الحصول على رسائل محادثة معينة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             MessageList: قائمة الرسائل
         """
@@ -100,9 +108,13 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
                 self.model.conversation_id == conversation_id,
             )
 
-            query = query.order_by(
-                self.model.created_at.asc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.created_at.asc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -132,13 +144,13 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> MessageList:
         """
         الحصول على رسائل حسب الدور.
-        
+
         Args:
             conversation_id: معرف المحادثة
             role: دور المرسل (user, assistant, system)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             MessageList: قائمة الرسائل
         """
@@ -150,9 +162,13 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
                 ),
             )
 
-            query = query.order_by(
-                self.model.created_at.asc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.created_at.asc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -183,13 +199,13 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> MessageList:
         """
         الحصول على رسائل حسب نوع المحتوى.
-        
+
         Args:
             conversation_id: معرف المحادثة
             content_type: نوع المحتوى (text, image, audio, video, file)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             MessageList: قائمة الرسائل
         """
@@ -201,9 +217,13 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
                 ),
             )
 
-            query = query.order_by(
-                self.model.created_at.asc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.created_at.asc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -231,19 +251,24 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> Optional[Message]:
         """
         الحصول على آخر رسالة في المحادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             Optional[Message]: آخر رسالة أو None
         """
         try:
-            query = select(self.model).where(
-                self.model.conversation_id == conversation_id,
-            ).order_by(
-                self.model.created_at.desc(),
-            ).limit(1)
+            query = (
+                select(self.model)
+                .where(
+                    self.model.conversation_id == conversation_id,
+                )
+                .order_by(
+                    self.model.created_at.desc(),
+                )
+                .limit(1)
+            )
 
             result = await self.session.execute(query)
 
@@ -270,19 +295,24 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> Optional[Message]:
         """
         الحصول على أول رسالة في المحادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             Optional[Message]: أول رسالة أو None
         """
         try:
-            query = select(self.model).where(
-                self.model.conversation_id == conversation_id,
-            ).order_by(
-                self.model.created_at.asc(),
-            ).limit(1)
+            query = (
+                select(self.model)
+                .where(
+                    self.model.conversation_id == conversation_id,
+                )
+                .order_by(
+                    self.model.created_at.asc(),
+                )
+                .limit(1)
+            )
 
             result = await self.session.execute(query)
 
@@ -313,14 +343,14 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> MessageList:
         """
         البحث عن الرسائل.
-        
+
         Args:
             query: نص البحث
             conversation_id: معرف المحادثة (اختياري)
             role: دور المرسل (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             MessageList: قائمة الرسائل
         """
@@ -381,11 +411,11 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> int:
         """
         حساب عدد رسائل محادثة معينة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             role: دور المرسل (اختياري)
-            
+
         Returns:
             int: عدد الرسائل
         """
@@ -408,11 +438,11 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> int:
         """
         حساب عدد رسائل محادثة معينة حسب نوع المحتوى.
-        
+
         Args:
             conversation_id: معرف المحادثة
             content_type: نوع المحتوى
-            
+
         Returns:
             int: عدد الرسائل
         """
@@ -422,8 +452,12 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
                 self.model.content_type == content_type,
             ]
 
-            stmt = select(func.count()).select_from(self.model).where(
-                *conditions,
+            stmt = (
+                select(func.count())
+                .select_from(self.model)
+                .where(
+                    *conditions,
+                )
             )
 
             result = await self.session.execute(stmt)
@@ -452,10 +486,10 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> List[Dict[str, Any]]:
         """
         الحصول على ملخص أدوار الرسائل في محادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             List[Dict[str, Any]]: ملخص أدوار الرسائل
         """
@@ -474,10 +508,7 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
 
             result = await self.session.execute(stmt)
 
-            return [
-                {"role": row[0], "count": row[1]}
-                for row in result.all()
-            ]
+            return [{"role": row[0], "count": row[1]} for row in result.all()]
 
         except Exception as e:
             logger.exception(
@@ -504,10 +535,10 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> MessageList:
         """
         إنشاء مجموعة من الرسائل دفعة واحدة.
-        
+
         Args:
             messages_data: قائمة بيانات الرسائل
-            
+
         Returns:
             MessageList: قائمة الرسائل المنشأة
         """
@@ -521,7 +552,11 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
             logger.info(
                 "message_bulk_create_successful",
                 extra={
-                    "conversation_id": messages_data[0].get("conversation_id") if messages_data else None,
+                    "conversation_id": (
+                        messages_data[0].get("conversation_id")
+                        if messages_data
+                        else None
+                    ),
                     "count": len(created_messages),
                 },
             )
@@ -549,10 +584,10 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> int:
         """
         حذف جميع رسائل محادثة معينة.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             int: عدد الرسائل المحذوفة
         """
@@ -600,11 +635,11 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
     ) -> int:
         """
         حذف الرسائل القديمة مع الاحتفاظ بعدد محدد من أحدث الرسائل.
-        
+
         Args:
             conversation_id: معرف المحادثة
             keep_count: عدد الرسائل التي سيتم الاحتفاظ بها
-            
+
         Returns:
             int: عدد الرسائل المحذوفة
         """

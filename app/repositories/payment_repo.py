@@ -10,6 +10,11 @@
 # عمليات قاعدة البيانات للمدفوعات باستخدام SQLAlchemy
 # ==============================================
 
+"""MoulAI operational module for payment repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -45,17 +50,21 @@ PaymentList = List[Payment]
 class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData]):
     """
     مستودع المدفوعات - يوفر عمليات خاصة بالمدفوعات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للمدفوعات
         - البحث والتصفية حسب المالك والمطعم والاشتراك
         - إدارة حالة المدفوعات (paid, failed, cancelled)
         - إحصائيات المدفوعات
-    
+
     Attributes:
         model: نموذج Payment
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,7 +72,7 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> None:
         """
         تهيئة مستودع المدفوعات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -86,12 +95,12 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> PaymentList:
         """
         الحصول على مدفوعات مالك معين.
-        
+
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المدفوعات
         """
@@ -131,12 +140,12 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> PaymentList:
         """
         الحصول على مدفوعات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المدفوعات
         """
@@ -174,10 +183,10 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> PaymentList:
         """
         الحصول على مدفوعات اشتراك معين.
-        
+
         Args:
             subscription_id: معرف الاشتراك
-            
+
         Returns:
             قائمة المدفوعات
         """
@@ -213,12 +222,12 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> PaymentList:
         """
         الحصول على مدفوعات حسب الحالة.
-        
+
         Args:
             status: حالة الدفع (pending, paid, failed, cancelled)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المدفوعات
         """
@@ -256,17 +265,18 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> Optional[Payment]:
         """
         الحصول على دفع بواسطة المرجع الخارجي.
-        
+
         Args:
             external_reference: المرجع الخارجي من بوابة الدفع
-            
+
         Returns:
             كائن Payment أو None
         """
         try:
             result = await self.session.execute(
-                select(self.model)
-                .where(self.model.external_reference == external_reference),
+                select(self.model).where(
+                    self.model.external_reference == external_reference
+                ),
             )
 
             return result.scalar_one_or_none()
@@ -293,11 +303,11 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> PaymentList:
         """
         الحصول على المدفوعات المعلقة.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المدفوعات المعلقة
         """
@@ -320,12 +330,12 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> PaymentList:
         """
         البحث عن مدفوعات.
-        
+
         Args:
             query: نص البحث (في external_reference أو payment_method)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المدفوعات
         """
@@ -374,12 +384,12 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> Optional[Payment]:
         """
         تحديث حالة الدفع.
-        
+
         Args:
             payment_id: معرف الدفع
             status: الحالة الجديدة (pending, paid, failed, cancelled)
             paid_at: تاريخ الدفع (إذا كان مدفوعاً)
-            
+
         Returns:
             كائن Payment المحدث أو None
         """
@@ -414,11 +424,11 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> Optional[Payment]:
         """
         تعيين الدفع كمدفوع.
-        
+
         Args:
             payment_id: معرف الدفع
             paid_at: تاريخ الدفع (افتراضي: الآن)
-            
+
         Returns:
             كائن Payment المحدث أو None
         """
@@ -450,10 +460,10 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> Optional[Payment]:
         """
         تعيين الدفع كفاشل.
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Returns:
             كائن Payment المحدث أو None
         """
@@ -478,10 +488,10 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> Optional[Payment]:
         """
         إلغاء الدفع.
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Returns:
             كائن Payment المحدث أو None
         """
@@ -510,10 +520,10 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> int:
         """
         حساب عدد المدفوعات حسب الحالة.
-        
+
         Args:
             status: حالة الدفع
-            
+
         Returns:
             عدد المدفوعات
         """
@@ -530,10 +540,10 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> int:
         """
         حساب عدد مدفوعات مالك معين.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             عدد المدفوعات
         """
@@ -550,10 +560,10 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> int:
         """
         حساب عدد مدفوعات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             عدد المدفوعات
         """
@@ -571,11 +581,11 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
     ) -> float:
         """
         حساب إجمالي المدفوعات لمالك معين.
-        
+
         Args:
             owner_id: معرف المالك
             status: حالة الدفع (اختياري)
-            
+
         Returns:
             إجمالي المبلغ
         """
@@ -612,6 +622,7 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
 # CREATE PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def create_payment(
     *,
     owner_id: int,
@@ -625,7 +636,7 @@ async def create_payment(
 ) -> int:
     """
     إنشاء دفع جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         restaurant_id: معرف المطعم
@@ -635,7 +646,7 @@ async def create_payment(
         status: حالة الدفع
         external_reference: المرجع الخارجي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الدفع
     """
@@ -669,6 +680,7 @@ async def create_payment(
 # GET PAYMENT BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_payment_by_id(
     *,
     payment_id: int,
@@ -676,11 +688,11 @@ async def get_payment_by_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على دفع بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الدفع أو None
     """
@@ -709,6 +721,7 @@ async def get_payment_by_id(
 # GET PAYMENT BY REFERENCE (COMPATIBILITY)
 # ==============================================
 
+
 async def get_payment_by_reference(
     *,
     external_reference: str,
@@ -716,11 +729,11 @@ async def get_payment_by_reference(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على دفع بواسطة المرجع الخارجي (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         external_reference: المرجع الخارجي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الدفع أو None
     """
@@ -751,6 +764,7 @@ async def get_payment_by_reference(
 # MARK PAYMENT PAID (COMPATIBILITY)
 # ==============================================
 
+
 async def mark_payment_paid(
     *,
     payment_id: int,
@@ -759,7 +773,7 @@ async def mark_payment_paid(
 ) -> None:
     """
     تعيين الدفع كمدفوع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         paid_at: تاريخ الدفع
@@ -782,6 +796,7 @@ async def mark_payment_paid(
 # MARK PAYMENT FAILED (COMPATIBILITY)
 # ==============================================
 
+
 async def mark_payment_failed(
     *,
     payment_id: int,
@@ -789,7 +804,7 @@ async def mark_payment_failed(
 ) -> None:
     """
     تعيين الدفع كفاشل (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -808,6 +823,7 @@ async def mark_payment_failed(
 # CANCEL PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def cancel_payment(
     *,
     payment_id: int,
@@ -815,7 +831,7 @@ async def cancel_payment(
 ) -> None:
     """
     إلغاء الدفع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -834,6 +850,7 @@ async def cancel_payment(
 # GET OWNER PAYMENTS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_owner_payments(
     *,
     owner_id: int,
@@ -843,13 +860,13 @@ async def get_owner_payments(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على مدفوعات مالك معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة المدفوعات
     """
@@ -864,18 +881,20 @@ async def get_owner_payments(
     result = []
 
     for payment in payments:
-        result.append({
-            "id": payment.id,
-            "owner_id": payment.owner_id,
-            "restaurant_id": payment.restaurant_id,
-            "subscription_id": payment.subscription_id,
-            "payment_method": payment.payment_method,
-            "amount": payment.amount,
-            "status": payment.status,
-            "external_reference": payment.external_reference,
-            "created_at": payment.created_at,
-            "paid_at": payment.paid_at,
-        })
+        result.append(
+            {
+                "id": payment.id,
+                "owner_id": payment.owner_id,
+                "restaurant_id": payment.restaurant_id,
+                "subscription_id": payment.subscription_id,
+                "payment_method": payment.payment_method,
+                "amount": payment.amount,
+                "status": payment.status,
+                "external_reference": payment.external_reference,
+                "created_at": payment.created_at,
+                "paid_at": payment.paid_at,
+            }
+        )
 
     return result
 
@@ -883,6 +902,7 @@ async def get_owner_payments(
 # ==============================================
 # GET RESTAURANT PAYMENTS (COMPATIBILITY)
 # ==============================================
+
 
 async def get_restaurant_payments(
     *,
@@ -893,13 +913,13 @@ async def get_restaurant_payments(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على مدفوعات مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة المدفوعات
     """
@@ -914,29 +934,33 @@ async def get_restaurant_payments(
     result = []
 
     for payment in payments:
-        result.append({
-            "id": payment.id,
-            "owner_id": payment.owner_id,
-            "restaurant_id": payment.restaurant_id,
-            "subscription_id": payment.subscription_id,
-            "payment_method": payment.payment_method,
-            "amount": payment.amount,
-            "status": payment.status,
-            "external_reference": payment.external_reference,
-            "created_at": payment.created_at,
-            "paid_at": payment.paid_at,
-        })
+        result.append(
+            {
+                "id": payment.id,
+                "owner_id": payment.owner_id,
+                "restaurant_id": payment.restaurant_id,
+                "subscription_id": payment.subscription_id,
+                "payment_method": payment.payment_method,
+                "amount": payment.amount,
+                "status": payment.status,
+                "external_reference": payment.external_reference,
+                "created_at": payment.created_at,
+                "paid_at": payment.paid_at,
+            }
+        )
 
     return result
 
+
 # ==============================================
-# 🔄 TRANSACTION FUNCTIONS 
+# 🔄 TRANSACTION FUNCTIONS
 # (للتوافق مع الكود القديم)
 # ==============================================
 
 # ==============================================
 # CONFIRM PAYMENT TRANSACTIONS (COMPATIBILITY)
 # ==============================================
+
 
 async def confirm_payment_tx(
     *,
@@ -945,11 +969,11 @@ async def confirm_payment_tx(
 ) -> int:
     """
     تأكيد الدفع (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: اتصال قاعدة البيانات (غير مستخدم في SQLAlchemy)
         payment_id: معرف الدفع
-        
+
     Returns:
         int: عدد الصفوف المتأثرة
     """
@@ -963,6 +987,7 @@ async def confirm_payment_tx(
 # FAIL PAYMENT TRANSACTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def fail_payment_tx(
     *,
     conn: AsyncConnection,
@@ -970,7 +995,7 @@ async def fail_payment_tx(
 ) -> None:
     """
     تعيين الدفع كفاشل (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: اتصال قاعدة البيانات (غير مستخدم في SQLAlchemy)
         payment_id: معرف الدفع

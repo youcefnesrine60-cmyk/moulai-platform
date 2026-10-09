@@ -1,8 +1,19 @@
 # ==============================================
-# 🎛 OPTION GROUPS API
-# نقاط نهاية API لمجموعات الخيارات
-# تدير عمليات إنشاء واستعراض وتحديث وحذف مجموعات الخيارات
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / API / V1 / OPTION GROUP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for option group.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     List,
@@ -60,19 +71,25 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_option_groups_service(
     session: AsyncSession = Depends(get_db),
 ) -> OptionGroupsService:
     """
     الحصول على خدمة مجموعات الخيارات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OptionGroupsService: مثيل من OptionGroupsService
     """
     return OptionGroupsService(session)
+
+
+# ==============================================
+# GET PRODUCT SERVICE
+# ==============================================
 
 
 async def get_product_service(
@@ -80,10 +97,10 @@ async def get_product_service(
 ) -> ProductService:
     """
     الحصول على خدمة المنتجات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         ProductService: مثيل من ProductService
     """
@@ -97,6 +114,7 @@ async def get_product_service(
 # ==============================================
 # LIST OPTION GROUPS
 # ==============================================
+
 
 @router.get(
     "/",
@@ -132,14 +150,14 @@ async def list_option_groups(
 ) -> OptionGroupListResponse:
     """
     الحصول على قائمة مجموعات الخيارات.
-    
+
     Args:
         product_id: معرف المنتج للتصفية
         search: نص البحث
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة مجموعات الخيارات
-        
+
     Returns:
         OptionGroupListResponse: قائمة مجموعات الخيارات مع الإحصائيات
     """
@@ -200,6 +218,7 @@ async def list_option_groups(
 # GET OPTION GROUP BY ID
 # ==============================================
 
+
 @router.get(
     "/{group_id}",
     response_model=OptionGroupWithOptionsResponse,
@@ -213,14 +232,14 @@ async def get_option_group(
 ) -> OptionGroupWithOptionsResponse:
     """
     الحصول على مجموعة خيارات محددة مع خياراتها.
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         service: خدمة مجموعات الخيارات
-        
+
     Returns:
         OptionGroupWithOptionsResponse: مجموعة الخيارات مع خياراتها
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المجموعة
     """
@@ -265,6 +284,7 @@ async def get_option_group(
 # GET PRODUCT OPTION GROUPS
 # ==============================================
 
+
 @router.get(
     "/product/{product_id}",
     response_model=OptionGroupListResponse,
@@ -293,14 +313,14 @@ async def get_product_option_groups(
 ) -> OptionGroupListResponse:
     """
     الحصول على مجموعات خيارات منتج معين.
-    
+
     Args:
         product_id: معرف المنتج
         only_required: جلب المجموعات الإجبارية فقط
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة مجموعات الخيارات
-        
+
     Returns:
         OptionGroupListResponse: قائمة مجموعات الخيارات مع الإحصائيات
     """
@@ -353,6 +373,7 @@ async def get_product_option_groups(
 # CREATE OPTION GROUP
 # ==============================================
 
+
 @router.post(
     "/",
     response_model=OptionGroupResponse,
@@ -372,15 +393,15 @@ async def create_option_group(
 ) -> OptionGroupResponse:
     """
     إنشاء مجموعة خيارات جديدة.
-    
+
     Args:
         data: بيانات مجموعة الخيارات
         product_id: معرف المنتج
         service: خدمة مجموعات الخيارات
-        
+
     Returns:
         OptionGroupResponse: مجموعة الخيارات المنشأة
-        
+
     Raises:
         HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
@@ -455,6 +476,7 @@ async def create_option_group(
 # UPDATE OPTION GROUP
 # ==============================================
 
+
 @router.patch(
     "/{group_id}",
     response_model=OptionGroupResponse,
@@ -469,15 +491,15 @@ async def update_option_group(
 ) -> OptionGroupResponse:
     """
     تحديث مجموعة خيارات موجودة.
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         data: بيانات التحديث
         service: خدمة مجموعات الخيارات
-        
+
     Returns:
         OptionGroupResponse: مجموعة الخيارات المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المجموعة أو حدث تعارض
     """
@@ -550,6 +572,7 @@ async def update_option_group(
 # UPDATE OPTION GROUP SORT ORDER
 # ==============================================
 
+
 @router.patch(
     "/{group_id}/sort-order",
     response_model=OptionGroupResponse,
@@ -568,15 +591,15 @@ async def update_option_group_sort_order(
 ) -> OptionGroupResponse:
     """
     تحديث ترتيب مجموعة الخيارات.
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         sort_order: الترتيب الجديد
         service: خدمة مجموعات الخيارات
-        
+
     Returns:
         OptionGroupResponse: مجموعة الخيارات المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المجموعة
     """
@@ -625,6 +648,7 @@ async def update_option_group_sort_order(
 # UPDATE OPTION GROUP REQUIRED
 # ==============================================
 
+
 @router.patch(
     "/{group_id}/required",
     response_model=OptionGroupResponse,
@@ -642,15 +666,15 @@ async def update_option_group_required(
 ) -> OptionGroupResponse:
     """
     تحديث حالة الإجبار لمجموعة الخيارات.
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         required: حالة الإجبار الجديدة
         service: خدمة مجموعات الخيارات
-        
+
     Returns:
         OptionGroupResponse: مجموعة الخيارات المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المجموعة
     """
@@ -699,6 +723,7 @@ async def update_option_group_required(
 # UPDATE OPTION GROUP MULTIPLE CHOICE
 # ==============================================
 
+
 @router.patch(
     "/{group_id}/multiple-choice",
     response_model=OptionGroupResponse,
@@ -716,15 +741,15 @@ async def update_option_group_multiple_choice(
 ) -> OptionGroupResponse:
     """
     تحديث حالة الاختيار المتعدد لمجموعة الخيارات.
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         multiple_choice: حالة الاختيار المتعدد الجديدة
         service: خدمة مجموعات الخيارات
-        
+
     Returns:
         OptionGroupResponse: مجموعة الخيارات المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المجموعة
     """
@@ -773,6 +798,7 @@ async def update_option_group_multiple_choice(
 # REORDER OPTION GROUPS
 # ==============================================
 
+
 @router.post(
     "/reorder",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -794,12 +820,12 @@ async def reorder_option_groups(
 ) -> None:
     """
     إعادة ترتيب مجموعات الخيارات.
-    
+
     Args:
         product_id: معرف المنتج
         group_order: قائمة معرفات المجموعات بالترتيب الجديد
         service: خدمة مجموعات الخيارات
-        
+
     Raises:
         HTTPException: إذا حدث خطأ
     """
@@ -859,6 +885,7 @@ async def reorder_option_groups(
 # DELETE OPTION GROUP
 # ==============================================
 
+
 @router.delete(
     "/{group_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -872,11 +899,11 @@ async def delete_option_group(
 ) -> None:
     """
     حذف مجموعة خيارات موجودة.
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         service: خدمة مجموعات الخيارات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المجموعة أو كانت تحتوي على خيارات
     """
@@ -937,6 +964,7 @@ async def delete_option_group(
 # DELETE PRODUCT OPTION GROUPS
 # ==============================================
 
+
 @router.delete(
     "/product/{product_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -950,11 +978,11 @@ async def delete_product_option_groups(
 ) -> None:
     """
     حذف جميع مجموعات خيارات منتج معين.
-    
+
     Args:
         product_id: معرف المنتج
         service: خدمة مجموعات الخيارات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المنتج
     """
@@ -1003,6 +1031,7 @@ async def delete_product_option_groups(
 # GET OPTION GROUPS SUMMARY
 # ==============================================
 
+
 @router.get(
     "/product/{product_id}/summary",
     response_model=OptionGroupSummary,
@@ -1016,14 +1045,14 @@ async def get_option_groups_summary(
 ) -> OptionGroupSummary:
     """
     الحصول على ملخص مجموعات خيارات منتج معين.
-    
+
     Args:
         product_id: معرف المنتج
         service: خدمة مجموعات الخيارات
-        
+
     Returns:
         OptionGroupSummary: ملخص مجموعات خيارات المنتج
-        
+
     Raises:
         HTTPException: إذا حدث خطأ
     """

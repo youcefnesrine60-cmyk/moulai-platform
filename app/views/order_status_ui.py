@@ -1,7 +1,19 @@
 # ==============================================
-# 📦 ORDER STATUS UI
-# عرض حالة الطلب للزبون
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / VIEWS / ORDER STATUS UI
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order status ui.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.views.ui import button
@@ -31,16 +43,17 @@ STATUS_ORDER = [
 # 📊 BUILD STATUS BAR
 # ==============================================
 
+
 def build_status_bar(
     *,
     current_status: str,
 ) -> str:
     """
     بناء شريط حالة متقدم
-    
+
     Args:
         current_status: الحالة الحالية للطلب
-        
+
     Returns:
         str: شريط الحالة كنص
     """
@@ -68,6 +81,7 @@ def build_status_bar(
 # 📦 ORDER STATUS UI
 # ==============================================
 
+
 async def order_status_ui(
     *,
     order_id: int,
@@ -78,14 +92,14 @@ async def order_status_ui(
 ) -> dict:
     """
     بناء واجهة عرض حالة الطلب
-    
+
     Args:
         order_id: معرف الطلب
         status: الحالة الحالية
         order_number: رقم الطلب
         created_at: تاريخ الإنشاء
         updated_at: آخر تحديث
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -100,12 +114,6 @@ async def order_status_ui(
     # بناء شريط الحالة
     status_bar = build_status_bar(
         current_status=status,
-    )
-
-    # نص الحالة
-    status_text = STATUS_STEPS.get(
-        status,
-        status,
     )
 
     # ==========================================
@@ -174,6 +182,12 @@ async def order_status_ui(
 # عرض بسيط للحالة (للإشعارات)
 # ==============================================
 
+
+# ==============================================
+# ORDER STATUS SIMPLE UI
+# ==============================================
+
+
 async def order_status_simple_ui(
     *,
     order_number: str,
@@ -181,11 +195,11 @@ async def order_status_simple_ui(
 ) -> str:
     """
     بناء رسالة حالة بسيطة (للإشعارات)
-    
+
     Args:
         order_number: رقم الطلب
         status: الحالة الحالية
-        
+
     Returns:
         str: نص الحالة
     """
@@ -194,7 +208,4 @@ async def order_status_simple_ui(
         status,
     )
 
-    return (
-        f"📦 **الطلب #{order_number}**\n"
-        f"📊 الحالة: {status_text}"
-    )
+    return f"📦 **الطلب #{order_number}**\n" f"📊 الحالة: {status_text}"

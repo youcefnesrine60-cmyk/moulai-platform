@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,6 +10,11 @@
 # مستودع مجموعات المطاعم
 # يدير عمليات قاعدة البيانات لمجموعات المطاعم
 # ==============================================
+
+"""MoulAI operational module for restaurant group repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -33,7 +38,6 @@ from app.models.restaurant_group import (
 )
 from app.repositories.base import BaseRepository
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -46,19 +50,26 @@ GroupUpdateData = Dict[str, Any]
 # 🏢 RESTAURANT GROUP REPOSITORY
 # ==============================================
 
-class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, GroupUpdateData]):
+
+class RestaurantGroupRepository(
+    BaseRepository[RestaurantGroup, GroupData, GroupUpdateData]
+):
     """
     مستودع مجموعات المطاعم.
-    
+
     يدير عمليات قاعدة البيانات لنموذج RestaurantGroup.
-    
+
     ⚠️ ملاحظة: RestaurantGroup لا يحتوي على حقل is_active
     ⚠️ ملاحظة: لا نستخدم "name" في extra لأنها محجوزة في LogRecord
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         model: نموذج RestaurantGroup
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -66,7 +77,7 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> None:
         """
         تهيئة مستودع مجموعات المطاعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -87,10 +98,10 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> Optional[RestaurantGroup]:
         """
         الحصول على مجموعة مطاعم بالمعرف مع تفاصيلها.
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             Optional[RestaurantGroup]: المجموعة مع تفاصيلها أو None
         """
@@ -105,7 +116,9 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
             .options(
                 selectinload(RestaurantGroup.owner),
                 selectinload(RestaurantGroup.restaurants),
-                selectinload(RestaurantGroup.branch_links).selectinload(RestaurantBranch.restaurant),
+                selectinload(RestaurantGroup.branch_links).selectinload(
+                    RestaurantBranch.restaurant
+                ),
             )
         )
 
@@ -126,15 +139,15 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> List[RestaurantGroup]:
         """
         الحصول على مجموعات المطاعم لمالك معين.
-        
+
         ✅ التصحيح: إزالة is_active (غير موجود في RestaurantGroup)
-        
+
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             include_inactive: متجاهل (RestaurantGroup لا يحتوي على is_active)
-            
+
         Returns:
             List[RestaurantGroup]: قائمة مجموعات المطاعم
         """
@@ -171,13 +184,13 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> int:
         """
         حساب عدد مجموعات المطاعم لمالك معين.
-        
+
         ✅ التصحيح: إزالة is_active
-        
+
         Args:
             owner_id: معرف المالك
             include_inactive: متجاهل
-            
+
         Returns:
             int: عدد المجموعات
         """
@@ -204,16 +217,16 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> Optional[RestaurantGroup]:
         """
         الحصول على مجموعة مطاعم بواسطة اسمها.
-        
+
         ✅ التصحيح 1: إزالة is_active
         ✅ التصحيح 2: استخدام "group_name" بدلاً من "name" في extra
                       لأن "name" محجوزة في LogRecord
-        
+
         Args:
             owner_id: معرف المالك
             name: اسم المجموعة
             include_inactive: متجاهل
-            
+
         Returns:
             Optional[RestaurantGroup]: المجموعة أو None
         """
@@ -226,14 +239,11 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
         )
 
         # ✅ إزالة is_active من الاستعلام
-        query = (
-            select(RestaurantGroup)
-            .where(
-                and_(
-                    RestaurantGroup.owner_id == owner_id,
-                    RestaurantGroup.name == name,
-                ),
-            )
+        query = select(RestaurantGroup).where(
+            and_(
+                RestaurantGroup.owner_id == owner_id,
+                RestaurantGroup.name == name,
+            ),
         )
 
         result = await self.session.execute(query)
@@ -254,16 +264,16 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> List[RestaurantGroup]:
         """
         البحث عن مجموعات المطاعم.
-        
+
         ✅ التصحيح: إزالة is_active
-        
+
         Args:
             query: نص البحث
             owner_id: معرف المالك (اختياري)
             only_active: متجاهل
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RestaurantGroup]: قائمة المجموعات المطابقة
         """
@@ -305,14 +315,14 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> List[RestaurantGroup]:
         """
         الحصول على مجموعات المطاعم مع المطاعم التابعة لها.
-        
+
         ✅ التصحيح: إزالة is_active
-        
+
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RestaurantGroup]: قائمة المجموعات مع المطاعم
         """
@@ -331,7 +341,9 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
             .where(RestaurantGroup.owner_id == owner_id)
             .options(
                 selectinload(RestaurantGroup.restaurants),
-                selectinload(RestaurantGroup.branch_links).selectinload(RestaurantBranch.restaurant),
+                selectinload(RestaurantGroup.branch_links).selectinload(
+                    RestaurantBranch.restaurant
+                ),
             )
             .offset(skip)
             .limit(limit)
@@ -352,12 +364,12 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> Dict[str, Any]:
         """
         الحصول على إحصائيات مجموعات المطاعم لمالك معين.
-        
+
         ✅ التصحيح: إزالة is_active
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             Dict[str, Any]: إحصائيات المجموعات
         """
@@ -390,13 +402,13 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> Optional[RestaurantGroup]:
         """
         تبديل حالة المجموعة (نشط/غير نشط).
-        
+
         ⚠️ RestaurantGroup لا يحتوي على is_active
         هذه الدالة موجودة للتوافق فقط — تُعيد المجموعة كما هي.
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             Optional[RestaurantGroup]: المجموعة أو None
         """
@@ -425,14 +437,14 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> int:
         """
         تبديل حالة مجموعة من المجموعات.
-        
+
         ⚠️ RestaurantGroup لا يحتوي على is_active
         هذه الدالة موجودة للتوافق فقط — تُعيد 0.
-        
+
         Args:
             group_ids: قائمة معرفات المجموعات
             is_active: الحالة الجديدة (متجاهل)
-            
+
         Returns:
             int: 0 (لأنه لا يوجد is_active)
         """
@@ -458,10 +470,10 @@ class RestaurantGroupRepository(BaseRepository[RestaurantGroup, GroupData, Group
     ) -> bool:
         """
         حذف مجموعة مع جميع فروعها المرتبطة.
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             bool: True إذا تم الحذف بنجاح
         """

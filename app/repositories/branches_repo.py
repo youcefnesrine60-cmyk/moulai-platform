@@ -10,6 +10,11 @@
 # عمليات قاعدة البيانات للفروع باستخدام SQLAlchemy
 # ==============================================
 
+"""MoulAI operational module for branches repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -43,17 +48,21 @@ BranchList = List[Branch]
 class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     """
     مستودع الفروع - يوفر عمليات خاصة بالفروع.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للفروع
         - البحث والتصفية حسب المطعم والولاية
         - إدارة حالة النشاط
         - إحصائيات الفروع
-    
+
     Attributes:
         model: نموذج Branch
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -61,7 +70,7 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> None:
         """
         تهيئة مستودع الفروع.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -85,13 +94,13 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> BranchList:
         """
         الحصول على فروع مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_active: جلب الفروع النشطة فقط
-            
+
         Returns:
             قائمة الفروع
         """
@@ -133,13 +142,13 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> BranchList:
         """
         الحصول على فروع حسب الولاية.
-        
+
         Args:
             wilaya: اسم الولاية
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_active: جلب الفروع النشطة فقط
-            
+
         Returns:
             قائمة الفروع
         """
@@ -178,10 +187,10 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> BranchList:
         """
         الحصول على الفروع النشطة لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             قائمة الفروع النشطة
         """
@@ -204,13 +213,13 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> BranchList:
         """
         البحث عن فروع.
-        
+
         Args:
             query: نص البحث
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             restaurant_id: معرف المطعم (اختياري)
-            
+
         Returns:
             قائمة الفروع
         """
@@ -267,11 +276,11 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> Optional[Branch]:
         """
         تحديث حالة الفرع.
-        
+
         Args:
             branch_id: معرف الفرع
             is_active: الحالة الجديدة
-            
+
         Returns:
             كائن Branch المحدث أو None
         """
@@ -299,10 +308,10 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> Optional[Branch]:
         """
         تفعيل الفرع.
-        
+
         Args:
             branch_id: معرف الفرع
-            
+
         Returns:
             كائن Branch المحدث أو None
         """
@@ -327,10 +336,10 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> Optional[Branch]:
         """
         إلغاء تفعيل الفرع.
-        
+
         Args:
             branch_id: معرف الفرع
-            
+
         Returns:
             كائن Branch المحدث أو None
         """
@@ -360,11 +369,11 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> int:
         """
         حساب عدد فروع مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             only_active: حساب الفروع النشطة فقط
-            
+
         Returns:
             عدد الفروع
         """
@@ -387,11 +396,11 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     ) -> int:
         """
         حساب عدد الفروع في ولاية معينة.
-        
+
         Args:
             wilaya: اسم الولاية
             only_active: حساب الفروع النشطة فقط
-            
+
         Returns:
             عدد الفروع
         """
@@ -412,6 +421,7 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
 # CREATE BRANCH (COMPATIBILITY)
 # ==============================================
 
+
 async def create_branch(
     *,
     restaurant_id: int,
@@ -424,7 +434,7 @@ async def create_branch(
 ) -> int:
     """
     إنشاء فرع جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         name: اسم الفرع
@@ -433,7 +443,7 @@ async def create_branch(
         lat: خط العرض
         lng: خط الطول
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الفرع
     """
@@ -466,6 +476,7 @@ async def create_branch(
 # GET BRANCH (COMPATIBILITY)
 # ==============================================
 
+
 async def get_branch(
     *,
     branch_id: int,
@@ -473,11 +484,11 @@ async def get_branch(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على فرع بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         branch_id: معرف الفرع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الفرع أو None
     """
@@ -505,6 +516,7 @@ async def get_branch(
 # GET RESTAURANT BRANCHES (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurant_branches(
     *,
     restaurant_id: int,
@@ -513,12 +525,12 @@ async def get_restaurant_branches(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على فروع مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         only_active: جلب الفروع النشطة فقط
-        
+
     Returns:
         قائمة الفروع
     """
@@ -532,17 +544,19 @@ async def get_restaurant_branches(
     result = []
 
     for branch in branches:
-        result.append({
-            "id": branch.id,
-            "restaurant_id": branch.restaurant_id,
-            "name": branch.name,
-            "phone": branch.phone,
-            "wilaya": branch.wilaya,
-            "lat": branch.lat,
-            "lng": branch.lng,
-            "is_active": branch.is_active,
-            "created_at": branch.created_at,
-        })
+        result.append(
+            {
+                "id": branch.id,
+                "restaurant_id": branch.restaurant_id,
+                "name": branch.name,
+                "phone": branch.phone,
+                "wilaya": branch.wilaya,
+                "lat": branch.lat,
+                "lng": branch.lng,
+                "is_active": branch.is_active,
+                "created_at": branch.created_at,
+            }
+        )
 
     return result
 
@@ -550,6 +564,7 @@ async def get_restaurant_branches(
 # ==============================================
 # COUNT RESTAURANT BRANCHES (COMPATIBILITY)
 # ==============================================
+
 
 async def count_restaurant_branches(
     *,
@@ -559,12 +574,12 @@ async def count_restaurant_branches(
 ) -> int:
     """
     حساب عدد فروع مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         only_active: حساب الفروع النشطة فقط
-        
+
     Returns:
         عدد الفروع
     """
@@ -580,6 +595,7 @@ async def count_restaurant_branches(
 # DELETE BRANCH (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_branch(
     *,
     branch_id: int,
@@ -587,7 +603,7 @@ async def delete_branch(
 ) -> None:
     """
     حذف فرع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         branch_id: معرف الفرع
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -606,6 +622,7 @@ async def delete_branch(
 # UPDATE BRANCH (COMPATIBILITY)
 # ==============================================
 
+
 async def update_branch(
     *,
     branch_id: int,
@@ -618,7 +635,7 @@ async def update_branch(
 ) -> None:
     """
     تحديث فرع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         branch_id: معرف الفرع
         name: اسم الفرع
@@ -653,6 +670,7 @@ async def update_branch(
 # DEACTIVATE BRANCH (COMPATIBILITY)
 # ==============================================
 
+
 async def deactivate_branch(
     *,
     branch_id: int,
@@ -660,7 +678,7 @@ async def deactivate_branch(
 ) -> None:
     """
     إلغاء تفعيل فرع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         branch_id: معرف الفرع
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -679,6 +697,7 @@ async def deactivate_branch(
 # ACTIVATE BRANCH (COMPATIBILITY)
 # ==============================================
 
+
 async def activate_branch(
     *,
     branch_id: int,
@@ -686,7 +705,7 @@ async def activate_branch(
 ) -> None:
     """
     تفعيل فرع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         branch_id: معرف الفرع
         session: جلسة قاعدة البيانات غير المتزامنة

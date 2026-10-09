@@ -1,17 +1,21 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🍽️ RESTAURANT SCHEMAS - PACKAGE INIT
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 # 🍽️ RESTAURANT
 from app.schemas.restaurant.restaurant import (
-
     RestaurantBase,
     RestaurantCreate,
     RestaurantUpdate,
@@ -25,7 +29,6 @@ from app.schemas.restaurant.restaurant import (
 
 # 🏢 RESTAURANT GROUP
 from app.schemas.restaurant.restaurant_group import (
-
     # Types
     RestaurantGroupData,
     RestaurantGroupUpdateData,
@@ -33,7 +36,6 @@ from app.schemas.restaurant.restaurant_group import (
     RestaurantBranchData,
     RestaurantBranchUpdateData,
     RestaurantBranchListData,
-            
     # Restaurant Group
     RestaurantGroupBase,
     RestaurantGroupCreate,
@@ -41,19 +43,17 @@ from app.schemas.restaurant.restaurant_group import (
     RestaurantGroupResponse,
     RestaurantGroupListResponse,
     RestaurantGroupStatistics,
-            
     # Restaurant Branch
     RestaurantBranchBase,
     RestaurantBranchCreate,
     RestaurantBranchUpdate,
     RestaurantBranchResponse,
     RestaurantBranchListResponse,
-    RestaurantBranchBulkCreate,    
+    RestaurantBranchBulkCreate,
 )
 
 # 📊 RESTAURANT METRIC
 from app.schemas.restaurant.restaurant_metric import (
-    
     # Restaurant Metric
     RestaurantMetricBase,
     RestaurantMetricCreate,
@@ -61,14 +61,11 @@ from app.schemas.restaurant.restaurant_metric import (
     RestaurantMetricResponse,
     RestaurantMetricListResponse,
     RestaurantMetricSummary,
-    
     # Metrics Trend
     MetricsTrendPoint,
     MetricsTrend,
-    
     # Product Metrics
     ProductMetrics,
-    
     # Types
     RestaurantMetricData,
     RestaurantMetricUpdateData,
@@ -77,44 +74,36 @@ from app.schemas.restaurant.restaurant_metric import (
 
 # 🔢 RESTAURANT ORDER COUNTER
 from app.schemas.restaurant.restaurant_order_counter import (
-
     # Restaurant Order Counter
     RestaurantOrderCounterBase,
     RestaurantOrderCounterCreate,
     RestaurantOrderCounterUpdate,
     RestaurantOrderCounterResponse,
     RestaurantOrderCounterListResponse,
-    
     # Next Order Number Response
     NextOrderNumberResponse,
-    
     # Order Counter Summary
     OrderCounterSummary,
-    
     # Order Number Format
     OrderNumberFormat,
-    
     # Types
     OrderCounterData,
     OrderCounterUpdateData,
     OrderCounterListData,
 )
+
 # 🏦 RESTAURANT PAYMENT SETTING
 from app.schemas.restaurant.restaurant_payment_setting import (
-
     # Restaurant Payment Setting
     RestaurantPaymentSettingBase,
     RestaurantPaymentSettingCreate,
     RestaurantPaymentSettingUpdate,
     RestaurantPaymentSettingResponse,
     RestaurantPaymentSettingListResponse,
-    
     # Payment Methods List
     PaymentMethodsList,
-    
-    #Payment Settings Summary
+    # Payment Settings Summary
     PaymentSettingsSummary,
-    
     # Types
     PaymentSettingData,
     PaymentSettingUpdateData,
@@ -126,7 +115,6 @@ from app.schemas.restaurant.restaurant_payment_setting import (
 # ==============================================
 
 __all__ = [
-
     # Restaurant
     "RestaurantBase",
     "RestaurantCreate",
@@ -137,8 +125,7 @@ __all__ = [
     "RestaurantData",
     "RestaurantUpdateData",
     "RestaurantListData",
-
-    #----------------------
+    # ----------------------
     # Types
     "RestaurantGroupData",
     "RestaurantGroupUpdateData",
@@ -146,7 +133,6 @@ __all__ = [
     "RestaurantBranchData",
     "RestaurantBranchUpdateData",
     "RestaurantBranchListData",
-
     # Restaurant Group
     "RestaurantGroupBase",
     "RestaurantGroupCreate",
@@ -154,7 +140,6 @@ __all__ = [
     "RestaurantGroupResponse",
     "RestaurantGroupListResponse",
     "RestaurantGroupStatistics",
-
     # Restaurant Branch
     "RestaurantBranchBase",
     "RestaurantBranchCreate",
@@ -162,8 +147,7 @@ __all__ = [
     "RestaurantBranchResponse",
     "RestaurantBranchListResponse",
     "RestaurantBranchBulkCreate",
-
-    #----------------------
+    # ----------------------
     # Restaurant Metric
     "RestaurantMetricBase",
     "RestaurantMetricCreate",
@@ -171,55 +155,43 @@ __all__ = [
     "RestaurantMetricResponse",
     "RestaurantMetricListResponse",
     "RestaurantMetricSummary",
-    
     # Metrics Trend
     "MetricsTrendPoint",
     "MetricsTrend",
-    
     # Product Metrics
     "ProductMetrics",
-    
     # Types
     "RestaurantMetricData",
     "RestaurantMetricUpdateData",
     "RestaurantMetricListData",
-
-    #----------------------
+    # ----------------------
     # Restaurant Order Counter
     "RestaurantOrderCounterBase",
     "RestaurantOrderCounterCreate",
     "RestaurantOrderCounterUpdate",
     "RestaurantOrderCounterResponse",
     "RestaurantOrderCounterListResponse",
-    
     # Next Order Number Response
     "NextOrderNumberResponse",
-    
     # Order Counter Summary
     "OrderCounterSummary",
-    
     # Order Number Format
     "OrderNumberFormat",
-    
     # Types
     "OrderCounterData",
     "OrderCounterUpdateData",
     "OrderCounterListData",
-
-    #----------------------
+    # ----------------------
     # Restaurant Payment Setting
     "RestaurantPaymentSettingBase",
     "RestaurantPaymentSettingCreate",
     "RestaurantPaymentSettingUpdate",
     "RestaurantPaymentSettingResponse",
     "RestaurantPaymentSettingListResponse",
-    
     # Payment Methods List
     "PaymentMethodsList",
-    
-    #Payment Settings Summary
+    # Payment Settings Summary
     "PaymentSettingsSummary",
-    
     # Types
     "PaymentSettingData",
     "PaymentSettingUpdateData",

@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها لعداد طلبات المطعم
 # ==============================================
 
+"""MoulAI operational module for restaurant order counter.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     Field,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,16 +43,18 @@ OrderCounterListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class RestaurantOrderCounterBase(BaseModel):
     """
     المخطط الأساسي لعداد طلبات المطعم.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات عداد طلبات المطعم.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         last_number: آخر رقم طلب
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -67,14 +73,16 @@ class RestaurantOrderCounterBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class RestaurantOrderCounterCreate(BaseModel):
     """
     مخطط إنشاء عداد طلبات مطعم جديد.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         last_number: آخر رقم طلب (اختياري)
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -93,13 +101,15 @@ class RestaurantOrderCounterCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class RestaurantOrderCounterUpdate(BaseModel):
     """
     مخطط تحديث عداد طلبات المطعم.
-    
+
     Attributes:
         last_number: آخر رقم طلب
     """
+
     last_number: Optional[int] = Field(
         None,
         ge=0,
@@ -112,14 +122,16 @@ class RestaurantOrderCounterUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class RestaurantOrderCounterResponse(RestaurantOrderCounterBase):
     """
     مخطط استجابة عداد طلبات المطعم - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     created_at: datetime = Field(
@@ -136,18 +148,20 @@ class RestaurantOrderCounterResponse(RestaurantOrderCounterBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class RestaurantOrderCounterListResponse(BaseModel):
     """
     مخطط استجابة قائمة عدادات طلبات المطعم.
-    
+
     يحتوي على قائمة عدادات طلبات المطعم مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة عدادات طلبات المطعم
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[RestaurantOrderCounterResponse] = Field(
@@ -178,16 +192,18 @@ class RestaurantOrderCounterListResponse(BaseModel):
 # 🔢 NEXT ORDER NUMBER RESPONSE
 # ==============================================
 
+
 class NextOrderNumberResponse(BaseModel):
     """
     مخطط استجابة رقم الطلب التالي.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         order_number: رقم الطلب الجديد
         sequence: رقم التسلسل
         previous_number: الرقم السابق
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     restaurant_id: int = Field(
@@ -218,10 +234,11 @@ class NextOrderNumberResponse(BaseModel):
 # 📊 ORDER COUNTER SUMMARY
 # ==============================================
 
+
 class OrderCounterSummary(BaseModel):
     """
     مخطط ملخص عداد طلبات المطعم.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         total_orders: إجمالي عدد الطلبات
@@ -230,6 +247,7 @@ class OrderCounterSummary(BaseModel):
         orders_today: عدد الطلبات اليوم
         orders_this_month: عدد الطلبات هذا الشهر
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     restaurant_id: int = Field(
@@ -271,10 +289,11 @@ class OrderCounterSummary(BaseModel):
 # 📈 ORDER NUMBER FORMAT
 # ==============================================
 
+
 class OrderNumberFormat(BaseModel):
     """
     مخطط تنسيق رقم الطلب.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         prefix: بادئة رقم الطلب
@@ -282,6 +301,7 @@ class OrderNumberFormat(BaseModel):
         format: تنسيق رقم الطلب
         example: مثال على رقم الطلب
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     restaurant_id: int = Field(
@@ -317,23 +337,18 @@ class OrderNumberFormat(BaseModel):
 # ==============================================
 
 __all__ = [
-
     # Restaurant Order Counter
     "RestaurantOrderCounterBase",
     "RestaurantOrderCounterCreate",
     "RestaurantOrderCounterUpdate",
     "RestaurantOrderCounterResponse",
     "RestaurantOrderCounterListResponse",
-
     # Next Order Number Response
     "NextOrderNumberResponse",
-
     # Order Counter Summary
     "OrderCounterSummary",
-
     # Order Number Format
     "OrderNumberFormat",
-
     # Types
     "OrderCounterData",
     "OrderCounterUpdateData",

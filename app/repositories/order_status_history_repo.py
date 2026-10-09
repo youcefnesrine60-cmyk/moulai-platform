@@ -1,4 +1,22 @@
-from sqlalchemy.orm import raiseload, selectinload
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / ORDER STATUS HISTORY REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order status history repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+from sqlalchemy.orm import raiseload
+
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -50,17 +68,21 @@ class OrderStatusHistoryRepository(
 ):
     """
     مستودع تاريخ حالات الطلبات - يوفر عمليات خاصة بتاريخ حالات الطلبات.
-    
+
     مسؤول عن:
         - تسجيل تغييرات حالة الطلب
         - استعراض تاريخ حالات الطلب
         - الحصول على آخر تغيير في الحالة
         - إحصائيات تغييرات الحالة
-    
+
     Attributes:
         model: نموذج OrderStatusHistory
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -68,7 +90,7 @@ class OrderStatusHistoryRepository(
     ) -> None:
         """
         تهيئة مستودع تاريخ حالات الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -86,8 +108,15 @@ class OrderStatusHistoryRepository(
 
     async def delete_by_order(self, *, order_id):
         from sqlalchemy import delete
-        result = await self.session.execute(delete(self.model).where(self.model.order_id == order_id))
+
+        result = await self.session.execute(
+            delete(self.model).where(self.model.order_id == order_id)
+        )
         return result.rowcount
+
+    # ==============================================
+    # GET BY ORDER ID
+    # ==============================================
 
     async def get_by_order_id(
         self,
@@ -98,12 +127,12 @@ class OrderStatusHistoryRepository(
     ) -> OrderStatusHistoryList:
         """
         الحصول على تاريخ حالات طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة تاريخ حالات الطلب
         """
@@ -141,10 +170,10 @@ class OrderStatusHistoryRepository(
     ) -> Optional[OrderStatusHistory]:
         """
         الحصول على آخر تغيير في حالة الطلب.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             كائن OrderStatusHistory أو None
         """
@@ -179,10 +208,10 @@ class OrderStatusHistoryRepository(
     ) -> OrderStatusTimeline:
         """
         الحصول على الجدول الزمني لحالات الطلب.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             قائمة الحالات مع التواريخ
         """
@@ -192,10 +221,12 @@ class OrderStatusHistoryRepository(
             result = []
 
             for entry in history:
-                result.append({
-                    "new_status": entry.new_status,
-                    "created_at": entry.created_at,
-                })
+                result.append(
+                    {
+                        "new_status": entry.new_status,
+                        "created_at": entry.created_at,
+                    }
+                )
 
             return result
 
@@ -220,10 +251,10 @@ class OrderStatusHistoryRepository(
     ) -> int:
         """
         حساب عدد تغييرات حالة طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             عدد التغييرات
         """
@@ -257,10 +288,10 @@ class OrderStatusHistoryRepository(
     ) -> List[int]:
         """
         الحصول على معرفات الطلبات التي وصلت إلى حالة معينة.
-        
+
         Args:
             status: حالة الطلب
-            
+
         Returns:
             قائمة معرفات الطلبات
         """
@@ -294,6 +325,7 @@ class OrderStatusHistoryRepository(
 # CREATE STATUS HISTORY (COMPATIBILITY)
 # ==============================================
 
+
 async def create_status_history(
     *,
     order_id: int,
@@ -305,7 +337,7 @@ async def create_status_history(
 ) -> None:
     """
     إنشاء سجل تاريخ حالة جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         old_status: الحالة السابقة
@@ -339,6 +371,7 @@ async def create_status_history(
 # GET ORDER STATUS HISTORY (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_status_history(
     *,
     order_id: int,
@@ -348,13 +381,13 @@ async def get_order_status_history(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على تاريخ حالات طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة تاريخ حالات الطلب
     """
@@ -369,15 +402,17 @@ async def get_order_status_history(
     result = []
 
     for entry in history:
-        result.append({
-            "id": entry.id,
-            "order_id": entry.order_id,
-            "old_status": entry.old_status,
-            "new_status": entry.new_status,
-            "changed_by_employee_id": entry.changed_by_employee_id,
-            "note": entry.note,
-            "created_at": entry.created_at,
-        })
+        result.append(
+            {
+                "id": entry.id,
+                "order_id": entry.order_id,
+                "old_status": entry.old_status,
+                "new_status": entry.new_status,
+                "changed_by_employee_id": entry.changed_by_employee_id,
+                "note": entry.note,
+                "created_at": entry.created_at,
+            }
+        )
 
     return result
 
@@ -386,6 +421,7 @@ async def get_order_status_history(
 # GET LAST STATUS CHANGE (COMPATIBILITY)
 # ==============================================
 
+
 async def get_last_status_change(
     *,
     order_id: int,
@@ -393,11 +429,11 @@ async def get_last_status_change(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على آخر تغيير في حالة الطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         آخر تغيير في حالة الطلب أو None
     """
@@ -423,6 +459,7 @@ async def get_last_status_change(
 # GET STATUS TIMELINE (COMPATIBILITY)
 # ==============================================
 
+
 async def get_status_timeline(
     *,
     order_id: int,
@@ -430,11 +467,11 @@ async def get_status_timeline(
 ) -> OrderStatusTimeline:
     """
     الحصول على الجدول الزمني لحالات الطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         الجدول الزمني للحالات
     """
@@ -447,6 +484,7 @@ async def get_status_timeline(
 # COUNT STATUS CHANGES (COMPATIBILITY)
 # ==============================================
 
+
 async def count_status_changes(
     *,
     order_id: int,
@@ -454,11 +492,11 @@ async def count_status_changes(
 ) -> int:
     """
     حساب عدد تغييرات حالة طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         عدد التغييرات
     """
@@ -471,6 +509,7 @@ async def count_status_changes(
 # GET ORDERS REACHED STATUS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_orders_reached_status(
     *,
     status: str,
@@ -478,11 +517,11 @@ async def get_orders_reached_status(
 ) -> List[int]:
     """
     الحصول على معرفات الطلبات التي وصلت إلى حالة معينة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         status: حالة الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قائمة معرفات الطلبات
     """
@@ -499,6 +538,7 @@ async def get_orders_reached_status(
 # CREATE STATUS HISTORY TX
 # ==============================================
 
+
 async def create_status_history_tx(
     conn: AsyncSession,
     *,
@@ -510,7 +550,7 @@ async def create_status_history_tx(
 ) -> None:
     """
     إنشاء سجل تاريخ حالة جديد (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         order_id: معرف الطلب

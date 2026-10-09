@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🤖 AGENT REPOSITORY
 # عمليات قاعدة البيانات للوكيل الذكي باستخدام SQLAlchemy
 # ==============================================
+
+"""MoulAI operational module for agent repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -29,7 +34,6 @@ from app.core.logger import logger
 from app.models.agent import Agent
 from app.repositories.base import BaseRepository
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -43,19 +47,24 @@ AgentList = List[Agent]
 # 🤖 AGENT REPOSITORY
 # ==============================================
 
+
 class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     """
     مستودع الوكيل - يوفر عمليات خاصة بجدول الوكيل.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للوكيل
         - البحث عن الوكلاء حسب المطعم
         - إدارة حالة الوكيل (نشط/غير نشط)
-    
+
     Attributes:
         model: نموذج Agent
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,7 +72,7 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> None:
         """
         تهيئة مستودع الوكيل.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -87,13 +96,13 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> AgentList:
         """
         الحصول على وكلاء مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             only_active: جلب الوكلاء النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AgentList: قائمة الوكلاء
         """
@@ -105,9 +114,13 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
             if only_active:
                 query = query.where(self.model.is_active == True)
 
-            query = query.order_by(
-                self.model.id.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.id.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -136,21 +149,25 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> Optional[Agent]:
         """
         الحصول على وكيل بواسطة اسمه.
-        
+
         Args:
             restaurant_id: معرف المطعم
             name: اسم الوكيل
-            
+
         Returns:
             Optional[Agent]: كائن Agent أو None
         """
         try:
-            query = select(self.model).where(
-                and_(
-                    self.model.restaurant_id == restaurant_id,
-                    self.model.name == name,
-                ),
-            ).limit(1)
+            query = (
+                select(self.model)
+                .where(
+                    and_(
+                        self.model.restaurant_id == restaurant_id,
+                        self.model.name == name,
+                    ),
+                )
+                .limit(1)
+            )
 
             result = await self.session.execute(query)
 
@@ -178,10 +195,10 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> Optional[Agent]:
         """
         الحصول على وكيل مع قنواته.
-        
+
         Args:
             agent_id: معرف الوكيل
-            
+
         Returns:
             Optional[Agent]: كائن Agent مع القنوات أو None
         """
@@ -218,13 +235,13 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> AgentList:
         """
         الحصول على وكلاء حسب الحالة.
-        
+
         Args:
             restaurant_id: معرف المطعم (اختياري)
             is_active: حالة الوكيل
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AgentList: قائمة الوكلاء
         """
@@ -238,11 +255,17 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
                     self.model.restaurant_id == restaurant_id,
                 )
 
-            query = select(self.model).where(
-                *conditions,
-            ).order_by(
-                self.model.id.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                select(self.model)
+                .where(
+                    *conditions,
+                )
+                .order_by(
+                    self.model.id.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -274,14 +297,14 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> AgentList:
         """
         البحث عن الوكلاء.
-        
+
         Args:
             query: نص البحث (الاسم أو الوصف)
             restaurant_id: معرف المطعم (اختياري)
             only_active: جلب الوكلاء النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AgentList: قائمة الوكلاء
         """
@@ -346,11 +369,11 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> int:
         """
         حساب عدد الوكلاء لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             only_active: حساب الوكلاء النشطين فقط
-            
+
         Returns:
             int: عدد الوكلاء
         """
@@ -373,11 +396,11 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> int:
         """
         حساب عدد الوكلاء حسب الحالة.
-        
+
         Args:
             restaurant_id: معرف المطعم (اختياري)
             is_active: حالة الوكيل
-            
+
         Returns:
             int: عدد الوكلاء
         """
@@ -391,8 +414,12 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
                     self.model.restaurant_id == restaurant_id,
                 )
 
-            stmt = select(func.count()).select_from(self.model).where(
-                *conditions,
+            stmt = (
+                select(func.count())
+                .select_from(self.model)
+                .where(
+                    *conditions,
+                )
             )
 
             result = await self.session.execute(stmt)
@@ -425,10 +452,10 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> Optional[Agent]:
         """
         تبديل حالة الوكيل (نشط/غير نشط).
-        
+
         Args:
             agent_id: معرف الوكيل
-            
+
         Returns:
             Optional[Agent]: كائن Agent المحدث أو None
         """
@@ -481,11 +508,11 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> int:
         """
         تبديل حالة مجموعة من الوكلاء.
-        
+
         Args:
             agent_ids: قائمة معرفات الوكلاء
             is_active: الحالة الجديدة
-            
+
         Returns:
             int: عدد الوكلاء المحدثين
         """
@@ -534,10 +561,10 @@ class AgentRepository(BaseRepository[Agent, AgentData, AgentUpdateData]):
     ) -> int:
         """
         حذف جميع وكلاء مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             int: عدد الوكلاء المحذوفين
         """

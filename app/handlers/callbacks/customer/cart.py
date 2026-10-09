@@ -1,7 +1,19 @@
 # ==============================================
-# 🛒 CART CALLBACKS
-# معالجة أزرار السلة
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / CUSTOMER / CART
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for cart.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -10,24 +22,25 @@ from app.core.middleware.rate_limit import rate_limit
 
 from app.helpers.ui_manager import UIManager
 
-from app.repositories.state_repo import (
-    get_state, 
-    set_state
-)
+from app.repositories.state_repo import get_state, set_state
 
-from app.views.cart_ui import (
-    cart_ui, 
-    cart_item_ui, 
-    cart_empty_ui
-)
+from app.views.cart_ui import cart_ui, cart_item_ui, cart_empty_ui
 from app.views.payment_ui import payment_ui
 
-from app.services.business.order_payments_service import get_allowed_payment_methods_for_order
+from app.services.business.order_payments_service import (
+    get_allowed_payment_methods_for_order,
+)
 
 # ==============================================
 # 🛒 SHOW CART
 # عرض السلة
 # ==============================================
+
+
+# ==============================================
+# SHOW CART CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,
@@ -85,10 +98,7 @@ async def show_cart_callback(
         return
 
     # حساب المجموع الكلي
-    total = sum(
-        float(item.get("price", 0))
-        for item in cart
-    )
+    total = sum(float(item.get("price", 0)) for item in cart)
 
     await UIManager.update(
         chat_id=chat_id,
@@ -105,6 +115,12 @@ async def show_cart_callback(
 # 🛒 CART ITEM
 # عرض تفاصيل منتج في السلة
 # ==============================================
+
+
+# ==============================================
+# CART ITEM CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,
@@ -189,6 +205,12 @@ async def cart_item_callback(
 # زيادة كمية منتج في السلة
 # ==============================================
 
+
+# ==============================================
+# CART INCREMENT CALLBACK
+# ==============================================
+
+
 @rate_limit(
     limit=10,
     window=30,
@@ -250,10 +272,7 @@ async def cart_increment_callback(
     )
 
     # حساب المجموع الكلي
-    total = sum(
-        float(item.get("price", 0))
-        for item in cart
-    )
+    total = sum(float(item.get("price", 0)) for item in cart)
 
     await UIManager.update(
         chat_id=chat_id,
@@ -270,6 +289,12 @@ async def cart_increment_callback(
 # ➖ CART DECREMENT
 # إنقاص كمية منتج في السلة
 # ==============================================
+
+
+# ==============================================
+# CART DECREMENT CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,
@@ -348,10 +373,7 @@ async def cart_decrement_callback(
         return
 
     # حساب المجموع الكلي
-    total = sum(
-        float(item.get("price", 0))
-        for item in cart
-    )
+    total = sum(float(item.get("price", 0)) for item in cart)
 
     await UIManager.update(
         chat_id=chat_id,
@@ -368,6 +390,12 @@ async def cart_decrement_callback(
 # ❌ CART REMOVE
 # حذف منتج من السلة
 # ==============================================
+
+
+# ==============================================
+# CART REMOVE CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,
@@ -437,10 +465,7 @@ async def cart_remove_callback(
         return
 
     # حساب المجموع الكلي
-    total = sum(
-        float(item.get("price", 0))
-        for item in cart
-    )
+    total = sum(float(item.get("price", 0)) for item in cart)
 
     await UIManager.update(
         chat_id=chat_id,
@@ -457,6 +482,12 @@ async def cart_remove_callback(
 # 🗑️ CART CLEAR
 # إفراغ السلة
 # ==============================================
+
+
+# ==============================================
+# CART CLEAR CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=5,
@@ -514,6 +545,12 @@ async def cart_clear_callback(
 # الانتقال إلى الدفع
 # ==============================================
 
+
+# ==============================================
+# CHECKOUT CALLBACK
+# ==============================================
+
+
 @rate_limit(
     limit=5,
     window=60,
@@ -563,10 +600,7 @@ async def checkout_callback(
         return
 
     # حساب المجموع الكلي
-    total = sum(
-        float(item.get("price", 0))
-        for item in cart
-    )
+    total = sum(float(item.get("price", 0)) for item in cart)
 
     # الحصول على معرف المطعم من الحالة
     restaurant_id = state.get("restaurant_id")
@@ -607,9 +641,7 @@ async def checkout_callback(
         chat_id=chat_id,
         message_id=message_id,
         text=(
-            f"💳 الدفع\n\n"
-            f"المجموع الكلي: {total:.2f} دج\n\n"
-            f"اختر طريقة الدفع:"
+            f"💳 الدفع\n\n" f"المجموع الكلي: {total:.2f} دج\n\n" f"اختر طريقة الدفع:"
         ),
         reply_markup=await payment_ui(
             allowed_methods=allowed_methods,

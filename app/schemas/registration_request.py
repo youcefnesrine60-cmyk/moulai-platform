@@ -10,6 +10,11 @@
 # نماذج Pydantic لطلبات التسجيل
 # ==============================================
 
+"""MoulAI operational module for registration request.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,10 +43,11 @@ RegistrationRequestListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class RegistrationRequestBase(BaseModel):
     """
     النموذج الأساسي لطلب التسجيل.
-    
+
     Attributes:
         chat_id: معرف المستخدم في تيليجرام
         full_name: الاسم الكامل
@@ -55,6 +60,7 @@ class RegistrationRequestBase(BaseModel):
         lat: خط العرض
         lng: خط الطول
     """
+
     chat_id: int = Field(
         ...,
         description="معرف المستخدم في تيليجرام",
@@ -126,13 +132,13 @@ class RegistrationRequestBase(BaseModel):
     def validate_email(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة البريد الإلكتروني.
-        
+
         Args:
             value: البريد الإلكتروني
-            
+
         Returns:
             Optional[str]: البريد الإلكتروني المدقق
-            
+
         Raises:
             ValueError: إذا كان البريد الإلكتروني غير صالح
         """
@@ -143,18 +149,22 @@ class RegistrationRequestBase(BaseModel):
                 raise ValueError("البريد الإلكتروني غير صالح")
         return value
 
+    # ==============================================
+    # VALIDATE PHONE
+    # ==============================================
+
     @field_validator("owner_phone", "restaurant_phone")
     @classmethod
     def validate_phone(cls, value: str) -> str:
         """
         التحقق من صحة رقم الهاتف.
-        
+
         Args:
             value: رقم الهاتف
-            
+
         Returns:
             str: رقم الهاتف المدقق
-            
+
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
         """
@@ -174,12 +184,14 @@ class RegistrationRequestBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class RegistrationRequestCreate(RegistrationRequestBase):
     """
     نموذج إنشاء طلب تسجيل جديد.
-    
+
     وراثة من RegistrationRequestBase.
     """
+
     pass
 
 
@@ -187,10 +199,11 @@ class RegistrationRequestCreate(RegistrationRequestBase):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class RegistrationRequestUpdate(BaseModel):
     """
     نموذج تحديث طلب التسجيل - جميع الحقول اختيارية.
-    
+
     Attributes:
         chat_id: معرف المستخدم في تيليجرام
         full_name: الاسم الكامل
@@ -205,6 +218,7 @@ class RegistrationRequestUpdate(BaseModel):
         status: حالة الطلب (pending, approved, rejected)
         owner_id: معرف المالك المرتبط
     """
+
     chat_id: Optional[int] = Field(
         None,
         description="معرف المستخدم في تيليجرام",
@@ -276,13 +290,13 @@ class RegistrationRequestUpdate(BaseModel):
     def validate_email(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة البريد الإلكتروني.
-        
+
         Args:
             value: البريد الإلكتروني
-            
+
         Returns:
             Optional[str]: البريد الإلكتروني المدقق
-            
+
         Raises:
             ValueError: إذا كان البريد الإلكتروني غير صالح
         """
@@ -293,18 +307,22 @@ class RegistrationRequestUpdate(BaseModel):
                 raise ValueError("البريد الإلكتروني غير صالح")
         return value
 
+    # ==============================================
+    # VALIDATE PHONE
+    # ==============================================
+
     @field_validator("owner_phone", "restaurant_phone")
     @classmethod
     def validate_phone(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة رقم الهاتف.
-        
+
         Args:
             value: رقم الهاتف
-            
+
         Returns:
             Optional[str]: رقم الهاتف المدقق
-            
+
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
         """
@@ -325,14 +343,16 @@ class RegistrationRequestUpdate(BaseModel):
 # 📤 STATUS UPDATE SCHEMA
 # ==============================================
 
+
 class RegistrationRequestStatusUpdate(BaseModel):
     """
     نموذج تحديث حالة طلب التسجيل.
-    
+
     Attributes:
         status: الحالة الجديدة (approved, rejected)
         note: ملاحظة إضافية
     """
+
     status: str = Field(
         ...,
         description="الحالة الجديدة: approved, rejected",
@@ -354,13 +374,13 @@ class RegistrationRequestStatusUpdate(BaseModel):
     def validate_status(cls, value: str) -> str:
         """
         التحقق من صحة الحالة.
-        
+
         Args:
             value: الحالة
-            
+
         Returns:
             str: الحالة المدققة
-            
+
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
@@ -376,10 +396,11 @@ class RegistrationRequestStatusUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class RegistrationRequestResponse(RegistrationRequestBase):
     """
     نموذج استجابة طلب التسجيل - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف طلب التسجيل
         status: حالة الطلب
@@ -387,6 +408,7 @@ class RegistrationRequestResponse(RegistrationRequestBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -419,18 +441,20 @@ class RegistrationRequestResponse(RegistrationRequestBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class RegistrationRequestListResponse(BaseModel):
     """
     مخطط استجابة قائمة طلبات التسجيل.
-    
+
     يحتوي على قائمة طلبات التسجيل مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة طلبات التسجيل
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[RegistrationRequestResponse] = Field(
@@ -461,16 +485,18 @@ class RegistrationRequestListResponse(BaseModel):
 # 📊 SUMMARY
 # ==============================================
 
+
 class RegistrationRequestSummary(BaseModel):
     """
     مخطط ملخص طلبات التسجيل.
-    
+
     Attributes:
         total: إجمالي عدد الطلبات
         pending: عدد الطلبات المعلقة
         approved: عدد الطلبات المعتمدة
         rejected: عدد الطلبات المرفوضة
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total: int = Field(

@@ -5,6 +5,16 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# TEST MODULE - TESTS / API / V1 / RESTAURANT / TEST BRANCHES
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test branches.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,15 +23,19 @@ from app.models.owner import Owner
 from app.models.restaurant import Restaurant
 from app.models.restaurant_group import RestaurantGroup
 
-
 # ==============================================
 # 📋 TESTS - RESTAURANT BRANCHES
 # ==============================================
+
 
 class TestRestaurantBranchesAPI:
     """
     اختبارات نقاط نهاية فروع المطاعم.
     """
+
+    # ==============================================
+    # SETUP
+    # ==============================================
 
     @pytest.fixture(autouse=True)
     async def setup(
@@ -33,10 +47,10 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         تهيئة بيانات الاختبار.
-        
+
         ✅ التصحيح: استخدام flush() بدلاً من commit()
         ✅ استخدام rollback() لإلغاء التغييرات بعد كل اختبار
-        
+
         Args:
             db_session: جلسة قاعدة البيانات
             sample_owner_data: بيانات مالك نموذجية
@@ -61,9 +75,7 @@ class TestRestaurantBranchesAPI:
         await db_session.flush()  # ✅ flush بدلاً من commit
 
         # إنشاء مجموعة
-        self.group = RestaurantGroup(
-            **{**sample_group_data, "owner_id": self.owner.id}
-        )
+        self.group = RestaurantGroup(**{**sample_group_data, "owner_id": self.owner.id})
         db_session.add(self.group)
         await db_session.flush()  # ✅ flush بدلاً من commit
 
@@ -84,7 +96,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار إنشاء فرع مطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -110,7 +122,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار الحصول على فرع مطعم بالمعرف.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -122,7 +134,9 @@ class TestRestaurantBranchesAPI:
             "/api/v1/restaurant-branches/",
             json=create_data,
         )
-        assert create_response.status_code == 201, f"Failed to create branch: {create_response.text}"
+        assert (
+            create_response.status_code == 201
+        ), f"Failed to create branch: {create_response.text}"
 
         branch_id = create_response.json()["id"]
 
@@ -145,7 +159,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار الحصول على فرع مطعم مع تفاصيله.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -182,7 +196,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار جلب فروع مجموعة معينة.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -217,7 +231,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار جلب فروع مطعم معين.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -252,7 +266,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار الحصول على فرع غير موجود.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -270,7 +284,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار إنشاء فرع مكرر.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -295,7 +309,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار حذف فرع مطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -327,7 +341,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار حذف فرع غير موجود.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -345,7 +359,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار إنشاء فرع بمجموعة غير موجودة.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -367,7 +381,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار إنشاء فرع بمطعم غير موجود.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -389,7 +403,7 @@ class TestRestaurantBranchesAPI:
     ) -> None:
         """
         اختبار جلب فروع مجموعة معينة مع التصفح.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """

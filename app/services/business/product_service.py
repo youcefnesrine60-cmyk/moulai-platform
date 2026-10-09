@@ -6,6 +6,16 @@
 # ==============================================
 
 # ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / PRODUCT SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for product service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+# ==============================================
 # 🍔 PRODUCT SERVICE
 # Business Logic Layer - منطق الأعمال للمنتجات
 #
@@ -93,6 +103,10 @@ class ProductService:
         repo: مستودع المنتجات
         metrics_repo: مستودع مقاييس المطعم
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -549,8 +563,7 @@ class ProductService:
         if current_count >= MAX_PRODUCTS_PER_RESTAURANT:
             raise ValidationError(
                 message=(
-                    f"تجاوزت الحد الأقصى للمنتجات "
-                    f"({MAX_PRODUCTS_PER_RESTAURANT})"
+                    f"تجاوزت الحد الأقصى للمنتجات " f"({MAX_PRODUCTS_PER_RESTAURANT})"
                 ),
                 details={
                     "restaurant_id": restaurant_id,
@@ -664,8 +677,7 @@ class ProductService:
             if duplicate and duplicate.id != product_id:
                 raise ConflictError(
                     message=(
-                        f"المنتج '{updates['name']}' "
-                        f"موجود بالفعل لهذا المطعم"
+                        f"المنتج '{updates['name']}' " f"موجود بالفعل لهذا المطعم"
                     ),
                 )
 
@@ -959,6 +971,7 @@ class ProductService:
 # CREATE RESTAURANT PRODUCT (COMPATIBILITY)
 # ==============================================
 
+
 async def create_restaurant_product(
     *,
     restaurant_id: int,
@@ -1013,6 +1026,7 @@ async def create_restaurant_product(
 # GET PRODUCT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_product(
     *,
     product_id: int,
@@ -1040,6 +1054,7 @@ async def get_product(
 # ==============================================
 # GET PRODUCTS (COMPATIBILITY)
 # ==============================================
+
 
 async def get_products(
     *,
@@ -1071,6 +1086,7 @@ async def get_products(
 # ==============================================
 # EDIT PRODUCT (COMPATIBILITY)
 # ==============================================
+
 
 async def edit_product(
     *,
@@ -1123,6 +1139,7 @@ async def edit_product(
 # ENABLE PRODUCT (COMPATIBILITY)
 # ==============================================
 
+
 async def enable_product(
     *,
     product_id: int,
@@ -1151,6 +1168,7 @@ async def enable_product(
 # ==============================================
 # DISABLE PRODUCT (COMPATIBILITY)
 # ==============================================
+
 
 async def disable_product(
     *,
@@ -1181,6 +1199,7 @@ async def disable_product(
 # REMOVE PRODUCT (COMPATIBILITY)
 # ==============================================
 
+
 async def remove_product(
     *,
     product_id: int,
@@ -1210,6 +1229,7 @@ async def remove_product(
 # ==============================================
 # GET PRODUCTS COUNT (COMPATIBILITY)
 # ==============================================
+
 
 async def get_products_count(
     *,

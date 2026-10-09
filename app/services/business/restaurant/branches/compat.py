@@ -10,6 +10,11 @@
 # دوال متوافقة مع الاستيرادات القديمة
 # ==============================================
 
+"""MoulAI operational module for compat.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,7 +23,6 @@ from app.core.logger import logger
 from app.schemas.restaurant.restaurant_group import RestaurantBranchCreate
 from app.services.business.restaurant.branches.service import RestaurantBranchService
 
-
 # ==============================================
 # 📦 COMPATIBILITY FUNCTIONS
 # ==============================================
@@ -26,6 +30,7 @@ from app.services.business.restaurant.branches.service import RestaurantBranchSe
 # ==============================================
 # CREATE BRANCH
 # ==============================================
+
 
 async def create_branch(
     *,
@@ -52,6 +57,7 @@ async def create_branch(
 # GET BRANCH
 # ==============================================
 
+
 async def get_branch(
     *,
     branch_id: int,
@@ -72,6 +78,7 @@ async def get_branch(
 # ==============================================
 # GET BRANCHES BY GROUP
 # ==============================================
+
 
 async def get_branches_by_group(
     *,
@@ -98,6 +105,7 @@ async def get_branches_by_group(
 # GET BRANCHES BY RESTAURANT
 # ==============================================
 
+
 async def get_branches_by_restaurant(
     *,
     restaurant_id: int,
@@ -122,6 +130,7 @@ async def get_branches_by_restaurant(
 # ==============================================
 # DELETE BRANCH
 # ==============================================
+
 
 async def delete_branch(
     *,

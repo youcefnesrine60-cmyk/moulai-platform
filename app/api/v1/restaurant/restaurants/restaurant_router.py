@@ -10,6 +10,11 @@
 # نقاط نهاية المطاعم الأساسية (CRUD)
 # ==============================================
 
+"""MoulAI operational module for restaurant router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -32,9 +37,10 @@ from app.schemas.restaurant.restaurant import (
     RestaurantResponse,
     RestaurantUpdate,
 )
-from app.services.business.restaurant.restaurants.handlers import RestaurantEventHandlers
+from app.services.business.restaurant.restaurants.handlers import (
+    RestaurantEventHandlers,
+)
 from app.services.business.restaurant.restaurants.service import RestaurantService
-
 
 # ==============================================
 # 🏗️ ROUTER
@@ -50,19 +56,25 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_restaurant_service(
     session: AsyncSession = Depends(get_db),
 ) -> RestaurantService:
     """
     الحصول على خدمة المطاعم (QUERIES).
-    
+
     Args:
         session: جلسة قاعدة البيانات
-        
+
     Returns:
         RestaurantService: خدمة المطاعم
     """
     return RestaurantService(session)
+
+
+# ==============================================
+# GET RESTAURANT HANDLERS
+# ==============================================
 
 
 async def get_restaurant_handlers(
@@ -70,10 +82,10 @@ async def get_restaurant_handlers(
 ) -> RestaurantEventHandlers:
     """
     الحصول على معالجات أحداث المطاعم (MUTATIONS).
-    
+
     Args:
         session: جلسة قاعدة البيانات
-        
+
     Returns:
         RestaurantEventHandlers: معالجات الأحداث
     """
@@ -87,6 +99,7 @@ async def get_restaurant_handlers(
 # ==============================================
 # CREATE RESTAURANT
 # ==============================================
+
 
 @router.post(
     "/",
@@ -102,14 +115,14 @@ async def create_restaurant(
 ) -> RestaurantResponse:
     """
     إنشاء مطعم جديد.
-    
+
     Args:
         data: بيانات المطعم
         handlers: معالجات الأحداث
-        
+
     Returns:
         RestaurantResponse: المطعم المنشأ
-        
+
     Raises:
         HTTPException: في حالة التعارض أو الخطأ
     """
@@ -170,6 +183,7 @@ async def create_restaurant(
 # GET RESTAURANT BY ID
 # ==============================================
 
+
 @router.get(
     "/{restaurant_id}",
     response_model=RestaurantResponse,
@@ -183,14 +197,14 @@ async def get_restaurant_by_id(
 ) -> RestaurantResponse:
     """
     الحصول على مطعم بالمعرف.
-    
+
     Args:
         restaurant_id: معرف المطعم
         service: خدمة المطاعم
-        
+
     Returns:
         RestaurantResponse: المطعم المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المطعم
     """
@@ -228,6 +242,7 @@ async def get_restaurant_by_id(
 # UPDATE RESTAURANT
 # ==============================================
 
+
 @router.patch(
     "/{restaurant_id}",
     response_model=RestaurantResponse,
@@ -242,15 +257,15 @@ async def update_restaurant(
 ) -> RestaurantResponse:
     """
     تحديث مطعم موجود.
-    
+
     Args:
         restaurant_id: معرف المطعم
         data: بيانات التحديث
         handlers: معالجات الأحداث
-        
+
     Returns:
         RestaurantResponse: المطعم المحدث
-        
+
     Raises:
         HTTPException: في حالة عدم العثور أو التعارض
     """
@@ -310,6 +325,7 @@ async def update_restaurant(
 # DELETE RESTAURANT
 # ==============================================
 
+
 @router.delete(
     "/{restaurant_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -324,12 +340,12 @@ async def delete_restaurant(
 ) -> None:
     """
     حذف مطعم.
-    
+
     Args:
         restaurant_id: معرف المطعم
         permanent: حذف نهائي أو منطقي
         handlers: معالجات الأحداث
-        
+
     Raises:
         HTTPException: في حالة عدم العثور أو الخطأ
     """

@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 📡 CHANNEL REPOSITORY
 # عمليات قاعدة البيانات للقنوات
 # ==============================================
+
+"""MoulAI operational module for channel repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -29,7 +34,6 @@ from app.core.logger import logger
 from app.models.agent import Channel
 from app.repositories.base import BaseRepository
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -43,19 +47,24 @@ ChannelList = List[Channel]
 # 📡 CHANNEL REPOSITORY
 # ==============================================
 
+
 class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData]):
     """
     مستودع القنوات - يوفر عمليات خاصة بجدول القنوات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للقنوات
         - البحث عن القنوات حسب الوكيل والنوع
         - إدارة حالة القناة (نشط/غير نشط)
-    
+
     Attributes:
         model: نموذج Channel
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,7 +72,7 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> None:
         """
         تهيئة مستودع القنوات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -87,13 +96,13 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> ChannelList:
         """
         الحصول على قنوات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
             only_active: جلب القنوات النشطة فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ChannelList: قائمة القنوات
         """
@@ -105,10 +114,14 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
             if only_active:
                 query = query.where(self.model.is_active == True)
 
-            query = query.order_by(
-                self.model.type.asc(),
-                self.model.id.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.type.asc(),
+                    self.model.id.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -137,21 +150,25 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> Optional[Channel]:
         """
         الحصول على قناة حسب النوع.
-        
+
         Args:
             agent_id: معرف الوكيل
             channel_type: نوع القناة
-            
+
         Returns:
             Optional[Channel]: كائن Channel أو None
         """
         try:
-            query = select(self.model).where(
-                and_(
-                    self.model.agent_id == agent_id,
-                    self.model.type == channel_type,
-                ),
-            ).limit(1)
+            query = (
+                select(self.model)
+                .where(
+                    and_(
+                        self.model.agent_id == agent_id,
+                        self.model.type == channel_type,
+                    ),
+                )
+                .limit(1)
+            )
 
             result = await self.session.execute(query)
 
@@ -181,12 +198,12 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> Optional[Channel]:
         """
         الحصول على قناة حسب الوكيل والنوع.
-        
+
         Args:
             agent_id: معرف الوكيل
             channel_type: نوع القناة
             only_active: جلب القناة النشطة فقط
-            
+
         Returns:
             Optional[Channel]: كائن Channel أو None
         """
@@ -201,9 +218,13 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
                     self.model.is_active == True,
                 )
 
-            query = select(self.model).where(
-                *conditions,
-            ).limit(1)
+            query = (
+                select(self.model)
+                .where(
+                    *conditions,
+                )
+                .limit(1)
+            )
 
             result = await self.session.execute(query)
 
@@ -233,11 +254,11 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> Optional[Channel]:
         """
         الحصول على قناة حسب مفتاح التهيئة.
-        
+
         Args:
             config_key: مفتاح التهيئة
             agent_id: معرف الوكيل (اختياري)
-            
+
         Returns:
             Optional[Channel]: كائن Channel أو None
         """
@@ -251,9 +272,13 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
                     self.model.agent_id == agent_id,
                 )
 
-            query = select(self.model).where(
-                *conditions,
-            ).limit(1)
+            query = (
+                select(self.model)
+                .where(
+                    *conditions,
+                )
+                .limit(1)
+            )
 
             result = await self.session.execute(query)
 
@@ -285,14 +310,14 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> ChannelList:
         """
         البحث عن القنوات.
-        
+
         Args:
             query: نص البحث (النوع أو الوصف)
             agent_id: معرف الوكيل (اختياري)
             only_active: جلب القنوات النشطة فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ChannelList: قائمة القنوات
         """
@@ -357,11 +382,11 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> int:
         """
         حساب عدد قنوات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
             only_active: حساب القنوات النشطة فقط
-            
+
         Returns:
             int: عدد القنوات
         """
@@ -385,12 +410,12 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> int:
         """
         حساب عدد قنوات وكيل معين حسب النوع.
-        
+
         Args:
             agent_id: معرف الوكيل
             channel_type: نوع القناة
             only_active: حساب القنوات النشطة فقط
-            
+
         Returns:
             int: عدد القنوات
         """
@@ -405,8 +430,12 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
                     self.model.is_active == True,
                 )
 
-            stmt = select(func.count()).select_from(self.model).where(
-                *conditions,
+            stmt = (
+                select(func.count())
+                .select_from(self.model)
+                .where(
+                    *conditions,
+                )
             )
 
             result = await self.session.execute(stmt)
@@ -437,11 +466,11 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> List[Dict[str, Any]]:
         """
         الحصول على ملخص أنواع القنوات لوكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
             only_active: حساب القنوات النشطة فقط
-            
+
         Returns:
             List[Dict[str, Any]]: ملخص أنواع القنوات
         """
@@ -467,10 +496,7 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
 
             result = await self.session.execute(stmt)
 
-            return [
-                {"type": row[0], "count": row[1]}
-                for row in result.all()
-            ]
+            return [{"type": row[0], "count": row[1]} for row in result.all()]
 
         except Exception as e:
             logger.exception(
@@ -498,10 +524,10 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> Optional[Channel]:
         """
         تبديل حالة القناة (نشط/غير نشط).
-        
+
         Args:
             channel_id: معرف القناة
-            
+
         Returns:
             Optional[Channel]: كائن Channel المحدث أو None
         """
@@ -554,11 +580,11 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> int:
         """
         تبديل حالة جميع قنوات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
             is_active: الحالة الجديدة
-            
+
         Returns:
             int: عدد القنوات المحدثة
         """
@@ -608,10 +634,10 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
     ) -> int:
         """
         حذف جميع قنوات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
-            
+
         Returns:
             int: عدد القنوات المحذوفة
         """

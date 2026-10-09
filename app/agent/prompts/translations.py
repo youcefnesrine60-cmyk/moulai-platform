@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🌍 PROMPT TRANSLATIONS
 # ترجمات قوالب الـ Prompts
 # ==============================================
+
+"""MoulAI operational module for translations.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Dict
 
@@ -347,6 +352,7 @@ ERROR_RESPONSES: ResponseMap = {
 # GET PROMPT
 # ==============================================
 
+
 def get_prompt(
     prompts: PromptMap,
     lang: str,
@@ -354,12 +360,12 @@ def get_prompt(
 ) -> str:
     """
     الحصول على النص المطلوب باللغة المحددة مع تنسيق المتغيرات.
-    
+
     Args:
         prompts: قاموس النصوص
         lang: كود اللغة (ar, en, fr)
         **kwargs: المتغيرات للتنسيق
-        
+
     Returns:
         النص المطلوب
     """
@@ -394,17 +400,18 @@ def get_prompt(
 # GET RESPONSE
 # ==============================================
 
+
 def get_response(
     responses: ResponseMap,
     lang: str,
 ) -> str:
     """
     الحصول على الرد المطلوب باللغة المحددة.
-    
+
     Args:
         responses: قاموس الردود
         lang: كود اللغة (ar, en, fr)
-        
+
     Returns:
         الرد المطلوب
     """

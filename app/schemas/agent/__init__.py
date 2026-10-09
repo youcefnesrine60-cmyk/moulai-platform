@@ -9,6 +9,11 @@
 # 🤖 AGENT SCHEMAS - PACKAGE INIT
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.schemas.agent.agent import (
     AgentBase,
     AgentCreate,
@@ -61,7 +66,6 @@ from app.schemas.agent.message import (
 # ==============================================
 
 __all__ = [
-
     # Agent
     "AgentBase",
     "AgentCreate",
@@ -73,7 +77,6 @@ __all__ = [
     "AgentData",
     "AgentUpdateData",
     "AgentListData",
-
     # Channel
     "ChannelBase",
     "ChannelCreate",
@@ -83,7 +86,6 @@ __all__ = [
     "ChannelData",
     "ChannelUpdateData",
     "ChannelListData",
-
     # Conversation
     "ConversationBase",
     "ConversationCreate",
@@ -94,7 +96,6 @@ __all__ = [
     "ConversationData",
     "ConversationUpdateData",
     "ConversationListData",
-
     # Message
     "MessageBase",
     "MessageCreate",

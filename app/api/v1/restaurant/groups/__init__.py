@@ -1,13 +1,18 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🏢 RESTAURANT GROUPS API
 # ==============================================
+
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import APIRouter
 
@@ -15,7 +20,6 @@ from app.api.v1.restaurant.groups.router import router as basic_router
 from app.api.v1.restaurant.groups.router_status import router as status_router
 from app.api.v1.restaurant.groups.router_statistics import router as statistics_router
 from app.api.v1.restaurant.groups.router_branches import router as branches_router
-
 
 # ==============================================
 # 📋 MAIN ROUTER

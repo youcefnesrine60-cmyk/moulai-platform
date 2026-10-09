@@ -1,8 +1,19 @@
 # ==============================================
-# 📂 CATEGORIES API
-# نقاط نهاية API للتصنيفات
-# تدير عمليات إنشاء واستعراض وتحديث وحذف التصنيفات
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / API / V1 / CATEGORIES
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for categories.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     List,
@@ -62,19 +73,25 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_category_service(
     session: AsyncSession = Depends(get_db),
 ) -> CategoryService:
     """
     الحصول على خدمة التصنيفات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         CategoryService: مثيل من CategoryService
     """
     return CategoryService(session)
+
+
+# ==============================================
+# GET PRODUCT SERVICE
+# ==============================================
 
 
 async def get_product_service(
@@ -82,10 +99,10 @@ async def get_product_service(
 ) -> ProductService:
     """
     الحصول على خدمة المنتجات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         ProductService: مثيل من ProductService
     """
@@ -99,6 +116,7 @@ async def get_product_service(
 # ==============================================
 # LIST CATEGORIES
 # ==============================================
+
 
 @router.get(
     "/",
@@ -134,14 +152,14 @@ async def list_categories(
 ) -> CategoryListResponse:
     """
     الحصول على قائمة التصنيفات.
-    
+
     Args:
         restaurant_id: معرف المطعم للتصفية
         search: نص البحث
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة التصنيفات
-        
+
     Returns:
         CategoryListResponse: قائمة التصنيفات مع الإحصائيات
     """
@@ -178,7 +196,7 @@ async def list_categories(
                 order_by="sort_order",
             )
             total = await service.repo.count()
-            
+
             result = CategoryListResponse(
                 items=[CategoryResponse.model_validate(c) for c in categories],
                 total=total,
@@ -203,6 +221,7 @@ async def list_categories(
 # GET CATEGORY BY ID
 # ==============================================
 
+
 @router.get(
     "/{category_id}",
     response_model=CategoryResponse,
@@ -216,14 +235,14 @@ async def get_category(
 ) -> CategoryResponse:
     """
     الحصول على تصنيف بالمعرف.
-    
+
     Args:
         category_id: معرف التصنيف
         service: خدمة التصنيفات
-        
+
     Returns:
         CategoryResponse: التصنيف المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على التصنيف
     """
@@ -266,6 +285,7 @@ async def get_category(
 # CREATE CATEGORY
 # ==============================================
 
+
 @router.post(
     "/",
     response_model=CategoryResponse,
@@ -285,15 +305,15 @@ async def create_category(
 ) -> CategoryResponse:
     """
     إنشاء تصنيف جديد.
-    
+
     Args:
         data: بيانات التصنيف
         restaurant_id: معرف المطعم
         service: خدمة التصنيفات
-        
+
     Returns:
         CategoryResponse: التصنيف المنشأ
-        
+
     Raises:
         HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
@@ -355,6 +375,7 @@ async def create_category(
 # UPDATE CATEGORY
 # ==============================================
 
+
 @router.patch(
     "/{category_id}",
     response_model=CategoryResponse,
@@ -369,15 +390,15 @@ async def update_category(
 ) -> CategoryResponse:
     """
     تحديث تصنيف موجود.
-    
+
     Args:
         category_id: معرف التصنيف
         data: بيانات التحديث
         service: خدمة التصنيفات
-        
+
     Returns:
         CategoryResponse: التصنيف المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على التصنيف أو حدث تعارض
     """
@@ -450,6 +471,7 @@ async def update_category(
 # REORDER CATEGORIES
 # ==============================================
 
+
 @router.post(
     "/reorder",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -471,12 +493,12 @@ async def reorder_categories(
 ) -> None:
     """
     إعادة ترتيب التصنيفات.
-    
+
     Args:
         restaurant_id: معرف المطعم
         category_order: قائمة معرفات التصنيفات بالترتيب الجديد
         service: خدمة التصنيفات
-        
+
     Raises:
         HTTPException: إذا حدث خطأ
     """
@@ -536,6 +558,7 @@ async def reorder_categories(
 # DELETE CATEGORY
 # ==============================================
 
+
 @router.delete(
     "/{category_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -549,11 +572,11 @@ async def delete_category(
 ) -> None:
     """
     حذف تصنيف.
-    
+
     Args:
         category_id: معرف التصنيف
         service: خدمة التصنيفات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على التصنيف أو كان يحتوي على منتجات
     """
@@ -612,6 +635,7 @@ async def delete_category(
 # GET CATEGORY SUMMARY
 # ==============================================
 
+
 @router.get(
     "/stats/summary",
     response_model=CategorySummary,
@@ -630,12 +654,12 @@ async def get_category_summary(
 ) -> CategorySummary:
     """
     الحصول على ملخص التصنيفات.
-    
+
     Args:
         restaurant_id: معرف المطعم
         service: خدمة التصنيفات
         product_service: خدمة المنتجات
-        
+
     Returns:
         CategorySummary: ملخص التصنيفات
     """
@@ -680,6 +704,7 @@ async def get_category_summary(
 # GET RESTAURANT CATEGORIES
 # ==============================================
 
+
 @router.get(
     "/restaurant/{restaurant_id}",
     response_model=CategoryListResponse,
@@ -704,13 +729,13 @@ async def get_restaurant_categories(
 ) -> CategoryListResponse:
     """
     الحصول على تصنيفات مطعم معين.
-    
+
     Args:
         restaurant_id: معرف المطعم
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة التصنيفات
-        
+
     Returns:
         CategoryListResponse: قائمة التصنيفات مع الإحصائيات
     """
@@ -749,6 +774,7 @@ async def get_restaurant_categories(
 # GET CATEGORY PRODUCTS
 # ==============================================
 
+
 @router.get(
     "/{category_id}/products",
     response_model=ProductListResponse,
@@ -778,7 +804,7 @@ async def get_category_products(
 ) -> ProductListResponse:
     """
     الحصول على منتجات تصنيف معين.
-    
+
     Args:
         category_id: معرف التصنيف
         only_available: جلب المنتجات المتاحة فقط
@@ -786,10 +812,10 @@ async def get_category_products(
         limit: الحد الأقصى للسجلات
         service: خدمة التصنيفات
         product_service: خدمة المنتجات
-        
+
     Returns:
         ProductListResponse: قائمة المنتجات مع الإحصائيات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على التصنيف
     """

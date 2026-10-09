@@ -10,6 +10,11 @@
 # نقاط نهاية مجموعات المطاعم الأساسية (CRUD)
 # ==============================================
 
+"""MoulAI operational module for router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import Optional
 
 from fastapi import (
@@ -40,7 +45,6 @@ from app.services.business.restaurant import (
     RestaurantGroupEventHandlers,
 )
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -55,11 +59,17 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_group_service(
     session: AsyncSession = Depends(get_db),
 ) -> RestaurantGroupService:
     """الحصول على خدمة مجموعات المطاعم (للقراءة)."""
     return RestaurantGroupService(session)
+
+
+# ==============================================
+# GET GROUP HANDLERS
+# ==============================================
 
 
 async def get_group_handlers(
@@ -76,6 +86,7 @@ async def get_group_handlers(
 # ==============================================
 # CREATE GROUP
 # ==============================================
+
 
 @router.post(
     "/",
@@ -146,6 +157,7 @@ async def create_restaurant_group(
 # GET GROUP BY ID
 # ==============================================
 
+
 @router.get(
     "/{group_id}",
     response_model=RestaurantGroupResponse,
@@ -197,6 +209,7 @@ async def get_restaurant_group_by_id(
 # GET GROUP WITH DETAILS
 # ==============================================
 
+
 @router.get(
     "/{group_id}/details",
     response_model=RestaurantGroupResponse,
@@ -240,6 +253,7 @@ async def get_restaurant_group_with_details(
 # ==============================================
 # LIST GROUPS BY OWNER
 # ==============================================
+
 
 @router.get(
     "/owner/{owner_id}",
@@ -289,6 +303,7 @@ async def list_restaurant_groups_by_owner(
 # SEARCH GROUPS
 # ==============================================
 
+
 @router.get(
     "/search",
     response_model=RestaurantGroupListResponse,
@@ -337,6 +352,7 @@ async def search_restaurant_groups(
 # ==============================================
 # UPDATE GROUP
 # ==============================================
+
 
 @router.patch(
     "/{group_id}",

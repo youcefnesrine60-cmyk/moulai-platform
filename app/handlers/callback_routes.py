@@ -1,7 +1,19 @@
 # ==============================================
-# 📌 CALLBACK ROUTES REGISTRATION
-# تسجيل جميع مسارات الكولباك في النظام
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACK ROUTES
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for callback routes.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.core.router_instance import router
@@ -44,15 +56,15 @@ from app.handlers.callbacks.admin.admin_handlers import (
     admin_reject_callback,
 )
 
-
 # ==============================================
 # 🚀 SETUP ROUTES
 # ==============================================
 
+
 async def setup_routes() -> None:
     """
     تسجيل جميع مسارات الكولباك في النظام
-    
+
     يتم استدعاء هذه الدالة عند بدء تشغيل التطبيق
     لتسجيل جميع المسارات في الـ Router المركزي.
     """

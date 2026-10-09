@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🌍 LANGUAGE DETECTOR
 # كشف اللغة من النص
 # ==============================================
+
+"""MoulAI operational module for detector.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 from typing import (
@@ -39,15 +44,19 @@ LanguageDetectionResult = Tuple[LanguageCode, ConfidenceScore]
 class LanguageDetector:
     """
     كاشف اللغة - يكتشف لغة النص المدخل.
-    
+
     يدعم: العربية (بلهجاتها)، الإنجليزية، الفرنسية
-    
+
     Attributes:
         patterns: أنماط كشف اللغة
         confidence_threshold: عتبة الثقة
         french_common_words: كلمات فرنسية شائعة
         english_common_words: كلمات إنجليزية شائعة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -56,32 +65,92 @@ class LanguageDetector:
     ) -> None:
         """
         تهيئة كاشف اللغة.
-        
+
         Args:
             confidence_threshold: عتبة الثقة للكشف
         """
-        self.patterns: Dict[LanguageCode, List[str]] = language_config.DETECTION_PATTERNS
+        self.patterns: Dict[LanguageCode, List[str]] = (
+            language_config.DETECTION_PATTERNS
+        )
         self.confidence_threshold: float = confidence_threshold
 
         # كلمات فرنسية شائعة للكشف
         self.french_common_words: List[str] = [
-            "bonjour", "bonsoir", "merci", "s'il vous plaît", "s'il vous plait",
-            "comment", "ça va", "très bien", "au revoir", "à bientôt",
-            "je", "tu", "il", "elle", "nous", "vous", "ils", "elles",
-            "le", "la", "les", "un", "une", "des",
-            "est", "sont", "être", "avoir", "faire",
-            "vouloir", "pouvoir", "devoir", "savoir",
-            "oui", "non", "peut-être",
+            "bonjour",
+            "bonsoir",
+            "merci",
+            "s'il vous plaît",
+            "s'il vous plait",
+            "comment",
+            "ça va",
+            "très bien",
+            "au revoir",
+            "à bientôt",
+            "je",
+            "tu",
+            "il",
+            "elle",
+            "nous",
+            "vous",
+            "ils",
+            "elles",
+            "le",
+            "la",
+            "les",
+            "un",
+            "une",
+            "des",
+            "est",
+            "sont",
+            "être",
+            "avoir",
+            "faire",
+            "vouloir",
+            "pouvoir",
+            "devoir",
+            "savoir",
+            "oui",
+            "non",
+            "peut-être",
         ]
 
         # كلمات إنجليزية شائعة للكشف
         self.english_common_words: List[str] = [
-            "hello", "hi", "hey", "good morning", "good evening", "good night",
-            "thanks", "thank you", "please", "sorry",
-            "how", "what", "why", "when", "where", "who", "which",
-            "want", "need", "get", "order", "buy", "purchase",
-            "yes", "no", "maybe", "ok", "okay",
-            "the", "a", "an", "this", "that", "these", "those",
+            "hello",
+            "hi",
+            "hey",
+            "good morning",
+            "good evening",
+            "good night",
+            "thanks",
+            "thank you",
+            "please",
+            "sorry",
+            "how",
+            "what",
+            "why",
+            "when",
+            "where",
+            "who",
+            "which",
+            "want",
+            "need",
+            "get",
+            "order",
+            "buy",
+            "purchase",
+            "yes",
+            "no",
+            "maybe",
+            "ok",
+            "okay",
+            "the",
+            "a",
+            "an",
+            "this",
+            "that",
+            "these",
+            "those",
         ]
 
         logger.info(
@@ -103,10 +172,10 @@ class LanguageDetector:
     ) -> LanguageDetectionResult:
         """
         كشف لغة النص.
-        
+
         Args:
             text: النص المراد كشف لغته
-            
+
         Returns:
             (رمز اللغة, نسبة الثقة)
         """
@@ -118,7 +187,7 @@ class LanguageDetector:
             return language_config.LANGUAGE_CODES["ar"], 0.0
 
         text_lower: str = text.lower().strip()
-        words: List[str] = re.findall(r'\w+', text_lower)
+        words: List[str] = re.findall(r"\w+", text_lower)
 
         if not words:
             logger.debug(
@@ -128,9 +197,7 @@ class LanguageDetector:
             return language_config.LANGUAGE_CODES["ar"], 0.0
 
         # حساب عدد الكلمات لكل لغة باستخدام الأنماط
-        scores: Dict[LanguageCode, int] = {
-            lang: 0 for lang in self.patterns.keys()
-        }
+        scores: Dict[LanguageCode, int] = {lang: 0 for lang in self.patterns.keys()}
 
         # حساب عدد الكلمات لكل لغة باستخدام الأنماط المحددة
         for word in words:
@@ -150,7 +217,7 @@ class LanguageDetector:
                 scores["en"] += 2
 
             # كلمات عربية (تحقق من وجود أحرف عربية)
-            if re.search(r'[\u0600-\u06FF]', word):
+            if re.search(r"[\u0600-\u06FF]", word):
                 scores["ar"] += 2
 
         # حساب نسبة الثقة
@@ -201,21 +268,21 @@ class LanguageDetector:
     ) -> LanguageDetectionResult:
         """
         كشف اللغة عن طريق تحليل الأحرف.
-        
+
         Args:
             text: النص المراد كشف لغته
-            
+
         Returns:
             (رمز اللغة, نسبة الثقة)
         """
         # نطاقات الأحرف العربية
         arabic_range: re.Pattern = re.compile(
-            r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]',
+            r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]",
         )
 
         # نطاقات الأحرف الفرنسية (أحرف لاتينية مع علامات)
         french_range: re.Pattern = re.compile(
-            r'[àâäéèêëïîôöùûüÿç]',
+            r"[àâäéèêëïîôöùûüÿç]",
             re.IGNORECASE,
         )
 
@@ -226,7 +293,7 @@ class LanguageDetector:
         french_count: int = len(french_range.findall(text))
 
         # عدد الأحرف اللاتينية العامة
-        latin_count: int = len(re.findall(r'[a-zA-Z]', text)) - french_count
+        latin_count: int = len(re.findall(r"[a-zA-Z]", text)) - french_count
 
         total: int = arabic_count + latin_count + french_count
 
@@ -249,26 +316,59 @@ class LanguageDetector:
 
             # قائمة كلمات فرنسية
             french_words: List[str] = [
-                "je", "tu", "il", "elle", "nous", "vous", "ils", "elles",
-                "le", "la", "les", "un", "une", "des",
-                "est", "sont", "être", "avoir", "faire",
-                "bonjour", "bonsoir", "merci", "au revoir",
+                "je",
+                "tu",
+                "il",
+                "elle",
+                "nous",
+                "vous",
+                "ils",
+                "elles",
+                "le",
+                "la",
+                "les",
+                "un",
+                "une",
+                "des",
+                "est",
+                "sont",
+                "être",
+                "avoir",
+                "faire",
+                "bonjour",
+                "bonsoir",
+                "merci",
+                "au revoir",
             ]
 
             french_score: int = sum(
-                1 for word in french_words
+                1
+                for word in french_words
                 if word in text_lower or text_lower.startswith(word)
             )
 
             # قائمة كلمات إنجليزية
             english_words: List[str] = [
-                "hello", "hi", "good", "morning", "evening",
-                "thanks", "please", "sorry", "how", "what",
-                "the", "this", "that", "these", "those",
+                "hello",
+                "hi",
+                "good",
+                "morning",
+                "evening",
+                "thanks",
+                "please",
+                "sorry",
+                "how",
+                "what",
+                "the",
+                "this",
+                "that",
+                "these",
+                "those",
             ]
 
             english_score: int = sum(
-                1 for word in english_words
+                1
+                for word in english_words
                 if word in text_lower or text_lower.startswith(word)
             )
 
@@ -278,7 +378,9 @@ class LanguageDetector:
 
             # إذا كانت الكلمات الإنجليزية أكثر، نختار الإنجليزية
             if english_score > french_score and english_score > 0:
-                return language_config.LANGUAGE_CODES["en"], min(0.7, english_score / 10)
+                return language_config.LANGUAGE_CODES["en"], min(
+                    0.7, english_score / 10
+                )
 
             # إذا كان العدد متساوياً، نتحقق من وجود كلمات فرنسية مميزة
             if "bon" in text_lower or "soir" in text_lower or "jour" in text_lower:
@@ -297,16 +399,17 @@ class LanguageDetector:
 # DETECT LANGUAGE
 # ==============================================
 
+
 def detect_language(
     *,
     text: str,
 ) -> LanguageDetectionResult:
     """
     كشف لغة النص (دالة مساعدة).
-    
+
     Args:
         text: النص المراد كشف لغته
-        
+
     Returns:
         (رمز اللغة, نسبة الثقة)
     """
@@ -324,16 +427,17 @@ def detect_language(
 # GET LANGUAGE NAME
 # ==============================================
 
+
 def get_language_name(
     *,
     lang_code: LanguageCode,
 ) -> LanguageName:
     """
     الحصول على اسم اللغة من رمزها (دالة مساعدة).
-    
+
     Args:
         lang_code: رمز اللغة (ar, en, fr)
-        
+
     Returns:
         اسم اللغة
     """

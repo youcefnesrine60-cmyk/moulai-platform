@@ -1,8 +1,19 @@
 # ==============================================
-# 👤 USERS API
-# نقاط نهاية API للمستخدمين
-# تدير عمليات إنشاء واستعراض وتحديث وحذف المستخدمين
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / API / V1 / USER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for user.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional
 
@@ -51,15 +62,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_user_service(
     session: AsyncSession = Depends(get_db),
 ) -> UserService:
     """
     الحصول على خدمة المستخدمين.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         UserService: مثيل من UserService
     """
@@ -73,6 +85,7 @@ async def get_user_service(
 # ==============================================
 # LIST USERS
 # ==============================================
+
 
 @router.get(
     "/",
@@ -107,14 +120,14 @@ async def list_users(
 ) -> UserListResponse:
     """
     الحصول على قائمة المستخدمين.
-    
+
     Args:
         has_consent: تصفية حسب حالة الموافقة
         search: نص البحث
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة المستخدمين
-        
+
     Returns:
         UserListResponse: قائمة المستخدمين مع الإحصائيات
     """
@@ -137,7 +150,7 @@ async def list_users(
                 limit=limit,
             )
             total = len(users)
-            
+
         elif has_consent is not None:
             users = await service.get_by_consent(
                 has_consent=has_consent,
@@ -145,7 +158,7 @@ async def list_users(
                 limit=limit,
             )
             total = len(users)
-            
+
         else:
             users = await service.repo.get_all(
                 skip=skip,
@@ -177,6 +190,7 @@ async def list_users(
 # GET USER BY ID
 # ==============================================
 
+
 @router.get(
     "/{user_id}",
     response_model=UserResponse,
@@ -190,14 +204,14 @@ async def get_user(
 ) -> UserResponse:
     """
     الحصول على مستخدم بالمعرف.
-    
+
     Args:
         user_id: معرف المستخدم
         service: خدمة المستخدمين
-        
+
     Returns:
         UserResponse: المستخدم المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المستخدم
     """
@@ -242,6 +256,7 @@ async def get_user(
 # GET USER BY CHAT ID
 # ==============================================
 
+
 @router.get(
     "/chat/{chat_id}",
     response_model=UserResponse,
@@ -255,14 +270,14 @@ async def get_user_by_chat_id(
 ) -> UserResponse:
     """
     الحصول على مستخدم بواسطة معرف تيليجرام.
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         service: خدمة المستخدمين
-        
+
     Returns:
         UserResponse: المستخدم المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المستخدم
     """
@@ -313,6 +328,7 @@ async def get_user_by_chat_id(
 # CREATE USER
 # ==============================================
 
+
 @router.post(
     "/",
     response_model=UserResponse,
@@ -327,14 +343,14 @@ async def create_user(
 ) -> UserResponse:
     """
     إنشاء مستخدم جديد.
-    
+
     Args:
         data: بيانات المستخدم
         service: خدمة المستخدمين
-        
+
     Returns:
         UserResponse: المستخدم المنشأ
-        
+
     Raises:
         HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
@@ -394,6 +410,7 @@ async def create_user(
 # UPDATE USER
 # ==============================================
 
+
 @router.patch(
     "/{user_id}",
     response_model=UserResponse,
@@ -408,15 +425,15 @@ async def update_user(
 ) -> UserResponse:
     """
     تحديث مستخدم موجود.
-    
+
     Args:
         user_id: معرف المستخدم
         data: بيانات التحديث
         service: خدمة المستخدمين
-        
+
     Returns:
         UserResponse: المستخدم المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المستخدم
     """
@@ -483,6 +500,7 @@ async def update_user(
 # UPDATE USER CONSENT
 # ==============================================
 
+
 @router.patch(
     "/chat/{chat_id}/consent",
     response_model=ConsentResponse,
@@ -497,15 +515,15 @@ async def update_user_consent(
 ) -> ConsentResponse:
     """
     تحديث موافقة المستخدم.
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         data: بيانات تحديث الموافقة
         service: خدمة المستخدمين
-        
+
     Returns:
         ConsentResponse: حالة الموافقة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المستخدم
     """
@@ -559,6 +577,7 @@ async def update_user_consent(
 # CHECK USER CONSENT
 # ==============================================
 
+
 @router.get(
     "/chat/{chat_id}/consent",
     response_model=ConsentResponse,
@@ -572,11 +591,11 @@ async def check_user_consent(
 ) -> ConsentResponse:
     """
     التحقق من موافقة المستخدم.
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         service: خدمة المستخدمين
-        
+
     Returns:
         ConsentResponse: حالة الموافقة
     """
@@ -593,7 +612,9 @@ async def check_user_consent(
         return ConsentResponse(
             chat_id=chat_id,
             has_consent=has_consent,
-            message="المستخدم لديه موافقة" if has_consent else "المستخدم ليس لديه موافقة",
+            message=(
+                "المستخدم لديه موافقة" if has_consent else "المستخدم ليس لديه موافقة"
+            ),
         )
 
     except Exception as e:
@@ -614,6 +635,7 @@ async def check_user_consent(
 # SEARCH USERS
 # ==============================================
 
+
 @router.post(
     "/search",
     response_model=UserListResponse,
@@ -627,11 +649,11 @@ async def search_users(
 ) -> UserListResponse:
     """
     البحث عن مستخدمين.
-    
+
     Args:
         data: بيانات البحث
         service: خدمة المستخدمين
-        
+
     Returns:
         UserListResponse: قائمة المستخدمين المطابقين للبحث مع الإحصائيات
     """
@@ -668,6 +690,7 @@ async def search_users(
 # GET USER SUMMARY
 # ==============================================
 
+
 @router.get(
     "/stats/summary",
     response_model=UserSummary,
@@ -680,10 +703,10 @@ async def get_user_summary(
 ) -> UserSummary:
     """
     الحصول على ملخص إحصائيات المستخدمين.
-    
+
     Args:
         service: خدمة المستخدمين
-        
+
     Returns:
         UserSummary: ملخص إحصائيات المستخدمين
     """
@@ -708,6 +731,7 @@ async def get_user_summary(
 # DELETE USER
 # ==============================================
 
+
 @router.delete(
     "/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -721,11 +745,11 @@ async def delete_user(
 ) -> None:
     """
     حذف مستخدم موجود.
-    
+
     Args:
         user_id: معرف المستخدم
         service: خدمة المستخدمين
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المستخدم
     """

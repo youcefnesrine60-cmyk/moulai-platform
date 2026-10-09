@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها للتصنيفات
 # ==============================================
 
+"""MoulAI operational module for categories.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     Field,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -38,17 +42,19 @@ CategoryUpdateData = Dict[str, Any]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class CategoryBase(BaseModel):
     """
     المخطط الأساسي للتصنيف.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات التصنيف.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         name: اسم التصنيف
         sort_order: ترتيب العرض
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -71,14 +77,16 @@ class CategoryBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class CategoryCreate(BaseModel):
     """
     مخطط إنشاء تصنيف جديد.
-    
+
     Attributes:
         name: اسم التصنيف
         sort_order: ترتيب العرض (اختياري)
     """
+
     name: str = Field(
         ...,
         max_length=255,
@@ -96,14 +104,16 @@ class CategoryCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class CategoryUpdate(BaseModel):
     """
     مخطط تحديث التصنيف - جميع الحقول اختيارية.
-    
+
     Attributes:
         name: اسم التصنيف
         sort_order: ترتيب العرض
     """
+
     name: Optional[str] = Field(
         None,
         max_length=255,
@@ -121,15 +131,17 @@ class CategoryUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class CategoryResponse(CategoryBase):
     """
     مخطط استجابة التصنيف - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف التصنيف
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -151,18 +163,20 @@ class CategoryResponse(CategoryBase):
 # 📋 CATEGORY LIST RESPONSE
 # ==============================================
 
+
 class CategoryListResponse(BaseModel):
     """
     مخطط استجابة قائمة التصنيفات.
-    
+
     يحتوي على قائمة التصنيفات مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة التصنيفات
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[CategoryResponse] = Field(
@@ -190,12 +204,13 @@ class CategoryListResponse(BaseModel):
 # 📊 CATEGORY SUMMARY
 # ==============================================
 
+
 class CategorySummary(BaseModel):
     """
     مخطط ملخص التصنيفات.
-    
+
     يحتوي على إحصائيات موجزة عن التصنيفات.
-    
+
     Attributes:
         total_categories: إجمالي عدد التصنيفات
         categories_with_products: عدد التصنيفات التي تحتوي على منتجات
@@ -203,6 +218,7 @@ class CategorySummary(BaseModel):
         total_products: إجمالي عدد المنتجات في جميع التصنيفات
         avg_products_per_category: متوسط عدد المنتجات لكل تصنيف
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_categories: int = Field(

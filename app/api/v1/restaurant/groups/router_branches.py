@@ -10,6 +10,11 @@
 # نقاط نهاية إدارة فروع مجموعات المطاعم
 # ==============================================
 
+"""MoulAI operational module for router branches.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import List
 
 from fastapi import (
@@ -35,7 +40,6 @@ from app.services.business.restaurant import (
     RestaurantBranchEventHandlers,
 )
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -49,6 +53,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_branch_handlers(
     session: AsyncSession = Depends(get_db),
@@ -64,6 +69,7 @@ async def get_branch_handlers(
 # ==============================================
 # ADD BRANCHES TO GROUP
 # ==============================================
+
 
 @router.post(
     "/{group_id}/branches",
@@ -138,6 +144,7 @@ async def add_branches_to_group(
 # REMOVE BRANCH FROM GROUP
 # ==============================================
 
+
 @router.delete(
     "/{group_id}/branches/{restaurant_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -204,6 +211,7 @@ async def remove_branch_from_group(
 # ==============================================
 # REMOVE ALL BRANCHES FROM GROUP
 # ==============================================
+
 
 @router.delete(
     "/{group_id}/branches",

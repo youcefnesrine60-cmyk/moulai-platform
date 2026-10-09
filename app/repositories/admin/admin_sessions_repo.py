@@ -1,7 +1,19 @@
 # ==============================================
-# 🔐 ADMIN SESSIONS REPOSITORY
-# عمليات قاعدة البيانات لجلسات المدير باستخدام SQLAlchemy
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / ADMIN / ADMIN SESSIONS REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for admin sessions repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from datetime import datetime
 from typing import (
@@ -44,17 +56,21 @@ class AdminSessionsRepository(
 ):
     """
     مستودع جلسات المدير - يوفر عمليات خاصة بجلسات المدير.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لجلسات المدير
         - إدارة الجلسات النشطة والمنتهية
         - تحديث آخر نشاط للجلسة
         - تنظيف الجلسات المنتهية
-    
+
     Attributes:
         model: نموذج AdminSession
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -62,7 +78,7 @@ class AdminSessionsRepository(
     ) -> None:
         """
         تهيئة مستودع جلسات المدير.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -86,13 +102,13 @@ class AdminSessionsRepository(
     ) -> AdminSessionList:
         """
         الحصول على جلسات مدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_active: جلب الجلسات النشطة فقط
-            
+
         Returns:
             قائمة جلسات المدير
         """
@@ -104,10 +120,14 @@ class AdminSessionsRepository(
             if only_active:
                 query = query.where(self.model.is_active == True)
 
-            query = query.order_by(
-                self.model.last_activity.desc(),
-                self.model.created_at.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.last_activity.desc(),
+                    self.model.created_at.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -135,10 +155,10 @@ class AdminSessionsRepository(
     ) -> Optional[AdminSession]:
         """
         الحصول على جلسة بواسطة رمز الجلسة.
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             كائن AdminSession أو None
         """
@@ -172,10 +192,10 @@ class AdminSessionsRepository(
     ) -> Optional[AdminSession]:
         """
         الحصول على جلسة نشطة بواسطة رمز الجلسة.
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             كائن AdminSession أو None
         """
@@ -217,12 +237,12 @@ class AdminSessionsRepository(
     ) -> AdminSessionList:
         """
         الحصول على الجلسات النشطة لمدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الجلسات النشطة
         """
@@ -270,11 +290,11 @@ class AdminSessionsRepository(
     ) -> AdminSessionList:
         """
         الحصول على الجلسات المنتهية.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الجلسات المنتهية
         """
@@ -317,13 +337,13 @@ class AdminSessionsRepository(
     ) -> AdminSessionList:
         """
         البحث عن جلسات المدير.
-        
+
         Args:
             query: نص البحث (IP أو User Agent)
             admin_id: معرف المدير (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة جلسات المدير
         """
@@ -382,11 +402,11 @@ class AdminSessionsRepository(
     ) -> int:
         """
         حساب عدد جلسات مدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             only_active: حساب الجلسات النشطة فقط
-            
+
         Returns:
             عدد الجلسات
         """
@@ -406,7 +426,7 @@ class AdminSessionsRepository(
     ) -> int:
         """
         حساب عدد الجلسات النشطة.
-        
+
         Returns:
             عدد الجلسات النشطة
         """
@@ -421,7 +441,7 @@ class AdminSessionsRepository(
     ) -> int:
         """
         حساب عدد الجلسات المنتهية.
-        
+
         Returns:
             عدد الجلسات المنتهية
         """
@@ -446,14 +466,14 @@ class AdminSessionsRepository(
     ) -> AdminSession:
         """
         إنشاء جلسة جديدة للمدير.
-        
+
         Args:
             admin_id: معرف المدير
             session_token: رمز الجلسة
             expires_at: تاريخ انتهاء الجلسة
             ip_address: عنوان IP (اختياري)
             user_agent: متصفح المدير (اختياري)
-            
+
         Returns:
             كائن AdminSession المنشأ
         """
@@ -498,10 +518,10 @@ class AdminSessionsRepository(
     ) -> Optional[AdminSession]:
         """
         تحديث آخر نشاط للجلسة.
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             كائن AdminSession المحدث أو None
         """
@@ -546,10 +566,10 @@ class AdminSessionsRepository(
     ) -> Optional[AdminSession]:
         """
         إلغاء تنشيط الجلسة (تسجيل الخروج).
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             كائن AdminSession المحدث أو None
         """
@@ -594,10 +614,10 @@ class AdminSessionsRepository(
     ) -> int:
         """
         إلغاء تنشيط جميع جلسات مدير معين.
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             عدد الجلسات التي تم إلغاء تنشيطها
         """
@@ -641,11 +661,11 @@ class AdminSessionsRepository(
     ) -> Optional[AdminSession]:
         """
         تمديد صلاحية الجلسة.
-        
+
         Args:
             session_token: رمز الجلسة
             expires_at: تاريخ الانتهاء الجديد
-            
+
         Returns:
             كائن AdminSession المحدث أو None
         """
@@ -693,7 +713,7 @@ class AdminSessionsRepository(
     ) -> int:
         """
         تنظيف الجلسات المنتهية (تعيين is_active = False).
-        
+
         Returns:
             عدد الجلسات التي تم تنظيفها
         """
@@ -726,6 +746,7 @@ class AdminSessionsRepository(
 # CREATE ADMIN SESSION (COMPATIBILITY)
 # ==============================================
 
+
 async def create_admin_session(
     *,
     admin_id: int,
@@ -737,7 +758,7 @@ async def create_admin_session(
 ) -> int:
     """
     إنشاء جلسة جديدة للمدير (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         admin_id: معرف المدير
         session_token: رمز الجلسة
@@ -745,7 +766,7 @@ async def create_admin_session(
         ip_address: عنوان IP (اختياري)
         user_agent: متصفح المدير (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الجلسة
     """
@@ -766,6 +787,7 @@ async def create_admin_session(
 # GET ADMIN SESSION (COMPATIBILITY)
 # ==============================================
 
+
 async def get_admin_session(
     *,
     session_token: str,
@@ -773,11 +795,11 @@ async def get_admin_session(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على جلسة بواسطة رمز الجلسة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session_token: رمز الجلسة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الجلسة أو None
     """
@@ -807,6 +829,7 @@ async def get_admin_session(
 # GET ADMIN ACTIVE SESSION (COMPATIBILITY)
 # ==============================================
 
+
 async def get_admin_active_session(
     *,
     session_token: str,
@@ -814,11 +837,11 @@ async def get_admin_active_session(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على جلسة نشطة بواسطة رمز الجلسة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session_token: رمز الجلسة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الجلسة أو None
     """
@@ -848,6 +871,7 @@ async def get_admin_active_session(
 # DEACTIVATE ADMIN SESSION (COMPATIBILITY)
 # ==============================================
 
+
 async def deactivate_admin_session(
     *,
     session_token: str,
@@ -855,7 +879,7 @@ async def deactivate_admin_session(
 ) -> None:
     """
     إلغاء تنشيط الجلسة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session_token: رمز الجلسة
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -876,6 +900,7 @@ async def deactivate_admin_session(
 # GET ADMIN SESSIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_admin_sessions(
     *,
     admin_id: int,
@@ -884,12 +909,12 @@ async def get_admin_sessions(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على جلسات مدير معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         admin_id: معرف المدير
         session: جلسة قاعدة البيانات غير المتزامنة
         only_active: جلب الجلسات النشطة فقط
-        
+
     Returns:
         قائمة جلسات المدير
     """
@@ -903,16 +928,18 @@ async def get_admin_sessions(
     result = []
 
     for s in sessions:
-        result.append({
-            "id": s.id,
-            "admin_id": s.admin_id,
-            "session_token": s.session_token,
-            "ip_address": s.ip_address,
-            "user_agent": s.user_agent,
-            "expires_at": s.expires_at,
-            "is_active": s.is_active,
-            "last_activity": s.last_activity,
-            "created_at": s.created_at,
-        })
+        result.append(
+            {
+                "id": s.id,
+                "admin_id": s.admin_id,
+                "session_token": s.session_token,
+                "ip_address": s.ip_address,
+                "user_agent": s.user_agent,
+                "expires_at": s.expires_at,
+                "is_active": s.is_active,
+                "last_activity": s.last_activity,
+                "created_at": s.created_at,
+            }
+        )
 
     return result

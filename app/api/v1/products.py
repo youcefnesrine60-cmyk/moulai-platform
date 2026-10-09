@@ -11,6 +11,11 @@
 # تدير عمليات إنشاء واستعراض وتحديث وحذف المنتجات
 # ==============================================
 
+"""MoulAI operational module for products.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import Optional
 
 from fastapi import (
@@ -56,6 +61,7 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_product_service(
     session: AsyncSession = Depends(get_db),
 ) -> ProductService:
@@ -78,6 +84,7 @@ async def get_product_service(
 # ==============================================
 # LIST PRODUCTS
 # ==============================================
+
 
 @router.get(
     "/",
@@ -208,6 +215,7 @@ async def list_products(
 # GET PRODUCT BY ID
 # ==============================================
 
+
 @router.get(
     "/{product_id}",
     response_model=ProductResponse,
@@ -270,6 +278,7 @@ async def get_product(
 # ==============================================
 # CREATE PRODUCT
 # ==============================================
+
 
 @router.post(
     "/",
@@ -374,6 +383,7 @@ async def create_product(
 # UPDATE PRODUCT
 # ==============================================
 
+
 @router.patch(
     "/{product_id}",
     response_model=ProductResponse,
@@ -469,6 +479,7 @@ async def update_product(
 # UPDATE PRODUCT AVAILABILITY
 # ==============================================
 
+
 @router.patch(
     "/{product_id}/availability",
     response_model=ProductResponse,
@@ -540,6 +551,7 @@ async def update_product_availability(
 # ENABLE PRODUCT
 # ==============================================
 
+
 @router.post(
     "/{product_id}/enable",
     response_model=ProductResponse,
@@ -603,6 +615,7 @@ async def enable_product(
 # DISABLE PRODUCT
 # ==============================================
 
+
 @router.post(
     "/{product_id}/disable",
     response_model=ProductResponse,
@@ -665,6 +678,7 @@ async def disable_product(
 # ==============================================
 # DELETE PRODUCT
 # ==============================================
+
 
 @router.delete(
     "/{product_id}",
@@ -742,6 +756,7 @@ async def delete_product(
 # GET PRODUCT SUMMARY
 # ==============================================
 
+
 @router.get(
     "/stats/summary",
     response_model=ProductSummary,
@@ -798,6 +813,7 @@ async def get_product_summary(
 # ==============================================
 # GET RESTAURANT PRODUCTS
 # ==============================================
+
 
 @router.get(
     "/restaurant/{restaurant_id}",  # ✅ تم إصلاح القوس المفقود
@@ -875,6 +891,7 @@ async def get_restaurant_products(
 # GET CATEGORY PRODUCTS
 # ==============================================
 
+
 @router.get(
     "/category/{category_id}",
     response_model=ProductListResponse,
@@ -950,6 +967,7 @@ async def get_category_products(
 # ==============================================
 # GET PRODUCT WITH DETAILS
 # ==============================================
+
 
 @router.get(
     "/{product_id}/details",

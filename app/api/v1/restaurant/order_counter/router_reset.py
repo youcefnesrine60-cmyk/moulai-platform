@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🔢 RESTAURANT ORDER COUNTER ROUTER - RESET & INCREMENT
 # نقاط نهاية إعادة التعيين والزيادة
 # ==============================================
+
+"""MoulAI operational module for router reset.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -29,7 +34,6 @@ from app.services.business.restaurant.order_counter.service import (
     RestaurantOrderCounterService,
 )
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -43,6 +47,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_order_counter_service(
     session: AsyncSession = Depends(get_db),
@@ -58,6 +63,7 @@ async def get_order_counter_service(
 # ==============================================
 # RESET ORDER COUNTER
 # ==============================================
+
 
 @router.post(
     "/{restaurant_id}/reset",
@@ -102,6 +108,7 @@ async def reset_order_counter(
 # ==============================================
 # INCREMENT ORDER COUNTER
 # ==============================================
+
 
 @router.post(
     "/{restaurant_id}/increment",

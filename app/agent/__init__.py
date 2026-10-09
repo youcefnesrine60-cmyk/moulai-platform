@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🤖 AGENT MODULE
 # وحدة الوكيل الذكي
 # ==============================================
+
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 # ==============================================
 # 📦 CONFIG
@@ -44,13 +49,11 @@ from app.agent.language.detector import (
 # ==============================================
 
 from app.agent.nlu import (
-
     # Intent Classifier
     IntentClassifier,
     classify_intent,
     IntentResult,
     IntentEntityDict,
-    
     # Entity Extractor
     EntityExtractor,
     extract_entities,
@@ -64,18 +67,15 @@ from app.agent.nlu import (
 # ==============================================
 
 from app.agent.executor import (
-
     # Base
     BaseAction,
     ActionResponse,
     ActionResult,
-    
     # Registry
     ActionRegistry,
     action_registry,
     get_action,
     get_action_by_intent,
-    
     # Actions
     OrderFoodAction,
     ViewMenuAction,
@@ -89,7 +89,6 @@ from app.agent.executor import (
     HelpAction,
     GreetingAction,
     GoodbyeAction,
-    
     # Executor
     ActionExecutor,
     action_executor,
@@ -141,7 +140,6 @@ from app.agent.response_generator import (
 # ==============================================
 
 __all__ = [
-
     # Config
     "AgentConfig",
     "LanguageConfig",
@@ -154,37 +152,31 @@ __all__ = [
     "is_language_supported",
     "get_supported_languages",
     "get_default_language",
-    
     # Language
     "LanguageDetector",
     "detect_language",
     "detector_get_language_name",
     "LanguageDetectionResult",
-    
     # NLU - Intent Classifier
     "IntentClassifier",
     "classify_intent",
     "IntentResult",
     "IntentEntityDict",
-    
     # NLU - Entity Extractor
     "EntityExtractor",
     "extract_entities",
     "ExtractionResult",
     "EntityDict",
     "EntityList",
-    
     # Executor - Base
     "BaseAction",
     "ActionResponse",
     "ActionResult",
-    
     # Executor - Registry
     "ActionRegistry",
     "action_registry",
     "get_action",
     "get_action_by_intent",
-    
     # Executor - Actions
     "OrderFoodAction",
     "ViewMenuAction",
@@ -198,14 +190,12 @@ __all__ = [
     "HelpAction",
     "GreetingAction",
     "GoodbyeAction",
-    
     # Executor - Executor
     "ActionExecutor",
     "action_executor",
     "execute_action",
     "ExecutionResult",
     "ActionContext",
-    
     # Memory
     "MemoryManager",
     "memory_manager",
@@ -214,19 +204,16 @@ __all__ = [
     "SessionData",
     "ContextData",
     "ConversationHistory",
-    
     # Engine
     "AgentEngine",
     "agent_engine",
     "process_message",
     "ProcessResult",
     "AgentResponse",
-
     # Response Generator
     "ResponseGenerator",
     "response_generator",
     "generate_response",
     "ResponseContext",
     "ResponseResult",
-
 ]

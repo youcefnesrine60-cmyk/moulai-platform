@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for features repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -58,6 +63,10 @@ class FeatureRepository(
         model: نموذج Feature
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -107,11 +116,7 @@ class FeatureRepository(
             كائن Feature أو None
         """
         try:
-            query = (
-                self._build_base_query()
-                .where(self.model.code == code)
-                .limit(1)
-            )
+            query = self._build_base_query().where(self.model.code == code).limit(1)
 
             result = await self.session.execute(query)
 
@@ -275,10 +280,7 @@ class FeatureRepository(
             True إذا كان الكود موجوداً
         """
         try:
-            query = (
-                select(self.model.id)
-                .where(self.model.code == code)
-            )
+            query = select(self.model.id).where(self.model.code == code)
 
             if exclude_id is not None:
                 query = query.where(self.model.id != exclude_id)
@@ -326,6 +328,7 @@ class FeatureRepository(
 # CREATE FEATURE (COMPATIBILITY)
 # ==============================================
 
+
 async def create_feature(
     *,
     code: str,
@@ -370,6 +373,7 @@ async def create_feature(
 # GET FEATURE BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_feature_by_id(
     *,
     feature_id: int,
@@ -408,6 +412,7 @@ async def get_feature_by_id(
 # GET FEATURE BY CODE (COMPATIBILITY)
 # ==============================================
 
+
 async def get_feature_by_code(
     *,
     code: str,
@@ -442,6 +447,7 @@ async def get_feature_by_code(
 # GET ALL FEATURES (COMPATIBILITY)
 # ==============================================
 
+
 async def get_all_features(
     session: AsyncSession,
     *,
@@ -469,12 +475,14 @@ async def get_all_features(
     result = []
 
     for feature in features:
-        result.append({
-            "id": feature.id,
-            "code": feature.code,
-            "name": feature.name,
-            "description": feature.description,
-        })
+        result.append(
+            {
+                "id": feature.id,
+                "code": feature.code,
+                "name": feature.name,
+                "description": feature.description,
+            }
+        )
 
     logger.info(
         "features_fetched",
@@ -487,6 +495,7 @@ async def get_all_features(
 # ==============================================
 # UPDATE FEATURE (COMPATIBILITY)
 # ==============================================
+
 
 async def update_feature(
     *,
@@ -523,6 +532,7 @@ async def update_feature(
 # ==============================================
 # DELETE FEATURE (COMPATIBILITY)
 # ==============================================
+
 
 async def delete_feature(
     *,

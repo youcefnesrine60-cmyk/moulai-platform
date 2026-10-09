@@ -1,14 +1,19 @@
 # ==============================================
-# 👤 USER SERVICE
-# منطق الأعمال للمستخدمين
-#
-# إنشاء مستخدم
-# قراءة مستخدم
-# تحديث مستخدم
-# إدارة الموافقة (Consent)
-# البحث عن مستخدمين
-# إحصائيات المستخدمين
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / USER SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for user service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -46,7 +51,6 @@ from app.schemas.user import (
     UserSearch,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -65,17 +69,21 @@ UserStats = Dict[str, Any]
 class UserService:
     """
     خدمة المستخدمين - تدير منطق الأعمال للمستخدمين.
-    
+
     مسؤولة عن:
         - إنشاء وإدارة المستخدمين
         - إدارة موافقة المستخدم (Consent)
         - البحث عن المستخدمين
         - إحصائيات المستخدمين
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع المستخدمين
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -83,7 +91,7 @@ class UserService:
     ) -> None:
         """
         تهيئة خدمة المستخدمين.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -105,13 +113,13 @@ class UserService:
     ) -> UserResponse:
         """
         الحصول على مستخدم بالمعرف.
-        
+
         Args:
             user_id: معرف المستخدم
-            
+
         Returns:
             UserResponse: بيانات المستخدم
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المستخدم
         """
@@ -142,10 +150,10 @@ class UserService:
     ) -> Optional[UserResponse]:
         """
         الحصول على مستخدم بواسطة chat_id.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             Optional[UserResponse]: بيانات المستخدم أو None
         """
@@ -174,10 +182,10 @@ class UserService:
     ) -> Optional[UserResponse]:
         """
         الحصول على مستخدم بواسطة رقم الهاتف.
-        
+
         Args:
             phone: رقم الهاتف
-            
+
         Returns:
             Optional[UserResponse]: بيانات المستخدم أو None
         """
@@ -210,12 +218,12 @@ class UserService:
     ) -> List[UserResponse]:
         """
         البحث عن مستخدمين بواسطة الاسم.
-        
+
         Args:
             name: اسم العميل
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[UserResponse]: قائمة المستخدمين
         """
@@ -249,10 +257,10 @@ class UserService:
     ) -> UserListResponse:
         """
         البحث عن مستخدمين (الاسم أو رقم الهاتف).
-        
+
         Args:
             search_params: معايير البحث
-            
+
         Returns:
             UserListResponse: قائمة المستخدمين مع الإحصائيات
         """
@@ -295,12 +303,12 @@ class UserService:
     ) -> List[UserResponse]:
         """
         الحصول على المستخدمين حسب حالة الموافقة.
-        
+
         Args:
             has_consent: حالة الموافقة
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[UserResponse]: قائمة المستخدمين
         """
@@ -336,10 +344,10 @@ class UserService:
     ) -> bool:
         """
         التحقق مما إذا كان المستخدم قد أعطى موافقته.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             bool: True إذا كان لديه موافقة، False إذا لم يكن
         """
@@ -364,14 +372,14 @@ class UserService:
     ) -> UserResponse:
         """
         تحديث موافقة المستخدم.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
             consent_data: بيانات الموافقة
-            
+
         Returns:
             UserResponse: بيانات المستخدم المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المستخدم
         """
@@ -430,10 +438,10 @@ class UserService:
     ) -> UserResponse:
         """
         منح الموافقة للمستخدم (إنشاء المستخدم إذا لم يكن موجوداً).
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             UserResponse: بيانات المستخدم المنشأ أو المحدث
         """
@@ -467,13 +475,13 @@ class UserService:
     ) -> UserResponse:
         """
         إلغاء موافقة المستخدم.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             UserResponse: بيانات المستخدم المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المستخدم
         """
@@ -516,13 +524,13 @@ class UserService:
     ) -> UserResponse:
         """
         إنشاء مستخدم جديد.
-        
+
         Args:
             user_data: بيانات المستخدم
-            
+
         Returns:
             UserResponse: بيانات المستخدم المنشأ
-            
+
         Raises:
             ConflictError: إذا كان chat_id موجوداً مسبقاً
             ValidationError: إذا كانت البيانات غير صالحة
@@ -546,8 +554,14 @@ class UserService:
             )
 
         # تنظيف البيانات
-        customer_name = sanitize_input(user_data.customer_name) if user_data.customer_name else None
-        customer_phone = sanitize_input(user_data.customer_phone) if user_data.customer_phone else None
+        customer_name = (
+            sanitize_input(user_data.customer_name) if user_data.customer_name else None
+        )
+        customer_phone = (
+            sanitize_input(user_data.customer_phone)
+            if user_data.customer_phone
+            else None
+        )
 
         # إنشاء المستخدم
         data: UserData = {
@@ -585,14 +599,14 @@ class UserService:
     ) -> UserResponse:
         """
         تحديث مستخدم.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
             update_data: بيانات التحديث
-            
+
         Returns:
             UserResponse: بيانات المستخدم المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المستخدم
         """
@@ -657,14 +671,14 @@ class UserService:
     ) -> UserResponse:
         """
         تحديث اسم العميل.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
             customer_name: اسم العميل الجديد
-            
+
         Returns:
             UserResponse: بيانات المستخدم المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المستخدم
         """
@@ -715,14 +729,14 @@ class UserService:
     ) -> UserResponse:
         """
         تحديث رقم هاتف العميل.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
             customer_phone: رقم الهاتف الجديد
-            
+
         Returns:
             UserResponse: بيانات المستخدم المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المستخدم
         """
@@ -772,10 +786,10 @@ class UserService:
     ) -> None:
         """
         حذف مستخدم.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المستخدم
         """
@@ -826,13 +840,13 @@ class UserService:
     ) -> UserResponse:
         """
         إنشاء أو تحديث مستخدم (Upsert).
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
             customer_name: اسم العميل (اختياري)
             customer_phone: رقم هاتف العميل (اختياري)
             consent: حالة الموافقة
-            
+
         Returns:
             UserResponse: بيانات المستخدم المنشأ أو المحدث
         """
@@ -917,7 +931,7 @@ class UserService:
     ) -> UserSummary:
         """
         الحصول على إحصائيات المستخدمين.
-        
+
         Returns:
             UserSummary: إحصائيات المستخدمين
         """
@@ -929,7 +943,9 @@ class UserService:
         users_with_name = await self.repo.count_with_name()
         users_with_phone = await self.repo.count_with_phone()
 
-        consent_rate = (users_with_consent / total_users * 100) if total_users > 0 else 0
+        consent_rate = (
+            (users_with_consent / total_users * 100) if total_users > 0 else 0
+        )
 
         return UserSummary(
             total_users=total_users,
@@ -950,6 +966,7 @@ class UserService:
 # GET OR CREATE USER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_or_create_user(
     *,
     chat_id: int,
@@ -960,14 +977,14 @@ async def get_or_create_user(
 ) -> int:
     """
     الحصول على مستخدم أو إنشاؤه (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         customer_name: اسم العميل (اختياري)
         customer_phone: رقم هاتف العميل (اختياري)
         consent: حالة الموافقة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف المستخدم
     """
@@ -987,6 +1004,7 @@ async def get_or_create_user(
 # GET USER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_user(
     *,
     chat_id: int,
@@ -994,11 +1012,11 @@ async def get_user(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مستخدم بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات المستخدم أو None
     """
@@ -1016,6 +1034,7 @@ async def get_user(
 # HAS USER CONSENT (COMPATIBILITY)
 # ==============================================
 
+
 async def has_user_consent(
     *,
     chat_id: int,
@@ -1023,11 +1042,11 @@ async def has_user_consent(
 ) -> bool:
     """
     التحقق من موافقة المستخدم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         bool: True إذا كان لديه موافقة
     """
@@ -1040,6 +1059,7 @@ async def has_user_consent(
 # GIVE USER CONSENT (COMPATIBILITY)
 # ==============================================
 
+
 async def give_user_consent(
     *,
     chat_id: int,
@@ -1047,11 +1067,11 @@ async def give_user_consent(
 ) -> int:
     """
     منح موافقة المستخدم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف المستخدم
     """
@@ -1066,6 +1086,7 @@ async def give_user_consent(
 # REVOKE USER CONSENT (COMPATIBILITY)
 # ==============================================
 
+
 async def revoke_user_consent(
     *,
     chat_id: int,
@@ -1073,11 +1094,11 @@ async def revoke_user_consent(
 ) -> None:
     """
     إلغاء موافقة المستخدم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المستخدم
     """
@@ -1095,6 +1116,7 @@ async def revoke_user_consent(
 # UPDATE USER NAME (COMPATIBILITY)
 # ==============================================
 
+
 async def update_user_name(
     *,
     chat_id: int,
@@ -1103,12 +1125,12 @@ async def update_user_name(
 ) -> None:
     """
     تحديث اسم المستخدم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         customer_name: اسم العميل الجديد
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المستخدم
     """
@@ -1129,6 +1151,7 @@ async def update_user_name(
 # UPDATE USER PHONE (COMPATIBILITY)
 # ==============================================
 
+
 async def update_user_phone(
     *,
     chat_id: int,
@@ -1137,12 +1160,12 @@ async def update_user_phone(
 ) -> None:
     """
     تحديث رقم هاتف المستخدم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         customer_phone: رقم الهاتف الجديد
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المستخدم
     """

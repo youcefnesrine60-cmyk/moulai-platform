@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,11 +10,16 @@
 # وحدة فهم اللغة الطبيعية
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.agent.nlu.intent_classifier import (
     IntentClassifier,
     classify_intent,
     IntentResult,
-    EntityDict as IntentEntityDict,  
+    EntityDict as IntentEntityDict,
 )
 
 from app.agent.nlu.entity_extractor import (
@@ -35,7 +40,6 @@ __all__ = [
     "classify_intent",
     "IntentResult",
     "IntentEntityDict",
-    
     # Entity Extractor
     "EntityExtractor",
     "extract_entities",

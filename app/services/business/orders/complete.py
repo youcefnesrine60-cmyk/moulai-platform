@@ -1,6 +1,23 @@
-from app.repositories.orders_repo import lock_order
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDERS / COMPLETE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for complete.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.services.business.orders.constants import ALLOWED_TRANSITIONS
 from app.services.business.orders.transaction import transactional_order
+
 # ==============================================
 # 📦 ORDERS SERVICE - COMPLETE
 # إكمال الطلب (complete_order)
@@ -25,7 +42,9 @@ from app.services.business.orders.update import change_order_status
 # ==============================================
 
 # الحالات التي يمكن إكمالها
-COMPLETABLE_STATUSES = {state for state, targets in ALLOWED_TRANSITIONS.items() if "completed" in targets}
+COMPLETABLE_STATUSES = {
+    state for state, targets in ALLOWED_TRANSITIONS.items() if "completed" in targets
+}
 
 # الحالات التي لا يمكن إكمالها
 NON_COMPLETABLE_STATUSES = {"pending", "cancelled", "completed"}
@@ -34,6 +53,7 @@ NON_COMPLETABLE_STATUSES = {"pending", "cancelled", "completed"}
 # ==============================================
 # ✅ COMPLETE ORDER
 # ==============================================
+
 
 @transactional_order
 async def complete_order(
@@ -45,13 +65,13 @@ async def complete_order(
 ) -> None:
     """
     إكمال الطلب (تعيين الحالة إلى completed).
-    
+
     Args:
         order_id: معرف الطلب
         employee_id: معرف الموظف (اختياري)
         note: ملاحظة إضافية (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كانت حالة الطلب لا تسمح بالإكمال
@@ -122,7 +142,9 @@ async def complete_order(
     #     )
 
     # 4️⃣ تغيير حالة الطلب إلى completed
-    completion_note = note or f"تم إكمال الطلب بواسطة {'الموظف' if employee_id else 'النظام'}"
+    completion_note = (
+        note or f"تم إكمال الطلب بواسطة {'الموظف' if employee_id else 'النظام'}"
+    )
 
     await change_order_status(
         order_id=order_id,
@@ -146,6 +168,7 @@ async def complete_order(
 # ✅ COMPLETE ORDER WITH DELIVERY CONFIRMATION
 # ==============================================
 
+
 @transactional_order
 async def complete_order_with_delivery_confirmation(
     *,
@@ -156,13 +179,13 @@ async def complete_order_with_delivery_confirmation(
 ) -> None:
     """
     إكمال الطلب مع تأكيد التسليم (للطلبات التي تم توصيلها).
-    
+
     Args:
         order_id: معرف الطلب
         employee_id: معرف الموظف (اختياري)
         delivery_note: ملاحظة التسليم (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كانت حالة الطلب لا تسمح بالإكمال
@@ -203,8 +226,13 @@ async def complete_order_with_delivery_confirmation(
     # 3️⃣ إكمال الطلب مع ملاحظة التسليم
     note = delivery_note or "تم تسليم الطلب وتأكيد الاستلام"
 
-    await change_order_status(order_id=order_id, new_status="delivered",
-                              employee_id=employee_id, note=note, session=session)
+    await change_order_status(
+        order_id=order_id,
+        new_status="delivered",
+        employee_id=employee_id,
+        note=note,
+        session=session,
+    )
     await complete_order(
         order_id=order_id,
         employee_id=employee_id,
@@ -225,6 +253,7 @@ async def complete_order_with_delivery_confirmation(
 # ✅ BULK COMPLETE ORDERS
 # ==============================================
 
+
 @transactional_order
 async def bulk_complete_orders(
     *,
@@ -235,16 +264,16 @@ async def bulk_complete_orders(
 ) -> dict:
     """
     إكمال مجموعة من الطلبات دفعة واحدة.
-    
+
     Args:
         order_ids: قائمة معرفات الطلبات
         employee_id: معرف الموظف (اختياري)
         note: ملاحظة إضافية (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         dict: نتائج الإكمال (completed, failed)
-        
+
     Raises:
         ValidationError: إذا كانت القائمة فارغة
     """
@@ -284,10 +313,12 @@ async def bulk_complete_orders(
                     "error": str(e),
                 },
             )
-            results["failed"].append({
-                "order_id": order_id,
-                "error": str(e),
-            })
+            results["failed"].append(
+                {
+                    "order_id": order_id,
+                    "error": str(e),
+                }
+            )
 
         except Exception as e:
             logger.error(
@@ -297,10 +328,12 @@ async def bulk_complete_orders(
                     "error": str(e),
                 },
             )
-            results["failed"].append({
-                "order_id": order_id,
-                "error": f"خطأ غير متوقع: {str(e)}",
-            })
+            results["failed"].append(
+                {
+                    "order_id": order_id,
+                    "error": f"خطأ غير متوقع: {str(e)}",
+                }
+            )
 
     logger.info(
         "bulk_complete_orders_completed",
@@ -318,6 +351,7 @@ async def bulk_complete_orders(
 # ✅ CHECK IF ORDER CAN BE COMPLETED
 # ==============================================
 
+
 async def can_complete_order(
     *,
     order_id: int,
@@ -325,11 +359,11 @@ async def can_complete_order(
 ) -> bool:
     """
     التحقق مما إذا كان يمكن إكمال الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         bool: True إذا كان يمكن الإكمال، False إذا لم يكن
     """
@@ -357,7 +391,13 @@ async def can_complete_order(
 # 🔄 COMPATIBILITY FUNCTIONS
 # ==============================================
 
+
 # دالة التوافق مع الإصدار القديم
+# ==============================================
+# COMPLETE ORDER COMPAT
+# ==============================================
+
+
 async def complete_order_compat(
     *,
     order_id: int,
@@ -367,7 +407,7 @@ async def complete_order_compat(
 ) -> None:
     """
     دالة متوافقة مع الإصدار القديم (مغلفة).
-    
+
     Args:
         order_id: معرف الطلب
         employee_id: معرف الموظف (اختياري)

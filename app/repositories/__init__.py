@@ -5,6 +5,16 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# PACKAGE INITIALIZER - APP / REPOSITORIES /   INIT
+# Package initialization and public exports component.
+# ==============================================
+
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 # 🤖 Agent
 from app.repositories.agent import (
     AgentRepository,
@@ -31,19 +41,16 @@ from app.repositories.admin import (
     AdminSessionsRepository,
 )
 
-
 # ==============================================
 # 📤 EXPORTS
 # ==============================================
 
 __all__ = [
-
     # Agent
     "AgentRepository",
     "ChannelRepository",
     "ConversationRepository",
     "MessageRepository",
-
     # Restaurant
     "RestaurantRepository",
     "RestaurantBranchRepository",
@@ -51,8 +58,7 @@ __all__ = [
     "RestaurantGroupRepository",
     "RestaurantOrderCountersRepository",
     "RestaurantPaymentSettingsRepository",
-    #"RestaurantMenuRepository"
-
+    # "RestaurantMenuRepository"
     # Admin
     "AdminRepository",
     "AdminLogRepository",

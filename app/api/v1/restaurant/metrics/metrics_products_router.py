@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 📊 RESTAURANT METRICS ROUTER - PRODUCTS
 # نقاط نهاية مقاييس المنتجات
 # ==============================================
+
+"""MoulAI operational module for metrics products router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -26,7 +31,6 @@ from app.repositories.products_repo import ProductRepository
 from app.schemas.restaurant.restaurant_metric import ProductMetrics
 from app.services.business.restaurant.metrics.service import RestaurantMetricsService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -40,6 +44,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_metrics_service(
     session: AsyncSession = Depends(get_db),
@@ -55,6 +60,7 @@ async def get_metrics_service(
 # ==============================================
 # GET PRODUCT METRICS
 # ==============================================
+
 
 @router.get(
     "/{restaurant_id}/products",
@@ -75,7 +81,7 @@ async def get_product_metrics(
 
     try:
         # الحصول على المقاييس
-        metrics = await service.get_metrics(restaurant_id=restaurant_id)
+        await service.get_metrics(restaurant_id=restaurant_id)
 
         # جلب المنتجات الفعلية لحساب الأسعار
         product_repo = ProductRepository(service.session)

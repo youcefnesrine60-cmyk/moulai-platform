@@ -1,7 +1,19 @@
 # ==============================================
-# 🍽️ RESTAURANT STEP
-# معالجة رسائل المستخدم أثناء اختيار المطعم
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CUSTOMER_HANDLER / RESTAURANT STEP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for restaurant step.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -20,7 +32,6 @@ from app.repositories.products_repo import ProductRepository
 
 from app.states.customer_states import CustomerStates
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -32,6 +43,7 @@ StateData = Dict[str, Any]
 # 🍽️ HANDLE RESTAURANT STEP
 # ==============================================
 
+
 async def handle_restaurant_step(
     *,
     chat_id: int,
@@ -40,14 +52,14 @@ async def handle_restaurant_step(
 ) -> None:
     """
     معالجة رسائل المستخدم في مرحلة اختيار المطعم.
-    
+
     يقوم المستخدم بإدخال رقم المطعم، ثم نقوم بـ:
     1. التحقق من صحة الرقم
     2. جلب بيانات المطعم من قاعدة البيانات
     3. جلب قائمة المنتجات الخاصة بالمطعم
     4. حفظ البيانات في الحالة
     5. عرض قائمة المنتجات للمستخدم
-    
+
     Args:
         chat_id: معرف المستخدم
         text: النص المرسل (رقم المطعم)
@@ -134,6 +146,7 @@ async def handle_restaurant_step(
 # 🛠️ PRIVATE HELPERS
 # ==========================================
 
+
 async def _parse_restaurant_id(
     *,
     chat_id: int,
@@ -141,11 +154,11 @@ async def _parse_restaurant_id(
 ) -> Optional[int]:
     """
     تحويل النص إلى رقم مطعم والتحقق من صحته.
-    
+
     Args:
         chat_id: معرف المستخدم
         text: النص المرسل
-        
+
     Returns:
         رقم المطعم أو None إذا كان غير صالح
     """
@@ -169,6 +182,11 @@ async def _parse_restaurant_id(
         return None
 
 
+# ==============================================
+#  HANDLE RESTAURANT NOT FOUND
+# ==============================================
+
+
 async def _handle_restaurant_not_found(
     *,
     chat_id: int,
@@ -176,7 +194,7 @@ async def _handle_restaurant_not_found(
 ) -> None:
     """
     معالجة حالة عدم وجود المطعم.
-    
+
     Args:
         chat_id: معرف المستخدم
         restaurant_id: رقم المطعم
@@ -196,6 +214,11 @@ async def _handle_restaurant_not_found(
     )
 
 
+# ==============================================
+#  SAVE RESTAURANT STATE
+# ==============================================
+
+
 async def _save_restaurant_state(
     *,
     chat_id: int,
@@ -205,7 +228,7 @@ async def _save_restaurant_state(
 ) -> None:
     """
     حفظ بيانات المطعم والمنتجات في حالة المستخدم.
-    
+
     Args:
         chat_id: معرف المستخدم
         restaurant: كائن المطعم
@@ -235,6 +258,11 @@ async def _save_restaurant_state(
     )
 
 
+# ==============================================
+#  SHOW PRODUCTS LIST
+# ==============================================
+
+
 async def _show_products_list(
     *,
     chat_id: int,
@@ -243,22 +271,18 @@ async def _show_products_list(
 ) -> None:
     """
     عرض قائمة المنتجات للمستخدم.
-    
+
     Args:
         chat_id: معرف المستخدم
         restaurant: كائن المطعم
         products: قائمة المنتجات
     """
     if not products:
-        text_message = (
-            f"🍔 {restaurant.name}\n\n"
-            f"⚠️ لا توجد منتجات متاحة حالياً."
-        )
+        text_message = f"🍔 {restaurant.name}\n\n" f"⚠️ لا توجد منتجات متاحة حالياً."
     else:
         # بناء قائمة المنتجات بشكل منظم
         products_text = "\n".join(
-            f"{idx}. {p.name} - {p.price} دج"
-            for idx, p in enumerate(products, 1)
+            f"{idx}. {p.name} - {p.price} دج" for idx, p in enumerate(products, 1)
         )
 
         text_message = (

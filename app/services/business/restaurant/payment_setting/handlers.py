@@ -10,26 +10,36 @@
 # معالجات أحداث إعدادات الدفع
 # ==============================================
 
+"""MoulAI operational module for handlers.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.logger import logger
-from app.services.business.restaurant.payment_setting.service import RestaurantPaymentSettingsService
-
+from app.services.business.restaurant.payment_setting.service import (
+    RestaurantPaymentSettingsService,
+)
 
 # ==============================================
 # 🏦 PAYMENT SETTINGS EVENT HANDLERS
 # ==============================================
 
+
 class PaymentSettingsEventHandlers:
     """
     معالجات أحداث إعدادات الدفع للمطعم.
-    
+
     تتعامل مع عمليات إنشاء وتحديث وحذف إعدادات الدفع.
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         service: خدمة إعدادات الدفع
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -37,7 +47,7 @@ class PaymentSettingsEventHandlers:
     ) -> None:
         """
         تهيئة معالجات الأحداث.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """

@@ -1,3 +1,20 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# TEST MODULE - TESTS / TEST ORDERS API AUTH
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test orders api auth.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
@@ -16,21 +33,42 @@ from app.core.config import settings
 
 
 class ScalarResult:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self, value):
         self.value = value
+
+    # ==============================================
+    # SCALAR ONE OR NONE
+    # ==============================================
 
     def scalar_one_or_none(self):
         return self.value
 
 
 class FakeSession:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self, result):
         self.result = result
         self.statements = []
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(self, statement):
         self.statements.append(statement)
         return ScalarResult(self.result)
+
+
+# ==============================================
+# OWNER AUTH SETTINGS
+# ==============================================
 
 
 def owner_auth_settings(monkeypatch):
@@ -43,6 +81,11 @@ def owner_auth_settings(monkeypatch):
     )
 
 
+# ==============================================
+# TEST ORDERS AUTHENTICATION FAILS CLOSED WITHOUT BEARER TOKEN
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_orders_authentication_fails_closed_without_bearer_token():
     with pytest.raises(HTTPException) as exc_info:
@@ -52,8 +95,15 @@ async def test_orders_authentication_fails_closed_without_bearer_token():
     assert exc_info.value.headers["WWW-Authenticate"] == "Bearer"
 
 
+# ==============================================
+# TEST ORDERS AUTHENTICATION FAILS CLOSED WITHOUT OIDC CONFIGURATION
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_orders_authentication_fails_closed_without_oidc_configuration(monkeypatch):
+async def test_orders_authentication_fails_closed_without_oidc_configuration(
+    monkeypatch,
+):
     monkeypatch.setattr(settings, "OIDC_ISSUER", None)
     monkeypatch.setattr(settings, "OIDC_AUDIENCE", None)
     monkeypatch.setattr(settings, "OIDC_JWKS_URL", None)
@@ -63,6 +113,11 @@ async def test_orders_authentication_fails_closed_without_oidc_configuration(mon
         await auth.get_current_owner(credentials=credentials, session=FakeSession(None))
 
     assert exc_info.value.status_code == 503
+
+
+# ==============================================
+# TEST CURRENT OWNER REQUIRES VERIFIED OIDC CLAIMS AND MAPS SUBJECT
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -104,15 +159,22 @@ async def test_current_owner_requires_verified_oidc_claims_and_maps_subject(
     assert "idp|owner-314" in session.statements[0].compile().params.values()
 
 
+# ==============================================
+# TEST CURRENT OWNER REJECTS INVALID TOKEN
+# ==============================================
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("failure", ["signature", "issuer", "audience", "expiry"])
 async def test_current_owner_rejects_invalid_token(monkeypatch, failure):
     owner_auth_settings(monkeypatch)
     signing_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     other_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    jwks = SimpleNamespace(get_signing_key_from_jwt=lambda _: SimpleNamespace(
-        key=signing_key.public_key(),
-    ))
+    jwks = SimpleNamespace(
+        get_signing_key_from_jwt=lambda _: SimpleNamespace(
+            key=signing_key.public_key(),
+        )
+    )
     monkeypatch.setattr(auth, "_get_jwks_client", lambda _: jwks)
     claims = {
         "iss": "https://identity.example.com/",
@@ -144,6 +206,11 @@ async def test_current_owner_rejects_invalid_token(monkeypatch, failure):
         )
 
     assert exc_info.value.status_code == 401
+
+
+# ==============================================
+# TEST CURRENT OWNER REJECTS SUBJECT WITHOUT OWNER MAPPING
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -178,6 +245,11 @@ async def test_current_owner_rejects_subject_without_owner_mapping(monkeypatch):
     assert exc_info.value.status_code == 403
 
 
+# ==============================================
+# TEST OWNED RESTAURANT QUERY IS BOUND TO OWNER
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_owned_restaurant_query_is_bound_to_owner():
     session = FakeSession(result=18)
@@ -191,6 +263,11 @@ async def test_owned_restaurant_query_is_bound_to_owner():
     compiled = statement.compile()
     assert "restaurants.owner_id" in str(compiled)
     assert {18, 314}.issubset(set(compiled.params.values()))
+
+
+# ==============================================
+# TEST OTHER OWNERS RESTAURANT IS NOT FOUND
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -207,6 +284,11 @@ async def test_other_owners_restaurant_is_not_found():
     assert exc_info.value.status_code == 404
 
 
+# ==============================================
+# TEST OWNED ORDER QUERY JOINS THROUGH RESTAURANT OWNER
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_owned_order_query_joins_through_restaurant_owner():
     session = FakeSession(result=91)
@@ -221,6 +303,11 @@ async def test_owned_order_query_joins_through_restaurant_owner():
     assert "orders.restaurant_id = restaurants.id" in str(compiled)
     assert "restaurants.owner_id" in str(compiled)
     assert {91, 314}.issubset(set(compiled.params.values()))
+
+
+# ==============================================
+# TEST OWNED ORDER ITEM QUERY JOINS THROUGH ORDER AND RESTAURANT
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -240,14 +327,15 @@ async def test_owned_order_item_query_joins_through_order_and_restaurant():
     assert {72, 314}.issubset(set(compiled.params.values()))
 
 
+# ==============================================
+# TEST EVERY ORDERS ROUTE REQUIRES AUTHENTICATED OWNER
+# ==============================================
+
+
 def test_every_orders_route_requires_authenticated_owner():
     routes = []
     for router in (orders.router, order_items.router):
-        routes.extend(
-            route
-            for route in router.routes
-            if isinstance(route, APIRoute)
-        )
+        routes.extend(route for route in router.routes if isinstance(route, APIRoute))
 
     assert routes
     for route in routes:
@@ -255,6 +343,11 @@ def test_every_orders_route_requires_authenticated_owner():
             dependency.call is auth.get_current_owner
             for dependency in route.dependant.dependencies
         ), route.path
+
+
+# ==============================================
+# TEST ORDERS HTTP ENDPOINT REJECTS REQUESTS WITHOUT BEARER TOKEN
+# ==============================================
 
 
 def test_orders_http_endpoint_rejects_requests_without_bearer_token():

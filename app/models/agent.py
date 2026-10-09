@@ -11,7 +11,12 @@
 # يدير الوكلاء والقنوات والمحادثات والرسائل
 # ==============================================
 
-from typing import Any, Dict, Optional
+"""MoulAI operational module for agent.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+from typing import Any, Dict
 
 from sqlalchemy import (
     Boolean,
@@ -37,16 +42,17 @@ JSONDict = Dict[str, Any]
 # 🤖 AGENT
 # ==============================================
 
+
 class Agent(BaseModel):
     """
     نموذج الوكيل الذكي - قلب المنصة
-    
+
     يدير:
         - إعدادات الوكيل الأساسية (الاسم، اللغة، النبرة)
         - إعدادات الذكاء الاصطناعي (النموذج، درجة الحرارة)
         - حالة النشاط
         - العلاقات مع المطعم والقنوات والمحادثات
-    
+
     Attributes:
         restaurant_id: معرف المطعم (ForeignKey)
         name: اسم الوكيل
@@ -60,12 +66,13 @@ class Agent(BaseModel):
         channels: قائمة القنوات
         conversations: قائمة المحادثات
     """
+
     __tablename__ = "agents"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     restaurant_id = Column(
         Integer,
         ForeignKey("restaurants.id", ondelete="CASCADE"),
@@ -97,11 +104,11 @@ class Agent(BaseModel):
         default=True,
         comment="حالة النشاط",
     )
-    
+
     # ==========================================
     # ⚙️ CONFIGURATIONS
     # ==========================================
-    
+
     config = Column(
         JSON,
         default={
@@ -123,11 +130,11 @@ class Agent(BaseModel):
         },
         comment="إعدادات الذكاء الاصطناعي",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     restaurant = relationship(
         "Restaurant",
         back_populates="agents",
@@ -148,15 +155,15 @@ class Agent(BaseModel):
         lazy="selectin",
         # comment="قائمة المحادثات",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والاسم ومعرف المطعم
         """
@@ -167,16 +174,17 @@ class Agent(BaseModel):
 # 📡 CHANNEL
 # ==============================================
 
+
 class Channel(BaseModel):
     """
     نموذج القناة - للتواصل مع العملاء
-    
+
     يدير:
         - نوع القناة (telegram, whatsapp, web, messenger, api)
         - إعدادات القناة (webhook, token, phone)
         - حالة النشاط
         - العلاقات مع الوكيل والمحادثات
-    
+
     Attributes:
         agent_id: معرف الوكيل (ForeignKey)
         type: نوع القناة
@@ -186,12 +194,13 @@ class Channel(BaseModel):
         agent: علاقة مع نموذج Agent
         conversations: قائمة المحادثات
     """
+
     __tablename__ = "channels"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     agent_id = Column(
         Integer,
         ForeignKey("agents.id", ondelete="CASCADE"),
@@ -213,11 +222,11 @@ class Channel(BaseModel):
         default=True,
         comment="حالة النشاط",
     )
-    
+
     # ==========================================
     # ⚙️ CONFIGURATIONS
     # ==========================================
-    
+
     config = Column(
         JSON,
         default={
@@ -227,11 +236,11 @@ class Channel(BaseModel):
         },
         comment="إعدادات القناة",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     agent = relationship(
         "Agent",
         back_populates="channels",
@@ -245,15 +254,15 @@ class Channel(BaseModel):
         lazy="selectin",
         # comment="قائمة المحادثات",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والنوع ومعرف الوكيل
         """
@@ -264,16 +273,17 @@ class Channel(BaseModel):
 # 💬 CONVERSATION
 # ==============================================
 
+
 class Conversation(BaseModel):
     """
     نموذج المحادثة - تتبع التفاعلات
-    
+
     يدير:
         - بيانات المستخدم (user_id, user_name)
         - سياق المحادثة (الطلب الحالي، الخطوة، النوايا)
         - حالة النشاط
         - العلاقات مع الوكيل والقناة والرسائل
-    
+
     Attributes:
         agent_id: معرف الوكيل (ForeignKey)
         channel_id: معرف القناة (ForeignKey)
@@ -285,12 +295,13 @@ class Conversation(BaseModel):
         channel: علاقة مع نموذج Channel
         messages: قائمة الرسائل
     """
+
     __tablename__ = "conversations"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     agent_id = Column(
         Integer,
         ForeignKey("agents.id", ondelete="CASCADE"),
@@ -317,11 +328,11 @@ class Conversation(BaseModel):
         default=True,
         comment="حالة النشاط",
     )
-    
+
     # ==========================================
     # 📊 CONTEXT
     # ==========================================
-    
+
     context = Column(
         JSON,
         default={
@@ -333,11 +344,11 @@ class Conversation(BaseModel):
         },
         comment="سياق المحادثة",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     agent = relationship(
         "Agent",
         back_populates="conversations",
@@ -357,15 +368,15 @@ class Conversation(BaseModel):
         lazy="selectin",
         # comment="قائمة الرسائل",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف ومعرف المستخدم ومعرف الوكيل
         """
@@ -376,16 +387,17 @@ class Conversation(BaseModel):
 # 💬 MESSAGE
 # ==============================================
 
+
 class Message(BaseModel):
     """
     نموذج الرسالة - تتبع كل رسالة
-    
+
     يدير:
         - محتوى الرسالة ودور المرسل (user, assistant, system)
         - تحليل الرسالة (النوايا، الثقة، الكيانات)
         - البيانات الوصفية
         - العلاقة مع المحادثة
-    
+
     Attributes:
         conversation_id: معرف المحادثة (ForeignKey)
         role: دور المرسل (user, assistant, system)
@@ -396,12 +408,13 @@ class Message(BaseModel):
         meta_data: بيانات وصفية (JSON)
         conversation: علاقة مع نموذج Conversation
     """
+
     __tablename__ = "messages"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     conversation_id = Column(
         Integer,
         ForeignKey("conversations.id", ondelete="CASCADE"),
@@ -418,11 +431,11 @@ class Message(BaseModel):
         nullable=False,
         comment="محتوى الرسالة",
     )
-    
+
     # ==========================================
     # 🧠 ANALYSIS
     # ==========================================
-    
+
     intent = Column(
         String(100),
         comment="نية الرسالة",
@@ -436,36 +449,36 @@ class Message(BaseModel):
         default={},
         comment="الكيانات المستخرجة",
     )
-    
+
     # ==========================================
     # 📊 meta_data
     # ==========================================
-    
+
     meta_data = Column(
         JSON,
         default={},
         comment="بيانات وصفية",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     conversation = relationship(
         "Conversation",
         back_populates="messages",
         lazy="selectin",
         # comment="المحادثة",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والدور والنية
         """

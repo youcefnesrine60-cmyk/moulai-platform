@@ -9,6 +9,11 @@
 # 👑 CREATE INITIAL ADMIN
 # ==============================================
 
+"""Operational maintenance script for create admin.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import asyncio
 import os
 import sys
@@ -18,6 +23,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.db import init_db, execute, fetchrow
 from app.core.logger import logger
+
+# ==============================================
+# CREATE ADMIN
+# ==============================================
 
 
 async def create_admin():
@@ -30,14 +39,12 @@ async def create_admin():
     # 🔍 التحقق من وجود المسؤول
     # ==========================================
 
-    existing = await fetchrow(
-        """
+    existing = await fetchrow("""
         SELECT id, chat_id, username
         FROM admins
         WHERE username = 'admin'
         LIMIT 1
-        """
-    )
+        """)
 
     if existing:
         logger.info(

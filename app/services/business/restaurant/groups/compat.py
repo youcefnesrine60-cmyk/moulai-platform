@@ -10,6 +10,11 @@
 # دوال متوافقة مع الاستيرادات القديمة
 # ==============================================
 
+"""MoulAI operational module for compat.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -41,6 +46,7 @@ from app.services.business.restaurant.groups.service import (
 # ==============================================
 # CREATE GROUP
 # ==============================================
+
 
 async def create_group(
     *,
@@ -77,6 +83,7 @@ async def create_group(
 # GET GROUP
 # ==============================================
 
+
 async def get_group(
     *,
     group_id: int,
@@ -104,6 +111,7 @@ async def get_group(
 # ==============================================
 # GET GROUPS BY OWNER
 # ==============================================
+
 
 async def get_groups_by_owner(
     *,
@@ -137,6 +145,7 @@ async def get_groups_by_owner(
 # UPDATE GROUP
 # ==============================================
 
+
 async def update_group(
     *,
     group_id: int,
@@ -165,6 +174,7 @@ async def update_group(
 # DELETE GROUP
 # ==============================================
 
+
 async def delete_group(
     *,
     group_id: int,
@@ -190,6 +200,7 @@ async def delete_group(
 # ==============================================
 # TOGGLE GROUP ACTIVE
 # ==============================================
+
 
 async def toggle_group_active(
     *,
@@ -217,6 +228,7 @@ async def toggle_group_active(
 # ==============================================
 # ADD BRANCHES TO GROUP
 # ==============================================
+
 
 async def add_branches_to_group(
     *,
@@ -250,6 +262,7 @@ async def add_branches_to_group(
 # ==============================================
 # REMOVE BRANCH FROM GROUP
 # ==============================================
+
 
 async def remove_branch_from_group(
     *,
@@ -285,7 +298,6 @@ __all__ = [
     "update_group",
     "delete_group",
     "toggle_group_active",
-
     # Branch Operations
     "add_branches_to_group",
     "remove_branch_from_group",

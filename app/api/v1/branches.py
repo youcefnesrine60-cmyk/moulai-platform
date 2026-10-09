@@ -1,8 +1,19 @@
 # ==============================================
-# 🏢 BRANCHES API
-# نقاط نهاية API للفروع
-# تدير عمليات إنشاء واستعراض وتحديث وحذف الفروع
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / API / V1 / BRANCHES
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for branches.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional
 
@@ -57,15 +68,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_branch_service(
     session: AsyncSession = Depends(get_db),
 ) -> BranchService:
     """
     الحصول على خدمة الفروع.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         BranchService: مثيل من BranchService
     """
@@ -79,6 +91,7 @@ async def get_branch_service(
 # ==============================================
 # LIST BRANCHES
 # ==============================================
+
 
 @router.get(
     "/",
@@ -123,7 +136,7 @@ async def list_branches(
 ) -> BranchListResponse:
     """
     الحصول على قائمة الفروع.
-    
+
     Args:
         restaurant_id: معرف المطعم للتصفية
         wilaya: الولاية للتصفية
@@ -132,7 +145,7 @@ async def list_branches(
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة الفروع
-        
+
     Returns:
         BranchListResponse: قائمة الفروع مع الإحصائيات
     """
@@ -194,9 +207,9 @@ async def list_branches(
                 filters=filters,
                 order_by="name",
             )
-            
+
             total = await service.repo.count(filters=filters)
-            
+
             result = BranchListResponse(
                 items=[BranchResponse.model_validate(b) for b in branches],
                 total=total,
@@ -230,6 +243,7 @@ async def list_branches(
 # GET BRANCH BY ID
 # ==============================================
 
+
 @router.get(
     "/{branch_id}",
     response_model=BranchResponse,
@@ -243,14 +257,14 @@ async def get_branch(
 ) -> BranchResponse:
     """
     الحصول على فرع بالمعرف.
-    
+
     Args:
         branch_id: معرف الفرع
         service: خدمة الفروع
-        
+
     Returns:
         BranchResponse: الفرع المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الفرع
     """
@@ -293,6 +307,7 @@ async def get_branch(
 # CREATE BRANCH
 # ==============================================
 
+
 @router.post(
     "/",
     response_model=BranchResponse,
@@ -312,15 +327,15 @@ async def create_branch(
 ) -> BranchResponse:
     """
     إنشاء فرع جديد.
-    
+
     Args:
         data: بيانات الفرع
         restaurant_id: معرف المطعم
         service: خدمة الفروع
-        
+
     Returns:
         BranchResponse: الفرع المنشأ
-        
+
     Raises:
         HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
@@ -394,6 +409,7 @@ async def create_branch(
 # UPDATE BRANCH
 # ==============================================
 
+
 @router.patch(
     "/{branch_id}",
     response_model=BranchResponse,
@@ -408,15 +424,15 @@ async def update_branch(
 ) -> BranchResponse:
     """
     تحديث فرع موجود.
-    
+
     Args:
         branch_id: معرف الفرع
         data: بيانات التحديث
         service: خدمة الفروع
-        
+
     Returns:
         BranchResponse: الفرع المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الفرع أو حدث تعارض
     """
@@ -489,6 +505,7 @@ async def update_branch(
 # UPDATE BRANCH STATUS
 # ==============================================
 
+
 @router.patch(
     "/{branch_id}/status",
     response_model=BranchResponse,
@@ -503,15 +520,15 @@ async def update_branch_status(
 ) -> BranchResponse:
     """
     تحديث حالة الفرع.
-    
+
     Args:
         branch_id: معرف الفرع
         data: بيانات تحديث الحالة
         service: خدمة الفروع
-        
+
     Returns:
         BranchResponse: الفرع المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الفرع
     """
@@ -560,6 +577,7 @@ async def update_branch_status(
 # ACTIVATE BRANCH
 # ==============================================
 
+
 @router.post(
     "/{branch_id}/activate",
     response_model=BranchResponse,
@@ -573,14 +591,14 @@ async def activate_branch(
 ) -> BranchResponse:
     """
     تفعيل فرع.
-    
+
     Args:
         branch_id: معرف الفرع
         service: خدمة الفروع
-        
+
     Returns:
         BranchResponse: الفرع المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الفرع
     """
@@ -623,6 +641,7 @@ async def activate_branch(
 # DEACTIVATE BRANCH
 # ==============================================
 
+
 @router.post(
     "/{branch_id}/deactivate",
     response_model=BranchResponse,
@@ -636,14 +655,14 @@ async def deactivate_branch(
 ) -> BranchResponse:
     """
     إلغاء تفعيل فرع.
-    
+
     Args:
         branch_id: معرف الفرع
         service: خدمة الفروع
-        
+
     Returns:
         BranchResponse: الفرع المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الفرع
     """
@@ -686,6 +705,7 @@ async def deactivate_branch(
 # DELETE BRANCH
 # ==============================================
 
+
 @router.delete(
     "/{branch_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -703,12 +723,12 @@ async def delete_branch(
 ) -> None:
     """
     حذف فرع.
-    
+
     Args:
         branch_id: معرف الفرع
         permanent: حذف نهائي
         service: خدمة الفروع
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الفرع
     """
@@ -776,6 +796,7 @@ async def delete_branch(
 # GET BRANCH SUMMARY
 # ==============================================
 
+
 @router.get(
     "/stats/summary",
     response_model=BranchSummary,
@@ -793,14 +814,14 @@ async def get_branch_summary(
 ) -> BranchSummary:
     """
     الحصول على ملخص الفروع.
-    
+
     Args:
         restaurant_id: معرف المطعم
         service: خدمة الفروع
-        
+
     Returns:
         BranchSummary: ملخص الفروع
-        
+
     Raises:
         HTTPException: إذا حدث خطأ
     """
@@ -845,6 +866,7 @@ async def get_branch_summary(
 # GET RESTAURANT BRANCHES
 # ==============================================
 
+
 @router.get(
     "/restaurant/{restaurant_id}",
     response_model=BranchListResponse,
@@ -873,14 +895,14 @@ async def get_restaurant_branches(
 ) -> BranchListResponse:
     """
     الحصول على فروع مطعم معين.
-    
+
     Args:
         restaurant_id: معرف المطعم
         only_active: جلب الفروع النشطة فقط
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة الفروع
-        
+
     Returns:
         BranchListResponse: قائمة الفروع مع الإحصائيات
     """
@@ -921,6 +943,7 @@ async def get_restaurant_branches(
 # GET BRANCH COST
 # ==============================================
 
+
 @router.get(
     "/{branch_id}/cost",
     summary="تكلفة الفرع",
@@ -933,14 +956,14 @@ async def get_branch_cost(
 ) -> BranchCostResponse:
     """
     الحصول على تكلفة الفرع.
-    
+
     Args:
         branch_id: معرف الفرع
         service: خدمة الفروع
-        
+
     Returns:
         BranchCostResponse: تفاصيل تكلفة الفرع
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الفرع
     """

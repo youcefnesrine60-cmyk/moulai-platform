@@ -1,3 +1,15 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# DATABASE MIGRATION - ALEMBIC / VERSIONS / 2026 08 15 14 01 15 ADD UPDATED AT TO REMAINING TABLES
+# Database migration and schema management component.
+# ==============================================
+
 """add_updated_at_to_remaining_tables
 
 Revision ID: 888e43fc4f9b
@@ -19,17 +31,22 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+# ==============================================
+# UPGRADE
+# ==============================================
+
+
 def upgrade() -> None:
     """
     إضافة عمود updated_at إلى الجداول المتبقية (مع التحقق من الوجود).
     """
     conn = op.get_bind()
     inspector = inspect(conn)
-    
+
     # ==========================================
     # 📊 الجداول التي تحتاج إلى updated_at
     # ==========================================
-    
+
     tables_to_update = [
         "branches",
         "payments",
@@ -65,20 +82,20 @@ def upgrade() -> None:
         "conversations",
         "messages",
     ]
-    
+
     # ==========================================
     # 🔄 إضافة العمود مع التحقق من الوجود
     # ==========================================
-    
+
     for table_name in tables_to_update:
         # ✅ التحقق من وجود الجدول
         if not inspector.has_table(table_name):
             print(f"[INFO] Table '{table_name}' does not exist, skipping")
             continue
-        
+
         # ✅ التحقق من وجود العمود
         columns = [col["name"] for col in inspector.get_columns(table_name)]
-        
+
         if "updated_at" not in columns:
             # ✅ إضافة العمود
             op.add_column(
@@ -89,11 +106,16 @@ def upgrade() -> None:
                     nullable=True,
                     server_default=sa.text("now()"),
                     comment="تاريخ ووقت آخر تحديث",
-                )
+                ),
             )
             print(f"[OK] Added 'updated_at' to '{table_name}'")
         else:
             print(f"[INFO] 'updated_at' already exists in '{table_name}', skipping")
+
+
+# ==============================================
+# DOWNGRADE
+# ==============================================
 
 
 def downgrade() -> None:
@@ -102,7 +124,7 @@ def downgrade() -> None:
     """
     conn = op.get_bind()
     inspector = inspect(conn)
-    
+
     tables_to_update = [
         "branches",
         "payments",
@@ -138,13 +160,13 @@ def downgrade() -> None:
         "conversations",
         "messages",
     ]
-    
+
     for table_name in tables_to_update:
         if not inspector.has_table(table_name):
             continue
-        
+
         columns = [col["name"] for col in inspector.get_columns(table_name)]
-        
+
         if "updated_at" in columns:
             op.drop_column(table_name, "updated_at")
             print(f"[OK] Dropped 'updated_at' from '{table_name}'")

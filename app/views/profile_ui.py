@@ -1,7 +1,19 @@
 # ==============================================
-# 👤 PROFILE UI
-# عرض وتعديل بيانات المستخدم
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / VIEWS / PROFILE UI
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for profile ui.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.views.ui import button
@@ -10,6 +22,7 @@ from app.views.ui import button
 # 👤 PROFILE UI
 # ==============================================
 
+
 async def profile_ui(
     *,
     user_data: dict,
@@ -17,11 +30,11 @@ async def profile_ui(
 ) -> dict:
     """
     بناء واجهة عرض الملف الشخصي
-    
+
     Args:
         user_data: بيانات المستخدم
         role: دور المستخدم (customer, owner, admin)
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -98,6 +111,7 @@ async def profile_ui(
 # ✏️ PROFILE EDIT UI
 # ==============================================
 
+
 async def profile_edit_ui(
     *,
     field: str,
@@ -105,11 +119,11 @@ async def profile_edit_ui(
 ) -> dict:
     """
     بناء واجهة تعديل حقل معين في الملف الشخصي
-    
+
     Args:
         field: اسم الحقل المراد تعديله
         current_value: القيمة الحالية
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """

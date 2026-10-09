@@ -1,6 +1,24 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDERS / CUSTOMER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for customer.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.services.business.orders.pricing import item_total
 from app.services.business.orders.update import transition_locked_order
 from app.services.business.orders.transaction import transactional_order
+
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -23,7 +41,7 @@ from sqlalchemy.sql import Select
 from app.core.logger import logger
 from app.core.exceptions import NotFoundError, ValidationError
 from app.models.order import Order
-from app.models.order_item import OrderItem, OrderStatusHistory
+from app.models.order_item import OrderItem
 from app.models.user import User
 from app.services.business.orders.pricing import validate_quantity
 from app.services.business.orders.totals import compute_order_totals
@@ -46,6 +64,12 @@ Quantity = int
 # استعلام أساسي لجلب الطلبات مع ربط المستخدم
 # ==============================================
 
+
+# ==============================================
+#  BASE ORDER SELECT
+# ==============================================
+
+
 def _base_order_select() -> Select:
     """
     بناء استعلام أساسي لجلب الطلبات مع ربط المستخدم.
@@ -60,6 +84,12 @@ def _base_order_select() -> Select:
 # 📦 GET CUSTOMER ORDER
 # جلب طلب العميل بواسطة مرجع الطلب
 # ==============================================
+
+
+# ==============================================
+# GET CUSTOMER ORDER
+# ==============================================
+
 
 async def get_customer_order(
     *,
@@ -90,12 +120,12 @@ async def get_customer_order(
         conditions.append(Order.id == int(reference))
 
     statement = (
-        _base_order_select()
-        .where(User.chat_id == chat_id, or_(*conditions))
-        .limit(1)
+        _base_order_select().where(User.chat_id == chat_id, or_(*conditions)).limit(1)
     )
     if lock:
-        statement = statement.with_for_update(of=Order).execution_options(populate_existing=True)
+        statement = statement.with_for_update(of=Order).execution_options(
+            populate_existing=True
+        )
     if restaurant_id is not None:
         statement = statement.where(Order.restaurant_id == restaurant_id)
 
@@ -107,6 +137,12 @@ async def get_customer_order(
 # ❌ CANCEL CUSTOMER ORDER
 # إلغاء طلب العميل مع تسجيل سبب الإلغاء
 # ==============================================
+
+
+# ==============================================
+# CANCEL CUSTOMER ORDER
+# ==============================================
+
 
 @transactional_order
 async def cancel_customer_order(
@@ -154,7 +190,9 @@ async def cancel_customer_order(
 
     previous_status = order.status
     await transition_locked_order(
-        order=order, new_status="cancelled", session=session,
+        order=order,
+        new_status="cancelled",
+        session=session,
         note=reason or "Cancelled by customer via agent",
     )
 
@@ -175,6 +213,12 @@ async def cancel_customer_order(
 # ✏️ CHANGE CUSTOMER ORDER ITEM QUANTITY
 # تعديل كمية عنصر في طلب العميل
 # ==============================================
+
+
+# ==============================================
+# CHANGE CUSTOMER ORDER ITEM QUANTITY
+# ==============================================
+
 
 @transactional_order
 async def change_customer_order_item_quantity(
@@ -259,14 +303,15 @@ async def change_customer_order_item_quantity(
     item = matching_items[0]
     item.quantity = quantity
     item.total_price = item_total(item.unit_price, quantity)
-    subtotal = round(
-        sum(float(order_item.total_price) for order_item in items), 2
-    )
+    subtotal = round(sum(float(order_item.total_price) for order_item in items), 2)
     discount = float(order.discount_amount or 0)
     tax = float(order.tax_amount or 0)
     delivery = float(order.delivery_amount or 0)
     totals = compute_order_totals(
-        subtotal=subtotal, discount=discount, tax=tax, delivery=delivery,
+        subtotal=subtotal,
+        discount=discount,
+        tax=tax,
+        delivery=delivery,
     )
     order.subtotal_amount, order.total_amount = totals[0], totals[4]
     await session.flush()

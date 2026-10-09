@@ -10,6 +10,11 @@
 # نماذج Pydantic لسجل أنشطة المديرين
 # ==============================================
 
+"""MoulAI operational module for admin log.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,10 +43,11 @@ AdminLogListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class AdminLogBase(BaseModel):
     """
     المخطط الأساسي لسجل أنشطة المدير.
-    
+
     Attributes:
         admin_id: معرف المدير
         action: نوع الإجراء
@@ -52,6 +57,7 @@ class AdminLogBase(BaseModel):
         ip_address: عنوان IP (اختياري)
         user_agent: متصفح المدير (اختياري)
     """
+
     admin_id: int = Field(
         ...,
         description="معرف المدير",
@@ -102,13 +108,13 @@ class AdminLogBase(BaseModel):
     def validate_action(cls, value: str) -> str:
         """
         التحقق من صحة نوع الإجراء.
-        
+
         Args:
             value: نوع الإجراء
-            
+
         Returns:
             str: نوع الإجراء بعد التحقق
-            
+
         Raises:
             ValueError: إذا كان نوع الإجراء غير صحيح
         """
@@ -144,10 +150,11 @@ class AdminLogBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class AdminLogCreate(BaseModel):
     """
     مخطط إنشاء سجل نشاط جديد.
-    
+
     Attributes:
         admin_id: معرف المدير
         action: نوع الإجراء
@@ -157,6 +164,7 @@ class AdminLogCreate(BaseModel):
         ip_address: عنوان IP (اختياري)
         user_agent: متصفح المدير (اختياري)
     """
+
     admin_id: int = Field(
         ...,
         description="معرف المدير",
@@ -208,13 +216,13 @@ class AdminLogCreate(BaseModel):
     def validate_action(cls, value: str) -> str:
         """
         التحقق من صحة نوع الإجراء.
-        
+
         Args:
             value: نوع الإجراء
-            
+
         Returns:
             str: نوع الإجراء بعد التحقق
-            
+
         Raises:
             ValueError: إذا كان نوع الإجراء غير صحيح
         """
@@ -250,16 +258,18 @@ class AdminLogCreate(BaseModel):
 # 📤 FILTER SCHEMA
 # ==============================================
 
+
 class AdminLogFilter(BaseModel):
     """
     مخطط تصفية سجل الأنشطة.
-    
+
     Attributes:
         action: نوع الإجراء (اختياري)
         resource: نوع المورد (اختياري)
         start_date: تاريخ البداية (اختياري)
         end_date: تاريخ النهاية (اختياري)
     """
+
     action: Optional[str] = Field(
         None,
         max_length=50,
@@ -290,13 +300,13 @@ class AdminLogFilter(BaseModel):
     def validate_action(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة نوع الإجراء.
-        
+
         Args:
             value: نوع الإجراء
-            
+
         Returns:
             Optional[str]: نوع الإجراء بعد التحقق
-            
+
         Raises:
             ValueError: إذا كان نوع الإجراء غير صحيح
         """
@@ -335,15 +345,17 @@ class AdminLogFilter(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class AdminLogResponse(AdminLogBase):
     """
     مخطط استجابة سجل النشاط.
-    
+
     Attributes:
         id: معرف سجل النشاط
         timestamp: تاريخ النشاط
         created_at: تاريخ الإنشاء
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -366,16 +378,18 @@ class AdminLogResponse(AdminLogBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class AdminLogListResponse(BaseModel):
     """
     مخطط استجابة قائمة سجل الأنشطة.
-    
+
     Attributes:
         items: قائمة سجل الأنشطة
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[AdminLogResponse] = Field(
@@ -406,14 +420,16 @@ class AdminLogListResponse(BaseModel):
 # 📊 ACTIONS SUMMARY
 # ==============================================
 
+
 class ActionSummary(BaseModel):
     """
     مخطط ملخص الإجراءات.
-    
+
     Attributes:
         action: نوع الإجراء
         count: عدد مرات تكرار الإجراء
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     action: str = Field(
@@ -432,11 +448,12 @@ class ActionSummary(BaseModel):
 class ActionsSummaryResponse(BaseModel):
     """
     مخطط استجابة ملخص الإجراءات.
-    
+
     Attributes:
         items: قائمة ملخص الإجراءات
         total: العدد الإجمالي
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[ActionSummary] = Field(

@@ -10,6 +10,11 @@
 # دوال متوافقة مع الاستيرادات القديمة
 # ==============================================
 
+"""MoulAI operational module for compat.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -31,6 +36,7 @@ from app.services.business.restaurant.order_counter.service import (
 # ==============================================
 # INITIALIZE ORDER COUNTER
 # ==============================================
+
 
 async def initialize_order_counter(
     *,
@@ -57,6 +63,7 @@ async def initialize_order_counter(
 # ==============================================
 # GET ORDER COUNTER
 # ==============================================
+
 
 async def get_order_counter(
     *,
@@ -86,6 +93,7 @@ async def get_order_counter(
 # UPDATE ORDER COUNTER
 # ==============================================
 
+
 async def update_order_counter(
     *,
     restaurant_id: int,
@@ -113,6 +121,7 @@ async def update_order_counter(
 # ==============================================
 # GENERATE NEXT ORDER NUMBER
 # ==============================================
+
 
 async def generate_next_order_number(
     *,
@@ -143,6 +152,7 @@ async def generate_next_order_number(
 # GET ORDER COUNTER SUMMARY
 # ==============================================
 
+
 async def get_order_counter_summary(
     *,
     restaurant_id: int,
@@ -168,6 +178,7 @@ async def get_order_counter_summary(
 # ==============================================
 # RESET ORDER COUNTER
 # ==============================================
+
 
 async def reset_order_counter(
     *,
@@ -195,6 +206,7 @@ async def reset_order_counter(
 # INCREMENT ORDER COUNTER
 # ==============================================
 
+
 async def increment_order_counter(
     *,
     restaurant_id: int,
@@ -221,6 +233,7 @@ async def increment_order_counter(
 # BUILD ORDER NUMBER
 # ==============================================
 
+
 def build_order_number(
     restaurant_id: int,
     sequence: int,
@@ -244,6 +257,7 @@ def build_order_number(
 # ==============================================
 # GET CURRENT ORDER NUMBER
 # ==============================================
+
 
 async def get_current_order_number(
     *,

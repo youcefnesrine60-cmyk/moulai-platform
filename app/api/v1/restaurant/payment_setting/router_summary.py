@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🏦 RESTAURANT PAYMENT SETTINGS ROUTER - SUMMARY
 # نقاط نهاية الملخص وإعادة التعيين
 # ==============================================
+
+"""MoulAI operational module for router summary.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -30,7 +35,6 @@ from app.services.business.restaurant.payment_setting.service import (
     RestaurantPaymentSettingsService,
 )
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -44,6 +48,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_payment_settings_service(
     session: AsyncSession = Depends(get_db),
@@ -59,6 +64,7 @@ async def get_payment_settings_service(
 # ==============================================
 # GET PAYMENT SETTINGS SUMMARY
 # ==============================================
+
 
 @router.get(
     "/{restaurant_id}/summary",
@@ -103,6 +109,7 @@ async def get_payment_settings_summary(
 # ==============================================
 # RESET PAYMENT SETTINGS TO DEFAULTS
 # ==============================================
+
 
 @router.post(
     "/{restaurant_id}/reset",

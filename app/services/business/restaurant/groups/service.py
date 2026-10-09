@@ -10,6 +10,11 @@
 # منطق الأعمال لمجموعات المطاعم
 # ==============================================
 
+"""MoulAI operational module for service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     List,
     Optional,
@@ -22,7 +27,9 @@ from app.core.exceptions import (
     NotFoundError,
 )
 from app.core.logger import logger
-from app.repositories.restaurant.restaurant_branch_repo import RestaurantBranchRepository
+from app.repositories.restaurant.restaurant_branch_repo import (
+    RestaurantBranchRepository,
+)
 from app.repositories.restaurant.restaurant_group_repo import RestaurantGroupRepository
 from app.repositories.restaurant.restaurant_repo import RestaurantRepository
 from app.schemas.restaurant.restaurant_group import (
@@ -35,20 +42,20 @@ from app.schemas.restaurant.restaurant_group import (
     RestaurantGroupUpdate,
 )
 
-
 # ==============================================
 # 🏢 RESTAURANT GROUP SERVICE
 # ==============================================
 
+
 class RestaurantGroupService:
     """
     خدمة مجموعات المطاعم.
-    
+
     تدير منطق الأعمال لمجموعات المطاعم.
-    
+
     ⚠️ ملاحظة: RestaurantGroup لا يحتوي على حقل is_active.
     جميع المجموعات تُعتبر نشطة.
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع مجموعات المطاعم
@@ -56,13 +63,17 @@ class RestaurantGroupService:
         restaurant_repo: مستودع المطاعم
     """
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         session: AsyncSession,
     ) -> None:
         """
         تهيئة خدمة مجموعات المطاعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -87,16 +98,16 @@ class RestaurantGroupService:
     ) -> RestaurantGroupResponse:
         """
         الحصول على مجموعة مطاعم بالمعرف.
-        
+
         ⚠️ ملاحظة: RestaurantGroup لا يحتوي على is_active.
-        
+
         Args:
             group_id: معرف المجموعة
             include_inactive: متجاهل (للتوافق مع الواجهة)
-            
+
         Returns:
             RestaurantGroupResponse: بيانات المجموعة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -128,13 +139,13 @@ class RestaurantGroupService:
     ) -> RestaurantGroupResponse:
         """
         الحصول على مجموعة مطاعم بالمعرف مع تفاصيلها.
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             RestaurantGroupResponse: بيانات المجموعة مع التفاصيل
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -166,15 +177,15 @@ class RestaurantGroupService:
     ) -> RestaurantGroupListResponse:
         """
         الحصول على مجموعات المطاعم لمالك معين.
-        
+
         ⚠️ ملاحظة: RestaurantGroup لا يحتوي على is_active.
-        
+
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_active: متجاهل (للتوافق مع الواجهة)
-            
+
         Returns:
             RestaurantGroupListResponse: قائمة المجموعات
         """
@@ -215,11 +226,11 @@ class RestaurantGroupService:
     ) -> Optional[RestaurantGroupResponse]:
         """
         الحصول على مجموعة مطاعم بواسطة اسمها.
-        
+
         Args:
             owner_id: معرف المالك
             name: اسم المجموعة
-            
+
         Returns:
             Optional[RestaurantGroupResponse]: بيانات المجموعة أو None
         """
@@ -256,14 +267,14 @@ class RestaurantGroupService:
     ) -> RestaurantGroupListResponse:
         """
         البحث عن مجموعات المطاعم.
-        
+
         Args:
             query: نص البحث
             owner_id: معرف المالك (اختياري)
             only_active: متجاهل (للتوافق مع الواجهة)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             RestaurantGroupListResponse: قائمة المجموعات
         """
@@ -305,12 +316,12 @@ class RestaurantGroupService:
     ) -> RestaurantGroupListResponse:
         """
         الحصول على مجموعات المطاعم مع المطاعم التابعة لها.
-        
+
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             RestaurantGroupListResponse: قائمة المجموعات مع المطاعم
         """
@@ -349,13 +360,13 @@ class RestaurantGroupService:
     ) -> RestaurantGroupStatistics:
         """
         الحصول على إحصائيات مجموعات المطاعم لمالك معين.
-        
+
         ⚠️ ملاحظة: RestaurantGroup لا يحتوي على is_active.
         جميع المجموعات نشطة.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             RestaurantGroupStatistics: إحصائيات المجموعات
         """
@@ -387,13 +398,13 @@ class RestaurantGroupService:
     ) -> RestaurantGroupResponse:
         """
         إنشاء مجموعة مطاعم جديدة.
-        
+
         Args:
             group_data: بيانات المجموعة
-            
+
         Returns:
             RestaurantGroupResponse: بيانات المجموعة المنشأة
-            
+
         Raises:
             ConflictError: إذا كان الاسم موجوداً مسبقاً
         """
@@ -434,14 +445,14 @@ class RestaurantGroupService:
     ) -> RestaurantGroupResponse:
         """
         تحديث مجموعة مطاعم.
-        
+
         Args:
             group_id: معرف المجموعة
             update_data: بيانات التحديث
-            
+
         Returns:
             RestaurantGroupResponse: بيانات المجموعة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
             ConflictError: إذا كان الاسم موجوداً مسبقاً
@@ -500,16 +511,16 @@ class RestaurantGroupService:
     ) -> RestaurantGroupResponse:
         """
         تبديل حالة المجموعة (نشط/غير نشط).
-        
+
         ⚠️ ملاحظة: RestaurantGroup لا يحتوي على is_active.
         هذه الدالة موجودة للتوافق فقط — تُعيد المجموعة كما هي.
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             RestaurantGroupResponse: بيانات المجموعة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -539,11 +550,11 @@ class RestaurantGroupService:
     ) -> None:
         """
         حذف مجموعة مطاعم.
-        
+
         Args:
             group_id: معرف المجموعة
             permanent: حذف نهائي
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -580,17 +591,17 @@ class RestaurantGroupService:
     ) -> List[RestaurantBranchResponse]:
         """
         إضافة فروع مطاعم إلى مجموعة.
-        
+
         ✅ التحقق من وجود المجموعة
         ✅ التحقق من وجود جميع المطاعم
         ✅ تجاهل المطاعم الموجودة مسبقاً
-        
+
         Args:
             data: بيانات الفروع (group_id + restaurant_ids)
-            
+
         Returns:
             List[RestaurantBranchResponse]: قائمة الفروع المنشأة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة أو أحد المطاعم
         """
@@ -635,10 +646,7 @@ class RestaurantGroupService:
             },
         )
 
-        return [
-            RestaurantBranchResponse.model_validate(b)
-            for b in branches
-        ]
+        return [RestaurantBranchResponse.model_validate(b) for b in branches]
 
     # ==============================================
     # REMOVE BRANCH FROM GROUP
@@ -652,11 +660,11 @@ class RestaurantGroupService:
     ) -> None:
         """
         إزالة فرع مطعم من مجموعة.
-        
+
         Args:
             group_id: معرف المجموعة
             restaurant_id: معرف المطعم
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """
@@ -709,13 +717,13 @@ class RestaurantGroupService:
     ) -> int:
         """
         إزالة جميع فروع المطاعم من مجموعة.
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             int: عدد الفروع المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """

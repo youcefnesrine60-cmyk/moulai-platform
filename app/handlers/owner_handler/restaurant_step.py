@@ -1,7 +1,19 @@
 # ==============================================
-# 🏪 RESTAURANT STEP - VERSION PRO
-# معالج خطوة إدخال اسم المطعم
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / OWNER_HANDLER / RESTAURANT STEP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for restaurant step.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -22,7 +34,6 @@ from app.helpers.state_helper import (
 from app.states.owner_states import OwnerStates
 from app.views.ui import back_ui
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -33,6 +44,7 @@ StateData = Dict[str, Any]
 # ==============================================
 # 🏪 HANDLE RESTAURANT STEP
 # ==============================================
+
 
 async def handle_restaurant_step(
     *,
@@ -108,6 +120,7 @@ async def handle_restaurant_step(
 # 🛠️ PRIVATE HELPERS
 # ==========================================
 
+
 async def _store_user_message_id(
     *,
     chat_id: int,
@@ -141,6 +154,11 @@ async def _store_user_message_id(
             "message_id": message_id,
         },
     )
+
+
+# ==============================================
+#  HANDLE INVALID INPUT
+# ==============================================
 
 
 async def _handle_invalid_input(
@@ -177,6 +195,11 @@ async def _handle_invalid_input(
         )
 
 
+# ==============================================
+#  SAVE RESTAURANT NAME
+# ==============================================
+
+
 async def _save_restaurant_name(
     *,
     chat_id: int,
@@ -202,6 +225,11 @@ async def _save_restaurant_name(
             "restaurant_name": restaurant_name,
         },
     )
+
+
+# ==============================================
+#  TRANSITION TO WILAYA
+# ==============================================
 
 
 async def _transition_to_wilaya(

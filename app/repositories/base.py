@@ -11,6 +11,11 @@
 # يوفر عمليات CRUD مشتركة لجميع النماذج
 # ==============================================
 
+"""MoulAI operational module for base.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -31,7 +36,6 @@ from sqlalchemy.exc import IntegrityError
 from app.core.logger import logger
 from app.models.base import BaseModel
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -46,24 +50,29 @@ FilterType = Optional[Dict[str, Any]]
 # 📦 BASE REPOSITORY
 # ==============================================
 
+
 class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     """
     المستودع الأساسي - يوفر عمليات CRUD مشتركة.
-    
+
     مسؤول عن:
         - عمليات الإنشاء (create, create_many)
         - عمليات القراءة (get_by_id, get_all, count, exists)
         - عمليات التحديث (update)
         - عمليات الحذف (delete, delete_many)
-    
+
     ⚠️ يدعم النماذج التي تحتوي على `id` والنماذج التي لا تحتوي عليه
        (مثل RestaurantMetric و RestaurantOrderCounter)
-    
+
     Attributes:
         model: نموذج SQLAlchemy
         session: جلسة قاعدة البيانات غير المتزامنة
         _primary_key_name: اسم المفتاح الأساسي (id أو غيره)
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -72,7 +81,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> None:
         """
         تهيئة المستودع.
-        
+
         Args:
             model: نموذج SQLAlchemy
             session: جلسة قاعدة البيانات غير المتزامنة
@@ -88,10 +97,10 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def _detect_primary_key_name(self) -> str:
         """
         تحديد اسم المفتاح الأساسي للنموذج.
-        
+
         ✅ يدعم النماذج التي لا تحتوي على `id`
            (مثل RestaurantMetric الذي يستخدم restaurant_id)
-        
+
         Returns:
             str: اسم المفتاح الأساسي
         """
@@ -104,8 +113,16 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         # افتراضياً: id
         return "id"
 
+    # ==============================================
+    #  SELECT
+    # ==============================================
+
     def _select(self):
         return select(self.model).options(*getattr(self, "query_options", ()))
+
+    # ==============================================
+    #  GET PRIMARY KEY VALUE
+    # ==============================================
 
     def _get_primary_key_value(
         self,
@@ -113,10 +130,10 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> Any:
         """
         الحصول على قيمة المفتاح الأساسي من نسخة النموذج.
-        
+
         Args:
             instance: نسخة من النموذج
-            
+
         Returns:
             Any: قيمة المفتاح الأساسي
         """
@@ -133,12 +150,12 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> ModelType:
         """
         إنشاء سجل جديد.
-        
+
         ✅ التصحيح النهائي: استخدام commit() و refresh()
-        
+
         Args:
             data: بيانات الإنشاء
-            
+
         Returns:
             ModelType: النموذج المُنشأ
         """
@@ -147,7 +164,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             self.session.add(instance)
 
             await self.session.flush()
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.commit()
 
             instance_id = self._get_primary_key_value(instance)
@@ -161,7 +180,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return refreshed or instance
 
         except IntegrityError as e:
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.rollback()
             logger.warning(
                 f"{self.model.__name__}_create_integrity_error",
@@ -169,7 +190,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             )
             raise
         except Exception as e:
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_create_failed",
@@ -188,10 +211,10 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> List[ModelType]:
         """
         إنشاء عدة سجلات دفعة واحدة.
-        
+
         Args:
             data_list: قائمة بيانات الإنشاء
-            
+
         Returns:
             List[ModelType]: قائمة النماذج المُنشأة
         """
@@ -200,7 +223,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             self.session.add_all(instances)
 
             await self.session.flush()
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.commit()
 
             refreshed_instances = []
@@ -217,7 +242,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return refreshed_instances
 
         except IntegrityError as e:
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.rollback()
             logger.warning(
                 f"{self.model.__name__}_create_many_integrity_error",
@@ -225,7 +252,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             )
             raise
         except Exception as e:
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_create_many_failed",
@@ -248,13 +277,13 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> Optional[ModelType]:
         """
         الحصول على سجل بالمعرف.
-        
+
         ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
            (مثل RestaurantMetric الذي يستخدم restaurant_id)
-        
+
         Args:
             id: المعرف
-            
+
         Returns:
             Optional[ModelType]: النموذج أو None
         """
@@ -293,14 +322,14 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> List[ModelType]:
         """
         الحصول على جميع السجلات مع ترقيم الصفحات.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             filters: عوامل التصفية
             order_by: اسم العمود للترتيب
             descending: ترتيب تنازلي
-            
+
         Returns:
             List[ModelType]: قائمة النماذج
         """
@@ -347,10 +376,10 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> int:
         """
         حساب عدد السجلات.
-        
+
         Args:
             filters: عوامل التصفية
-            
+
         Returns:
             int: عدد السجلات
         """
@@ -386,12 +415,12 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> bool:
         """
         التحقق من وجود سجل.
-        
+
         ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
-        
+
         Args:
             id: المعرف
-            
+
         Returns:
             bool: True إذا كان موجوداً، False إذا لم يكن
         """
@@ -399,9 +428,7 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             pk_column = getattr(self.model, self._primary_key_name)
 
             result = await self.session.execute(
-                select(func.count())
-                .where(pk_column == id)
-                .select_from(self.model),
+                select(func.count()).where(pk_column == id).select_from(self.model),
             )
 
             return result.scalar_one() > 0
@@ -432,14 +459,14 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> Optional[ModelType]:
         """
         تحديث سجل.
-        
+
         ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
            (مثل RestaurantMetric الذي يستخدم restaurant_id)
-        
+
         Args:
             id: المعرف
             data: بيانات التحديث
-            
+
         Returns:
             Optional[ModelType]: النموذج المُحدّث أو None
         """
@@ -455,7 +482,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                     setattr(instance, key, value)
 
             await self.session.flush()
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.commit()
 
             refreshed = await self.get_by_id(id=id)
@@ -468,7 +497,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return refreshed or instance
 
         except Exception as e:
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_update_failed",
@@ -494,12 +525,12 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> bool:
         """
         حذف سجل.
-        
+
         ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
-        
+
         Args:
             id: المعرف
-            
+
         Returns:
             bool: True إذا تم الحذف، False إذا لم يتم
         """
@@ -511,7 +542,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
             await self.session.delete(instance)
 
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.commit()
 
             logger.info(
@@ -522,7 +555,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return True
 
         except Exception as e:
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_delete_failed",
@@ -544,12 +579,12 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> int:
         """
         حذف عدة سجلات.
-        
+
         ✅ التصحيح: دعم النماذج التي لا تحتوي على `id`
-        
+
         Args:
             ids: قائمة المعرفات
-            
+
         Returns:
             int: عدد السجلات المحذوفة
         """
@@ -565,7 +600,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             for instance in instances:
                 await self.session.delete(instance)
 
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.commit()
 
             logger.info(
@@ -576,7 +613,9 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             return len(instances)
 
         except Exception as e:
-            if getattr(self, "commit_on_write", True) and not self.session.info.get("defer_repository_commit"):
+            if getattr(self, "commit_on_write", True) and not self.session.info.get(
+                "defer_repository_commit"
+            ):
                 await self.session.rollback()
             logger.exception(
                 f"{self.model.__name__}_delete_many_failed",
@@ -599,10 +638,10 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     ) -> int:
         """
         حساب عدد المطاعم المملوكة لمالك معين.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             int: عدد المطاعم
         """

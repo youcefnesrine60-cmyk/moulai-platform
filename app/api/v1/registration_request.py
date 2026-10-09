@@ -1,8 +1,19 @@
 # ==============================================
-# 📋 REGISTRATION REQUESTS API
-# نقاط نهاية API لطلبات التسجيل
-# تدير عمليات إنشاء واستعراض وتحديث وحذف طلبات التسجيل
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / API / V1 / REGISTRATION REQUEST
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for registration request.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional
 
@@ -50,15 +61,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_registration_request_service(
     session: AsyncSession = Depends(get_db),
 ) -> RegistrationRequestService:
     """
     الحصول على خدمة طلبات التسجيل.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         RegistrationRequestService: مثيل من RegistrationRequestService
     """
@@ -72,6 +84,7 @@ async def get_registration_request_service(
 # ==============================================
 # LIST REGISTRATION REQUESTS
 # ==============================================
+
 
 @router.get(
     "/",
@@ -115,7 +128,7 @@ async def list_registration_requests(
 ) -> RegistrationRequestListResponse:
     """
     الحصول على قائمة طلبات التسجيل.
-    
+
     Args:
         status: حالة الطلب للتصفية
         chat_id: معرف المستخدم للتصفية
@@ -123,7 +136,7 @@ async def list_registration_requests(
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة طلبات التسجيل
-        
+
     Returns:
         RegistrationRequestListResponse: قائمة طلبات التسجيل مع الإحصائيات
     """
@@ -201,6 +214,7 @@ async def list_registration_requests(
 # GET REGISTRATION REQUEST BY ID
 # ==============================================
 
+
 @router.get(
     "/{request_id}",
     response_model=RegistrationRequestResponse,
@@ -216,14 +230,14 @@ async def get_registration_request(
 ) -> RegistrationRequestResponse:
     """
     الحصول على طلب تسجيل بالمعرف.
-    
+
     Args:
         request_id: معرف طلب التسجيل
         service: خدمة طلبات التسجيل
-        
+
     Returns:
         RegistrationRequestResponse: طلب التسجيل المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب
     """
@@ -268,6 +282,7 @@ async def get_registration_request(
 # GET REGISTRATION REQUEST BY CHAT ID
 # ==============================================
 
+
 @router.get(
     "/chat/{chat_id}",
     response_model=RegistrationRequestResponse,
@@ -283,14 +298,14 @@ async def get_registration_request_by_chat_id(
 ) -> RegistrationRequestResponse:
     """
     الحصول على طلب تسجيل بواسطة chat_id.
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         service: خدمة طلبات التسجيل
-        
+
     Returns:
         RegistrationRequestResponse: طلب التسجيل
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب
     """
@@ -339,6 +354,7 @@ async def get_registration_request_by_chat_id(
 # CREATE REGISTRATION REQUEST
 # ==============================================
 
+
 @router.post(
     "/",
     response_model=RegistrationRequestResponse,
@@ -355,14 +371,14 @@ async def create_registration_request(
 ) -> RegistrationRequestResponse:
     """
     إنشاء طلب تسجيل جديد.
-    
+
     Args:
         data: بيانات طلب التسجيل
         service: خدمة طلبات التسجيل
-        
+
     Returns:
         RegistrationRequestResponse: طلب التسجيل المنشأ
-        
+
     Raises:
         HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
@@ -422,6 +438,7 @@ async def create_registration_request(
 # UPDATE REGISTRATION REQUEST
 # ==============================================
 
+
 @router.patch(
     "/{request_id}",
     response_model=RegistrationRequestResponse,
@@ -438,15 +455,15 @@ async def update_registration_request(
 ) -> RegistrationRequestResponse:
     """
     تحديث طلب تسجيل موجود.
-    
+
     Args:
         request_id: معرف طلب التسجيل
         data: بيانات التحديث
         service: خدمة طلبات التسجيل
-        
+
     Returns:
         RegistrationRequestResponse: طلب التسجيل المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب أو حدث تعارض
     """
@@ -507,6 +524,7 @@ async def update_registration_request(
 # UPDATE REGISTRATION REQUEST STATUS
 # ==============================================
 
+
 @router.patch(
     "/{request_id}/status",
     response_model=RegistrationRequestResponse,
@@ -528,16 +546,16 @@ async def update_registration_request_status(
 ) -> RegistrationRequestResponse:
     """
     تغيير حالة طلب التسجيل.
-    
+
     Args:
         request_id: معرف طلب التسجيل
         data: بيانات تحديث الحالة
         owner_id: معرف المالك (عند الموافقة)
         service: خدمة طلبات التسجيل
-        
+
     Returns:
         RegistrationRequestResponse: طلب التسجيل المحدث
-        
+
     Raises:
         HTTPException: إذا كانت الحالة غير صالحة أو لم يتم العثور على الطلب
     """
@@ -605,6 +623,7 @@ async def update_registration_request_status(
 # APPROVE REGISTRATION REQUEST
 # ==============================================
 
+
 @router.post(
     "/{request_id}/approve",
     response_model=RegistrationRequestResponse,
@@ -625,15 +644,15 @@ async def approve_registration_request(
 ) -> RegistrationRequestResponse:
     """
     اعتماد طلب التسجيل.
-    
+
     Args:
         request_id: معرف طلب التسجيل
         owner_id: معرف المالك (اختياري)
         service: خدمة طلبات التسجيل
-        
+
     Returns:
         RegistrationRequestResponse: طلب التسجيل المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب
     """
@@ -694,6 +713,7 @@ async def approve_registration_request(
 # REJECT REGISTRATION REQUEST
 # ==============================================
 
+
 @router.post(
     "/{request_id}/reject",
     response_model=RegistrationRequestResponse,
@@ -709,14 +729,14 @@ async def reject_registration_request(
 ) -> RegistrationRequestResponse:
     """
     رفض طلب التسجيل.
-    
+
     Args:
         request_id: معرف طلب التسجيل
         service: خدمة طلبات التسجيل
-        
+
     Returns:
         RegistrationRequestResponse: طلب التسجيل المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب
     """
@@ -773,6 +793,7 @@ async def reject_registration_request(
 # DELETE REGISTRATION REQUEST
 # ==============================================
 
+
 @router.delete(
     "/{request_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -788,11 +809,11 @@ async def delete_registration_request(
 ) -> None:
     """
     حذف طلب تسجيل.
-    
+
     Args:
         request_id: معرف طلب التسجيل
         service: خدمة طلبات التسجيل
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب
     """
@@ -853,6 +874,7 @@ async def delete_registration_request(
 # GET REGISTRATION REQUESTS SUMMARY
 # ==============================================
 
+
 @router.get(
     "/stats/summary",
     summary="ملخص طلبات التسجيل",
@@ -866,10 +888,10 @@ async def get_registration_requests_summary(
 ) -> dict:
     """
     الحصول على ملخص طلبات التسجيل.
-    
+
     Args:
         service: خدمة طلبات التسجيل
-        
+
     Returns:
         dict: ملخص طلبات التسجيل
     """

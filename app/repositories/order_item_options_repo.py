@@ -1,4 +1,22 @@
-from sqlalchemy.orm import raiseload, selectinload
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / ORDER ITEM OPTIONS REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order item options repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+from sqlalchemy.orm import raiseload
+
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -50,16 +68,20 @@ class OrderItemOptionsRepository(
 ):
     """
     مستودع خيارات عناصر الطلبات - يوفر عمليات خاصة بخيارات عناصر الطلبات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لخيارات عناصر الطلبات
         - حساب السعر الإضافي الإجمالي
         - حذف خيارات عنصر الطلب
-    
+
     Attributes:
         model: نموذج OrderItemOption
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -67,7 +89,7 @@ class OrderItemOptionsRepository(
     ) -> None:
         """
         تهيئة مستودع خيارات عناصر الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -84,11 +106,21 @@ class OrderItemOptionsRepository(
     # ==============================================
 
     async def get_by_name(self, *, order_item_id, option_group_name, option_name):
-        return (await self.session.execute(self._select().where(
-            self.model.order_item_id == order_item_id,
-            self.model.option_group_name == option_group_name,
-            self.model.option_name == option_name,
-        ).limit(1))).scalar_one_or_none()
+        return (
+            await self.session.execute(
+                self._select()
+                .where(
+                    self.model.order_item_id == order_item_id,
+                    self.model.option_group_name == option_group_name,
+                    self.model.option_name == option_name,
+                )
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+    # ==============================================
+    # GET BY ORDER ITEM ID
+    # ==============================================
 
     async def get_by_order_item_id(
         self,
@@ -99,12 +131,12 @@ class OrderItemOptionsRepository(
     ) -> OrderItemOptionList:
         """
         الحصول على خيارات عنصر طلب معين.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة خيارات عنصر الطلب
         """
@@ -143,11 +175,11 @@ class OrderItemOptionsRepository(
     ) -> Optional[OrderItemOption]:
         """
         الحصول على خيار بواسطة اسمه.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
             option_name: اسم الخيار
-            
+
         Returns:
             كائن OrderItemOption أو None
         """
@@ -185,10 +217,10 @@ class OrderItemOptionsRepository(
     ) -> int:
         """
         حساب عدد خيارات عنصر طلب معين.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Returns:
             عدد الخيارات
         """
@@ -222,17 +254,18 @@ class OrderItemOptionsRepository(
     ) -> float:
         """
         حساب السعر الإضافي الإجمالي لخيارات عنصر طلب معين.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Returns:
             السعر الإضافي الإجمالي
         """
         try:
             result = await self.session.execute(
-                select(func.coalesce(func.sum(self.model.additional_price), 0))
-                .where(self.model.order_item_id == order_item_id),
+                select(func.coalesce(func.sum(self.model.additional_price), 0)).where(
+                    self.model.order_item_id == order_item_id
+                ),
             )
 
             return float(result.scalar_one())
@@ -262,10 +295,10 @@ class OrderItemOptionsRepository(
     ) -> int:
         """
         حذف جميع خيارات عنصر طلب معين.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Returns:
             عدد الخيارات المحذوفة
         """
@@ -311,6 +344,7 @@ class OrderItemOptionsRepository(
 # CREATE ORDER ITEM OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def create_order_item_option(
     *,
     order_item_id: int,
@@ -321,14 +355,14 @@ async def create_order_item_option(
 ) -> int:
     """
     إنشاء خيار جديد لعنصر طلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         option_group_name: اسم مجموعة الخيارات
         option_name: اسم الخيار
         additional_price: السعر الإضافي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الخيار
     """
@@ -358,6 +392,7 @@ async def create_order_item_option(
 # GET ORDER ITEM OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_item_option(
     *,
     option_id: int,
@@ -365,11 +400,11 @@ async def get_order_item_option(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على خيار بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الخيار أو None
     """
@@ -394,6 +429,7 @@ async def get_order_item_option(
 # GET ORDER ITEM OPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_item_options(
     *,
     order_item_id: int,
@@ -403,13 +439,13 @@ async def get_order_item_options(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على خيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة الخيارات
     """
@@ -424,14 +460,16 @@ async def get_order_item_options(
     result = []
 
     for option in options:
-        result.append({
-            "id": option.id,
-            "order_item_id": option.order_item_id,
-            "option_group_name": option.option_group_name,
-            "option_name": option.option_name,
-            "additional_price": option.additional_price,
-            "created_at": option.created_at,
-        })
+        result.append(
+            {
+                "id": option.id,
+                "order_item_id": option.order_item_id,
+                "option_group_name": option.option_group_name,
+                "option_name": option.option_name,
+                "additional_price": option.additional_price,
+                "created_at": option.created_at,
+            }
+        )
 
     return result
 
@@ -440,6 +478,7 @@ async def get_order_item_options(
 # GET ORDER ITEM OPTIONS TOTAL (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_item_options_total(
     *,
     order_item_id: int,
@@ -447,11 +486,11 @@ async def get_order_item_options_total(
 ) -> float:
     """
     حساب السعر الإضافي الإجمالي لخيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         السعر الإضافي الإجمالي
     """
@@ -466,6 +505,7 @@ async def get_order_item_options_total(
 # COUNT ORDER ITEM OPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def count_order_item_options(
     *,
     order_item_id: int,
@@ -473,11 +513,11 @@ async def count_order_item_options(
 ) -> int:
     """
     حساب عدد خيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         عدد الخيارات
     """
@@ -492,6 +532,7 @@ async def count_order_item_options(
 # DELETE ORDER ITEM OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_order_item_option(
     *,
     option_id: int,
@@ -499,7 +540,7 @@ async def delete_order_item_option(
 ) -> None:
     """
     حذف خيار (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -518,6 +559,7 @@ async def delete_order_item_option(
 # DELETE ORDER ITEM OPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_order_item_options(
     *,
     order_item_id: int,
@@ -525,7 +567,7 @@ async def delete_order_item_options(
 ) -> None:
     """
     حذف جميع خيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -550,6 +592,7 @@ async def delete_order_item_options(
 # CREATE ORDER ITEM OPTION TX
 # ==============================================
 
+
 async def create_order_item_option_tx(
     *,
     conn: AsyncSession,
@@ -560,14 +603,14 @@ async def create_order_item_option_tx(
 ) -> int:
     """
     إنشاء خيار جديد لعنصر طلب (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         order_item_id: معرف عنصر الطلب
         option_group_name: اسم مجموعة الخيارات
         option_name: اسم الخيار
         additional_price: السعر الإضافي
-        
+
     Returns:
         معرف الخيار
     """
@@ -597,6 +640,7 @@ async def create_order_item_option_tx(
 # DELETE ORDER ITEM OPTION TX
 # ==============================================
 
+
 async def delete_order_item_option_tx(
     *,
     conn: AsyncSession,
@@ -604,7 +648,7 @@ async def delete_order_item_option_tx(
 ) -> None:
     """
     حذف خيار (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         option_id: معرف الخيار

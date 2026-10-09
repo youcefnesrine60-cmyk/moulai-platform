@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 💬 CONVERSATION REPOSITORY
 # عمليات قاعدة البيانات للمحادثات
 # ==============================================
+
+"""MoulAI operational module for conversation repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -29,7 +34,6 @@ from app.core.logger import logger
 from app.models.agent import Conversation
 from app.repositories.base import BaseRepository
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -43,19 +47,26 @@ ConversationList = List[Conversation]
 # 💬 CONVERSATION REPOSITORY
 # ==============================================
 
-class ConversationRepository(BaseRepository[Conversation, ConversationData, ConversationUpdateData]):
+
+class ConversationRepository(
+    BaseRepository[Conversation, ConversationData, ConversationUpdateData]
+):
     """
     مستودع المحادثات - يوفر عمليات خاصة بجدول المحادثات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للمحادثات
         - البحث عن المحادثات حسب المستخدم والوكيل
         - إدارة سياق المحادثة
-    
+
     Attributes:
         model: نموذج Conversation
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,7 +74,7 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> None:
         """
         تهيئة مستودع المحادثات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -86,12 +97,12 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> Optional[Conversation]:
         """
         الحصول على محادثة حسب معرف المستخدم.
-        
+
         Args:
             agent_id: معرف الوكيل
             user_id: معرف المستخدم
             only_active: جلب المحادثة النشطة فقط
-            
+
         Returns:
             Optional[Conversation]: كائن Conversation أو None
         """
@@ -140,13 +151,13 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> ConversationList:
         """
         الحصول على محادثات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
             only_active: جلب المحادثات النشطة فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ConversationList: قائمة المحادثات
         """
@@ -158,9 +169,13 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
             if only_active:
                 query = query.where(self.model.is_active == True)
 
-            query = query.order_by(
-                self.model.updated_at.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.updated_at.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -188,10 +203,10 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> Optional[Conversation]:
         """
         الحصول على محادثة مع رسائلها.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             Optional[Conversation]: كائن Conversation مع الرسائل أو None
         """
@@ -228,13 +243,13 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> ConversationList:
         """
         الحصول على محادثات حسب الحالة.
-        
+
         Args:
             agent_id: معرف الوكيل (اختياري)
             status: حالة المحادثة
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ConversationList: قائمة المحادثات
         """
@@ -248,11 +263,17 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
                     self.model.agent_id == agent_id,
                 )
 
-            query = select(self.model).where(
-                *conditions,
-            ).order_by(
-                self.model.updated_at.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                select(self.model)
+                .where(
+                    *conditions,
+                )
+                .order_by(
+                    self.model.updated_at.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -284,14 +305,14 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> ConversationList:
         """
         البحث عن المحادثات.
-        
+
         Args:
             query: نص البحث (معرف المستخدم أو السياق)
             agent_id: معرف الوكيل (اختياري)
             only_active: جلب المحادثات النشطة فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ConversationList: قائمة المحادثات
         """
@@ -355,11 +376,11 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> int:
         """
         حساب عدد محادثات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
             only_active: حساب المحادثات النشطة فقط
-            
+
         Returns:
             int: عدد المحادثات
         """
@@ -383,12 +404,12 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> int:
         """
         حساب عدد المحادثات حسب الحالة.
-        
+
         Args:
             agent_id: معرف الوكيل (اختياري)
             status: حالة المحادثة
             only_active: حساب المحادثات النشطة فقط
-            
+
         Returns:
             int: عدد المحادثات
         """
@@ -407,8 +428,12 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
                     self.model.is_active == True,
                 )
 
-            stmt = select(func.count()).select_from(self.model).where(
-                *conditions,
+            stmt = (
+                select(func.count())
+                .select_from(self.model)
+                .where(
+                    *conditions,
+                )
             )
 
             result = await self.session.execute(stmt)
@@ -439,11 +464,11 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> List[Dict[str, Any]]:
         """
         الحصول على ملخص حالات المحادثات.
-        
+
         Args:
             agent_id: معرف الوكيل (اختياري)
             only_active: حساب المحادثات النشطة فقط
-            
+
         Returns:
             List[Dict[str, Any]]: ملخص حالات المحادثات
         """
@@ -472,10 +497,7 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
 
             result = await self.session.execute(stmt)
 
-            return [
-                {"status": row[0], "count": row[1]}
-                for row in result.all()
-            ]
+            return [{"status": row[0], "count": row[1]} for row in result.all()]
 
         except Exception as e:
             logger.exception(
@@ -504,11 +526,11 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> Optional[Conversation]:
         """
         تحديث سياق المحادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             context: السياق الجديد
-            
+
         Returns:
             Optional[Conversation]: كائن Conversation المحدث أو None
         """
@@ -556,11 +578,11 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> Optional[Conversation]:
         """
         تحديث حالة المحادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             status: الحالة الجديدة
-            
+
         Returns:
             Optional[Conversation]: كائن Conversation المحدث أو None
         """
@@ -611,10 +633,10 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> Optional[Conversation]:
         """
         تبديل حالة المحادثة (نشط/غير نشط).
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             Optional[Conversation]: كائن Conversation المحدث أو None
         """
@@ -666,10 +688,10 @@ class ConversationRepository(BaseRepository[Conversation, ConversationData, Conv
     ) -> int:
         """
         حذف جميع محادثات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
-            
+
         Returns:
             int: عدد المحادثات المحذوفة
         """

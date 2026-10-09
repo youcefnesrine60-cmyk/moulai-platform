@@ -1,3 +1,20 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# TEST MODULE - TESTS / TEST ORDER SERVICE CONTRACTS
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test order service contracts.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -11,12 +28,24 @@ from app.services.business.orders import cancel, read, status_history, totals, u
 
 
 class FakeTransaction:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self):
         self.committed = False
         self.rolled_back = False
 
+    # ==============================================
+    #   AENTER
+    # ==============================================
+
     async def __aenter__(self):
         return self
+
+    # ==============================================
+    #   AEXIT
+    # ==============================================
 
     async def __aexit__(self, exc_type, exc, traceback):
         self.committed = exc_type is None
@@ -25,14 +54,26 @@ class FakeTransaction:
 
 
 class ScalarResult:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self, value):
         self.value = value
+
+    # ==============================================
+    # SCALAR ONE OR NONE
+    # ==============================================
 
     def scalar_one_or_none(self):
         return self.value
 
 
 class FakeSession:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self, *, result=None, active_transaction=False):
         self.result = result
         self.active_transaction = active_transaction
@@ -41,27 +82,60 @@ class FakeSession:
         self.statements = []
         self.commits = 0
 
+    # ==============================================
+    # BEGIN
+    # ==============================================
+
     def begin(self):
         return self.transaction
+
+    # ==============================================
+    # BEGIN NESTED
+    # ==============================================
 
     def begin_nested(self):
         return self.transaction
 
+    # ==============================================
+    # GET TRANSACTION
+    # ==============================================
+
     def get_transaction(self):
         return SimpleNamespace(sync_transaction=SimpleNamespace(origin=None))
+
+    # ==============================================
+    # FLUSH
+    # ==============================================
 
     async def flush(self):
         pass
 
+    # ==============================================
+    # IN TRANSACTION
+    # ==============================================
+
     def in_transaction(self):
         return self.active_transaction
+
+    # ==============================================
+    # EXECUTE
+    # ==============================================
 
     async def execute(self, statement):
         self.statements.append(statement)
         return ScalarResult(self.result)
 
+    # ==============================================
+    # COMMIT
+    # ==============================================
+
     async def commit(self):
         self.commits += 1
+
+
+# ==============================================
+# TEST STATUS CHANGE UPDATES ORDER AND HISTORY IN SAME TRANSACTION
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -72,8 +146,16 @@ async def test_status_change_updates_order_and_history_in_same_transaction(monke
     histories = []
 
     class OrdersRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             self.session = session
+
+        # ==============================================
+        # UPDATE
+        # ==============================================
 
         async def update(self, *, id, data):
             updates.append((id, data.copy()))
@@ -81,8 +163,16 @@ async def test_status_change_updates_order_and_history_in_same_transaction(monke
             return order
 
     class HistoryRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             self.session = session
+
+        # ==============================================
+        # CREATE
+        # ==============================================
 
         async def create(self, *, data):
             histories.append(data.copy())
@@ -102,15 +192,22 @@ async def test_status_change_updates_order_and_history_in_same_transaction(monke
     assert changed is order
     assert order.status == "confirmed"
     assert updates == []  # Tracked order mutation; the unit of work flushes it.
-    assert histories == [{
-        "order_id": 17,
-        "old_status": "pending",
-        "new_status": "confirmed",
-        "changed_by_employee_id": 5,
-        "note": "Accepted",
-    }]
+    assert histories == [
+        {
+            "order_id": 17,
+            "old_status": "pending",
+            "new_status": "confirmed",
+            "changed_by_employee_id": 5,
+            "note": "Accepted",
+        }
+    ]
     assert session.transaction.committed is True
     assert session.info == {}
+
+
+# ==============================================
+# TEST STATUS CHANGE PRESERVES CALLERS OUTER TRANSACTION
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -119,16 +216,32 @@ async def test_status_change_preserves_callers_outer_transaction(monkeypatch):
     session = FakeSession(result=order, active_transaction=True)
 
     class OrdersRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             self.session = session
+
+        # ==============================================
+        # UPDATE
+        # ==============================================
 
         async def update(self, *, id, data):
             order.status = data["status"]
             return order
 
     class HistoryRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # CREATE
+        # ==============================================
 
         async def create(self, *, data):
             return data
@@ -144,6 +257,11 @@ async def test_status_change_preserves_callers_outer_transaction(monkeypatch):
 
     assert session.commits == 0
     assert session.info == {}
+
+
+# ==============================================
+# TEST STATUS CHANGE REJECTS INVALID AND DISALLOWED TRANSITIONS
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -168,18 +286,35 @@ async def test_status_change_rejects_invalid_and_disallowed_transitions(monkeypa
     assert session.transaction.rolled_back is True
 
 
+# ==============================================
+# TEST UPDATE ORDER USES REPOSITORY PRIMARY KEY SIGNATURE
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_update_order_uses_repository_primary_key_signature(monkeypatch):
     order = SimpleNamespace(id=17, order_number="RST1-000017", status="pending")
     calls = []
 
     class OrdersRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # GET BY ID
+        # ==============================================
 
         async def get_by_id(self, *, id):
             calls.append(("get", id))
             return order
+
+        # ==============================================
+        # UPDATE
+        # ==============================================
 
         async def update(self, *, id, data):
             calls.append(("update", id, data.copy()))
@@ -198,6 +333,11 @@ async def test_update_order_uses_repository_primary_key_signature(monkeypatch):
     assert calls == [("update", 17, {"customer_note": "No onions"})]
 
 
+# ==============================================
+# TEST CALCULATE ORDER TOTALS INCLUDES OPTIONS AND ROUNDS
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_calculate_order_totals_includes_options_and_rounds(monkeypatch):
     order = SimpleNamespace(
@@ -209,18 +349,38 @@ async def test_calculate_order_totals_includes_options_and_rounds(monkeypatch):
     updated = []
 
     class OrdersRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
 
+        # ==============================================
+        # GET BY ID
+        # ==============================================
+
         async def get_by_id(self, *, id):
             return order
+
+        # ==============================================
+        # UPDATE
+        # ==============================================
 
         async def update(self, *, id, data):
             updated.append((id, data))
 
     class ItemsRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # GET BY ORDER ID
+        # ==============================================
 
         async def get_by_order_id(self, *, order_id):
             return [
@@ -229,11 +389,21 @@ async def test_calculate_order_totals_includes_options_and_rounds(monkeypatch):
             ]
 
     class OptionsRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
 
+        # ==============================================
+        # GET BY ORDER ITEM ID
+        # ==============================================
+
         async def get_by_order_item_id(self, *, order_item_id):
-            return [SimpleNamespace(additional_price=1.505)] if order_item_id == 31 else []
+            return (
+                [SimpleNamespace(additional_price=1.505)] if order_item_id == 31 else []
+            )
 
     monkeypatch.setattr(totals, "OrdersRepository", OrdersRepository)
     monkeypatch.setattr(totals, "OrderItemsRepository", ItemsRepository)
@@ -246,16 +416,23 @@ async def test_calculate_order_totals_includes_options_and_rounds(monkeypatch):
     )
 
     assert result == (31.5, 5.25, 2.5, 10.0, 38.75)
-    assert updated == [(
-        17,
-        {
-            "subtotal_amount": 31.5,
-            "discount_amount": 5.25,
-            "tax_amount": 2.5,
-            "delivery_amount": 10.0,
-            "total_amount": 38.75,
-        },
-    )]
+    assert updated == [
+        (
+            17,
+            {
+                "subtotal_amount": 31.5,
+                "discount_amount": 5.25,
+                "tax_amount": 2.5,
+                "delivery_amount": 10.0,
+                "total_amount": 38.75,
+            },
+        )
+    ]
+
+
+# ==============================================
+# TEST UPDATE TOTALS REJECTS EACH NEGATIVE COMPONENT
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -271,6 +448,10 @@ async def test_calculate_order_totals_includes_options_and_rounds(monkeypatch):
 )
 async def test_update_totals_rejects_each_negative_component(field, value, monkeypatch):
     class UnexpectedRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pytest.fail("Invalid totals must be rejected before database access")
 
@@ -292,6 +473,11 @@ async def test_update_totals_rejects_each_negative_component(field, value, monke
         )
 
 
+# ==============================================
+# TEST UPDATE TOTALS REJECTS LOCKED ORDER
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_update_totals_rejects_locked_order(monkeypatch):
     order = Order(
@@ -301,8 +487,16 @@ async def test_update_totals_rejects_locked_order(monkeypatch):
     )
 
     class OrdersRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # GET BY ID
+        # ==============================================
 
         async def get_by_id(self, *, id):
             return order
@@ -321,14 +515,29 @@ async def test_update_totals_rejects_locked_order(monkeypatch):
         )
 
 
+# ==============================================
+# TEST READ ORDERS ALWAYS SCOPES PAGINATION AND STATUS TO RESTAURANT
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_read_orders_always_scopes_pagination_and_status_to_restaurant(monkeypatch):
+async def test_read_orders_always_scopes_pagination_and_status_to_restaurant(
+    monkeypatch,
+):
     expected = [SimpleNamespace(id=17, restaurant_id=8)]
     calls = []
 
     class OrdersRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # GET BY RESTAURANT ID
+        # ==============================================
 
         async def get_by_restaurant_id(self, **kwargs):
             calls.append(kwargs)
@@ -345,12 +554,19 @@ async def test_read_orders_always_scopes_pagination_and_status_to_restaurant(mon
     )
 
     assert result == expected
-    assert calls == [{
-        "restaurant_id": 8,
-        "skip": 10,
-        "limit": 5,
-        "status": "pending",
-    }]
+    assert calls == [
+        {
+            "restaurant_id": 8,
+            "skip": 10,
+            "limit": 5,
+            "status": "pending",
+        }
+    ]
+
+
+# ==============================================
+# TEST ORDERS REPOSITORY QUERY IS SCOPED TO RESTAURANT
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -359,11 +575,23 @@ async def test_orders_repository_query_is_scoped_to_restaurant():
     session = FakeSession()
 
     class Result:
+        # ==============================================
+        # SCALARS
+        # ==============================================
+
         def scalars(self):
             return self
 
+        # ==============================================
+        # ALL
+        # ==============================================
+
         def all(self):
             return expected
+
+    # ==============================================
+    # EXECUTE
+    # ==============================================
 
     async def execute(statement):
         session.statements.append(statement)
@@ -380,6 +608,11 @@ async def test_orders_repository_query_is_scoped_to_restaurant():
     assert result == expected
     assert "orders.restaurant_id" in str(compiled)
     assert 8 in compiled.params.values()
+
+
+# ==============================================
+# TEST CUSTOMER ORDER QUERY IS SCOPED TO CHAT AND LOCKS ORDER
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -400,9 +633,20 @@ async def test_customer_order_query_is_scoped_to_chat_and_locks_order():
     assert statement._for_update_arg is not None
 
 
+# ==============================================
+# TEST GET ORDERS BY STATUS REJECTS INVALID STATUS BEFORE REPOSITORY
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_get_orders_by_status_rejects_invalid_status_before_repository(monkeypatch):
+async def test_get_orders_by_status_rejects_invalid_status_before_repository(
+    monkeypatch,
+):
     class UnexpectedRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pytest.fail("Invalid status must be rejected before querying")
 
@@ -416,6 +660,11 @@ async def test_get_orders_by_status_rejects_invalid_status_before_repository(mon
         )
 
 
+# ==============================================
+# TEST CANCEL ORDER LOCKS RECORD AND REJECTS REPLAY
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_cancel_order_locks_record_and_rejects_replay(monkeypatch):
     order = SimpleNamespace(
@@ -426,6 +675,10 @@ async def test_cancel_order_locks_record_and_rejects_replay(monkeypatch):
     )
     session = FakeSession(result=order)
     transitions = []
+
+    # ==============================================
+    # CHANGE STATUS
+    # ==============================================
 
     async def change_status(**kwargs):
         transitions.append(kwargs)
@@ -455,6 +708,11 @@ async def test_cancel_order_locks_record_and_rejects_replay(monkeypatch):
     assert transitions.__len__() == 1
 
 
+# ==============================================
+# TEST CANCEL ORDER USES SAVEPOINT WHEN CALLER OWNS TRANSACTION
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_cancel_order_uses_savepoint_when_caller_owns_transaction(monkeypatch):
     order = SimpleNamespace(
@@ -473,10 +731,20 @@ async def test_cancel_order_uses_savepoint_when_caller_owns_transaction(monkeypa
     assert session.transaction.committed is True
 
 
+# ==============================================
+# TEST CANCEL ORDER WITH REFUND REQUIRES PAYMENT AND DELEGATES CANCELLATION
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_cancel_order_with_refund_requires_payment_and_delegates_cancellation(monkeypatch):
+async def test_cancel_order_with_refund_requires_payment_and_delegates_cancellation(
+    monkeypatch,
+):
     from app.services.business.order_payments_service import OrderPaymentsService
-    order = SimpleNamespace(is_paid=True, payments=[SimpleNamespace(id=42, payment_status="paid")])
+
+    order = SimpleNamespace(
+        is_paid=True, payments=[SimpleNamespace(id=42, payment_status="paid")]
+    )
     refund = AsyncMock()
     monkeypatch.setattr(OrderPaymentsService, "refund_payment", refund)
     monkeypatch.setattr(cancel, "cancel_order", AsyncMock())
@@ -494,6 +762,11 @@ async def test_cancel_order_with_refund_requires_payment_and_delegates_cancellat
     refund.assert_awaited_once_with(payment_id=42)
 
 
+# ==============================================
+# TEST CANCEL ORDER NOT FOUND ROLLS BACK
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_cancel_order_not_found_rolls_back(monkeypatch):
     session = FakeSession(result=None)
@@ -506,19 +779,40 @@ async def test_cancel_order_not_found_rolls_back(monkeypatch):
     cancel.change_order_status.assert_not_awaited()
 
 
+# ==============================================
+# TEST STATUS HISTORY TIMELINE USES NEW STATUS FOR DISPLAY
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_status_history_timeline_uses_new_status_for_display(monkeypatch):
+    # ==============================================
+    # GET TIMELINE
+    # ==============================================
+
     async def get_timeline(*, order_id):
         return [
             {"new_status": "confirmed", "created_at": "timestamp"},
         ]
 
     class HistoryRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
 
+        # ==============================================
+        # GET STATUS TIMELINE
+        # ==============================================
+
         async def get_status_timeline(self, *, order_id):
             return await get_timeline(order_id=order_id)
+
+        # ==============================================
+        # GET LAST STATUS CHANGE
+        # ==============================================
 
         async def get_last_status_change(self, *, order_id):
             return SimpleNamespace(
@@ -526,7 +820,9 @@ async def test_status_history_timeline_uses_new_status_for_display(monkeypatch):
                 created_at="timestamp",
             )
 
-    monkeypatch.setattr(status_history, "OrderStatusHistoryRepository", HistoryRepository)
+    monkeypatch.setattr(
+        status_history, "OrderStatusHistoryRepository", HistoryRepository
+    )
 
     timeline = await status_history.get_order_timeline(order_id=17, session=object())
     latest = await status_history.get_last_status(order_id=17, session=object())
@@ -536,19 +832,36 @@ async def test_status_history_timeline_uses_new_status_for_display(monkeypatch):
     assert latest.new_status == "confirmed"
 
 
+# ==============================================
+# TEST STATUS HISTORY REACHED STATUS VALIDATES AND RETURNS REPOSITORY RESULT
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_status_history_reached_status_validates_and_returns_repository_result(monkeypatch):
+async def test_status_history_reached_status_validates_and_returns_repository_result(
+    monkeypatch,
+):
     calls = []
 
     class HistoryRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # GET ORDERS REACHED STATUS
+        # ==============================================
 
         async def get_orders_reached_status(self, *, status):
             calls.append(status)
             return [17, 21]
 
-    monkeypatch.setattr(status_history, "OrderStatusHistoryRepository", HistoryRepository)
+    monkeypatch.setattr(
+        status_history, "OrderStatusHistoryRepository", HistoryRepository
+    )
 
     assert await status_history.get_orders_reached_status(
         status="ready",

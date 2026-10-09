@@ -1,6 +1,19 @@
 # ==============================================
-# 🔄 STATE TRANSITION HELPER
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HELPERS / STATE TRANSITION
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for state transition.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Any
 
@@ -18,6 +31,7 @@ StateData = dict[str, Any]
 # ==============================================
 # 🔄 TRANSITION TO NEXT STATE
 # ==============================================
+
 
 async def transition_to(
     *,

@@ -11,6 +11,11 @@
 # تدير عمليات إنشاء واستعراض المالكين
 # ==============================================
 
+"""MoulAI operational module for owners.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -54,15 +59,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_owner_service(
     session: AsyncSession = Depends(get_db),
 ) -> OwnerService:
     """
     الحصول على خدمة المالكين.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OwnerService: مثيل من OwnerService
     """
@@ -76,6 +82,7 @@ async def get_owner_service(
 # ==============================================
 # CREATE OWNER
 # ==============================================
+
 
 @router.post(
     "/",
@@ -149,6 +156,7 @@ async def create_owner(
 # GET OWNER BY ID
 # ==============================================
 
+
 @router.get(
     "/{owner_id}",
     response_model=OwnerResponse,
@@ -162,14 +170,14 @@ async def get_owner(
 ) -> OwnerResponse:
     """
     الحصول على مالك بالمعرف.
-    
+
     Args:
         owner_id: معرف المالك
         service: خدمة المالكين
-        
+
     Returns:
         OwnerResponse: المالك المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المالك
     """
@@ -214,6 +222,7 @@ async def get_owner(
 # GET OWNER BY CHAT ID
 # ==============================================
 
+
 @router.get(
     "/chat/{chat_id}",
     response_model=OwnerResponse,
@@ -227,14 +236,14 @@ async def get_owner_by_chat_id(
 ) -> OwnerResponse:
     """
     الحصول على مالك بواسطة chat_id.
-    
+
     Args:
         chat_id: معرف الدردشة في Telegram
         service: خدمة المالكين
-        
+
     Returns:
         OwnerResponse: المالك المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المالك
     """
@@ -285,6 +294,7 @@ async def get_owner_by_chat_id(
 # LIST OWNERS
 # ==============================================
 
+
 @router.get(
     "/",
     response_model=OwnerListResponse,
@@ -312,13 +322,13 @@ async def list_owners(
 ) -> OwnerListResponse:
     """
     الحصول على قائمة المالكين.
-    
+
     Args:
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         only_approved: جلب المالكين المعتمدين فقط
         service: خدمة المالكين
-        
+
     Returns:
         OwnerListResponse: قائمة المالكين مع الإحصائيات
     """
@@ -362,6 +372,7 @@ async def list_owners(
 # GET OWNERS BY STATUS
 # ==============================================
 
+
 @router.get(
     "/status/{status}",
     response_model=OwnerListResponse,
@@ -386,16 +397,16 @@ async def get_owners_by_status(
 ) -> OwnerListResponse:
     """
     الحصول على المالكين حسب حالة التسجيل.
-    
+
     Args:
         status: حالة التسجيل
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة المالكين
-        
+
     Returns:
         OwnerListResponse: قائمة المالكين مع الإحصائيات
-        
+
     Raises:
         HTTPException: إذا كانت الحالة غير صالحة
     """
@@ -454,6 +465,7 @@ async def get_owners_by_status(
 # SEARCH OWNERS
 # ==============================================
 
+
 @router.get(
     "/search",
     response_model=OwnerListResponse,
@@ -483,13 +495,13 @@ async def search_owners(
 ) -> OwnerListResponse:
     """
     البحث عن المالكين.
-    
+
     Args:
         query: نص البحث
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة المالكين
-        
+
     Returns:
         OwnerListResponse: قائمة المالكين مع الإحصائيات
     """
@@ -536,6 +548,7 @@ async def search_owners(
 # UPDATE OWNER
 # ==============================================
 
+
 @router.patch(
     "/{owner_id}",
     response_model=OwnerResponse,
@@ -550,15 +563,15 @@ async def update_owner(
 ) -> OwnerResponse:
     """
     تحديث مالك موجود.
-    
+
     Args:
         owner_id: معرف المالك
         data: بيانات التحديث
         service: خدمة المالكين
-        
+
     Returns:
         OwnerResponse: المالك المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المالك أو حدث تعارض
     """
@@ -631,6 +644,7 @@ async def update_owner(
 # UPDATE OWNER STATUS
 # ==============================================
 
+
 @router.patch(
     "/{owner_id}/status",
     response_model=OwnerResponse,
@@ -645,15 +659,15 @@ async def update_owner_status(
 ) -> OwnerResponse:
     """
     تحديث حالة تسجيل المالك.
-    
+
     Args:
         owner_id: معرف المالك
         data: بيانات تحديث الحالة
         service: خدمة المالكين
-        
+
     Returns:
         OwnerResponse: المالك المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المالك أو كانت الحالة غير صالحة
     """
@@ -714,6 +728,7 @@ async def update_owner_status(
 # APPROVE OWNER
 # ==============================================
 
+
 @router.post(
     "/{owner_id}/approve",
     response_model=OwnerResponse,
@@ -727,14 +742,14 @@ async def approve_owner(
 ) -> OwnerResponse:
     """
     اعتماد مالك.
-    
+
     Args:
         owner_id: معرف المالك
         service: خدمة المالكين
-        
+
     Returns:
         OwnerResponse: المالك المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المالك
     """
@@ -779,6 +794,7 @@ async def approve_owner(
 # REJECT OWNER
 # ==============================================
 
+
 @router.post(
     "/{owner_id}/reject",
     response_model=OwnerResponse,
@@ -792,14 +808,14 @@ async def reject_owner(
 ) -> OwnerResponse:
     """
     رفض مالك.
-    
+
     Args:
         owner_id: معرف المالك
         service: خدمة المالكين
-        
+
     Returns:
         OwnerResponse: المالك المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المالك
     """
@@ -844,6 +860,7 @@ async def reject_owner(
 # DELETE OWNER
 # ==============================================
 
+
 @router.delete(
     "/{owner_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -857,11 +874,11 @@ async def delete_owner(
 ) -> None:
     """
     حذف مالك.
-    
+
     Args:
         owner_id: معرف المالك
         service: خدمة المالكين
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المالك أو كان لديه مطاعم
     """
@@ -922,6 +939,7 @@ async def delete_owner(
 # GET OWNER STATISTICS
 # ==============================================
 
+
 @router.get(
     "/stats",
     response_model=OwnerStatistics,
@@ -934,10 +952,10 @@ async def get_owner_statistics(
 ) -> OwnerStatistics:
     """
     الحصول على إحصائيات المالكين.
-    
+
     Args:
         service: خدمة المالكين
-        
+
     Returns:
         OwnerStatistics: إحصائيات المالكين
     """

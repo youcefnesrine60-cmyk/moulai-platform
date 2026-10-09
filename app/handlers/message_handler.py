@@ -1,6 +1,19 @@
 # ==============================================
-# 💬 MESSAGE HANDLER - VERSION PRO
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / MESSAGE HANDLER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for message handler.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.core.state_dispatcher import StateDispatcher
@@ -22,14 +35,12 @@ from app.repositories.state_repo import (
     set_state,
 )
 from app.agent.executor.actions import action_registry
-from app.services.telegram import delete_message
 from app.services.telegram import send_message
-from app.states.owner_states import OwnerStates
-
 
 # ==============================================
 # 💬 HANDLE MESSAGE
 # ==============================================
+
 
 async def handle_message(
     *,
@@ -237,11 +248,15 @@ async def handle_message(
                 "restaurant_name": state.get("restaurant_name"),
                 "cart": state.get("cart", []),
                 "products": [
-                    product if isinstance(product, dict) else {
-                        "id": getattr(product, "id", None),
-                        "name": getattr(product, "name", None),
-                        "price": getattr(product, "price", None),
-                    }
+                    (
+                        product
+                        if isinstance(product, dict)
+                        else {
+                            "id": getattr(product, "id", None),
+                            "name": getattr(product, "name", None),
+                            "price": getattr(product, "price", None),
+                        }
+                    )
                     for product in state.get("products", [])
                 ],
             }

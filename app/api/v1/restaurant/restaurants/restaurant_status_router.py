@@ -10,6 +10,11 @@
 # نقاط نهاية حالة المطعم
 # ==============================================
 
+"""MoulAI operational module for restaurant status router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -24,8 +29,9 @@ from app.core.database import get_db
 from app.core.exceptions import NotFoundError
 from app.core.logger import logger
 from app.schemas.restaurant import RestaurantResponse
-from app.services.business.restaurant.restaurants.handlers import RestaurantEventHandlers
-
+from app.services.business.restaurant.restaurants.handlers import (
+    RestaurantEventHandlers,
+)
 
 # ==============================================
 # 🏗️ ROUTER
@@ -41,15 +47,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_restaurant_handlers(
     session: AsyncSession = Depends(get_db),
 ) -> RestaurantEventHandlers:
     """
     الحصول على معالجات أحداث المطاعم.
-    
+
     Args:
         session: جلسة قاعدة البيانات
-        
+
     Returns:
         RestaurantEventHandlers: معالجات الأحداث
     """
@@ -64,6 +71,7 @@ async def get_restaurant_handlers(
 # TOGGLE RESTAURANT STATUS
 # ==============================================
 
+
 @router.patch(
     "/{restaurant_id}/status",
     response_model=RestaurantResponse,
@@ -73,20 +81,22 @@ async def get_restaurant_handlers(
 async def toggle_restaurant_status(
     *,
     restaurant_id: int = Path(..., ge=1, description="معرف المطعم"),
-    is_active: bool = Query(..., description="الحالة الجديدة (true: نشط, false: غير نشط)"),
+    is_active: bool = Query(
+        ..., description="الحالة الجديدة (true: نشط, false: غير نشط)"
+    ),
     handlers: RestaurantEventHandlers = Depends(get_restaurant_handlers),
 ) -> RestaurantResponse:
     """
     تفعيل أو تعطيل مطعم.
-    
+
     Args:
         restaurant_id: معرف المطعم
         is_active: الحالة الجديدة
         handlers: معالجات الأحداث
-        
+
     Returns:
         RestaurantResponse: المطعم المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المطعم
     """
@@ -128,6 +138,7 @@ async def toggle_restaurant_status(
 # ACTIVATE RESTAURANT
 # ==============================================
 
+
 @router.post(
     "/{restaurant_id}/activate",
     response_model=RestaurantResponse,
@@ -141,14 +152,14 @@ async def activate_restaurant(
 ) -> RestaurantResponse:
     """
     تفعيل مطعم.
-    
+
     Args:
         restaurant_id: معرف المطعم
         handlers: معالجات الأحداث
-        
+
     Returns:
         RestaurantResponse: المطعم المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المطعم
     """
@@ -187,6 +198,7 @@ async def activate_restaurant(
 # DEACTIVATE RESTAURANT
 # ==============================================
 
+
 @router.post(
     "/{restaurant_id}/deactivate",
     response_model=RestaurantResponse,
@@ -200,14 +212,14 @@ async def deactivate_restaurant(
 ) -> RestaurantResponse:
     """
     تعطيل مطعم.
-    
+
     Args:
         restaurant_id: معرف المطعم
         handlers: معالجات الأحداث
-        
+
     Returns:
         RestaurantResponse: المطعم المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المطعم
     """

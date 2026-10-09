@@ -1,4 +1,22 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / ORDERS REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for orders repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy.orm import raiseload, selectinload
+
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -45,17 +63,21 @@ OrderList = List[Order]
 class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     """
     مستودع الطلبات - يوفر عمليات خاصة بالطلبات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للطلبات
         - البحث والتصفية حسب المطعم والفرع والحالة
         - تحديث حالة الطلب ومبالغه
         - إحصائيات الطلبات
-    
+
     Attributes:
         model: نموذج Order
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,13 +85,17 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> None:
         """
         تهيئة مستودع الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         super().__init__(Order, session)
         self.commit_on_write = False
-        self.query_options = [raiseload("*"), selectinload(Order.payments).raiseload("*"), selectinload(Order.user).raiseload("*")]
+        self.query_options = [
+            raiseload("*"),
+            selectinload(Order.payments).raiseload("*"),
+            selectinload(Order.user).raiseload("*"),
+        ]
 
     # ==========================================
     # 📖 QUERIES
@@ -81,11 +107,24 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
 
     async def get_with_relations(self, *, order_id):
         from app.models.order_item import OrderItem
-        return (await self.session.execute(self._select().where(Order.id == order_id).options(
-            selectinload(Order.items).raiseload("*"),
-            selectinload(Order.items).selectinload(OrderItem.options).raiseload("*"),
-            selectinload(Order.status_history).raiseload("*"),
-        ))).scalar_one_or_none()
+
+        return (
+            await self.session.execute(
+                self._select()
+                .where(Order.id == order_id)
+                .options(
+                    selectinload(Order.items).raiseload("*"),
+                    selectinload(Order.items)
+                    .selectinload(OrderItem.options)
+                    .raiseload("*"),
+                    selectinload(Order.status_history).raiseload("*"),
+                )
+            )
+        ).scalar_one_or_none()
+
+    # ==============================================
+    # GET BY ORDER NUMBER
+    # ==============================================
 
     async def get_by_order_number(
         self,
@@ -95,18 +134,17 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> Optional[Order]:
         """
         الحصول على طلب بواسطة رقم الطلب.
-        
+
         Args:
             restaurant_id: معرف المطعم
             order_number: رقم الطلب
-            
+
         Returns:
             كائن Order أو None
         """
         try:
             result = await self.session.execute(
-                self._select()
-                .where(
+                self._select().where(
                     and_(
                         self.model.restaurant_id == restaurant_id,
                         self.model.order_number == order_number,
@@ -141,13 +179,13 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> OrderList:
         """
         الحصول على طلبات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             status: حالة الطلب (اختياري)
-            
+
         Returns:
             قائمة الطلبات
         """
@@ -159,7 +197,9 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
             if status is not None:
                 query = query.where(self.model.status == status)
 
-            query = query.order_by(self.model.created_at.desc()).offset(skip).limit(limit)
+            query = (
+                query.order_by(self.model.created_at.desc()).offset(skip).limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -189,13 +229,13 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> OrderList:
         """
         الحصول على طلبات حسب الحالة.
-        
+
         Args:
             status: حالة الطلب
             restaurant_id: معرف المطعم (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الطلبات
         """
@@ -205,7 +245,9 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
             if restaurant_id is not None:
                 query = query.where(self.model.restaurant_id == restaurant_id)
 
-            query = query.order_by(self.model.created_at.desc()).offset(skip).limit(limit)
+            query = (
+                query.order_by(self.model.created_at.desc()).offset(skip).limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -235,12 +277,12 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> OrderList:
         """
         الحصول على طلبات فرع معين.
-        
+
         Args:
             branch_id: معرف الفرع
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الطلبات
         """
@@ -281,13 +323,13 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> OrderList:
         """
         الحصول على طلبات عميل معين.
-        
+
         Args:
             customer_phone: رقم هاتف العميل
             restaurant_id: معرف المطعم (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الطلبات
         """
@@ -299,7 +341,9 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
             if restaurant_id is not None:
                 query = query.where(self.model.restaurant_id == restaurant_id)
 
-            query = query.order_by(self.model.created_at.desc()).offset(skip).limit(limit)
+            query = (
+                query.order_by(self.model.created_at.desc()).offset(skip).limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -330,13 +374,13 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> OrderList:
         """
         البحث عن طلبات.
-        
+
         Args:
             query: نص البحث
             restaurant_id: معرف المطعم (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الطلبات
         """
@@ -392,11 +436,11 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> Optional[Order]:
         """
         تحديث حالة الطلب.
-        
+
         Args:
             order_id: معرف الطلب
             status: الحالة الجديدة
-            
+
         Returns:
             كائن Order المحدث أو None
         """
@@ -429,7 +473,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> Optional[Order]:
         """
         تحديث مبالغ الطلب.
-        
+
         Args:
             order_id: معرف الطلب
             subtotal_amount: المبلغ الإجمالي قبل الخصم
@@ -437,7 +481,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
             tax_amount: مبلغ الضريبة
             delivery_amount: مبلغ التوصيل
             total_amount: المبلغ النهائي
-            
+
         Returns:
             كائن Order المحدث أو None
         """
@@ -479,11 +523,11 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> int:
         """
         حساب عدد طلبات مطعم معين حسب الحالة.
-        
+
         Args:
             restaurant_id: معرف المطعم
             status: حالة الطلب
-            
+
         Returns:
             عدد الطلبات
         """
@@ -505,10 +549,10 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> int:
         """
         حساب عدد طلبات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             عدد الطلبات
         """
@@ -526,11 +570,11 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
     ) -> float:
         """
         حساب إجمالي مبلغ الطلبات لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             status: حالة الطلب (اختياري)
-            
+
         Returns:
             إجمالي المبلغ
         """
@@ -569,6 +613,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
 # CREATE ORDER (COMPATIBILITY)
 # ==============================================
 
+
 async def create_order(
     *,
     restaurant_id: int,
@@ -591,7 +636,7 @@ async def create_order(
 ) -> int:
     """
     إنشاء طلب جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         branch_id: معرف الفرع
@@ -610,7 +655,7 @@ async def create_order(
         delivery_amount: مبلغ التوصيل
         total_amount: المبلغ النهائي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الطلب
     """
@@ -652,6 +697,7 @@ async def create_order(
 # GET ORDER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order(
     *,
     order_id: int,
@@ -659,11 +705,11 @@ async def get_order(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على طلب بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الطلب أو None
     """
@@ -701,6 +747,7 @@ async def get_order(
 # GET ORDER BY NUMBER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_by_number(
     *,
     restaurant_id: int,
@@ -709,12 +756,12 @@ async def get_order_by_number(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على طلب بواسطة رقم الطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         order_number: رقم الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الطلب أو None
     """
@@ -755,6 +802,7 @@ async def get_order_by_number(
 # GET RESTAURANT ORDERS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurant_orders(
     *,
     restaurant_id: int,
@@ -765,14 +813,14 @@ async def get_restaurant_orders(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على طلبات مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         status: حالة الطلب (اختياري)
-        
+
     Returns:
         قائمة الطلبات
     """
@@ -788,27 +836,29 @@ async def get_restaurant_orders(
     result = []
 
     for order in orders:
-        result.append({
-            "id": order.id,
-            "restaurant_id": order.restaurant_id,
-            "branch_id": order.branch_id,
-            "table_id": order.table_id,
-            "employee_id": order.employee_id,
-            "order_number": order.order_number,
-            "order_type": order.order_type,
-            "customer_name": order.customer_name,
-            "customer_phone": order.customer_phone,
-            "delivery_address": order.delivery_address,
-            "customer_note": order.customer_note,
-            "status": order.status,
-            "subtotal_amount": order.subtotal_amount,
-            "discount_amount": order.discount_amount,
-            "tax_amount": order.tax_amount,
-            "delivery_amount": order.delivery_amount,
-            "total_amount": order.total_amount,
-            "created_at": order.created_at,
-            "updated_at": order.updated_at,
-        })
+        result.append(
+            {
+                "id": order.id,
+                "restaurant_id": order.restaurant_id,
+                "branch_id": order.branch_id,
+                "table_id": order.table_id,
+                "employee_id": order.employee_id,
+                "order_number": order.order_number,
+                "order_type": order.order_type,
+                "customer_name": order.customer_name,
+                "customer_phone": order.customer_phone,
+                "delivery_address": order.delivery_address,
+                "customer_note": order.customer_note,
+                "status": order.status,
+                "subtotal_amount": order.subtotal_amount,
+                "discount_amount": order.discount_amount,
+                "tax_amount": order.tax_amount,
+                "delivery_amount": order.delivery_amount,
+                "total_amount": order.total_amount,
+                "created_at": order.created_at,
+                "updated_at": order.updated_at,
+            }
+        )
 
     return result
 
@@ -816,6 +866,7 @@ async def get_restaurant_orders(
 # ==============================================
 # GET ORDERS BY STATUS (COMPATIBILITY)
 # ==============================================
+
 
 async def get_orders_by_status(
     *,
@@ -827,14 +878,14 @@ async def get_orders_by_status(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على طلبات حسب الحالة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         status: حالة الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة الطلبات
     """
@@ -850,27 +901,29 @@ async def get_orders_by_status(
     result = []
 
     for order in orders:
-        result.append({
-            "id": order.id,
-            "restaurant_id": order.restaurant_id,
-            "branch_id": order.branch_id,
-            "table_id": order.table_id,
-            "employee_id": order.employee_id,
-            "order_number": order.order_number,
-            "order_type": order.order_type,
-            "customer_name": order.customer_name,
-            "customer_phone": order.customer_phone,
-            "delivery_address": order.delivery_address,
-            "customer_note": order.customer_note,
-            "status": order.status,
-            "subtotal_amount": order.subtotal_amount,
-            "discount_amount": order.discount_amount,
-            "tax_amount": order.tax_amount,
-            "delivery_amount": order.delivery_amount,
-            "total_amount": order.total_amount,
-            "created_at": order.created_at,
-            "updated_at": order.updated_at,
-        })
+        result.append(
+            {
+                "id": order.id,
+                "restaurant_id": order.restaurant_id,
+                "branch_id": order.branch_id,
+                "table_id": order.table_id,
+                "employee_id": order.employee_id,
+                "order_number": order.order_number,
+                "order_type": order.order_type,
+                "customer_name": order.customer_name,
+                "customer_phone": order.customer_phone,
+                "delivery_address": order.delivery_address,
+                "customer_note": order.customer_note,
+                "status": order.status,
+                "subtotal_amount": order.subtotal_amount,
+                "discount_amount": order.discount_amount,
+                "tax_amount": order.tax_amount,
+                "delivery_amount": order.delivery_amount,
+                "total_amount": order.total_amount,
+                "created_at": order.created_at,
+                "updated_at": order.updated_at,
+            }
+        )
 
     return result
 
@@ -878,6 +931,7 @@ async def get_orders_by_status(
 # ==============================================
 # UPDATE ORDER STATUS (COMPATIBILITY)
 # ==============================================
+
 
 async def update_order_status(
     *,
@@ -887,7 +941,7 @@ async def update_order_status(
 ) -> None:
     """
     تحديث حالة الطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         status: الحالة الجديدة
@@ -905,6 +959,7 @@ async def update_order_status(
 # UPDATE ORDER TOTALS (COMPATIBILITY)
 # ==============================================
 
+
 async def update_order_totals(
     *,
     order_id: int,
@@ -917,7 +972,7 @@ async def update_order_totals(
 ) -> None:
     """
     تحديث مبالغ الطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         subtotal_amount: المبلغ الإجمالي قبل الخصم
@@ -943,6 +998,7 @@ async def update_order_totals(
 # DELETE ORDER (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_order(
     *,
     order_id: int,
@@ -950,7 +1006,7 @@ async def delete_order(
 ) -> None:
     """
     حذف طلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -964,6 +1020,7 @@ async def delete_order(
         extra={"order_id": order_id},
     )
 
+
 # ==============================================
 # 🔄 TRANSACTION FUNCTIONS (للتوافق مع الكود القديم)
 # دوال معاملات متوافقة مع الاستيرادات القديمة
@@ -972,6 +1029,7 @@ async def delete_order(
 # ==============================================
 # CREATE ORDER TX
 # ==============================================
+
 
 async def create_order_tx(
     *,
@@ -995,7 +1053,7 @@ async def create_order_tx(
 ) -> int:
     """
     إنشاء طلب جديد (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         restaurant_id: معرف المطعم
@@ -1014,7 +1072,7 @@ async def create_order_tx(
         tax_amount: مبلغ الضريبة
         delivery_amount: مبلغ التوصيل
         total_amount: المبلغ النهائي
-        
+
     Returns:
         معرف الطلب
     """
@@ -1056,6 +1114,7 @@ async def create_order_tx(
 # UPDATE ORDER TOTALS TX
 # ==============================================
 
+
 async def update_order_totals_tx(
     *,
     conn: AsyncSession,
@@ -1068,7 +1127,7 @@ async def update_order_totals_tx(
 ) -> None:
     """
     تحديث مبالغ الطلب (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         order_id: معرف الطلب
@@ -1094,6 +1153,7 @@ async def update_order_totals_tx(
 # UPDATE ORDER STATUS TX
 # ==============================================
 
+
 async def update_order_status_tx(
     *,
     conn: AsyncSession,
@@ -1102,7 +1162,7 @@ async def update_order_status_tx(
 ) -> None:
     """
     تحديث حالة الطلب (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         order_id: معرف الطلب
@@ -1115,7 +1175,20 @@ async def update_order_status_tx(
         status=status,
     )
 
+
+# ==============================================
+# LOCK ORDER
+# ==============================================
+
+
 async def lock_order(*, order_id, session):
     """Lock the aggregate before checking rules or mutating its children."""
-    return (await session.execute(OrdersRepository(session=session)._select().where(Order.id == order_id)
-                                  .with_for_update(of=Order).execution_options(populate_existing=True))).scalar_one_or_none()
+    return (
+        await session.execute(
+            OrdersRepository(session=session)
+            ._select()
+            .where(Order.id == order_id)
+            .with_for_update(of=Order)
+            .execution_options(populate_existing=True)
+        )
+    ).scalar_one_or_none()

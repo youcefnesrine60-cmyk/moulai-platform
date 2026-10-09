@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for feature usage limits repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -59,6 +64,10 @@ class FeatureUsageLimitRepository(
         model: نموذج FeatureUsageLimit
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -328,6 +337,7 @@ class FeatureUsageLimitRepository(
 # CREATE FEATURE USAGE LIMIT (COMPATIBILITY)
 # ==============================================
 
+
 async def create_feature_usage_limit(
     *,
     plan_id: int,
@@ -376,6 +386,7 @@ async def create_feature_usage_limit(
 # GET LIMIT BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_feature_usage_limit_by_id(
     *,
     limit_id: int,
@@ -410,6 +421,7 @@ async def get_feature_usage_limit_by_id(
 # ==============================================
 # GET PLAN FEATURE LIMIT (COMPATIBILITY)
 # ==============================================
+
 
 async def get_plan_feature_limit(
     *,
@@ -451,6 +463,7 @@ async def get_plan_feature_limit(
 # GET PLAN LIMITS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_plan_feature_limits(
     *,
     plan_id: int,
@@ -473,13 +486,15 @@ async def get_plan_feature_limits(
     result = []
 
     for ul in usage_limits:
-        result.append({
-            "id": ul.id,
-            "plan_id": ul.plan_id,
-            "feature_id": ul.feature_id,
-            "monthly_limit": ul.monthly_limit,
-            "limit_type": ul.limit_type,
-        })
+        result.append(
+            {
+                "id": ul.id,
+                "plan_id": ul.plan_id,
+                "feature_id": ul.feature_id,
+                "monthly_limit": ul.monthly_limit,
+                "limit_type": ul.limit_type,
+            }
+        )
 
     return result
 
@@ -487,6 +502,7 @@ async def get_plan_feature_limits(
 # ==============================================
 # GET FEATURE LIMITS (COMPATIBILITY)
 # ==============================================
+
 
 async def get_feature_limits(
     *,
@@ -510,13 +526,15 @@ async def get_feature_limits(
     result = []
 
     for ul in usage_limits:
-        result.append({
-            "id": ul.id,
-            "plan_id": ul.plan_id,
-            "feature_id": ul.feature_id,
-            "monthly_limit": ul.monthly_limit,
-            "limit_type": ul.limit_type,
-        })
+        result.append(
+            {
+                "id": ul.id,
+                "plan_id": ul.plan_id,
+                "feature_id": ul.feature_id,
+                "monthly_limit": ul.monthly_limit,
+                "limit_type": ul.limit_type,
+            }
+        )
 
     return result
 
@@ -524,6 +542,7 @@ async def get_feature_limits(
 # ==============================================
 # GET ALL LIMITS (COMPATIBILITY)
 # ==============================================
+
 
 async def get_all_feature_usage_limits(
     session: AsyncSession,
@@ -549,13 +568,15 @@ async def get_all_feature_usage_limits(
     result = []
 
     for ul in usage_limits:
-        result.append({
-            "id": ul.id,
-            "plan_id": ul.plan_id,
-            "feature_id": ul.feature_id,
-            "monthly_limit": ul.monthly_limit,
-            "limit_type": ul.limit_type,
-        })
+        result.append(
+            {
+                "id": ul.id,
+                "plan_id": ul.plan_id,
+                "feature_id": ul.feature_id,
+                "monthly_limit": ul.monthly_limit,
+                "limit_type": ul.limit_type,
+            }
+        )
 
     return result
 
@@ -563,6 +584,7 @@ async def get_all_feature_usage_limits(
 # ==============================================
 # UPDATE LIMIT (COMPATIBILITY)
 # ==============================================
+
 
 async def update_feature_usage_limit(
     *,
@@ -592,6 +614,7 @@ async def update_feature_usage_limit(
 # ==============================================
 # DELETE LIMIT (COMPATIBILITY)
 # ==============================================
+
 
 async def delete_feature_usage_limit(
     *,

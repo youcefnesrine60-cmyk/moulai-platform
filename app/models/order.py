@@ -11,6 +11,11 @@
 # يدير الطلبات بكامل تفاصيلها من البداية إلى النهاية
 # ==============================================
 
+"""MoulAI operational module for order.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Column,
     Float,
@@ -28,17 +33,18 @@ from .base import BaseModel
 # 📋 ORDER
 # ==============================================
 
+
 class Order(BaseModel):
     """
     نموذج الطلب
-    
+
     يدير:
         - بيانات الطلب الأساسية (الرقم، النوع، الحالة)
         - معلومات العميل (الاسم، الهاتف، العنوان)
         - المبالغ (الإجمالي، الخصم، الضريبة، التوصيل)
         - الملاحظات
         - العلاقات مع المطعم والفرع والموظف
-    
+
     Attributes:
         restaurant_id: معرف المطعم (ForeignKey)
         branch_id: معرف الفرع (ForeignKey)
@@ -60,14 +66,15 @@ class Order(BaseModel):
         payments: قائمة مدفوعات الطلب
         status_history: سجل حالات الطلب
     """
+
     __tablename__ = "orders"
     # Fetch server-generated timestamps during flush for async DTO serialization.
     __mapper_args__ = {"eager_defaults": True}
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     user_id = Column(
         Integer,
         ForeignKey("users.id", ondelete="SET NULL"),
@@ -119,11 +126,11 @@ class Order(BaseModel):
         nullable=False,
         comment="حالة الطلب: pending, confirmed, preparing, ready, completed, cancelled",
     )
-    
+
     # ==========================================
     # 💰 AMOUNTS
     # ==========================================
-    
+
     subtotal_amount = Column(
         Float,
         nullable=False,
@@ -154,100 +161,103 @@ class Order(BaseModel):
         default=0,
         comment="المبلغ الإجمالي النهائي",
     )
-    
+
     # ==========================================
     # 🔒 CONSTRAINTS
     # ==========================================
-    
+
     __table_args__ = (
         Index(
-            'idx_orders_restaurant',
-            'restaurant_id',
-            #comment="مؤشر لتحسين أداء البحث عن طلبات مطعم معين",
+            "idx_orders_restaurant",
+            "restaurant_id",
+            # comment="مؤشر لتحسين أداء البحث عن طلبات مطعم معين",
         ),
         Index(
-            'idx_orders_branch',
-            'branch_id',
-            #comment="مؤشر لتحسين أداء البحث عن طلبات فرع معين",
+            "idx_orders_branch",
+            "branch_id",
+            # comment="مؤشر لتحسين أداء البحث عن طلبات فرع معين",
         ),
         Index(
-            'idx_orders_status',
-            'status',
-            #comment="مؤشر لتحسين أداء البحث عن طلبات بحالة معينة",
+            "idx_orders_status",
+            "status",
+            # comment="مؤشر لتحسين أداء البحث عن طلبات بحالة معينة",
         ),
         Index(
-            'idx_orders_created_at',
-            'created_at',
-            #comment="مؤشر لتحسين أداء البحث عن طلبات بفترة زمنية معينة",
+            "idx_orders_created_at",
+            "created_at",
+            # comment="مؤشر لتحسين أداء البحث عن طلبات بفترة زمنية معينة",
         ),
         Index(
-            'idx_orders_restaurant_order_number',
-            'restaurant_id',
-            'order_number',
+            "idx_orders_restaurant_order_number",
+            "restaurant_id",
+            "order_number",
             unique=True,
-            #comment="تأكد من عدم تكرار رقم الطلب لنفس المطعم",
+            # comment="تأكد من عدم تكرار رقم الطلب لنفس المطعم",
         ),
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     # المستخدم
-    user = relationship(
-        "User", 
-        back_populates="orders", lazy="selectin"
-    )
+    user = relationship("User", back_populates="orders", lazy="selectin")
     # المطعم
-    restaurant = relationship(
-        "Restaurant",
-        back_populates="orders",
-        lazy="selectin"
-    )
+    restaurant = relationship("Restaurant", back_populates="orders", lazy="selectin")
     # الفرع
-    branch = relationship(
-        "Branch",
-        back_populates="orders",
-        lazy="selectin"
-    )
+    branch = relationship("Branch", back_populates="orders", lazy="selectin")
     # قائمة بنود الطلب
     items = relationship(
         "OrderItem",
         back_populates="order",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
     # قائمة مدفوعات الطلب
     payments = relationship(
         "OrderPayment",
         back_populates="order",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
     # سجل حالات الطلب"
     status_history = relationship(
         "OrderStatusHistory",
         back_populates="order",
         cascade="all, delete-orphan",
-        lazy="selectin"
+        lazy="selectin",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     @property
     def customer_name(self):
         return self.user.customer_name if self.user else None
+
+    # ==============================================
+    # CUSTOMER PHONE
+    # ==============================================
 
     @property
     def customer_phone(self):
         return self.user.customer_phone if self.user else None
 
+    # ==============================================
+    # IS PAID
+    # ==============================================
+
     @property
     def is_paid(self):
         paid = sum(float(p.amount) for p in self.payments if p.payment_status == "paid")
-        return float(self.total_amount or 0) > 0 and round(paid, 2) >= round(float(self.total_amount), 2)
+        return float(self.total_amount or 0) > 0 and round(paid, 2) >= round(
+            float(self.total_amount), 2
+        )
+
+    # ==============================================
+    # PAYMENT STATUS
+    # ==============================================
 
     @property
     def payment_status(self):
@@ -264,11 +274,17 @@ class Order(BaseModel):
             return "failed"
         return None
 
+    # ==============================================
+    #   REPR
+    # ==============================================
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف ورقم الطلب والحالة
         """
-        return f"<Order(id={self.id}, number={self.order_number}, status={self.status})>"
+        return (
+            f"<Order(id={self.id}, number={self.order_number}, status={self.status})>"
+        )

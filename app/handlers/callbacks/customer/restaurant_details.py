@@ -1,6 +1,19 @@
 # ==============================================
-# 🍔 RESTAURANT DETAILS
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / CUSTOMER / RESTAURANT DETAILS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for restaurant details.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 
@@ -17,6 +30,7 @@ from app.views.ui import (
 # 🍔 HANDLE RESTAURANT SELECTION
 # ==============================================
 
+
 async def handle_restaurant_selection(
     *,
     chat_id: int,
@@ -30,11 +44,7 @@ async def handle_restaurant_selection(
 
     try:
 
-        restaurant_id = int(
-            callback_data.removeprefix(
-                "rest_"
-            )
-        )
+        restaurant_id = int(callback_data.removeprefix("rest_"))
 
     except ValueError:
 

@@ -11,6 +11,11 @@
 # يدير عمليات قاعدة البيانات لفروع المطاعم
 # ==============================================
 
+"""MoulAI operational module for restaurant branch repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -30,7 +35,6 @@ from app.core.logger import logger
 from app.models.restaurant_group import RestaurantBranch
 from app.repositories.base import BaseRepository
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -43,16 +47,23 @@ BranchUpdateData = Dict[str, Any]
 # 🔗 RESTAURANT BRANCH REPOSITORY
 # ==============================================
 
-class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, BranchUpdateData]):
+
+class RestaurantBranchRepository(
+    BaseRepository[RestaurantBranch, BranchData, BranchUpdateData]
+):
     """
     مستودع فروع المطاعم.
-    
+
     يدير عمليات قاعدة البيانات لنموذج RestaurantBranch.
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         model: نموذج RestaurantBranch
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -60,7 +71,7 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> None:
         """
         تهيئة مستودع فروع المطاعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -81,10 +92,10 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> Optional[RestaurantBranch]:
         """
         الحصول على فرع مطعم بالمعرف مع تفاصيله.
-        
+
         Args:
             branch_id: معرف الفرع
-            
+
         Returns:
             Optional[RestaurantBranch]: الفرع مع تفاصيله أو None
         """
@@ -118,12 +129,12 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> List[RestaurantBranch]:
         """
         الحصول على فروع المطاعم لمجموعة معينة.
-        
+
         Args:
             group_id: معرف المجموعة
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RestaurantBranch]: قائمة فروع المطاعم
         """
@@ -161,12 +172,12 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> List[RestaurantBranch]:
         """
         الحصول على فروع المطاعم لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RestaurantBranch]: قائمة فروع المطاعم
         """
@@ -203,11 +214,11 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> Optional[RestaurantBranch]:
         """
         الحصول على فرع مطعم بواسطة معرف المجموعة والمطعم.
-        
+
         Args:
             group_id: معرف المجموعة
             restaurant_id: معرف المطعم
-            
+
         Returns:
             Optional[RestaurantBranch]: الفرع أو None
         """
@@ -240,10 +251,10 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> int:
         """
         حساب عدد فروع المطاعم لمجموعة معينة.
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             int: عدد الفروع
         """
@@ -267,10 +278,10 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> int:
         """
         حساب عدد فروع المطاعم لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             int: عدد الفروع
         """
@@ -299,11 +310,11 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> List[RestaurantBranch]:
         """
         إنشاء فروع مطاعم متعددة دفعة واحدة.
-        
+
         Args:
             group_id: معرف المجموعة
             restaurant_ids: قائمة معرفات المطاعم
-            
+
         Returns:
             List[RestaurantBranch]: قائمة الفروع المنشأة
         """
@@ -363,10 +374,10 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> int:
         """
         حذف جميع فروع المطاعم لمجموعة معينة.
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             int: عدد الفروع المحذوفة
         """
@@ -400,10 +411,10 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> int:
         """
         حذف جميع فروع المطاعم لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             int: عدد الفروع المحذوفة
         """
@@ -438,11 +449,11 @@ class RestaurantBranchRepository(BaseRepository[RestaurantBranch, BranchData, Br
     ) -> bool:
         """
         حذف فرع مطعم بواسطة معرف المجموعة والمطعم.
-        
+
         Args:
             group_id: معرف المجموعة
             restaurant_id: معرف المطعم
-            
+
         Returns:
             bool: True إذا تم الحذف بنجاح
         """

@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها للمنتجات
 # ==============================================
 
+"""MoulAI operational module for product.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     Field,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -38,12 +42,13 @@ ProductUpdateData = Dict[str, Any]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class ProductBase(BaseModel):
     """
     المخطط الأساسي للمنتج.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات المنتج.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         category_id: معرف التصنيف
@@ -54,6 +59,7 @@ class ProductBase(BaseModel):
         is_available: حالة التوفر
         sort_order: ترتيب العرض
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -103,10 +109,11 @@ class ProductBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class ProductCreate(BaseModel):
     """
     مخطط إنشاء منتج جديد.
-    
+
     Attributes:
         category_id: معرف التصنيف
         name: اسم المنتج
@@ -115,6 +122,7 @@ class ProductCreate(BaseModel):
         image_url: رابط الصورة (اختياري)
         sort_order: ترتيب العرض (اختياري)
     """
+
     category_id: int = Field(
         ...,
         description="معرف التصنيف",
@@ -154,10 +162,11 @@ class ProductCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class ProductUpdate(BaseModel):
     """
     مخطط تحديث المنتج - جميع الحقول اختيارية.
-    
+
     Attributes:
         category_id: معرف التصنيف
         name: اسم المنتج
@@ -167,6 +176,7 @@ class ProductUpdate(BaseModel):
         is_available: حالة التوفر
         sort_order: ترتيب العرض
     """
+
     category_id: Optional[int] = Field(
         None,
         description="معرف التصنيف",
@@ -211,13 +221,15 @@ class ProductUpdate(BaseModel):
 # 📤 AVAILABILITY UPDATE SCHEMA
 # ==============================================
 
+
 class ProductAvailabilityUpdate(BaseModel):
     """
     مخطط تحديث حالة توفر المنتج.
-    
+
     Attributes:
         is_available: حالة التوفر الجديدة
     """
+
     is_available: bool = Field(
         ...,
         description="حالة التوفر الجديدة",
@@ -229,15 +241,17 @@ class ProductAvailabilityUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class ProductResponse(ProductBase):
     """
     مخطط استجابة المنتج - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف المنتج
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -259,18 +273,20 @@ class ProductResponse(ProductBase):
 # 📋 PRODUCT LIST RESPONSE
 # ==============================================
 
+
 class ProductListResponse(BaseModel):
     """
     مخطط استجابة قائمة المنتجات.
-    
+
     يحتوي على قائمة المنتجات مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة المنتجات
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[ProductResponse] = Field(
@@ -298,12 +314,13 @@ class ProductListResponse(BaseModel):
 # 📊 PRODUCT SUMMARY
 # ==============================================
 
+
 class ProductSummary(BaseModel):
     """
     مخطط ملخص المنتجات.
-    
+
     يحتوي على إحصائيات موجزة عن المنتجات.
-    
+
     Attributes:
         total_products: إجمالي عدد المنتجات
         available_products: عدد المنتجات المتاحة
@@ -313,6 +330,7 @@ class ProductSummary(BaseModel):
         min_price: أقل سعر
         max_price: أعلى سعر
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_products: int = Field(

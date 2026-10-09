@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🔗 RESTAURANT BRANCHES ROUTER - LIST
 # نقاط نهاية قوائم فروع المطاعم
 # ==============================================
+
+"""MoulAI operational module for router list.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -25,7 +30,6 @@ from app.core.logger import logger
 from app.schemas.restaurant.restaurant_group import RestaurantBranchListResponse
 from app.services.business.restaurant.branches.service import RestaurantBranchService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -39,6 +43,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_restaurant_branch_service(
     session: AsyncSession = Depends(get_db),
@@ -54,6 +59,7 @@ async def get_restaurant_branch_service(
 # ==============================================
 # LIST BRANCHES BY GROUP
 # ==============================================
+
 
 @router.get(
     "/group/{group_id}",
@@ -99,6 +105,7 @@ async def list_restaurant_branches_by_group(
 # ==============================================
 # LIST BRANCHES BY RESTAURANT
 # ==============================================
+
 
 @router.get(
     "/restaurant/{restaurant_id}",

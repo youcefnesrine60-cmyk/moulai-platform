@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,13 +10,14 @@
 # دوال التحقق من صحة بيانات المطاعم
 # ==============================================
 
-from typing import (
-    Dict, 
-    Any
-)
+"""MoulAI operational module for validators.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+from typing import Dict, Any
 
 from app.core.exceptions import ValidationError
-
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -34,18 +35,19 @@ VALID_RESTAURANT_TYPES = {"restaurant", "cafe", "fast_food", "bakery", "pizza", 
 # VALIDATE RESTAURANT TYPE
 # ==============================================
 
+
 def validate_restaurant_type(
     restaurant_type: str,
 ) -> str:
     """
     التحقق من صحة نوع المطعم.
-    
+
     Args:
         restaurant_type: نوع المطعم
-        
+
     Returns:
         str: نوع المطعم المدقق
-        
+
     Raises:
         ValidationError: إذا كان النوع غير صالح
     """
@@ -64,15 +66,16 @@ def validate_restaurant_type(
 # VALIDATE OWNER LIMIT
 # ==============================================
 
+
 def validate_owner_limit(
     current_count: int,
 ) -> None:
     """
     التحقق من عدم تجاوز المالك للحد الأقصى للمطاعم.
-    
+
     Args:
         current_count: عدد المطاعم الحالية
-        
+
     Raises:
         ValidationError: إذا تجاوز المالك الحد الأقصى
     """
@@ -90,15 +93,16 @@ def validate_owner_limit(
 # VALIDATE METRICS VALUES
 # ==============================================
 
+
 def validate_metrics_values(
     updates: Dict[str, Any],
 ) -> None:
     """
     التحقق من صحة قيم المقاييس.
-    
+
     Args:
         updates: قاموس القيم المراد تحديثها
-        
+
     Raises:
         ValidationError: إذا كانت أي قيمة غير صالحة
     """

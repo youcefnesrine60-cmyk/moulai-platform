@@ -10,6 +10,11 @@
 # دوال متوافقة مع الاستيرادات القديمة
 # ==============================================
 
+"""MoulAI operational module for compat.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -24,8 +29,9 @@ from app.schemas.restaurant.restaurant_payment_setting import (
     RestaurantPaymentSettingUpdate,
     PaymentMethodsList,
 )
-from app.services.business.restaurant.payment_setting.service import RestaurantPaymentSettingsService
-
+from app.services.business.restaurant.payment_setting.service import (
+    RestaurantPaymentSettingsService,
+)
 
 # ==============================================
 # 📦 COMPATIBILITY FUNCTIONS
@@ -34,6 +40,7 @@ from app.services.business.restaurant.payment_setting.service import RestaurantP
 # ==============================================
 # CREATE PAYMENT SETTINGS
 # ==============================================
+
 
 async def create_payment_settings(
     *,
@@ -70,6 +77,7 @@ async def create_payment_settings(
 # GET PAYMENT SETTINGS
 # ==============================================
 
+
 async def get_payment_settings(
     *,
     restaurant_id: int,
@@ -90,6 +98,7 @@ async def get_payment_settings(
 # ==============================================
 # UPDATE PAYMENT SETTINGS
 # ==============================================
+
 
 async def update_payment_settings(
     *,
@@ -118,6 +127,7 @@ async def update_payment_settings(
 # ==============================================
 # UPDATE PAYMENT METHODS
 # ==============================================
+
 
 async def update_payment_methods(
     *,
@@ -155,6 +165,7 @@ async def update_payment_methods(
 # GET ALLOWED PAYMENT METHODS
 # ==============================================
 
+
 async def get_allowed_payment_methods(
     *,
     restaurant_id: int,
@@ -171,6 +182,7 @@ async def get_allowed_payment_methods(
 # ==============================================
 # DELETE PAYMENT SETTINGS
 # ==============================================
+
 
 async def delete_payment_settings(
     *,
@@ -194,6 +206,7 @@ async def delete_payment_settings(
 # RESET PAYMENT SETTINGS
 # ==============================================
 
+
 async def reset_payment_settings(
     *,
     restaurant_id: int,
@@ -215,6 +228,7 @@ async def reset_payment_settings(
 # ==============================================
 # ENABLE PAYMENT METHOD
 # ==============================================
+
 
 async def enable_payment_method(
     *,
@@ -244,6 +258,7 @@ async def enable_payment_method(
 # ==============================================
 # DISABLE PAYMENT METHOD
 # ==============================================
+
 
 async def disable_payment_method(
     *,

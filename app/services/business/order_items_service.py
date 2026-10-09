@@ -1,7 +1,30 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDER ITEMS SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order items service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.repositories.orders_repo import lock_order
 from app.services.business.orders.helpers import check_order_editable
-from app.services.business.orders.items import add_item_to_order, remove_item_from_order, change_item_amounts, _recalculate_order_total
+from app.services.business.orders.items import (
+    add_item_to_order,
+    remove_item_from_order,
+    change_item_amounts,
+    _recalculate_order_total,
+)
 from app.services.business.orders.transaction import transactional_order
+
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -28,22 +51,17 @@ from typing import (
     Any,
     Dict,
     List,
-    Optional,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
-    ConflictError,
     NotFoundError,
     ValidationError,
 )
 
 # ✅ استيراد دوال الأمان
-from app.core.security import (
-    sanitize_input,
-)
 
 from app.core.logger import logger
 from app.models.order_item import OrderItem
@@ -56,7 +74,6 @@ from app.schemas.order_item import (
     OrderItemWithOptionsResponse,
     OrderItemSummary,
 )
-
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -81,17 +98,21 @@ OrderItemList = List[OrderItem]
 class OrderItemsService:
     """
     خدمة عناصر الطلبات - تدير منطق الأعمال لعناصر الطلبات.
-    
+
     مسؤولة عن:
         - إضافة عناصر إلى الطلب
         - تحديث كمية العناصر
         - حذف عناصر من الطلب
         - حساب المجموع الفرعي
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع عناصر الطلبات
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -99,7 +120,7 @@ class OrderItemsService:
     ) -> None:
         """
         تهيئة خدمة عناصر الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -121,13 +142,13 @@ class OrderItemsService:
     ) -> OrderItemResponse:
         """
         الحصول على عنصر طلب بالمعرف.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Returns:
             OrderItemResponse: بيانات عنصر الطلب
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العنصر
         """
@@ -160,12 +181,12 @@ class OrderItemsService:
     ) -> List[OrderItemResponse]:
         """
         الحصول على عناصر طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[OrderItemResponse]: قائمة عناصر الطلب
         """
@@ -197,13 +218,13 @@ class OrderItemsService:
     ) -> OrderItemWithOptionsResponse:
         """
         الحصول على عنصر طلب مع خياراته.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Returns:
             OrderItemWithOptionsResponse: عنصر الطلب مع الخيارات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العنصر
         """
@@ -234,10 +255,10 @@ class OrderItemsService:
     ) -> int:
         """
         حساب عدد عناصر طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             int: عدد العناصر
         """
@@ -261,10 +282,10 @@ class OrderItemsService:
     ) -> float:
         """
         حساب المجموع الفرعي لعناصر طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             float: المجموع الفرعي
         """
@@ -288,10 +309,10 @@ class OrderItemsService:
     ) -> OrderItemSummary:
         """
         الحصول على ملخص عناصر الطلب.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             OrderItemSummary: ملخص عناصر الطلب
         """
@@ -341,7 +362,13 @@ class OrderItemsService:
         if not items or len({item.order_id for item in items}) != 1:
             raise ValidationError(message="Items must belong to one order")
         created = [await self.add_item(item_data=item) for item in items]
-        return OrderItemListResponse(items=created, total=len(created), skip=0, limit=len(created))
+        return OrderItemListResponse(
+            items=created, total=len(created), skip=0, limit=len(created)
+        )
+
+    # ==============================================
+    # ADD ITEM
+    # ==============================================
 
     @transactional_order
     async def add_item(
@@ -351,13 +378,13 @@ class OrderItemsService:
     ) -> OrderItemResponse:
         """
         إضافة عنصر جديد إلى الطلب.
-        
+
         Args:
             item_data: بيانات عنصر الطلب
-            
+
         Returns:
             OrderItemResponse: بيانات عنصر الطلب المنشأ
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب أو المنتج
             ConflictError: إذا كان المنتج مكرراً في الطلب
@@ -366,6 +393,10 @@ class OrderItemsService:
         values = item_data.model_dump()
         item = await add_item_to_order(**values, session=self.session)
         return OrderItemResponse.model_validate(item)
+
+    # ==============================================
+    # UPDATE QUANTITY
+    # ==============================================
 
     @transactional_order
     async def update_quantity(
@@ -376,21 +407,26 @@ class OrderItemsService:
     ) -> OrderItemResponse:
         """
         تحديث كمية عنصر الطلب.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
             quantity: الكمية الجديدة
-            
+
         Returns:
             OrderItemResponse: بيانات عنصر الطلب المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العنصر
             ValidationError: إذا كانت الكمية غير صالحة
         """
-        item = await change_item_amounts(order_item_id=order_item_id,
-            quantity=quantity, session=self.session)
+        item = await change_item_amounts(
+            order_item_id=order_item_id, quantity=quantity, session=self.session
+        )
         return OrderItemResponse.model_validate(item)
+
+    # ==============================================
+    # UPDATE UNIT PRICE
+    # ==============================================
 
     @transactional_order
     async def update_unit_price(
@@ -401,21 +437,26 @@ class OrderItemsService:
     ) -> OrderItemResponse:
         """
         تحديث سعر الوحدة لعنصر الطلب.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
             unit_price: سعر الوحدة الجديد
-            
+
         Returns:
             OrderItemResponse: بيانات عنصر الطلب المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العنصر
             ValidationError: إذا كان السعر غير صالح
         """
-        item = await change_item_amounts(order_item_id=order_item_id,
-            unit_price=unit_price, session=self.session)
+        item = await change_item_amounts(
+            order_item_id=order_item_id, unit_price=unit_price, session=self.session
+        )
         return OrderItemResponse.model_validate(item)
+
+    # ==============================================
+    # REMOVE ITEM
+    # ==============================================
 
     @transactional_order
     async def remove_item(
@@ -425,18 +466,23 @@ class OrderItemsService:
     ) -> None:
         """
         حذف عنصر من الطلب.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على العنصر
         """
         item = await self.repo.get_by_id(id=order_item_id)
         if item is None:
             raise NotFoundError(message="Order item not found")
-        await remove_item_from_order(order_id=item.order_id,
-            order_item_id=order_item_id, session=self.session)
+        await remove_item_from_order(
+            order_id=item.order_id, order_item_id=order_item_id, session=self.session
+        )
+
+    # ==============================================
+    # REMOVE ALL ITEMS
+    # ==============================================
 
     @transactional_order
     async def remove_all_items(
@@ -446,13 +492,13 @@ class OrderItemsService:
     ) -> int:
         """
         حذف جميع عناصر الطلب.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             int: عدد العناصر المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
         """

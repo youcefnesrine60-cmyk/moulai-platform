@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🏦 RESTAURANT PAYMENT SETTINGS ROUTER - METHODS
 # نقاط نهاية طرق الدفع
 # ==============================================
+
+"""MoulAI operational module for router methods.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -36,7 +41,6 @@ from app.services.business.restaurant.payment_setting.service import (
 
 from app.api.v1.restaurant.payment_setting.router import ALL_PAYMENT_METHODS
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -50,6 +54,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_payment_settings_service(
     session: AsyncSession = Depends(get_db),
@@ -65,6 +70,7 @@ async def get_payment_settings_service(
 # ==============================================
 # GET ALLOWED PAYMENT METHODS
 # ==============================================
+
 
 @router.get(
     "/{restaurant_id}/methods",
@@ -120,6 +126,7 @@ async def get_allowed_payment_methods(
 # ==============================================
 # UPDATE PAYMENT METHODS
 # ==============================================
+
 
 @router.patch(
     "/{restaurant_id}/methods",

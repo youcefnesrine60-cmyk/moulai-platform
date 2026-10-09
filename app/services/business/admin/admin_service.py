@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 👑 ADMIN SERVICE
 # منطق الأعمال للمديرين (CRUD الأساسي)
 # ==============================================
+
+"""MoulAI operational module for admin service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -47,18 +52,22 @@ AdminStats = Dict[str, Any]
 class AdminService:
     """
     خدمة المديرين - تدير عمليات CRUD الأساسية للمديرين.
-    
+
     مسؤول عن:
         - إنشاء المديرين
         - قراءة المديرين
         - تحديث المديرين
         - حذف المديرين
         - التحقق من صلاحيات المديرين
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         admin_repo: مستودع المديرين
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -66,7 +75,7 @@ class AdminService:
     ) -> None:
         """
         تهيئة خدمة المديرين.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -88,13 +97,13 @@ class AdminService:
     ) -> AdminResponse:
         """
         إنشاء مدير جديد.
-        
+
         Args:
             admin_data: بيانات المدير
-            
+
         Returns:
             بيانات المدير المنشأ
-            
+
         Raises:
             ConflictError: إذا كان اسم المستخدم أو chat_id موجوداً مسبقاً
         """
@@ -141,7 +150,9 @@ class AdminService:
             full_name=admin_data.full_name,
             role=admin_data.role or "admin",
             password_hash=password_hash,
-            is_active=admin_data.is_active if admin_data.is_active is not None else True,
+            is_active=(
+                admin_data.is_active if admin_data.is_active is not None else True
+            ),
         )
 
         logger.info(
@@ -166,14 +177,14 @@ class AdminService:
     ) -> AdminResponse:
         """
         الحصول على مدير بواسطة المعرف.
-        
+
         Args:
             admin_id: معرف المدير
             include_inactive: تضمين المديرين غير النشطين
-            
+
         Returns:
             بيانات المدير
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
         """
@@ -213,14 +224,14 @@ class AdminService:
     ) -> AdminResponse:
         """
         الحصول على مدير بواسطة اسم المستخدم.
-        
+
         Args:
             username: اسم المستخدم
             include_inactive: تضمين المديرين غير النشطين
-            
+
         Returns:
             بيانات المدير
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
         """
@@ -256,14 +267,14 @@ class AdminService:
     ) -> AdminResponse:
         """
         الحصول على مدير بواسطة معرف الدردشة.
-        
+
         Args:
             chat_id: معرف الدردشة في Telegram
             include_inactive: تضمين المديرين غير النشطين
-            
+
         Returns:
             بيانات المدير
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
         """
@@ -302,14 +313,14 @@ class AdminService:
     ) -> AdminListResponse:
         """
         الحصول على جميع المديرين.
-        
+
         Args:
             only_active: جلب المديرين النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             order_by: حقل الترتيب
             order_desc: ترتيب تنازلي
-            
+
         Returns:
             قائمة المديرين مع الإحصائيات
         """
@@ -355,13 +366,13 @@ class AdminService:
     ) -> AdminListResponse:
         """
         الحصول على المديرين حسب الدور.
-        
+
         Args:
             role: دور المدير
             only_active: جلب المديرين النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المديرين مع الإحصائيات
         """
@@ -408,13 +419,13 @@ class AdminService:
     ) -> AdminListResponse:
         """
         البحث عن المديرين.
-        
+
         Args:
             query: نص البحث (username أو full_name)
             only_active: جلب المديرين النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المديرين مع الإحصائيات
         """
@@ -460,14 +471,14 @@ class AdminService:
     ) -> AdminResponse:
         """
         تحديث بيانات المدير.
-        
+
         Args:
             admin_id: معرف المدير
             update_data: بيانات التحديث
-            
+
         Returns:
             بيانات المدير المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
             ConflictError: إذا كان اسم المستخدم موجوداً مسبقاً
@@ -541,14 +552,14 @@ class AdminService:
     ) -> AdminResponse:
         """
         تحديث دور المدير.
-        
+
         Args:
             admin_id: معرف المدير
             role: الدور الجديد
-            
+
         Returns:
             بيانات المدير المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
         """
@@ -591,13 +602,13 @@ class AdminService:
     ) -> AdminResponse:
         """
         تبديل حالة المدير (نشط/غير نشط).
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             بيانات المدير المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
         """
@@ -636,13 +647,13 @@ class AdminService:
     ) -> AdminResponse:
         """
         تنشيط المدير.
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             بيانات المدير المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
         """
@@ -678,13 +689,13 @@ class AdminService:
     ) -> AdminResponse:
         """
         إلغاء تنشيط المدير.
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             بيانات المدير المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
         """
@@ -721,14 +732,14 @@ class AdminService:
     ) -> bool:
         """
         حذف المدير.
-        
+
         Args:
             admin_id: معرف المدير
             permanent: حذف نهائي (بدلاً من الحذف المنطقي)
-            
+
         Returns:
             True إذا تم الحذف
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
         """
@@ -783,15 +794,15 @@ class AdminService:
     ) -> bool:
         """
         التحقق من صلاحيات المدير.
-        
+
         Args:
             admin_id: معرف المدير
             required_role: الدور المطلوب
             required_permission: الصلاحية المطلوبة
-            
+
         Returns:
             True إذا كان المدير لديه الصلاحية
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
             UnauthorizedError: إذا لم يكن لدى المدير الصلاحية
@@ -842,10 +853,10 @@ class AdminService:
     ) -> bool:
         """
         التحقق من أن المدير هو مشرف عام.
-        
+
         Args:
             admin_id: معرف المدير
-            
+
         Returns:
             True إذا كان المدير مشرفاً عاماً
         """
@@ -876,7 +887,7 @@ class AdminService:
     ) -> AdminStats:
         """
         الحصول على إحصائيات المديرين.
-        
+
         Returns:
             قاموس الإحصائيات
         """
@@ -908,6 +919,7 @@ class AdminService:
 # IS ADMIN
 # ==============================================
 
+
 async def is_admin(
     *,
     chat_id: int,
@@ -915,11 +927,11 @@ async def is_admin(
 ) -> bool:
     """
     التحقق من أن المستخدم هو مدير (دالة مساعدة).
-    
+
     Args:
         chat_id: معرف الدردشة في Telegram
         session: جلسة قاعدة البيانات (اختياري)
-        
+
     Returns:
         True إذا كان المستخدم مديراً، False وإلا
     """
@@ -953,6 +965,7 @@ async def is_admin(
 # COUNT ADMINS
 # ==============================================
 
+
 async def count_admins(
     *,
     session: Optional[AsyncSession] = None,
@@ -960,11 +973,11 @@ async def count_admins(
 ) -> int:
     """
     حساب عدد المديرين (دالة مساعدة).
-    
+
     Args:
         session: جلسة قاعدة البيانات (اختياري)
         only_active: حساب المديرين النشطين فقط
-        
+
     Returns:
         عدد المديرين
     """
@@ -996,6 +1009,7 @@ async def count_admins(
 # GET ADMIN BY CHAT ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_admin_by_chat_id(
     *,
     chat_id: int,
@@ -1003,11 +1017,11 @@ async def get_admin_by_chat_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مدير بواسطة معرف الدردشة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف الدردشة في Telegram
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات المدير أو None
     """

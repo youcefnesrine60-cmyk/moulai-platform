@@ -11,6 +11,11 @@
 # يدير الخيارات الفردية للمنتجات مع الأسعار الإضافية
 # ==============================================
 
+"""MoulAI operational module for product option.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -27,17 +32,18 @@ from .base import BaseModel
 # 🎯 PRODUCT OPTION
 # ==============================================
 
+
 class ProductOption(BaseModel):
     """
     نموذج خيار المنتج الفردي
-    
+
     يدير:
         - اسم الخيار
         - السعر الإضافي
         - حالة التوفر
         - ترتيب العرض
         - العلاقة مع مجموعة الخيارات
-    
+
     Attributes:
         group_id: معرف مجموعة الخيارات (ForeignKey)
         name: اسم الخيار
@@ -46,12 +52,13 @@ class ProductOption(BaseModel):
         sort_order: ترتيب العرض
         group: علاقة مع نموذج OptionGroup
     """
+
     __tablename__ = "product_options"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     group_id = Column(
         Integer,
         ForeignKey("option_groups.id", ondelete="CASCADE"),
@@ -78,26 +85,26 @@ class ProductOption(BaseModel):
         default=0,
         comment="ترتيب العرض",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     group = relationship(
         "OptionGroup",
         back_populates="options",
         lazy="selectin",
         # comment="مجموعة الخيارات",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والاسم والسعر الإضافي
         """

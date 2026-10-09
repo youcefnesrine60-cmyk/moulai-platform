@@ -1,12 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
-# 🌍 LANGUAGE MODULE
-# وحدة كشف اللغة
+
 # ==============================================
+# PACKAGE INITIALIZER - APP / AGENT / LANGUAGE /   INIT
+# Package initialization and public exports component.
+# ==============================================
+
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.agent.language.detector import (
     LanguageDetector,

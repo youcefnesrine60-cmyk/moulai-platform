@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🌍 SUPPORTED LANGUAGES
 # اللغات المدعومة في الوكيل
 # ==============================================
+
+"""MoulAI operational module for supported.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Dict,
@@ -35,28 +40,37 @@ LanguageMap = Dict[LanguageCode, LanguageName]
 class Language(Enum):
     """
     اللغات المدعومة في الوكيل الذكي.
-    
+
     يدعم ثلاث لغات: العربية والإنجليزية والفرنسية.
     """
+
     ARABIC = "ar"
     ENGLISH = "en"
     FRENCH = "fr"
+
+    # ==============================================
+    # LIST CODES
+    # ==============================================
 
     @classmethod
     def list_codes(cls) -> List[LanguageCode]:
         """
         الحصول على قائمة رموز اللغات المدعومة.
-        
+
         Returns:
             قائمة رموز اللغات
         """
         return [lang.value for lang in cls]
 
+    # ==============================================
+    # LIST NAMES
+    # ==============================================
+
     @classmethod
     def list_names(cls) -> LanguageMap:
         """
         الحصول على قائمة أسماء اللغات المدعومة.
-        
+
         Returns:
             قاموس (رمز اللغة, اسم اللغة)
         """
@@ -66,38 +80,50 @@ class Language(Enum):
             "fr": "Français",
         }
 
+    # ==============================================
+    # IS SUPPORTED
+    # ==============================================
+
     @classmethod
     def is_supported(cls, lang_code: str) -> bool:
         """
         التحقق من أن اللغة مدعومة.
-        
+
         Args:
             lang_code: رمز اللغة
-            
+
         Returns:
             True إذا كانت مدعومة
         """
         return lang_code in cls.list_codes()
 
+    # ==============================================
+    # GET NAME
+    # ==============================================
+
     @classmethod
     def get_name(cls, lang_code: str) -> str:
         """
         الحصول على اسم اللغة من رمزها.
-        
+
         Args:
             lang_code: رمز اللغة
-            
+
         Returns:
             اسم اللغة
         """
         names = cls.list_names()
         return names.get(lang_code, lang_code)
 
+    # ==============================================
+    # GET DEFAULT
+    # ==============================================
+
     @classmethod
     def get_default(cls) -> str:
         """
         الحصول على اللغة الافتراضية.
-        
+
         Returns:
             رمز اللغة الافتراضية
         """
@@ -158,17 +184,18 @@ LANGUAGE_DISPLAY_NAMES: LanguageMap = {
 # GET LANGUAGE NAME
 # ==============================================
 
+
 def get_language_name(
     lang_code: str,
     display_lang: str = "ar",
 ) -> str:
     """
     الحصول على اسم اللغة باللغة المطلوبة.
-    
+
     Args:
         lang_code: رمز اللغة
         display_lang: لغة العرض (ar, en, fr)
-        
+
     Returns:
         اسم اللغة
     """
@@ -190,15 +217,16 @@ def get_language_name(
 # GET LANGUAGE DISPLAY NAME
 # ==============================================
 
+
 def get_language_display_name(
     lang_code: str,
 ) -> str:
     """
     الحصول على اسم اللغة المعروض مع العلم.
-    
+
     Args:
         lang_code: رمز اللغة
-        
+
     Returns:
         اسم اللغة المعروض
     """
@@ -214,15 +242,16 @@ def get_language_display_name(
 # IS SUPPORTED LANGUAGE
 # ==============================================
 
+
 def is_supported_language(
     lang_code: str,
 ) -> bool:
     """
     التحقق من أن اللغة مدعومة.
-    
+
     Args:
         lang_code: رمز اللغة
-        
+
     Returns:
         True إذا كانت مدعومة، False وإلا
     """
@@ -233,15 +262,16 @@ def is_supported_language(
 # GET SUPPORTED LANGUAGES
 # ==============================================
 
+
 def get_supported_languages(
     as_list: bool = False,
 ) -> Set[LanguageCode] | List[LanguageCode]:
     """
     الحصول على قائمة اللغات المدعومة.
-    
+
     Args:
         as_list: إرجاع القائمة كـ list بدلاً من set
-        
+
     Returns:
         قائمة أو مجموعة اللغات المدعومة
     """

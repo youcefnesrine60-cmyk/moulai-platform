@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها للطلبات
 # ==============================================
 
+"""MoulAI operational module for order.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -38,6 +43,7 @@ OrderListData = List[Dict[str, Any]]
 # 📦 OPTION PAYLOAD
 # ==============================================
 
+
 class OrderOptionPayload(BaseModel):
     """
     مخطط خيار عنصر الطلب (Payload).
@@ -49,6 +55,7 @@ class OrderOptionPayload(BaseModel):
         option_name: اسم الخيار
         additional_price: السعر الإضافي
     """
+
     option_group_name: str = Field(
         ...,
         max_length=255,
@@ -73,6 +80,7 @@ class OrderOptionPayload(BaseModel):
 # 📦 ITEM PAYLOAD
 # ==============================================
 
+
 class OrderItemPayload(BaseModel):
     """
     مخطط عنصر الطلب (Payload).
@@ -87,6 +95,7 @@ class OrderItemPayload(BaseModel):
         total_price: السعر الإجمالي
         options: قائمة الخيارات (اختياري)
     """
+
     product_id: int = Field(
         ...,
         ge=1,
@@ -128,6 +137,7 @@ class OrderItemPayload(BaseModel):
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class OrderBase(BaseModel):
     """
     المخطط الأساسي للطلب.
@@ -154,6 +164,7 @@ class OrderBase(BaseModel):
         is_paid: هل الطلب مدفوع؟
         payment_status: حالة الدفع
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -286,6 +297,10 @@ class OrderBase(BaseModel):
             )
         return value.lower()
 
+    # ==============================================
+    # VALIDATE STATUS
+    # ==============================================
+
     @field_validator("status")
     @classmethod
     def validate_status(cls, value: str) -> str:
@@ -322,6 +337,7 @@ class OrderBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class OrderCreate(BaseModel):
     """
     مخطط إنشاء طلب جديد.
@@ -343,6 +359,7 @@ class OrderCreate(BaseModel):
         total_amount: المبلغ النهائي
         items: قائمة عناصر الطلب (اختياري)
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -455,8 +472,9 @@ class OrderCreate(BaseModel):
 
 
 # ==============================================
-# 📥 CREATE ORDER ITEM SCHEMA 
+# 📥 CREATE ORDER ITEM SCHEMA
 # ==============================================
+
 
 class OrderItemCreate(BaseModel):
     """
@@ -471,6 +489,7 @@ class OrderItemCreate(BaseModel):
         total_price: السعر الإجمالي
         options: قائمة الخيارات (اختياري)
     """
+
     order_id: int = Field(  # ← ← ← أضفنا هذا
         ...,
         description="معرف الطلب",
@@ -518,6 +537,7 @@ class OrderItemCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class OrderUpdate(BaseModel):
     """
     مخطط تحديث الطلب - جميع الحقول اختيارية.
@@ -536,6 +556,7 @@ class OrderUpdate(BaseModel):
         delivery_amount: مبلغ التوصيل
         total_amount: المبلغ النهائي
     """
+
     branch_id: Optional[int] = Field(
         None,
         description="معرف الفرع",
@@ -609,6 +630,7 @@ class OrderUpdate(BaseModel):
 # 📤 STATUS UPDATE SCHEMA
 # ==============================================
 
+
 class OrderStatusUpdate(BaseModel):
     """
     مخطط تحديث حالة الطلب.
@@ -618,6 +640,7 @@ class OrderStatusUpdate(BaseModel):
         note: ملاحظة إضافية
         employee_id: معرف الموظف
     """
+
     status: str = Field(
         ...,
         max_length=50,
@@ -676,6 +699,7 @@ class OrderStatusUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class OrderResponse(OrderBase):
     """
     مخطط استجابة الطلب - يحتوي على جميع الحقول بما فيها التواريخ.
@@ -685,6 +709,7 @@ class OrderResponse(OrderBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -707,6 +732,7 @@ class OrderResponse(OrderBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class OrderListResponse(BaseModel):
     """
     مخطط استجابة قائمة الطلبات.
@@ -717,6 +743,7 @@ class OrderListResponse(BaseModel):
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[OrderResponse] = Field(
@@ -747,6 +774,7 @@ class OrderListResponse(BaseModel):
 # 📋 ORDER WITH ITEMS RESPONSE
 # ==============================================
 
+
 class OrderWithItemsResponse(OrderResponse):
     """
     مخطط استجابة الطلب مع عناصره.
@@ -756,6 +784,7 @@ class OrderWithItemsResponse(OrderResponse):
         payments: قائمة مدفوعات الطلب
         status_history: قائمة تاريخ الحالات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[Dict[str, Any]] = Field(
@@ -776,6 +805,7 @@ class OrderWithItemsResponse(OrderResponse):
 # 📊 ORDER SUMMARY
 # ==============================================
 
+
 class OrderSummary(BaseModel):
     """
     مخطط ملخص الطلبات.
@@ -793,6 +823,7 @@ class OrderSummary(BaseModel):
         total_revenue: إجمالي الإيرادات
         avg_order_value: متوسط قيمة الطلب
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_orders: int = Field(
@@ -871,7 +902,6 @@ __all__ = [
     # Payloads
     "OrderOptionPayload",
     "OrderItemPayload",
-
     # Order
     "OrderBase",
     "OrderCreate",
@@ -882,7 +912,6 @@ __all__ = [
     "OrderListResponse",
     "OrderWithItemsResponse",
     "OrderSummary",
-
     # Types
     "OrderData",
     "OrderUpdateData",

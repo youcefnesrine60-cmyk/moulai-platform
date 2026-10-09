@@ -10,6 +10,11 @@
 # نقاط نهاية الإحصائيات
 # ==============================================
 
+"""MoulAI operational module for restaurant stats router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -25,7 +30,6 @@ from app.core.logger import logger
 from app.schemas.restaurant import RestaurantStats
 from app.services.business.restaurant.restaurants.service import RestaurantService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -40,15 +44,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_restaurant_service(
     session: AsyncSession = Depends(get_db),
 ) -> RestaurantService:
     """
     الحصول على خدمة المطاعم.
-    
+
     Args:
         session: جلسة قاعدة البيانات
-        
+
     Returns:
         RestaurantService: خدمة المطاعم
     """
@@ -63,6 +68,7 @@ async def get_restaurant_service(
 # GET RESTAURANT STATS
 # ==============================================
 
+
 @router.get(
     "/{restaurant_id}/stats",
     response_model=RestaurantStats,
@@ -76,14 +82,14 @@ async def get_restaurant_stats(
 ) -> RestaurantStats:
     """
     الحصول على إحصائيات المطعم.
-    
+
     Args:
         restaurant_id: معرف المطعم
         service: خدمة المطاعم
-        
+
     Returns:
         RestaurantStats: إحصائيات المطعم
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المطعم
     """
@@ -121,6 +127,7 @@ async def get_restaurant_stats(
 # GET OWNER RESTAURANTS STATS
 # ==============================================
 
+
 @router.get(
     "/stats/{owner_id}",
     response_model=RestaurantStats,
@@ -134,14 +141,14 @@ async def get_owner_restaurants_stats(
 ) -> RestaurantStats:
     """
     الحصول على إحصائيات مطاعم مالك معين.
-    
+
     Args:
         owner_id: معرف المالك
         service: خدمة المطاعم
-        
+
     Returns:
         RestaurantStats: إحصائيات مطاعم المالك
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المالك
     """

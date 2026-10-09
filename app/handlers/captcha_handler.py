@@ -1,6 +1,19 @@
 # ==============================================
-# 🤖 CAPTCHA SERVICE
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CAPTCHA HANDLER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for captcha handler.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Any
 
@@ -20,6 +33,7 @@ CaptchaData = dict[str, Any]
 # ==============================================
 # 🚀 SEND CAPTCHA CHALLENGE
 # ==============================================
+
 
 async def send_captcha(
     *,
@@ -69,9 +83,11 @@ async def send_captcha(
         reply_markup=captcha.get("keyboard"),
     )
 
+
 # ==============================================
 # ✅ HANDLE CAPTCHA RESPONSE
 # ==============================================
+
 
 async def handle_captcha(
     *,

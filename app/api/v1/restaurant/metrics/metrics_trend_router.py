@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 📊 RESTAURANT METRICS ROUTER - TREND
 # نقاط نهاية اتجاهات المقاييس
 # ==============================================
+
+"""MoulAI operational module for metrics trend router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from datetime import datetime
 import calendar
@@ -29,7 +34,6 @@ from app.core.logger import logger
 from app.schemas.restaurant.restaurant_metric import MetricsTrend
 from app.services.business.restaurant.metrics.service import RestaurantMetricsService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -43,6 +47,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_metrics_service(
     session: AsyncSession = Depends(get_db),
@@ -58,6 +63,7 @@ async def get_metrics_service(
 # ==============================================
 # GET METRICS TREND
 # ==============================================
+
 
 @router.get(
     "/{restaurant_id}/trend",
@@ -101,12 +107,14 @@ async def get_metrics_trend(
             day_orders = max(1, int(total_orders / 30))
             day_revenue = day_orders * (metrics.average_order_value or 100)
 
-            trend_points.append({
-                "period": f"{now.year}-{now.month:02d}-{day:02d}",
-                "orders_count": day_orders,
-                "revenue": day_revenue,
-                "avg_order_value": metrics.average_order_value or 100,
-            })
+            trend_points.append(
+                {
+                    "period": f"{now.year}-{now.month:02d}-{day:02d}",
+                    "orders_count": day_orders,
+                    "revenue": day_revenue,
+                    "avg_order_value": metrics.average_order_value or 100,
+                }
+            )
 
         return MetricsTrend(
             restaurant_id=restaurant_id,

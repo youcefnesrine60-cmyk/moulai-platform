@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,17 +10,22 @@
 #  نماذج Pydantic للتحقق من البيانات.
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.schemas.owner import (
     OwnerBase,
     OwnerCreate,
     OwnerUpdate,
-    OwnerStatusUpdate,      
+    OwnerStatusUpdate,
     OwnerResponse,
-    OwnerListResponse,      
-    OwnerStatistics,       
-    OwnerSearch,           
-    TrialActivation,       
-    TrialActivationResponse, 
+    OwnerListResponse,
+    OwnerStatistics,
+    OwnerSearch,
+    TrialActivation,
+    TrialActivationResponse,
     OwnerData,
     OwnerUpdateData,
     OwnerListData,
@@ -32,11 +37,11 @@ from app.schemas.registration_request import (
     RegistrationRequestResponse,
     RegistrationRequestUpdate,
     RegistrationRequestStatusUpdate,
-    RegistrationRequestListResponse,      
-    RegistrationRequestSummary,           
+    RegistrationRequestListResponse,
+    RegistrationRequestSummary,
     RegistrationRequestData,
     RegistrationRequestUpdateData,
-    RegistrationRequestListData,          
+    RegistrationRequestListData,
 )
 
 from app.schemas.payment import (
@@ -48,10 +53,10 @@ from app.schemas.payment import (
     PaymentConfirm,
     PaymentStatus,
     PaymentSummary,
-    PaymentListResponse,      
+    PaymentListResponse,
     PaymentData,
     PaymentUpdateData,
-    PaymentListData,          
+    PaymentListData,
 )
 
 from app.schemas.product import (
@@ -93,22 +98,20 @@ from app.schemas.categories import (
 from app.schemas.order import (
     OrderBase,
     OrderCreate,
-    OrderItemCreate,
     OrderResponse,
     OrderUpdate,
     OrderStatusUpdate,
     OrderWithItemsResponse,
-    OrderListResponse,          
+    OrderListResponse,
     OrderSummary,
     OrderData,
     OrderUpdateData,
     OrderItemPayload,
     OrderOptionPayload,
-    OrderListData,              
+    OrderListData,
 )
 
 from app.schemas.order_item import (
-    
     # Order Item
     OrderItemBase,
     OrderItemCreate,
@@ -120,21 +123,18 @@ from app.schemas.order_item import (
     OrderItemData,
     OrderItemUpdateData,
     OrderItemListData,
-    
     # Order Item Option
     OrderItemOptionBase,
     OrderItemOptionCreate,
     OrderItemOptionUpdate,
     OrderItemOptionResponse,
     OrderItemOptionSummary,
-    
     # Order Payment
     OrderPaymentBase,
     OrderPaymentCreate,
     OrderPaymentUpdate,
     OrderPaymentResponse,
     OrderPaymentStatusUpdate,
-    
     # Order Status History
     OrderStatusHistoryBase,
     OrderStatusHistoryCreate,
@@ -142,7 +142,6 @@ from app.schemas.order_item import (
 )
 
 from app.schemas.restaurant import (
-
     # Restaurant Group
     RestaurantGroupBase,
     RestaurantGroupCreate,
@@ -162,34 +161,31 @@ from app.schemas.restaurant import (
     RestaurantBranchData,
     RestaurantBranchUpdateData,
     RestaurantBranchListData,
-
     # Restaurant Metric
     RestaurantMetricBase,
     RestaurantMetricCreate,
     RestaurantMetricResponse,
     RestaurantMetricUpdate,
     RestaurantMetricSummary,
-    RestaurantMetricListResponse,      
+    RestaurantMetricListResponse,
     MetricsTrendPoint,
     MetricsTrend,
     ProductMetrics,
     RestaurantMetricData,
     RestaurantMetricUpdateData,
     RestaurantMetricListData,
-
     # Restaurant Order Counter
     RestaurantOrderCounterBase,
     RestaurantOrderCounterCreate,
     RestaurantOrderCounterResponse,
     RestaurantOrderCounterUpdate,
-    RestaurantOrderCounterListResponse,      
+    RestaurantOrderCounterListResponse,
     NextOrderNumberResponse,
     OrderCounterSummary,
     OrderNumberFormat,
     OrderCounterData,
     OrderCounterUpdateData,
-    OrderCounterListData,     
-
+    OrderCounterListData,
     # Restaurant Payment Setting
     RestaurantPaymentSettingBase,
     RestaurantPaymentSettingCreate,
@@ -198,19 +194,17 @@ from app.schemas.restaurant import (
     PaymentMethodsList,
     PaymentSettingsSummary,
     PaymentSettingData,
-    PaymentSettingUpdateData, 
-
+    PaymentSettingUpdateData,
     # Restaurant
     RestaurantBase,
     RestaurantCreate,
     RestaurantResponse,
     RestaurantStats,
     RestaurantUpdate,
-    RestaurantListResponse,      
+    RestaurantListResponse,
     RestaurantData,
     RestaurantUpdateData,
     RestaurantListData,
-                  
 )
 
 from app.schemas.option_group import (
@@ -218,9 +212,8 @@ from app.schemas.option_group import (
     OptionGroupCreate,
     OptionGroupResponse,
     OptionGroupUpdate,
-    ProductOptionResponse,
     OptionGroupWithOptionsResponse,
-    OptionGroupListResponse,      
+    OptionGroupListResponse,
     OptionGroupSummary,
     OptionGroupValidation,
     OptionGroupData,
@@ -305,13 +298,11 @@ from app.schemas.admin_session import (
     AdminSessionListData as AdminSessionListDataSchema,
 )
 
-
 # ==============================================
 # 📤 EXPORTS
 # ==============================================
 
 __all__ = [
-
     # Owner
     "OwnerBase",
     "OwnerCreate",
@@ -326,7 +317,6 @@ __all__ = [
     "OwnerData",
     "OwnerUpdateData",
     "OwnerListData",
-
     # Registration Request
     "RegistrationRequestBase",
     "RegistrationRequestCreate",
@@ -338,7 +328,6 @@ __all__ = [
     "RegistrationRequestData",
     "RegistrationRequestUpdateData",
     "RegistrationRequestListData",
-
     # Payment
     "PaymentBase",
     "PaymentCreate",
@@ -352,7 +341,6 @@ __all__ = [
     "PaymentData",
     "PaymentUpdateData",
     "PaymentListData",
-
     # Product
     "ProductBase",
     "ProductCreate",
@@ -363,7 +351,6 @@ __all__ = [
     "ProductSummary",
     "ProductData",
     "ProductUpdateData",
-
     # Branch
     "BranchBase",
     "BranchCreate",
@@ -374,7 +361,6 @@ __all__ = [
     "BranchSummary",
     "BranchData",
     "BranchUpdateData",
-
     # Category
     "CategoryBase",
     "CategoryCreate",
@@ -384,7 +370,6 @@ __all__ = [
     "CategorySummary",
     "CategoryData",
     "CategoryUpdateData",
-
     # Order
     "OrderBase",
     "OrderCreate",
@@ -400,7 +385,6 @@ __all__ = [
     "OrderItemPayload",
     "OrderOptionPayload",
     "OrderListData",
-
     # Order Item
     "OrderItemBase",
     "OrderItemCreate",
@@ -412,26 +396,22 @@ __all__ = [
     "OrderItemData",
     "OrderItemUpdateData",
     "OrderItemListData",
-    
     # Order Item Option
     "OrderItemOptionBase",
     "OrderItemOptionCreate",
     "OrderItemOptionUpdate",
     "OrderItemOptionResponse",
     "OrderItemOptionSummary",
-    
     # Order Payment
     "OrderPaymentBase",
     "OrderPaymentCreate",
     "OrderPaymentUpdate",
     "OrderPaymentResponse",
     "OrderPaymentStatusUpdate",
-    
     # Order Status History
     "OrderStatusHistoryBase",
     "OrderStatusHistoryCreate",
     "OrderStatusHistoryResponse",
-
     # Restaurant Group
     "RestaurantGroupBase",
     "RestaurantGroupCreate",
@@ -451,34 +431,31 @@ __all__ = [
     "RestaurantBranchData",
     "RestaurantBranchUpdateData",
     "RestaurantBranchListData",
-
     # Restaurant Metric
     "RestaurantMetricBase",
     "RestaurantMetricCreate",
     "RestaurantMetricResponse",
     "RestaurantMetricUpdate",
     "RestaurantMetricSummary",
-    "RestaurantMetricListResponse",      
+    "RestaurantMetricListResponse",
     "MetricsTrendPoint",
     "MetricsTrend",
     "ProductMetrics",
     "RestaurantMetricData",
     "RestaurantMetricUpdateData",
     "RestaurantMetricListData",
-
     # Restaurant Order Counter
     "RestaurantOrderCounterBase",
     "RestaurantOrderCounterCreate",
     "RestaurantOrderCounterResponse",
     "RestaurantOrderCounterUpdate",
-    "RestaurantOrderCounterListResponse",      
+    "RestaurantOrderCounterListResponse",
     "NextOrderNumberResponse",
     "OrderCounterSummary",
     "OrderNumberFormat",
     "OrderCounterData",
     "OrderCounterUpdateData",
-    "OrderCounterListData",     
-
+    "OrderCounterListData",
     # Restaurant Payment Setting
     "RestaurantPaymentSettingBase",
     "RestaurantPaymentSettingCreate",
@@ -487,19 +464,17 @@ __all__ = [
     "PaymentMethodsList",
     "PaymentSettingsSummary",
     "PaymentSettingData",
-    "PaymentSettingUpdateData", 
-    
+    "PaymentSettingUpdateData",
     # Restaurant
     "RestaurantBase",
     "RestaurantCreate",
     "RestaurantResponse",
     "RestaurantStats",
     "RestaurantUpdate",
-    "RestaurantListResponse",      
+    "RestaurantListResponse",
     "RestaurantData",
     "RestaurantUpdateData",
     "RestaurantListData",
-    
     # Option Group
     "OptionGroupBase",
     "OptionGroupCreate",
@@ -513,7 +488,6 @@ __all__ = [
     "OptionGroupData",
     "OptionGroupUpdateData",
     "OptionGroupListData",
-
     # Product Option
     "ProductOptionBase",
     "ProductOptionCreate",
@@ -526,7 +500,6 @@ __all__ = [
     "ProductOptionBulkCreate",
     "ProductOptionData",
     "ProductOptionUpdateData",
-
     # User
     "UserBase",
     "UserCreate",
@@ -539,7 +512,6 @@ __all__ = [
     "ConsentResponse",
     "UserData",
     "UserUpdateData",
-
     # Admin
     "AdminBase",
     "AdminCreate",
@@ -562,7 +534,6 @@ __all__ = [
     "AdminData",
     "AdminUpdateData",
     "AdminSessionData",
-    
     # Admin Log
     "AdminLogBase",
     "AdminLogCreate",
@@ -574,7 +545,6 @@ __all__ = [
     "AdminLogData",
     "AdminLogUpdateData",
     "AdminLogListData",
-    
     # Admin Session
     "AdminSessionBaseSchema",
     "AdminSessionCreateSchema",
@@ -585,5 +555,4 @@ __all__ = [
     "AdminSessionDataSchema",
     "AdminSessionUpdateDataSchema",
     "AdminSessionListDataSchema",
-
 ]

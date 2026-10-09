@@ -1,7 +1,19 @@
 # ==============================================
-# 📦 ORDER STATUS STEP
-# ربط واجهة حالة الطلب مع خدمة الطلبات
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CUSTOMER_HANDLER / ORDER STATUS STEP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order status step.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 
@@ -9,16 +21,20 @@ from app.helpers.ui_manager import UIManager
 
 from app.services.business.orders import (
     get_restaurant_order,
-    get_order_timeline,
 )
 
 from app.views.order_status_ui import order_status_ui
-
 
 # ==============================================
 # 📦 SHOW ORDER STATUS
 # عرض حالة الطلب
 # ==============================================
+
+
+# ==============================================
+# SHOW ORDER STATUS
+# ==============================================
+
 
 async def show_order_status(
     *,
@@ -27,7 +43,7 @@ async def show_order_status(
 ) -> None:
     """
     عرض حالة طلب معين
-    
+
     Args:
         chat_id: معرف المستخدم
         order_id: معرف الطلب
@@ -65,15 +81,7 @@ async def show_order_status(
         return
 
     # ==========================================
-    # 2️⃣ جلب تاريخ الحالات (اختياري)
-    # ==========================================
-
-    timeline = await get_order_timeline(
-        order_id=order_id,
-    )
-
-    # ==========================================
-    # 3️⃣ عرض واجهة الحالة
+    # 2️⃣ عرض واجهة الحالة
     # ==========================================
 
     status_ui = await order_status_ui(

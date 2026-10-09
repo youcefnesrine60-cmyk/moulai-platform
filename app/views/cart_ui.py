@@ -1,7 +1,19 @@
 # ==============================================
-# 🛒 CART UI
-# واجهة سلة التسوق الخاصة بالزبون
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / VIEWS / CART UI
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for cart ui.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.views.ui import button
 from app.core.logger import logger
@@ -11,6 +23,12 @@ from app.core.logger import logger
 # عرض سلة التسوق مع جميع عناصرها
 # ==============================================
 
+
+# ==============================================
+# CART UI
+# ==============================================
+
+
 async def cart_ui(
     *,
     items: list[dict],
@@ -18,7 +36,7 @@ async def cart_ui(
 ) -> dict:
     """
     بناء واجهة سلة التسوق الرئيسية
-    
+
     Args:
         items: قائمة عناصر السلة، كل عنصر يحتوي على:
                - id: معرف المنتج
@@ -26,7 +44,7 @@ async def cart_ui(
                - quantity: الكمية
                - price: السعر الإجمالي للعنصر
         total: المجموع الكلي للسلة
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -141,16 +159,22 @@ async def cart_ui(
 # عرض تفاصيل منتج معين في السلة
 # ==============================================
 
+
+# ==============================================
+# CART ITEM UI
+# ==============================================
+
+
 async def cart_item_ui(
     *,
     item: dict,
 ) -> dict:
     """
     بناء واجهة عرض تفاصيل منتج معين في السلة
-    
+
     Args:
         item: بيانات المنتج (id, name, quantity, price, unit_price)
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -174,11 +198,6 @@ async def cart_item_ui(
     quantity = item.get(
         "quantity",
         1,
-    )
-
-    unit_price = item.get(
-        "unit_price",
-        0,
     )
 
     total_price = item.get(
@@ -237,10 +256,16 @@ async def cart_item_ui(
 # عرض رسالة السلة فارغة
 # ==============================================
 
+
+# ==============================================
+# CART EMPTY UI
+# ==============================================
+
+
 async def cart_empty_ui() -> dict:
     """
     بناء واجهة تعرض رسالة "السلة فارغة" مع زر رجوع
-    
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -271,10 +296,16 @@ async def cart_empty_ui() -> dict:
 # عرض تأكيد قبل إفراغ السلة
 # ==============================================
 
+
+# ==============================================
+# CART CONFIRMATION UI
+# ==============================================
+
+
 async def cart_confirmation_ui() -> dict:
     """
     بناء واجهة تأكيد إفراغ السلة
-    
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """

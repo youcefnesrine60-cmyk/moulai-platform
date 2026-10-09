@@ -1,6 +1,19 @@
 # ==============================================
-# 🔙 NAVIGATION - VERSION PRO
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / OWNER / NAVIGATION
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for navigation.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -8,9 +21,9 @@ from app.core.logger import logger
 
 from app.helpers.navigation import go_back
 from app.helpers.state_helper import (
-    clear_user_state, 
-    get_user_state, 
-    update_state_field
+    clear_user_state,
+    get_user_state,
+    update_state_field,
 )
 from app.helpers.ui_manager import UIManager
 
@@ -42,6 +55,7 @@ ReplyMarkup = dict[str, object] | None
 # ==============================================
 # 🧹 DELETE STEP MESSAGES
 # ==============================================
+
 
 async def _delete_step_messages(
     *,
@@ -161,6 +175,7 @@ async def _delete_step_messages(
 # 🧹 CLEANUP STEP MESSAGES FROM STATE
 # ==============================================
 
+
 async def _cleanup_step_from_state(
     *,
     chat_id: int,
@@ -214,6 +229,7 @@ async def _cleanup_step_from_state(
 # 🔙 BACK STEP CALLBACK
 # ==============================================
 
+
 async def back_step_callback(
     *,
     chat_id: int,
@@ -246,8 +262,12 @@ async def back_step_callback(
             "back_step_initial_state",
             extra={
                 "chat_id": chat_id,
-                "user_message_id_restaurant": state.get("user_message_id_restaurant") if state else None,
-                "restaurant_message_id": state.get("restaurant_message_id") if state else None,
+                "user_message_id_restaurant": (
+                    state.get("user_message_id_restaurant") if state else None
+                ),
+                "restaurant_message_id": (
+                    state.get("restaurant_message_id") if state else None
+                ),
                 "step": state.get("step") if state else None,
                 "all_keys": list(state.keys()) if state else [],
             },
@@ -570,6 +590,7 @@ async def back_step_callback(
 # 🔙 BACK TO MAIN MENU
 # ==============================================
 
+
 async def back_to_main_menu(
     *,
     chat_id: int,
@@ -615,6 +636,7 @@ async def back_to_main_menu(
 # 🔙 BACK MAIN CALLBACK
 # ==============================================
 
+
 async def back_main_callback(
     *,
     chat_id: int,
@@ -635,6 +657,7 @@ async def back_main_callback(
 # ==============================================
 # ❌ DECLINE CALLBACK
 # ==============================================
+
 
 async def decline_callback(
     *,

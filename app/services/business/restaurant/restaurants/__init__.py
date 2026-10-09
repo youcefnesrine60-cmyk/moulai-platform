@@ -9,8 +9,15 @@
 # 🍽️ RESTAURANTS SERVICES - PACKAGE INIT
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.services.business.restaurant.restaurants.service import RestaurantService
-from app.services.business.restaurant.restaurants.handlers import RestaurantEventHandlers
+from app.services.business.restaurant.restaurants.handlers import (
+    RestaurantEventHandlers,
+)
 from app.services.business.restaurant.restaurants.validators import (
     MAX_RESTAURANTS_PER_OWNER,
     VALID_RESTAURANT_TYPES,
@@ -26,7 +33,6 @@ from app.services.business.restaurant.restaurants.compat import (
     delete_restaurant,
     toggle_restaurant_status,
 )
-
 
 # ==============================================
 # 📋 EXPORTS

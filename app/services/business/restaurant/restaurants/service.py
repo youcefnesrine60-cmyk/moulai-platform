@@ -11,6 +11,11 @@
 # يدير عمليات استعراض المطاعم (QUERIES فقط)
 # ==============================================
 
+"""MoulAI operational module for service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -30,7 +35,6 @@ from app.schemas.restaurant import (
     RestaurantStats,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -44,22 +48,27 @@ RestaurantList = List[RestaurantResponse]
 # 🏪 RESTAURANT SERVICE
 # ==============================================
 
+
 class RestaurantService:
     """
     خدمة المطاعم - تدير منطق الأعمال للمطاعم (QUERIES).
-    
+
     مسؤولة عن:
         - استعراض المطاعم
         - البحث والتصفية
         - الإحصائيات
         - جلب المطاعم مع العلاقات
-    
+
     ⚠️ ملاحظة: عمليات MUTATIONS (create, update, delete) في handlers.py
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع المطاعم
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -67,7 +76,7 @@ class RestaurantService:
     ) -> None:
         """
         تهيئة خدمة المطاعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -90,14 +99,14 @@ class RestaurantService:
     ) -> RestaurantResponse:
         """
         الحصول على مطعم بالمعرف.
-        
+
         Args:
             restaurant_id: معرف المطعم
             include_inactive: تضمين المطاعم غير النشطة
-            
+
         Returns:
             RestaurantResponse: بيانات المطعم
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المطعم
         """
@@ -136,13 +145,13 @@ class RestaurantService:
     ) -> RestaurantResponse:
         """
         الحصول على مطعم مع جميع علاقاته.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantResponse: بيانات المطعم مع العلاقات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المطعم
         """
@@ -176,13 +185,13 @@ class RestaurantService:
     ) -> List[RestaurantResponse]:
         """
         الحصول على مطاعم المالك.
-        
+
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             include_inactive: تضمين المطاعم غير النشطة
-            
+
         Returns:
             List[RestaurantResponse]: قائمة المطاعم
         """
@@ -218,12 +227,12 @@ class RestaurantService:
     ) -> List[RestaurantResponse]:
         """
         الحصول على مطاعم حسب الولاية.
-        
+
         Args:
             wilaya: الولاية
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RestaurantResponse]: قائمة المطاعم
         """
@@ -257,12 +266,12 @@ class RestaurantService:
     ) -> List[RestaurantResponse]:
         """
         البحث عن مطاعم.
-        
+
         Args:
             query: نص البحث
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RestaurantResponse]: قائمة المطاعم المطابقة للبحث
         """
@@ -282,6 +291,10 @@ class RestaurantService:
         )
 
         return [RestaurantResponse.model_validate(r) for r in restaurants]
+
+    # ==============================================
+    # COUNT SEARCH RESTAURANTS
+    # ==============================================
 
     async def count_search_restaurants(
         self,
@@ -308,12 +321,12 @@ class RestaurantService:
     ) -> List[RestaurantResponse]:
         """
         الحصول على جميع المطاعم.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_active: جلب المطاعم النشطة فقط
-            
+
         Returns:
             List[RestaurantResponse]: قائمة المطاعم
         """
@@ -354,14 +367,18 @@ class RestaurantService:
     ) -> int:
         """
         حساب عدد مطاعم المالك.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             int: عدد المطاعم
         """
         return await self.repo.count_by_owner(owner_id=owner_id)
+
+    # ==============================================
+    # COUNT ALL RESTAURANTS
+    # ==============================================
 
     async def count_all_restaurants(
         self,
@@ -385,10 +402,10 @@ class RestaurantService:
     ) -> int:
         """
         حساب عدد المطاعم في الولاية.
-        
+
         Args:
             wilaya: الولاية
-            
+
         Returns:
             int: عدد المطاعم
         """
@@ -405,19 +422,17 @@ class RestaurantService:
     ) -> None:
         """
         التحقق من وجود المالك.
-        
+
         ✅ يستخدم BASE SELECT للتحقق من وجود المالك
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
         """
         result = await self.session.execute(
-            select(Owner.id)
-            .where(Owner.id == owner_id)
-            .limit(1),
+            select(Owner.id).where(Owner.id == owner_id).limit(1),
         )
 
         owner_exists = result.scalar_one_or_none()
@@ -439,17 +454,17 @@ class RestaurantService:
     ) -> RestaurantStats:
         """
         الحصول على إحصائيات المطاعم.
-        
+
         ✅ يدعم الفلترة بـ owner_id أو restaurant_id
         ✅ يتحقق من وجود المالك عند استخدام owner_id
-        
+
         Args:
             owner_id: معرف المالك (اختياري)
             restaurant_id: معرف المطعم (اختياري)
-            
+
         Returns:
             RestaurantStats: إحصائيات المطاعم
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك أو المطعم
         """

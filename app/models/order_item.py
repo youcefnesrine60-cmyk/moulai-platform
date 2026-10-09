@@ -11,6 +11,11 @@
 # تدير تفاصيل الطلبات من عناصر وخيارات ومدفوعات وحالة
 # ==============================================
 
+"""MoulAI operational module for order item.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     BigInteger,
     Column,
@@ -30,12 +35,13 @@ from .base import BaseModel
 # عنصر الطلب
 # ==============================================
 
+
 class OrderItem(BaseModel):
     """
     نموذج عنصر الطلب
-    
+
     يمثل منتجاً محدداً ضمن طلب معين مع الكمية والسعر.
-    
+
     Attributes:
         order_id: معرف الطلب (ForeignKey)
         product_id: معرف المنتج (ForeignKey)
@@ -47,12 +53,13 @@ class OrderItem(BaseModel):
         product: علاقة مع نموذج Product
         options: قائمة خيارات العنصر
     """
+
     __tablename__ = "order_items"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     order_id = Column(
         BigInteger,
         ForeignKey("orders.id", ondelete="CASCADE"),
@@ -85,11 +92,11 @@ class OrderItem(BaseModel):
         nullable=False,
         comment="السعر الإجمالي (unit_price * quantity)",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     order = relationship(
         "Order",
         back_populates="items",
@@ -109,15 +116,15 @@ class OrderItem(BaseModel):
         lazy="selectin",
         # comment="خيارات العنصر",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف واسم المنتج والكمية
         """
@@ -132,12 +139,13 @@ class OrderItem(BaseModel):
 # خيار عنصر الطلب
 # ==============================================
 
+
 class OrderItemOption(BaseModel):
     """
     نموذج خيار عنصر الطلب
-    
+
     يمثل خياراً محدداً (مثل: إضافة جبن، حجم كبير) تم اختياره لعنصر طلب.
-    
+
     Attributes:
         order_item_id: معرف عنصر الطلب (ForeignKey)
         option_group_name: اسم مجموعة الخيار (نسخة لحظة الطلب)
@@ -145,12 +153,13 @@ class OrderItemOption(BaseModel):
         additional_price: السعر الإضافي لهذا الخيار
         order_item: علاقة مع نموذج OrderItem
     """
+
     __tablename__ = "order_item_options"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     order_item_id = Column(
         BigInteger,
         ForeignKey("order_items.id", ondelete="CASCADE"),
@@ -173,26 +182,26 @@ class OrderItemOption(BaseModel):
         default=0,
         comment="السعر الإضافي لهذا الخيار",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     order_item = relationship(
         "OrderItem",
         back_populates="options",
         lazy="selectin",
         # comment="عنصر الطلب المرتبط",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف واسم الخيار والسعر الإضافي
         """
@@ -207,12 +216,13 @@ class OrderItemOption(BaseModel):
 # دفع الطلب
 # ==============================================
 
+
 class OrderPayment(BaseModel):
     """
     نموذج دفع الطلب
-    
+
     يمثل عملية دفع مرتبطة بطلب معين.
-    
+
     Attributes:
         order_id: معرف الطلب (ForeignKey)
         payment_method: طريقة الدفع (cash, card, online)
@@ -222,12 +232,13 @@ class OrderPayment(BaseModel):
         paid_at: تاريخ ووقت الدفع
         order: علاقة مع نموذج Order
     """
+
     __tablename__ = "order_payments"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     order_id = Column(
         BigInteger,
         ForeignKey("orders.id", ondelete="CASCADE"),
@@ -259,26 +270,26 @@ class OrderPayment(BaseModel):
         nullable=True,
         comment="تاريخ ووقت الدفع",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     order = relationship(
         "Order",
         back_populates="payments",
         lazy="selectin",
         # comment="الطلب المرتبط",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف وطريقة الدفع والحالة
         """
@@ -293,12 +304,13 @@ class OrderPayment(BaseModel):
 # سجل حالة الطلب
 # ==============================================
 
+
 class OrderStatusHistory(BaseModel):
     """
     نموذج سجل حالة الطلب
-    
+
     يتتبع جميع تغييرات حالة الطلب مع مرور الوقت.
-    
+
     Attributes:
         order_id: معرف الطلب (ForeignKey)
         old_status: الحالة السابقة
@@ -307,12 +319,13 @@ class OrderStatusHistory(BaseModel):
         note: ملاحظة إضافية عن التغيير
         order: علاقة مع نموذج Order
     """
+
     __tablename__ = "order_status_history"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     order_id = Column(
         BigInteger,
         ForeignKey("orders.id", ondelete="CASCADE"),
@@ -339,26 +352,26 @@ class OrderStatusHistory(BaseModel):
         nullable=True,
         comment="ملاحظة إضافية عن التغيير",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     order = relationship(
         "Order",
         back_populates="status_history",
         lazy="selectin",
         # comment="الطلب المرتبط",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والحالة السابقة والحالة الجديدة
         """

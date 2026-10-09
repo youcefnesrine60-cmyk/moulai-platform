@@ -9,12 +9,16 @@
 # 🔗 RESTAURANT BRANCHES API
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import APIRouter
 
 from app.api.v1.restaurant.branches.router import router as basic_router
 from app.api.v1.restaurant.branches.router_list import router as list_router
 from app.api.v1.restaurant.branches.router_delete import router as delete_router
-
 
 # ==============================================
 # 📋 MAIN ROUTER

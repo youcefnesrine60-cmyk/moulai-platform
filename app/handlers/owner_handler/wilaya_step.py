@@ -1,6 +1,19 @@
 # ==============================================
-# 🗺️ WILAYA STEP - VERSION PRO
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / OWNER_HANDLER / WILAYA STEP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for wilaya step.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Any
 
@@ -25,6 +38,7 @@ StateData = dict[str, Any]
 # ==============================================
 # 🗺️ HANDLE WILAYA STEP
 # ==============================================
+
 
 async def handle_wilaya_step(
     *,
@@ -86,8 +100,12 @@ async def handle_wilaya_step(
         "verify_user_message_id_wilaya_stored",
         extra={
             "chat_id": chat_id,
-            "user_message_id_wilaya": state_after.get("user_message_id_wilaya") if state_after else None,
-            "wilaya_message_id": state_after.get("wilaya_message_id") if state_after else None,
+            "user_message_id_wilaya": (
+                state_after.get("user_message_id_wilaya") if state_after else None
+            ),
+            "wilaya_message_id": (
+                state_after.get("wilaya_message_id") if state_after else None
+            ),
             "step": state_after.get("step") if state_after else None,
             "all_keys": list(state_after.keys()) if state_after else [],
         },

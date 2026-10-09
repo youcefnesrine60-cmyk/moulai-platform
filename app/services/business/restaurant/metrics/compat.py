@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🔄 RESTAURANT METRICS COMPATIBILITY
 # دوال متوافقة مع الاستيرادات القديمة
 # ==============================================
+
+"""MoulAI operational module for compat.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional
 
@@ -21,7 +26,6 @@ from app.services.business.restaurant.metrics.service import (
 )
 from app.services.business.restaurant.metrics.handlers import MetricsEventHandlers
 
-
 # ==============================================
 # 📊 COMPATIBILITY FUNCTIONS
 # ==============================================
@@ -30,6 +34,7 @@ from app.services.business.restaurant.metrics.handlers import MetricsEventHandle
 # INITIALIZE METRICS
 # ==============================================
 
+
 async def initialize_metrics(
     *,
     restaurant_id: int,
@@ -37,7 +42,7 @@ async def initialize_metrics(
 ) -> None:
     """
     تهيئة مقاييس مطعم جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -52,6 +57,7 @@ async def initialize_metrics(
 # PRODUCT CREATED
 # ==============================================
 
+
 async def product_created(
     *,
     restaurant_id: int,
@@ -59,7 +65,7 @@ async def product_created(
 ) -> None:
     """
     تحديث المقاييس عند إنشاء منتج جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -74,6 +80,7 @@ async def product_created(
 # PRODUCT DELETED
 # ==============================================
 
+
 async def product_deleted(
     *,
     restaurant_id: int,
@@ -81,7 +88,7 @@ async def product_deleted(
 ) -> None:
     """
     تحديث المقاييس عند حذف منتج (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -96,6 +103,7 @@ async def product_deleted(
 # CATEGORY CREATED
 # ==============================================
 
+
 async def category_created(
     *,
     restaurant_id: int,
@@ -103,7 +111,7 @@ async def category_created(
 ) -> None:
     """
     تحديث المقاييس عند إنشاء تصنيف جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -118,6 +126,7 @@ async def category_created(
 # CATEGORY DELETED
 # ==============================================
 
+
 async def category_deleted(
     *,
     restaurant_id: int,
@@ -125,7 +134,7 @@ async def category_deleted(
 ) -> None:
     """
     تحديث المقاييس عند حذف تصنيف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -140,6 +149,7 @@ async def category_deleted(
 # ORDER REGISTERED
 # ==============================================
 
+
 async def order_registered(
     *,
     restaurant_id: int,
@@ -148,7 +158,7 @@ async def order_registered(
 ) -> None:
     """
     تحديث المقاييس عند تسجيل طلب جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         order_total: إجمالي قيمة الطلب
@@ -173,6 +183,7 @@ async def order_registered(
 # GET METRICS
 # ==============================================
 
+
 async def get_metrics(
     *,
     restaurant_id: int,
@@ -180,11 +191,11 @@ async def get_metrics(
 ) -> Optional[MetricsDict]:
     """
     الحصول على مقاييس مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[MetricsDict]: قاموس مقاييس المطعم أو None
     """
@@ -196,6 +207,7 @@ async def get_metrics(
 # GET METRICS SUMMARY
 # ==============================================
 
+
 async def get_metrics_summary(
     *,
     restaurant_id: int,
@@ -203,11 +215,11 @@ async def get_metrics_summary(
 ) -> Optional[MetricsDict]:
     """
     الحصول على ملخص مقاييس المطعم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[MetricsDict]: قاموس ملخص المقاييس أو None
     """
@@ -224,6 +236,7 @@ async def get_metrics_summary(
 # RESET METRICS
 # ==============================================
 
+
 async def reset_metrics(
     *,
     restaurant_id: int,
@@ -231,7 +244,7 @@ async def reset_metrics(
 ) -> None:
     """
     إعادة تعيين مقاييس المطعم إلى الصفر (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة

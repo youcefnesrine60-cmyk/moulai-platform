@@ -9,12 +9,14 @@
 # 🧠 STATE REPOSITORY (Redis + Memory)
 # ==============================================
 
+"""MoulAI operational module for state repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import json
 
-from app.core.redis_client import (
-    redis_client, 
-    memory_storage
-)
+from app.core.redis_client import redis_client, memory_storage
 from app.core.logger import logger
 
 # ==============================================
@@ -27,6 +29,7 @@ StateData = dict | None
 # 🔑 STATE KEY BUILDER
 # ==============================================
 
+
 def _state_key(chat_id: int) -> str:
     return f"user:{chat_id}"
 
@@ -35,10 +38,8 @@ def _state_key(chat_id: int) -> str:
 # 📥 GET STATE
 # ==============================================
 
-async def get_state(
-    *,
-    chat_id: int
-) -> StateData:
+
+async def get_state(*, chat_id: int) -> StateData:
 
     key = _state_key(chat_id=chat_id)
 
@@ -98,11 +99,8 @@ async def get_state(
 # 💾 SET STATE
 # ==============================================
 
-async def set_state(
-    *,
-    chat_id: int,
-    state: dict
-) -> None:
+
+async def set_state(*, chat_id: int, state: dict) -> None:
 
     key = _state_key(chat_id=chat_id)
 
@@ -117,10 +115,7 @@ async def set_state(
             extra={"chat_id": chat_id},
         )
 
-        redis_client.set(
-            key,
-            json.dumps(state)
-        )
+        redis_client.set(key, json.dumps(state))
 
         logger.info(
             "state_saved_to_redis",
@@ -149,10 +144,8 @@ async def set_state(
 # 🗑️ DELETE STATE
 # ==============================================
 
-async def delete_state(
-    *,
-    chat_id: int
-) -> None:
+
+async def delete_state(*, chat_id: int) -> None:
 
     key = _state_key(chat_id=chat_id)
 

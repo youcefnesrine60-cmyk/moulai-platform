@@ -1,7 +1,19 @@
 # ==============================================
-# 📦 ORDERS SERVICE - CONSTANTS
-# الثوابت (LOCKED_STATUSES, ORDERS_FEATURE_ID)
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDERS / CONSTANTS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for constants.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Set, Dict
 
@@ -19,10 +31,10 @@ ORDERS_FEATURE_ID: int = 6
 # الحالات التي تمنع تعديل الطلب (Lock Order)
 # عندما يكون الطلب في هذه الحالات، لا يمكن تعديله أو إلغاؤه
 LOCKED_STATUSES: Set[str] = {
-    "delivering",   # قيد التوصيل
-    "delivered",    # تم التوصيل
-    "completed",    # مكتمل
-    "cancelled",    # ملغى
+    "delivering",  # قيد التوصيل
+    "delivered",  # تم التوصيل
+    "completed",  # مكتمل
+    "cancelled",  # ملغى
 }
 
 # ==============================================
@@ -64,14 +76,14 @@ STATUS_DISPLAY_NAMES: Dict[str, str] = {
 
 # الألوان لكل حالة (للواجهات)
 STATUS_COLORS: Dict[str, str] = {
-    "pending": "#FFA500",      # برتقالي
-    "confirmed": "#2196F3",    # أزرق
-    "preparing": "#FF9800",    # برتقالي غامق
-    "ready": "#4CAF50",        # أخضر
-    "delivering": "#9C27B0",   # بنفسجي
-    "delivered": "#00BCD4",    # فيروزي
-    "completed": "#8BC34A",    # أخضر فاتح
-    "cancelled": "#F44336",    # أحمر
+    "pending": "#FFA500",  # برتقالي
+    "confirmed": "#2196F3",  # أزرق
+    "preparing": "#FF9800",  # برتقالي غامق
+    "ready": "#4CAF50",  # أخضر
+    "delivering": "#9C27B0",  # بنفسجي
+    "delivered": "#00BCD4",  # فيروزي
+    "completed": "#8BC34A",  # أخضر فاتح
+    "cancelled": "#F44336",  # أحمر
 }
 
 # ==============================================
@@ -193,157 +205,213 @@ StatusOrderDict = Dict[str, int]
 # 🔧 HELPER FUNCTIONS
 # ==============================================
 
+
 def get_status_display_name(status: str) -> str:
     """
     الحصول على الاسم المعروض للحالة.
-    
+
     Args:
         status: الحالة
-        
+
     Returns:
         str: الاسم المعروض
     """
     return STATUS_DISPLAY_NAMES.get(status, status)
 
 
+# ==============================================
+# GET STATUS COLOR
+# ==============================================
+
+
 def get_status_color(status: str) -> str:
     """
     الحصول على لون الحالة.
-    
+
     Args:
         status: الحالة
-        
+
     Returns:
         str: لون الحالة
     """
     return STATUS_COLORS.get(status, "#808080")  # رمادي افتراضي
 
 
+# ==============================================
+# GET STATUS DESCRIPTION
+# ==============================================
+
+
 def get_status_description(status: str) -> str:
     """
     الحصول على وصف الحالة.
-    
+
     Args:
         status: الحالة
-        
+
     Returns:
         str: وصف الحالة
     """
     return STATUS_DESCRIPTIONS.get(status, "حالة غير معروفة")
 
 
+# ==============================================
+# IS VALID STATUS
+# ==============================================
+
+
 def is_valid_status(status: str) -> bool:
     """
     التحقق من صحة الحالة.
-    
+
     Args:
         status: الحالة
-        
+
     Returns:
         bool: True إذا كانت الحالة صالحة
     """
     return status in VALID_STATUSES
 
 
+# ==============================================
+# IS LOCKED STATUS
+# ==============================================
+
+
 def is_locked_status(status: str) -> bool:
     """
     التحقق من أن الحالة مقفلة (لا يمكن تعديلها).
-    
+
     Args:
         status: الحالة
-        
+
     Returns:
         bool: True إذا كانت الحالة مقفلة
     """
     return status in LOCKED_STATUSES
 
 
+# ==============================================
+# IS COMPLETABLE STATUS
+# ==============================================
+
+
 def is_completable_status(status: str) -> bool:
     """
     التحقق من أن الحالة قابلة للإكمال.
-    
+
     Args:
         status: الحالة
-        
+
     Returns:
         bool: True إذا كانت الحالة قابلة للإكمال
     """
     return status in COMPLETABLE_STATUSES
 
 
+# ==============================================
+# IS CANCELLABLE STATUS
+# ==============================================
+
+
 def is_cancellable_status(status: str) -> bool:
     """
     التحقق من أن الحالة قابلة للإلغاء.
-    
+
     Args:
         status: الحالة
-        
+
     Returns:
         bool: True إذا كانت الحالة قابلة للإلغاء
     """
     return status in CANCELLABLE_STATUSES
 
 
+# ==============================================
+# IS EDITABLE STATUS
+# ==============================================
+
+
 def is_editable_status(status: str) -> bool:
     """
     التحقق من أن الحالة قابلة للتعديل.
-    
+
     Args:
         status: الحالة
-        
+
     Returns:
         bool: True إذا كانت الحالة قابلة للتعديل
     """
     return status in EDITABLE_STATUSES
 
 
+# ==============================================
+# GET ALLOWED TRANSITIONS
+# ==============================================
+
+
 def get_allowed_transitions(status: str) -> Set[str]:
     """
     الحصول على الحالات المسموح الانتقال إليها من حالة معينة.
-    
+
     Args:
         status: الحالة الحالية
-        
+
     Returns:
         Set[str]: مجموعة الحالات المسموح الانتقال إليها
     """
     return ALLOWED_TRANSITIONS.get(status, set())
 
 
+# ==============================================
+# CAN TRANSITION
+# ==============================================
+
+
 def can_transition(from_status: str, to_status: str) -> bool:
     """
     التحقق من إمكانية الانتقال من حالة إلى أخرى.
-    
+
     Args:
         from_status: الحالة الحالية
         to_status: الحالة المطلوبة
-        
+
     Returns:
         bool: True إذا كان الانتقال مسموحاً
     """
     return to_status in get_allowed_transitions(from_status)
 
 
+# ==============================================
+# GET NEXT STATUSES
+# ==============================================
+
+
 def get_next_statuses(status: str) -> Set[str]:
     """
     الحصول على الحالات التالية المسموح بها من حالة معينة.
-    
+
     Args:
         status: الحالة الحالية
-        
+
     Returns:
         Set[str]: مجموعة الحالات التالية
     """
     return get_allowed_transitions(status)
 
 
+# ==============================================
+# GET PREVIOUS STATUSES
+# ==============================================
+
+
 def get_previous_statuses(status: str) -> Set[str]:
     """
     الحصول على الحالات السابقة التي يمكن الانتقال منها إلى حالة معينة.
-    
+
     Args:
         status: الحالة المطلوبة
-        
+
     Returns:
         Set[str]: مجموعة الحالات السابقة
     """
@@ -373,14 +441,12 @@ __all__ = [
     "PAYMENT_REQUIRED_STATUSES",
     "ALL_STATUSES",
     "VALID_STATUSES",
-    
     # Type Aliases
     "StatusType",
     "StatusSet",
     "StatusDict",
     "StatusTransitionDict",
     "StatusOrderDict",
-    
     # Helper Functions
     "get_status_display_name",
     "get_status_color",

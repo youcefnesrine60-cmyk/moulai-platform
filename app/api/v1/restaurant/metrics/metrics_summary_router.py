@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 📊 RESTAURANT METRICS ROUTER - SUMMARY
 # نقاط نهاية الملخص والإحصائيات
 # ==============================================
+
+"""MoulAI operational module for metrics summary router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -27,7 +32,6 @@ from app.schemas.restaurant.restaurant_metric import (
 )
 from app.services.business.restaurant.metrics.service import RestaurantMetricsService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -41,6 +45,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_metrics_service(
     session: AsyncSession = Depends(get_db),
@@ -56,6 +61,7 @@ async def get_metrics_service(
 # ==============================================
 # GET RESTAURANT METRICS SUMMARY
 # ==============================================
+
 
 @router.get(
     "/{restaurant_id}/summary",

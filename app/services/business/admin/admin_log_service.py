@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 📋 ADMIN LOG SERVICE
 # منطق الأعمال لسجل أنشطة المديرين
 # ==============================================
+
+"""MoulAI operational module for admin log service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from datetime import datetime
 from typing import (
@@ -30,7 +35,6 @@ from app.schemas.admin_log import (
     AdminLogFilter,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -42,21 +46,26 @@ ActionsSummary = List[Dict[str, Any]]
 # 📋 ADMIN LOG SERVICE
 # ==============================================
 
+
 class AdminLogService:
     """
     خدمة سجل أنشطة المديرين - تدير منطق الأعمال لسجل الأنشطة.
-    
+
     مسؤول عن:
         - إنشاء سجلات الأنشطة
         - قراءة سجلات الأنشطة
         - البحث والتصفية
         - إحصائيات الأنشطة
         - تنظيف السجلات القديمة
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع سجل الأنشطة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -64,7 +73,7 @@ class AdminLogService:
     ) -> None:
         """
         تهيئة خدمة سجل أنشطة المديرين.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -86,13 +95,13 @@ class AdminLogService:
     ) -> AdminLogResponse:
         """
         الحصول على سجل نشاط بالمعرف.
-        
+
         Args:
             log_id: معرف سجل النشاط
-            
+
         Returns:
             AdminLogResponse: بيانات سجل النشاط
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على السجل
         """
@@ -124,13 +133,13 @@ class AdminLogService:
     ) -> AdminLogListResponse:
         """
         الحصول على سجل أنشطة مدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             filters: معايير التصفية (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AdminLogListResponse: قائمة سجل الأنشطة
         """
@@ -180,13 +189,13 @@ class AdminLogService:
     ) -> AdminLogListResponse:
         """
         الحصول على سجل الأنشطة حسب نوع الإجراء.
-        
+
         Args:
             action: نوع الإجراء
             admin_id: معرف المدير (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AdminLogListResponse: قائمة سجل الأنشطة
         """
@@ -228,13 +237,13 @@ class AdminLogService:
     ) -> AdminLogListResponse:
         """
         البحث في سجل الأنشطة.
-        
+
         Args:
             query: نص البحث
             admin_id: معرف المدير (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AdminLogListResponse: قائمة سجل الأنشطة
         """
@@ -274,11 +283,11 @@ class AdminLogService:
     ) -> ActionsSummary:
         """
         الحصول على ملخص الأنشطة حسب نوع الإجراء.
-        
+
         Args:
             admin_id: معرف المدير (اختياري)
             limit: الحد الأقصى للنتائج
-            
+
         Returns:
             ActionsSummary: قائمة ملخص الأنشطة
         """
@@ -307,11 +316,11 @@ class AdminLogService:
     ) -> List[AdminLogResponse]:
         """
         الحصول على أحدث الأنشطة.
-        
+
         Args:
             admin_id: معرف المدير (اختياري)
             limit: عدد النتائج
-            
+
         Returns:
             List[AdminLogResponse]: قائمة أحدث الأنشطة
         """
@@ -345,14 +354,14 @@ class AdminLogService:
     ) -> AdminLogListResponse:
         """
         الحصول على سجل الأنشطة في نطاق زمني محدد.
-        
+
         Args:
             start_date: تاريخ البداية
             end_date: تاريخ النهاية
             admin_id: معرف المدير (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AdminLogListResponse: قائمة سجل الأنشطة
         """
@@ -397,10 +406,10 @@ class AdminLogService:
     ) -> AdminLogResponse:
         """
         إنشاء سجل نشاط جديد.
-        
+
         Args:
             log_data: بيانات سجل النشاط
-            
+
         Returns:
             AdminLogResponse: سجل النشاط المنشأ
         """
@@ -445,7 +454,7 @@ class AdminLogService:
     ) -> AdminLogResponse:
         """
         إنشاء سجل نشاط جديد مع تفاصيل إضافية.
-        
+
         Args:
             admin_id: معرف المدير
             action: نوع الإجراء
@@ -454,7 +463,7 @@ class AdminLogService:
             details: تفاصيل إضافية (اختياري)
             ip_address: عنوان IP (اختياري)
             user_agent: متصفح المستخدم (اختياري)
-            
+
         Returns:
             AdminLogResponse: سجل النشاط المنشأ
         """
@@ -509,10 +518,10 @@ class AdminLogService:
     ) -> int:
         """
         تنظيف السجلات القديمة.
-        
+
         Args:
             days: عدد الأيام للاحتفاظ بالسجلات (افتراضي: 90)
-            
+
         Returns:
             int: عدد السجلات المحذوفة
         """
@@ -543,10 +552,10 @@ class AdminLogService:
     ) -> Dict[str, Any]:
         """
         الحصول على إحصائيات الأنشطة.
-        
+
         Args:
             admin_id: معرف المدير (اختياري)
-            
+
         Returns:
             Dict[str, Any]: إحصائيات الأنشطة
         """
@@ -569,6 +578,7 @@ class AdminLogService:
 # 🏢 BUSINESS LOGIC HELPERS
 # ==============================================
 
+
 async def log_admin_action(
     *,
     session: AsyncSession,
@@ -582,7 +592,7 @@ async def log_admin_action(
 ) -> AdminLogResponse:
     """
     دالة مساعدة لتسجيل إجراءات المديرين - تستخدم في طبقة الأعمال.
-    
+
     Args:
         session: جلسة قاعدة البيانات
         admin_id: معرف المدير
@@ -592,12 +602,12 @@ async def log_admin_action(
         details: تفاصيل إضافية (اختياري)
         ip_address: عنوان IP (اختياري)
         user_agent: متصفح المستخدم (اختياري)
-        
+
     Returns:
         AdminLogResponse: سجل النشاط المنشأ
     """
     service = AdminLogService(session)
-    
+
     return await service.create_log_with_details(
         admin_id=admin_id,
         action=action,
@@ -613,6 +623,7 @@ async def log_admin_action(
 # 🏢 AUDIT HELPERS
 # ==============================================
 
+
 async def audit_resource_access(
     *,
     session: AsyncSession,
@@ -623,7 +634,7 @@ async def audit_resource_access(
 ) -> None:
     """
     تسجيل وصول المدير إلى مورد معين لأغراض التدقيق.
-    
+
     Args:
         session: جلسة قاعدة البيانات
         admin_id: معرف المدير

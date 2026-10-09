@@ -10,6 +10,11 @@
 # منطق الأعمال للمحادثات
 # ==============================================
 
+"""MoulAI operational module for conversation service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -33,7 +38,6 @@ from app.schemas.agent.conversation import (
     ConversationListResponse,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -46,16 +50,17 @@ ConversationStats = Dict[str, Any]
 # 💬 CONVERSATION SERVICE
 # ==============================================
 
+
 class ConversationService:
     """
     خدمة المحادثات - تدير منطق الأعمال للمحادثات.
-    
+
     مسؤول عن:
         - إنشاء وتحديث المحادثات
         - إدارة سياق المحادثة
         - البحث عن المحادثات حسب المستخدم
         - إدارة حالة المحادثة
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع المحادثات
@@ -63,13 +68,17 @@ class ConversationService:
         channel_repo: مستودع القنوات
     """
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         session: AsyncSession,
     ) -> None:
         """
         تهيئة خدمة المحادثات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -94,14 +103,14 @@ class ConversationService:
     ) -> ConversationResponse:
         """
         الحصول على محادثة بالمعرف.
-        
+
         Args:
             conversation_id: معرف المحادثة
             include_inactive: تضمين المحادثات غير النشطة
-            
+
         Returns:
             ConversationResponse: بيانات المحادثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -139,14 +148,14 @@ class ConversationService:
     ) -> ConversationResponse:
         """
         الحصول على محادثة مع رسائلها.
-        
+
         Args:
             conversation_id: معرف المحادثة
             include_inactive: تضمين المحادثات غير النشطة
-            
+
         Returns:
             ConversationResponse: بيانات المحادثة مع الرسائل
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -187,12 +196,12 @@ class ConversationService:
     ) -> Optional[ConversationResponse]:
         """
         الحصول على محادثة حسب معرف المستخدم.
-        
+
         Args:
             agent_id: معرف الوكيل
             user_id: معرف المستخدم
             only_active: جلب المحادثة النشطة فقط
-            
+
         Returns:
             Optional[ConversationResponse]: بيانات المحادثة أو None
         """
@@ -230,13 +239,13 @@ class ConversationService:
     ) -> ConversationListResponse:
         """
         الحصول على محادثات وكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
             only_active: جلب المحادثات النشطة فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ConversationListResponse: قائمة المحادثات مع الإحصائيات
         """
@@ -289,13 +298,13 @@ class ConversationService:
     ) -> ConversationListResponse:
         """
         الحصول على محادثات حسب الحالة.
-        
+
         Args:
             agent_id: معرف الوكيل
             status: حالة المحادثة (active, closed, suspended)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ConversationListResponse: قائمة المحادثات مع الإحصائيات
         """
@@ -342,14 +351,14 @@ class ConversationService:
     ) -> ConversationListResponse:
         """
         البحث عن المحادثات.
-        
+
         Args:
             query: نص البحث
             agent_id: معرف الوكيل (اختياري)
             only_active: جلب المحادثات النشطة فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ConversationListResponse: قائمة المحادثات مع الإحصائيات
         """
@@ -393,13 +402,13 @@ class ConversationService:
     ) -> ConversationResponse:
         """
         إنشاء محادثة جديدة.
-        
+
         Args:
             conversation_data: بيانات المحادثة
-            
+
         Returns:
             ConversationResponse: بيانات المحادثة المنشأة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل أو القناة
         """
@@ -486,14 +495,14 @@ class ConversationService:
     ) -> ConversationResponse:
         """
         تحديث محادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             update_data: بيانات التحديث
-            
+
         Returns:
             ConversationResponse: بيانات المحادثة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -550,14 +559,14 @@ class ConversationService:
     ) -> ConversationResponse:
         """
         تحديث سياق المحادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             context: السياق الجديد
-            
+
         Returns:
             ConversationResponse: بيانات المحادثة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -610,14 +619,14 @@ class ConversationService:
     ) -> ConversationResponse:
         """
         تحديث حالة المحادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             status: الحالة الجديدة (active, closed, suspended)
-            
+
         Returns:
             ConversationResponse: بيانات المحادثة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
             ValidationError: إذا كانت الحالة غير صالحة
@@ -669,13 +678,13 @@ class ConversationService:
     ) -> ConversationResponse:
         """
         إلغاء تنشيط المحادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             ConversationResponse: بيانات المحادثة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -716,11 +725,11 @@ class ConversationService:
     ) -> None:
         """
         حذف محادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             permanent: حذف نهائي
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -771,13 +780,13 @@ class ConversationService:
     ) -> ConversationStats:
         """
         الحصول على إحصائيات المحادثات لوكيل معين.
-        
+
         Args:
             agent_id: معرف الوكيل
-            
+
         Returns:
             ConversationStats: إحصائيات المحادثات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
         """

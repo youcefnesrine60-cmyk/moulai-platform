@@ -1,7 +1,19 @@
 # ==============================================
-# 🏪 OWNER DASHBOARD HANDLERS
-# معالجات لوحة تحكم صاحب المحل
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / OWNER / OWNER DASHBOARD HANDLERS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for owner dashboard handlers.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -21,11 +33,16 @@ from app.repositories.categories_repo import get_restaurant_categories
 from app.views.owner_dashboard_ui import owner_dashboard_ui
 from app.views.ui import button
 
-
 # ==============================================
 # 🏪 OWNER DASHBOARD
 # عرض لوحة تحكم صاحب المحل
 # ==============================================
+
+
+# ==============================================
+# OWNER DASHBOARD CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,
@@ -41,7 +58,7 @@ async def owner_dashboard_callback(
 ) -> None:
     """
     عرض لوحة تحكم صاحب المحل
-    
+
     Args:
         chat_id: معرف المستخدم
         message_id: معرف الرسالة
@@ -108,7 +125,8 @@ async def owner_dashboard_callback(
 
     # ⏳ عدد الطلبات المعلقة
     pending_orders = [
-        o for o in orders
+        o
+        for o in orders
         if o.get("status") in ["received", "preparing", "ready", "delivering"]
     ]
     pending_count = len(pending_orders)
@@ -119,14 +137,8 @@ async def owner_dashboard_callback(
     )
 
     # 💰 حساب الإيرادات (مجموع الطلبات المكتملة)
-    completed_orders = [
-        o for o in orders
-        if o.get("status") == "completed"
-    ]
-    revenue = sum(
-        float(o.get("total_amount", 0))
-        for o in completed_orders
-    )
+    completed_orders = [o for o in orders if o.get("status") == "completed"]
+    revenue = sum(float(o.get("total_amount", 0)) for o in completed_orders)
 
     # ==========================================
     # 4️⃣ حفظ حالة المستخدم
@@ -171,6 +183,12 @@ async def owner_dashboard_callback(
 # إدارة طلبات المطعم
 # ==============================================
 
+
+# ==============================================
+# OWNER ORDERS CALLBACK
+# ==============================================
+
+
 @rate_limit(
     limit=10,
     window=30,
@@ -185,7 +203,7 @@ async def owner_orders_callback(
 ) -> None:
     """
     عرض وإدارة طلبات المطعم
-    
+
     Args:
         chat_id: معرف المستخدم
         message_id: معرف الرسالة
@@ -274,6 +292,12 @@ async def owner_orders_callback(
 # إدارة منتجات المطعم
 # ==============================================
 
+
+# ==============================================
+# OWNER PRODUCTS CALLBACK
+# ==============================================
+
+
 @rate_limit(
     limit=10,
     window=30,
@@ -288,7 +312,7 @@ async def owner_products_callback(
 ) -> None:
     """
     عرض وإدارة منتجات المطعم
-    
+
     Args:
         chat_id: معرف المستخدم
         message_id: معرف الرسالة

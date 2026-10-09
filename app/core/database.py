@@ -11,6 +11,11 @@
 # Production Ready
 # ==============================================
 
+"""MoulAI operational module for database.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import AsyncGenerator
 
 from dotenv import load_dotenv
@@ -34,7 +39,6 @@ load_dotenv()
 # ==============================================
 
 from app.models.base import Base
-
 
 # ==============================================
 # 🚀 CREATE ENGINE
@@ -68,12 +72,13 @@ AsyncSessionLocal = async_sessionmaker(
 # 📥 GET DATABASE SESSION (Dependency Injection)
 # ==============================================
 
+
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     الحصول على جلسة قاعدة البيانات (Dependency Injection)
-    
+
     تستخدم في FastAPI Dependency Injection
-    
+
     Yields:
         AsyncSession: جلسة قاعدة البيانات
     """
@@ -95,12 +100,13 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 # 📥 GET ASYNC SESSION
 # ==============================================
 
+
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """
     الحصول على جلسة قاعدة البيانات (مولد غير متزامن).
-    
+
     تستخدم في Dependency Injection مع FastAPI.
-    
+
     Yields:
         AsyncSession: جلسة قاعدة البيانات
     """
@@ -122,12 +128,13 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 # 📥 GET SESSION (للاستخدام المباشر)
 # ==============================================
 
+
 async def get_session() -> AsyncSession:
     """
     الحصول على جلسة قاعدة البيانات للاستخدام المباشر
-    
+
     تستخدم في الـ Repositories والـ Services
-    
+
     Returns:
         AsyncSession: جلسة قاعدة البيانات
     """
@@ -138,15 +145,16 @@ async def get_session() -> AsyncSession:
 # 🚀 INITIALIZE DATABASE
 # ==============================================
 
+
 async def init_db() -> None:
     """
     تهيئة قاعدة البيانات وإنشاء الجداول
-    
+
     يتم استدعاؤها عند بدء التشغيل
     """
     try:
         # ✅ استيراد جميع النماذج لضمان تسجيلها في Base.metadata
-        import app.models
+        import app.models  # noqa: F401  # Registers SQLAlchemy models in Base.metadata.
 
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
@@ -170,16 +178,17 @@ async def init_db() -> None:
 # 🗑️ DROP DATABASE (للاختبار فقط)
 # ==============================================
 
+
 async def drop_db() -> None:
     """
     حذف جميع الجداول (للاختبار فقط)
-    
+
     ⚠️ تحذير: هذه الدالة تحذف جميع البيانات!
     تستخدم فقط في بيئة الاختبار
     """
     try:
         # ✅ استيراد جميع النماذج لضمان تسجيلها في Base.metadata
-        import app.models
+        import app.models  # noqa: F401  # Registers SQLAlchemy models in Base.metadata.
 
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
@@ -197,10 +206,11 @@ async def drop_db() -> None:
 # 🔒 CLOSE DATABASE
 # ==============================================
 
+
 async def close_db() -> None:
     """
     إغلاق اتصال قاعدة البيانات
-    
+
     يتم استدعاؤها عند إيقاف التشغيل
     """
     try:
@@ -218,10 +228,11 @@ async def close_db() -> None:
 # ✅ CHECK DATABASE CONNECTION
 # ==============================================
 
+
 async def check_db_connection() -> bool:
     """
     التحقق من اتصال قاعدة البيانات
-    
+
     Returns:
         True إذا كان الاتصال ناجحاً، False إذا فشل
     """

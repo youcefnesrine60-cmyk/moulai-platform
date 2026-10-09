@@ -1,6 +1,19 @@
 # ==============================================
-# 📞 PHONE STEP
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / OWNER_HANDLER / PHONE STEP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for phone step.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Any
 
@@ -30,6 +43,7 @@ StateData = dict[str, Any]
 # ==============================================
 # 📞 HANDLE PHONE STEP
 # ==============================================
+
 
 async def handle_phone_step(
     *,
@@ -63,11 +77,7 @@ async def handle_phone_step(
 
         await UIManager.update(
             chat_id=chat_id,
-            text=(
-                "❌ رقم الهاتف غير صحيح.\n\n"
-                "📞 مثال صحيح:\n"
-                "0551234567"
-            ),
+            text=("❌ رقم الهاتف غير صحيح.\n\n" "📞 مثال صحيح:\n" "0551234567"),
             reply_markup=await back_ui(),
         )
 

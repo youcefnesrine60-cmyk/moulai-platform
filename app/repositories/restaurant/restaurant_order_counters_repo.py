@@ -1,7 +1,19 @@
 # ==============================================
-# 🔢 RESTAURANT ORDER COUNTERS REPOSITORY
-# عمليات قاعدة البيانات لعدادات الطلبات باستخدام SQLAlchemy
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / RESTAURANT / RESTAURANT ORDER COUNTERS REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for restaurant order counters repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -36,17 +48,21 @@ class RestaurantOrderCountersRepository(
 ):
     """
     مستودع عداد الطلبات - يوفر عمليات خاصة بعدادات الطلبات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لعدادات الطلبات
         - إنشاء عداد جديد للمطعم
         - زيادة العداد وإرجاع الرقم الجديد
         - توليد رقم طلب منسق
-    
+
     Attributes:
         model: نموذج RestaurantOrderCounter
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -54,7 +70,7 @@ class RestaurantOrderCountersRepository(
     ) -> None:
         """
         تهيئة مستودع عداد الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -75,10 +91,10 @@ class RestaurantOrderCountersRepository(
     ) -> Optional[RestaurantOrderCounter]:
         """
         الحصول على عداد طلبات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             كائن RestaurantOrderCounter أو None
         """
@@ -112,10 +128,10 @@ class RestaurantOrderCountersRepository(
     ) -> int:
         """
         الحصول على رقم الطلب الحالي لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             آخر رقم طلب
         """
@@ -143,10 +159,10 @@ class RestaurantOrderCountersRepository(
     ) -> RestaurantOrderCounter:
         """
         إنشاء عداد طلبات جديد لمطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             كائن RestaurantOrderCounter المنشأ
         """
@@ -193,10 +209,10 @@ class RestaurantOrderCountersRepository(
     ) -> int:
         """
         زيادة عداد الطلبات وإرجاع الرقم الجديد.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             رقم الطلب الجديد
         """
@@ -246,10 +262,10 @@ class RestaurantOrderCountersRepository(
     ) -> Optional[RestaurantOrderCounter]:
         """
         إعادة تعيين عداد الطلبات إلى الصفر.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             كائن RestaurantOrderCounter المعاد تعيينه أو None
         """
@@ -285,11 +301,11 @@ class RestaurantOrderCountersRepository(
     ) -> str:
         """
         بناء رقم طلب منسق.
-        
+
         Args:
             restaurant_id: معرف المطعم
             sequence: رقم التسلسل
-            
+
         Returns:
             رقم الطلب المنسق
         """
@@ -306,10 +322,10 @@ class RestaurantOrderCountersRepository(
     ) -> str:
         """
         توليد رقم الطلب التالي.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             رقم الطلب التالي
         """
@@ -332,6 +348,7 @@ class RestaurantOrderCountersRepository(
 # CREATE ORDER COUNTER (COMPATIBILITY)
 # ==============================================
 
+
 async def create_order_counter(
     *,
     restaurant_id: int,
@@ -339,7 +356,7 @@ async def create_order_counter(
 ) -> None:
     """
     إنشاء عداد طلبات جديد لمطعم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -358,6 +375,7 @@ async def create_order_counter(
 # GET ORDER COUNTER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_counter(
     *,
     restaurant_id: int,
@@ -365,11 +383,11 @@ async def get_order_counter(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على عداد طلبات مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         عداد الطلبات أو None
     """
@@ -394,6 +412,7 @@ async def get_order_counter(
 # GET CURRENT ORDER NUMBER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_current_order_number(
     *,
     restaurant_id: int,
@@ -401,11 +420,11 @@ async def get_current_order_number(
 ) -> int:
     """
     الحصول على رقم الطلب الحالي لمطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         آخر رقم طلب
     """
@@ -420,6 +439,7 @@ async def get_current_order_number(
 # INCREMENT ORDER COUNTER TX (COMPATIBILITY)
 # ==============================================
 
+
 async def increment_order_counter_tx(
     *,
     conn: AsyncSession,
@@ -427,11 +447,11 @@ async def increment_order_counter_tx(
 ) -> int:
     """
     زيادة عداد الطلبات وإرجاع الرقم الجديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         restaurant_id: معرف المطعم
-        
+
     Returns:
         رقم الطلب الجديد
     """
@@ -446,6 +466,7 @@ async def increment_order_counter_tx(
 # BUILD ORDER NUMBER (COMPATIBILITY)
 # ==============================================
 
+
 def build_order_number(
     *,
     restaurant_id: int,
@@ -453,11 +474,11 @@ def build_order_number(
 ) -> str:
     """
     بناء رقم طلب منسق (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         sequence: رقم التسلسل
-        
+
     Returns:
         رقم الطلب المنسق
     """
@@ -471,6 +492,7 @@ def build_order_number(
 # GENERATE NEXT ORDER NUMBER TX (COMPATIBILITY)
 # ==============================================
 
+
 async def generate_next_order_number_tx(
     *,
     conn: AsyncSession,
@@ -478,11 +500,11 @@ async def generate_next_order_number_tx(
 ) -> str:
     """
     توليد رقم الطلب التالي (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         restaurant_id: معرف المطعم
-        
+
     Returns:
         رقم الطلب التالي
     """

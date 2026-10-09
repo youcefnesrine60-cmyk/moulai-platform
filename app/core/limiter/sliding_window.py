@@ -1,13 +1,24 @@
-# ==========================================
-# THE SINGLE SOURCE OF TRUTH
-# المصدر الوحيد للحقيقة
-# ==========================================
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / CORE / LIMITER / SLIDING WINDOW
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for sliding window.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import time
 
 from app.core.logger import logger
 from app.core.redis_client import redis_client
-
 
 # ==========================================
 # 🚫 LUA SLIDING WINDOW LIMITER
@@ -65,15 +76,15 @@ return 1
 # 🚫 SLIDING WINDOW LIMITER
 # ==========================================
 
+
 class SlidingWindowLimiter:
 
+    # ==============================================
+    # IS ALLOWED
+    # ==============================================
+
     @staticmethod
-    async def is_allowed(
-        *,
-        key: str,
-        limit: int,
-        window: int
-    ) -> bool:
+    async def is_allowed(*, key: str, limit: int, window: int) -> bool:
 
         # ==================================
         # 🚫 REDIS UNAVAILABLE
@@ -81,12 +92,7 @@ class SlidingWindowLimiter:
 
         if not redis_client:
 
-            logger.warning(
-                "redis_client_not_initialized",
-                extra={
-                    "key": key
-                }
-            )
+            logger.warning("redis_client_not_initialized", extra={"key": key})
 
             return True
 
@@ -96,14 +102,7 @@ class SlidingWindowLimiter:
 
             redis_key = f"limit:{key}"
 
-            allowed = redis_client.eval(
-                LUA_SCRIPT,
-                1,
-                redis_key,
-                now,
-                window,
-                limit
-            )
+            allowed = redis_client.eval(LUA_SCRIPT, 1, redis_key, now, window, limit)
 
             # ==============================
             # 🚫 RATE LIMITED
@@ -113,11 +112,7 @@ class SlidingWindowLimiter:
 
                 logger.warning(
                     "rate_limit_exceeded",
-                    extra={
-                        "key": key,
-                        "limit": limit,
-                        "window": window
-                    }
+                    extra={"key": key, "limit": limit, "window": window},
                 )
 
                 return False
@@ -127,11 +122,7 @@ class SlidingWindowLimiter:
         except Exception as e:
 
             logger.exception(
-                "sliding_window_limiter_failed",
-                extra={
-                    "key": key,
-                    "error": str(e)
-                }
+                "sliding_window_limiter_failed", extra={"key": key, "error": str(e)}
             )
 
             return True

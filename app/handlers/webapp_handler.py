@@ -1,8 +1,19 @@
 # ==============================================
-# 🌍 WEBAPP HANDLER
-# المسؤول عن:
-# استقبال الموقع من Telegram WebApp
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / WEBAPP HANDLER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for webapp handler.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import json
 
@@ -16,6 +27,7 @@ from app.views.ui import types_ui
 # ==============================================
 # 🌍 HANDLE WEBAPP DATA
 # ==============================================
+
 
 async def handle_webapp_data(
     *,

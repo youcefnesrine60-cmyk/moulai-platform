@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,20 +10,23 @@
 # إدارة الذاكرة والسياق للمحادثات
 # ==============================================
 
+"""MoulAI operational module for memory manager.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import json
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import (
     Any,
     Dict,
     List,
     Optional,
-    Tuple,
 )
 
 from app.agent.config import default_config
 from app.core.logger import logger
-from app.core.redis_client import redis_client
 
 # ==============================================
 # 🧩 TYPES
@@ -43,18 +46,22 @@ ConversationHistory = List[Message]
 class MemoryManager:
     """
     مدير الذاكرة - يدير سياق المحادثة والذاكرة.
-    
+
     مسؤول عن:
         - تخزين واسترجاع سياق المحادثة
         - إدارة الجلسات
         - الحفاظ على تاريخ المحادثة
         - استخراج المعلومات المهمة من السياق
-    
+
     Attributes:
         redis_client: عميل Redis (اختياري)
         max_history: الحد الأقصى لرسائل السياق
         session_timeout: مهلة الجلسة (ثواني)
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -65,7 +72,7 @@ class MemoryManager:
     ) -> None:
         """
         تهيئة مدير الذاكرة.
-        
+
         Args:
             redis_client: عميل Redis (اختياري)
             max_history: الحد الأقصى لرسائل السياق
@@ -100,12 +107,12 @@ class MemoryManager:
     ) -> SessionData:
         """
         إنشاء جلسة جديدة.
-        
+
         Args:
             session_id: معرف الجلسة
             user_id: معرف المستخدم
             initial_context: السياق الأولي (اختياري)
-            
+
         Returns:
             بيانات الجلسة
         """
@@ -134,6 +141,10 @@ class MemoryManager:
 
         return session
 
+    # ==============================================
+    # GET SESSION
+    # ==============================================
+
     async def get_session(
         self,
         *,
@@ -141,10 +152,10 @@ class MemoryManager:
     ) -> Optional[SessionData]:
         """
         الحصول على جلسة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             بيانات الجلسة أو None
         """
@@ -163,6 +174,10 @@ class MemoryManager:
 
         return session
 
+    # ==============================================
+    # UPDATE SESSION
+    # ==============================================
+
     async def update_session(
         self,
         *,
@@ -171,11 +186,11 @@ class MemoryManager:
     ) -> Optional[SessionData]:
         """
         تحديث جلسة.
-        
+
         Args:
             session_id: معرف الجلسة
             updates: بيانات التحديث
-            
+
         Returns:
             بيانات الجلسة المحدثة أو None
         """
@@ -208,6 +223,10 @@ class MemoryManager:
 
         return session
 
+    # ==============================================
+    # DELETE SESSION
+    # ==============================================
+
     async def delete_session(
         self,
         *,
@@ -215,10 +234,10 @@ class MemoryManager:
     ) -> bool:
         """
         حذف جلسة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             True إذا تم الحذف، False إذا لم يتم
         """
@@ -259,7 +278,7 @@ class MemoryManager:
     ) -> bool:
         """
         إضافة رسالة إلى تاريخ المحادثة.
-        
+
         Args:
             session_id: معرف الجلسة
             message: نص الرسالة
@@ -267,7 +286,7 @@ class MemoryManager:
             metadata: بيانات إضافية (اختياري)
             intent: النية المستخرجة (اختياري)
             entities: الكيانات المستخرجة (اختياري)
-            
+
         Returns:
             True إذا تمت الإضافة، False إذا لم يتم
         """
@@ -302,7 +321,7 @@ class MemoryManager:
 
         # الحفاظ على الحد الأقصى للسياق
         if len(session["history"]) > self.max_history:
-            session["history"] = session["history"][-self.max_history:]
+            session["history"] = session["history"][-self.max_history :]
 
         # تحديث وقت آخر نشاط
         session["updated_at"] = datetime.now().isoformat()
@@ -321,6 +340,10 @@ class MemoryManager:
 
         return True
 
+    # ==============================================
+    # GET HISTORY
+    # ==============================================
+
     async def get_history(
         self,
         *,
@@ -329,11 +352,11 @@ class MemoryManager:
     ) -> ConversationHistory:
         """
         الحصول على تاريخ المحادثة.
-        
+
         Args:
             session_id: معرف الجلسة
             limit: الحد الأقصى للرسائل (اختياري)
-            
+
         Returns:
             قائمة الرسائل
         """
@@ -353,6 +376,10 @@ class MemoryManager:
 
         return history
 
+    # ==============================================
+    # GET LAST MESSAGE
+    # ==============================================
+
     async def get_last_message(
         self,
         *,
@@ -360,10 +387,10 @@ class MemoryManager:
     ) -> Optional[Message]:
         """
         الحصول على آخر رسالة في المحادثة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             آخر رسالة أو None
         """
@@ -374,6 +401,10 @@ class MemoryManager:
 
         return history[-1]
 
+    # ==============================================
+    # GET LAST USER MESSAGE
+    # ==============================================
+
     async def get_last_user_message(
         self,
         *,
@@ -381,10 +412,10 @@ class MemoryManager:
     ) -> Optional[Message]:
         """
         الحصول على آخر رسالة من المستخدم.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             آخر رسالة من المستخدم أو None
         """
@@ -396,6 +427,10 @@ class MemoryManager:
 
         return None
 
+    # ==============================================
+    # CLEAR HISTORY
+    # ==============================================
+
     async def clear_history(
         self,
         *,
@@ -403,10 +438,10 @@ class MemoryManager:
     ) -> bool:
         """
         مسح تاريخ المحادثة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             True إذا تم المسح، False إذا لم يتم
         """
@@ -439,11 +474,11 @@ class MemoryManager:
     ) -> bool:
         """
         تحديث سياق المحادثة.
-        
+
         Args:
             session_id: معرف الجلسة
             updates: تحديثات السياق
-            
+
         Returns:
             True إذا تم التحديث، False إذا لم يتم
         """
@@ -472,6 +507,10 @@ class MemoryManager:
 
         return True
 
+    # ==============================================
+    # GET CONTEXT
+    # ==============================================
+
     async def get_context(
         self,
         *,
@@ -479,10 +518,10 @@ class MemoryManager:
     ) -> ContextData:
         """
         الحصول على سياق المحادثة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             سياق المحادثة
         """
@@ -493,6 +532,10 @@ class MemoryManager:
 
         return session.get("context", {})
 
+    # ==============================================
+    # GET CONTEXT VALUE
+    # ==============================================
+
     async def get_context_value(
         self,
         *,
@@ -502,12 +545,12 @@ class MemoryManager:
     ) -> Any:
         """
         الحصول على قيمة محددة من السياق.
-        
+
         Args:
             session_id: معرف الجلسة
             key: مفتاح القيمة
             default: القيمة الافتراضية
-            
+
         Returns:
             قيمة المفتاح أو القيمة الافتراضية
         """
@@ -526,11 +569,11 @@ class MemoryManager:
     ) -> bool:
         """
         تحديث الكيانات المستخرجة.
-        
+
         Args:
             session_id: معرف الجلسة
             entities: الكيانات الجديدة
-            
+
         Returns:
             True إذا تم التحديث، False إذا لم يتم
         """
@@ -558,6 +601,10 @@ class MemoryManager:
 
         return True
 
+    # ==============================================
+    # GET ENTITIES
+    # ==============================================
+
     async def get_entities(
         self,
         *,
@@ -565,10 +612,10 @@ class MemoryManager:
     ) -> Dict[str, Any]:
         """
         الحصول على جميع الكيانات المستخرجة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             الكيانات المستخرجة
         """
@@ -579,6 +626,10 @@ class MemoryManager:
 
         return session.get("entities", {})
 
+    # ==============================================
+    # GET ENTITY
+    # ==============================================
+
     async def get_entity(
         self,
         *,
@@ -588,12 +639,12 @@ class MemoryManager:
     ) -> Any:
         """
         الحصول على كيان محدد.
-        
+
         Args:
             session_id: معرف الجلسة
             key: مفتاح الكيان
             default: القيمة الافتراضية
-            
+
         Returns:
             قيمة الكيان أو القيمة الافتراضية
         """
@@ -611,10 +662,10 @@ class MemoryManager:
     ) -> Dict[str, Any]:
         """
         الحصول على ملخص الجلسة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             ملخص الجلسة
         """
@@ -663,14 +714,18 @@ class MemoryManager:
     def _get_session_key(self, session_id: str) -> str:
         """
         الحصول على مفتاح الجلسة في Redis.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             مفتاح الجلسة
         """
         return f"session:{session_id}"
+
+    # ==============================================
+    #  SAVE SESSION
+    # ==============================================
 
     async def _save_session(
         self,
@@ -678,7 +733,7 @@ class MemoryManager:
     ) -> None:
         """
         حفظ الجلسة.
-        
+
         Args:
             session: بيانات الجلسة
         """
@@ -699,16 +754,20 @@ class MemoryManager:
         else:
             self._local_memory[session_id] = session
 
+    # ==============================================
+    #  LOAD SESSION
+    # ==============================================
+
     async def _load_session(
         self,
         session_id: str,
     ) -> Optional[SessionData]:
         """
         تحميل الجلسة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             بيانات الجلسة أو None
         """
@@ -729,16 +788,20 @@ class MemoryManager:
         else:
             return self._local_memory.get(session_id)
 
+    # ==============================================
+    #  GENERATE SESSION ID
+    # ==============================================
+
     def _generate_session_id(
         self,
         user_id: int,
     ) -> str:
         """
         توليد معرف جلسة فريد.
-        
+
         Args:
             user_id: معرف المستخدم
-            
+
         Returns:
             معرف الجلسة
         """
@@ -764,6 +827,7 @@ memory_manager = MemoryManager()
 # GET SESSION
 # ==============================================
 
+
 async def get_session(
     *,
     session_id: str,
@@ -771,11 +835,11 @@ async def get_session(
 ) -> Optional[SessionData]:
     """
     الحصول على جلسة (دالة مساعدة).
-    
+
     Args:
         session_id: معرف الجلسة
         manager: مدير الذاكرة (اختياري)
-        
+
     Returns:
         بيانات الجلسة أو None
     """
@@ -794,6 +858,7 @@ async def get_session(
 # ADD MESSAGE
 # ==============================================
 
+
 async def add_message(
     *,
     session_id: str,
@@ -804,14 +869,14 @@ async def add_message(
 ) -> bool:
     """
     إضافة رسالة إلى المحادثة (دالة مساعدة).
-    
+
     Args:
         session_id: معرف الجلسة
         message: نص الرسالة
         role: دور المرسل
         manager: مدير الذاكرة (اختياري)
         **kwargs: معاملات إضافية
-        
+
     Returns:
         True إذا تمت الإضافة
     """

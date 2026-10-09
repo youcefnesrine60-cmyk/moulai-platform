@@ -1,6 +1,19 @@
 # ==============================================
-# 🍽️ TYPE CALLBACK
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / TYPE CALLBACKS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for type callbacks.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -22,6 +35,7 @@ from app.views.ui import back_ui
 # ==============================================
 # 🍽️ TYPE CALLBACK
 # ==============================================
+
 
 async def type_callback(
     *,

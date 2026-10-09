@@ -10,6 +10,11 @@
 # عمليات قاعدة البيانات لمجموعات الخيارات باستخدام SQLAlchemy
 # ==============================================
 
+"""MoulAI operational module for option groups repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -18,7 +23,6 @@ from typing import (
 )
 
 from sqlalchemy import (
-    or_,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,16 +54,20 @@ class OptionGroupsRepository(
 ):
     """
     مستودع مجموعات الخيارات - يوفر عمليات خاصة بمجموعات الخيارات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لمجموعات الخيارات
         - البحث والتصفية حسب المنتج
         - جلب مجموعات الخيارات مع خياراتها
-    
+
     Attributes:
         model: نموذج OptionGroup
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -67,7 +75,7 @@ class OptionGroupsRepository(
     ) -> None:
         """
         تهيئة مستودع مجموعات الخيارات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -90,12 +98,12 @@ class OptionGroupsRepository(
     ) -> OptionGroupList:
         """
         الحصول على مجموعات خيارات منتج معين.
-        
+
         Args:
             product_id: معرف المنتج
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة مجموعات الخيارات
         """
@@ -134,11 +142,11 @@ class OptionGroupsRepository(
     ) -> Optional[OptionGroup]:
         """
         الحصول على مجموعة خيارات بواسطة اسمها.
-        
+
         Args:
             product_id: معرف المنتج
             name: اسم مجموعة الخيارات
-            
+
         Returns:
             كائن OptionGroup أو None
         """
@@ -176,10 +184,10 @@ class OptionGroupsRepository(
     ) -> Optional[OptionGroup]:
         """
         الحصول على مجموعة خيارات مع خياراتها.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
-            
+
         Returns:
             كائن OptionGroup مع الخيارات أو None
         """
@@ -215,10 +223,10 @@ class OptionGroupsRepository(
     ) -> OptionGroupList:
         """
         الحصول على مجموعات الخيارات الإجبارية لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             قائمة مجموعات الخيارات الإجبارية
         """
@@ -260,13 +268,13 @@ class OptionGroupsRepository(
     ) -> OptionGroupList:
         """
         البحث عن مجموعات خيارات.
-        
+
         Args:
             query: نص البحث
             product_id: معرف المنتج (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة مجموعات الخيارات
         """
@@ -321,11 +329,11 @@ class OptionGroupsRepository(
     ) -> Optional[OptionGroup]:
         """
         تحديث ترتيب مجموعة الخيارات.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             sort_order: الترتيب الجديد
-            
+
         Returns:
             كائن OptionGroup المحدث أو None
         """
@@ -354,11 +362,11 @@ class OptionGroupsRepository(
     ) -> Optional[OptionGroup]:
         """
         تحديث حالة الإجبار لمجموعة الخيارات.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             required: حالة الإجبار الجديدة
-            
+
         Returns:
             كائن OptionGroup المحدث أو None
         """
@@ -387,11 +395,11 @@ class OptionGroupsRepository(
     ) -> Optional[OptionGroup]:
         """
         تحديث حالة الاختيار المتعدد لمجموعة الخيارات.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             multiple_choice: حالة الاختيار المتعدد الجديدة
-            
+
         Returns:
             كائن OptionGroup المحدث أو None
         """
@@ -420,11 +428,11 @@ class OptionGroupsRepository(
     ) -> Optional[OptionGroup]:
         """
         تحديث اسم مجموعة الخيارات.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             name: الاسم الجديد
-            
+
         Returns:
             كائن OptionGroup المحدث أو None
         """
@@ -456,10 +464,10 @@ class OptionGroupsRepository(
     ) -> int:
         """
         حساب عدد مجموعات الخيارات لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             عدد مجموعات الخيارات
         """
@@ -476,10 +484,10 @@ class OptionGroupsRepository(
     ) -> int:
         """
         حساب عدد مجموعات الخيارات الإجبارية لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             عدد مجموعات الخيارات الإجبارية
         """
@@ -505,10 +513,10 @@ class OptionGroupsRepository(
     ) -> int:
         """
         حذف جميع مجموعات الخيارات لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             عدد المجموعات المحذوفة
         """
@@ -554,6 +562,7 @@ class OptionGroupsRepository(
 # CREATE OPTION GROUP (COMPATIBILITY)
 # ==============================================
 
+
 async def create_option_group(
     *,
     product_id: int,
@@ -565,7 +574,7 @@ async def create_option_group(
 ) -> int:
     """
     إنشاء مجموعة خيارات جديدة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         name: اسم مجموعة الخيارات
@@ -573,7 +582,7 @@ async def create_option_group(
         multiple_choice: هل يسمح باختيار متعدد
         sort_order: ترتيب العرض
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف مجموعة الخيارات
     """
@@ -604,6 +613,7 @@ async def create_option_group(
 # GET OPTION GROUP (COMPATIBILITY)
 # ==============================================
 
+
 async def get_option_group(
     *,
     group_id: int,
@@ -611,11 +621,11 @@ async def get_option_group(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مجموعة خيارات بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات مجموعة الخيارات أو None
     """
@@ -641,6 +651,7 @@ async def get_option_group(
 # GET PRODUCT OPTION GROUPS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_product_option_groups(
     *,
     product_id: int,
@@ -650,13 +661,13 @@ async def get_product_option_groups(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على مجموعات خيارات منتج معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة مجموعات الخيارات
     """
@@ -671,15 +682,17 @@ async def get_product_option_groups(
     result = []
 
     for group in groups:
-        result.append({
-            "id": group.id,
-            "product_id": group.product_id,
-            "name": group.name,
-            "required": group.required,
-            "multiple_choice": group.multiple_choice,
-            "sort_order": group.sort_order,
-            "created_at": group.created_at,
-        })
+        result.append(
+            {
+                "id": group.id,
+                "product_id": group.product_id,
+                "name": group.name,
+                "required": group.required,
+                "multiple_choice": group.multiple_choice,
+                "sort_order": group.sort_order,
+                "created_at": group.created_at,
+            }
+        )
 
     return result
 
@@ -688,6 +701,7 @@ async def get_product_option_groups(
 # GET OPTION GROUP WITH OPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_option_group_with_options(
     *,
     group_id: int,
@@ -695,11 +709,11 @@ async def get_option_group_with_options(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مجموعة خيارات مع خياراتها (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات مجموعة الخيارات مع الخيارات أو None
     """
@@ -735,6 +749,7 @@ async def get_option_group_with_options(
 # DELETE OPTION GROUP (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_option_group(
     *,
     group_id: int,
@@ -742,7 +757,7 @@ async def delete_option_group(
 ) -> None:
     """
     حذف مجموعة خيارات (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -761,6 +776,7 @@ async def delete_option_group(
 # GET REQUIRED OPTION GROUPS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_required_option_groups(
     *,
     product_id: int,
@@ -768,11 +784,11 @@ async def get_required_option_groups(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على مجموعات الخيارات الإجبارية لمنتج معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قائمة مجموعات الخيارات الإجبارية
     """
@@ -783,14 +799,16 @@ async def get_required_option_groups(
     result = []
 
     for group in groups:
-        result.append({
-            "id": group.id,
-            "product_id": group.product_id,
-            "name": group.name,
-            "required": group.required,
-            "multiple_choice": group.multiple_choice,
-            "sort_order": group.sort_order,
-            "created_at": group.created_at,
-        })
+        result.append(
+            {
+                "id": group.id,
+                "product_id": group.product_id,
+                "name": group.name,
+                "required": group.required,
+                "multiple_choice": group.multiple_choice,
+                "sort_order": group.sort_order,
+                "created_at": group.created_at,
+            }
+        )
 
     return result

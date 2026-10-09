@@ -12,6 +12,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for pricing service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from decimal import Decimal
 from typing import (
     Any,
@@ -22,7 +27,6 @@ from typing import (
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.logger import logger
 from app.repositories.branch_pricing_repo import (
     BranchPricingRepository,
 )
@@ -64,6 +68,7 @@ YEARLY = "yearly"
 # 📊 RESTAURANT SCORE
 # ==============================================
 
+
 def calculate_restaurant_score(
     *,
     products_count: int,
@@ -84,14 +89,11 @@ def calculate_restaurant_score(
         نقاط المطعم كـ Decimal
     """
     score = (
-        (
-            products_count * 1
-            + categories_count * 3
-            + monthly_orders * 0.1
-            + (average_order_value / 100)
-        )
-        * 10
-    )
+        products_count * 1
+        + categories_count * 3
+        + monthly_orders * 0.1
+        + (average_order_value / 100)
+    ) * 10
 
     return Decimal(str(round(score, 2)))
 
@@ -99,6 +101,7 @@ def calculate_restaurant_score(
 # ==============================================
 # 💲 ADDITIONAL FEATURES PRICE
 # ==============================================
+
 
 async def calculate_additional_features_price(
     *,
@@ -143,6 +146,7 @@ async def calculate_additional_features_price(
 # 💰 PLAN BASE PRICE
 # ==============================================
 
+
 async def calculate_plan_base_price(
     *,
     session: AsyncSession,
@@ -184,9 +188,7 @@ async def calculate_plan_base_price(
     )
 
     discounted_features_price = (
-        additional_features_price
-        * (Decimal("100") - discount_percent)
-        / Decimal("100")
+        additional_features_price * (Decimal("100") - discount_percent) / Decimal("100")
     )
 
     return base_price + discounted_features_price
@@ -195,6 +197,7 @@ async def calculate_plan_base_price(
 # ==============================================
 # 🎖️ LOYALTY DISCOUNT
 # ==============================================
+
 
 async def calculate_loyalty_discount(
     *,
@@ -226,6 +229,7 @@ async def calculate_loyalty_discount(
 # ==============================================
 # 🏢 MULTI RESTAURANT DISCOUNT
 # ==============================================
+
 
 async def calculate_multi_restaurant_discount(
     *,
@@ -260,6 +264,7 @@ async def calculate_multi_restaurant_discount(
 # 🎉 PROMOTION DISCOUNT
 # ==============================================
 
+
 async def calculate_promotion_discount(
     *,
     session: AsyncSession,
@@ -290,6 +295,7 @@ async def calculate_promotion_discount(
 # ==============================================
 # 🏢 MULTI BRANCH COST
 # ==============================================
+
 
 async def calculate_multi_branch_cost(
     *,
@@ -328,6 +334,7 @@ async def calculate_multi_branch_cost(
 # 📅 BILLING CYCLE MULTIPLIER
 # ==============================================
 
+
 def calculate_billing_cycle_price(
     *,
     amount: Decimal,
@@ -360,6 +367,7 @@ def calculate_billing_cycle_price(
 # 💳 PAYMENT ADJUSTMENT
 # ==============================================
 
+
 def calculate_payment_adjustment(
     *,
     amount: Decimal,
@@ -389,6 +397,7 @@ def calculate_payment_adjustment(
 # ==============================================
 # 🧮 FINAL PRICING
 # ==============================================
+
 
 async def calculate_subscription_pricing(
     *,
@@ -463,11 +472,7 @@ async def calculate_subscription_pricing(
         amount=value_before_discounts,
     )
 
-    total_discount = (
-        loyalty_discount
-        + multi_restaurant_discount
-        + promotion_discount
-    )
+    total_discount = loyalty_discount + multi_restaurant_discount + promotion_discount
 
     # 4️⃣ تكلفة الفروع الإضافية
     branch_cost = await calculate_multi_branch_cost(

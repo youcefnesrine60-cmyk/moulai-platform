@@ -1,7 +1,19 @@
 # ==============================================
-# 🧠 CUSTOMER STATE ROUTER
-# توجيه رسائل الزبون حسب الحالة
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CUSTOMER_HANDLER / CUSTOMER ROUTER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for customer router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.states.customer_states import CustomerStates
@@ -32,6 +44,7 @@ STATE_HANDLERS = {
 # 🚀 HANDLE CUSTOMER STATE
 # ==============================================
 
+
 async def handle_customer_state(
     *,
     chat_id: int,
@@ -40,7 +53,7 @@ async def handle_customer_state(
 ) -> None:
     """
     توجيه رسالة الزبون إلى المعالج المناسب حسب الحالة
-    
+
     Args:
         chat_id: معرف المستخدم
         text: النص المرسل

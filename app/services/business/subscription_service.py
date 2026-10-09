@@ -6,6 +6,16 @@
 # ==============================================
 
 # ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / SUBSCRIPTION SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for subscription service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+# ==============================================
 # 💳 SUBSCRIPTION SERVICE
 # Business Logic Layer - منطق الأعمال للاشتراكات
 #
@@ -76,6 +86,10 @@ class SubscriptionService:
         owner_repo: مستودع المالكين
         payment_repo: مستودع المدفوعات
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -652,6 +666,7 @@ class SubscriptionService:
 # CREATE TRIAL SUBSCRIPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def create_trial_subscription(
     *,
     owner_id: int,
@@ -685,6 +700,7 @@ async def create_trial_subscription(
 # ==============================================
 # CREATE PAID SUBSCRIPTION (COMPATIBILITY)
 # ==============================================
+
 
 async def create_paid_subscription(
     *,
@@ -747,6 +763,7 @@ async def create_paid_subscription(
 # ==============================================
 # PREVIEW SUBSCRIPTION PRICING (COMPATIBILITY)
 # ==============================================
+
 
 async def preview_subscription_pricing(
     *,

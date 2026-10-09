@@ -1,8 +1,19 @@
 # ==============================================
-# 📋 ALEMBIC ENVIRONMENT
-# إدارة ترحيلات قاعدة البيانات باستخدام Alembic
-# Production Ready with Async Support
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# DATABASE MIGRATION - ALEMBIC / ENV
+# Database migration and schema management component.
+# ==============================================
+
+"""Database migration for env.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import asyncio
 from logging.config import fileConfig
@@ -49,6 +60,7 @@ target_metadata = Base.metadata
 # 🚀 RUN MIGRATIONS OFFLINE
 # ==============================================
 
+
 def run_migrations_offline() -> None:
     """تشغيل الترحيلات في وضع Offline"""
     url = config.get_main_option("sqlalchemy.url")
@@ -69,6 +81,7 @@ def run_migrations_offline() -> None:
 # 🔄 DO RUN MIGRATIONS (SYNC)
 # ==============================================
 
+
 def do_run_migrations(connection: Connection) -> None:
     """تنفيذ الترحيلات (النسخة المتزامنة)"""
     context.configure(
@@ -86,6 +99,7 @@ def do_run_migrations(connection: Connection) -> None:
 # 🚀 RUN MIGRATIONS ONLINE (ASYNC)
 # ==============================================
 
+
 async def run_async_migrations() -> None:
     """تشغيل الترحيلات في وضع Online (غير متزامن)"""
     connectable = async_engine_from_config(
@@ -98,6 +112,11 @@ async def run_async_migrations() -> None:
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()
+
+
+# ==============================================
+# RUN MIGRATIONS ONLINE
+# ==============================================
 
 
 def run_migrations_online() -> None:

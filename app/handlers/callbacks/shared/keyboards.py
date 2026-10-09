@@ -1,16 +1,33 @@
 # ==============================================
-# ⌨️ SHARED KEYBOARDS
-# أزرار مشتركة تستخدم في عدة أماكن
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / SHARED / KEYBOARDS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for keyboards.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.views.ui import button
-
 
 # ==============================================
 # ⌨️ CONFIRM KEYBOARD
 # أزرار التأكيد
 # ==============================================
+
+
+# ==============================================
+# CONFIRM KEYBOARD
+# ==============================================
+
 
 async def confirm_keyboard(
     *,
@@ -19,11 +36,11 @@ async def confirm_keyboard(
 ) -> dict:
     """
     بناء أزرار تأكيد/إلغاء
-    
+
     Args:
         confirm_callback: الكولباك عند الضغط على تأكيد
         cancel_callback: الكولباك عند الضغط على إلغاء
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup
     """
@@ -34,7 +51,7 @@ async def confirm_keyboard(
             "cancel_callback": cancel_callback,
         },
     )
-    
+
     return {
         "inline_keyboard": [
             [
@@ -56,6 +73,12 @@ async def confirm_keyboard(
 # أزرار التنقل
 # ==============================================
 
+
+# ==============================================
+# NAVIGATION KEYBOARD
+# ==============================================
+
+
 async def navigation_keyboard(
     *,
     back_callback: str = "back_main",
@@ -63,11 +86,11 @@ async def navigation_keyboard(
 ) -> dict:
     """
     بناء أزرار تنقل (رجوع، رئيسية)
-    
+
     Args:
         back_callback: الكولباك عند الضغط على رجوع
         home_callback: الكولباك عند الضغط على رئيسية
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup
     """
@@ -92,6 +115,12 @@ async def navigation_keyboard(
 # أزرار التنقل بين الصفحات
 # ==============================================
 
+
+# ==============================================
+# PAGINATION KEYBOARD
+# ==============================================
+
+
 async def pagination_keyboard(
     *,
     page: int,
@@ -100,18 +129,18 @@ async def pagination_keyboard(
 ) -> dict:
     """
     بناء أزرار التنقل بين الصفحات
-    
+
     Args:
         page: رقم الصفحة الحالية (تبدأ من 0)
         total_pages: إجمالي عدد الصفحات
         base_callback: أساس الكولباك (سيُضاف إليه رقم الصفحة)
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup
     """
     buttons = []
     nav_buttons = []
-    
+
     if page > 0:
         nav_buttons.append(
             await button(
@@ -119,7 +148,7 @@ async def pagination_keyboard(
                 callback=f"{base_callback}_{page - 1}",
             ),
         )
-    
+
     if page < total_pages - 1:
         nav_buttons.append(
             await button(
@@ -127,10 +156,10 @@ async def pagination_keyboard(
                 callback=f"{base_callback}_{page + 1}",
             ),
         )
-    
+
     if nav_buttons:
         buttons.append(nav_buttons)
-    
+
     # زر الرجوع
     buttons.append(
         [
@@ -140,7 +169,7 @@ async def pagination_keyboard(
             ),
         ],
     )
-    
+
     return {
         "inline_keyboard": buttons,
     }
@@ -151,21 +180,27 @@ async def pagination_keyboard(
 # أزرار إجراءات
 # ==============================================
 
+
+# ==============================================
+# ACTION KEYBOARD
+# ==============================================
+
+
 async def action_keyboard(
     *,
     actions: list[tuple[str, str]],
 ) -> dict:
     """
     بناء أزرار إجراءات مخصصة
-    
+
     Args:
         actions: قائمة من (النص, الكولباك)
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup
     """
     buttons = []
-    
+
     for text, callback in actions:
         buttons.append(
             [
@@ -175,7 +210,7 @@ async def action_keyboard(
                 ),
             ],
         )
-    
+
     # زر الرجوع
     buttons.append(
         [
@@ -185,7 +220,7 @@ async def action_keyboard(
             ),
         ],
     )
-    
+
     return {
         "inline_keyboard": buttons,
     }

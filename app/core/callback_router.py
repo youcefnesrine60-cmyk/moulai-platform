@@ -1,6 +1,19 @@
 # ==============================================
-# 📌 CALLBACK ROUTER
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / CORE / CALLBACK ROUTER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for callback router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 from collections.abc import Awaitable
@@ -18,6 +31,7 @@ CallbackHandler = Callable[..., Awaitable[Any]]
 # ==============================================
 # 📌 CALLBACK ROUTER
 # ==============================================
+
 
 class CallbackRouter:
 
@@ -67,7 +81,7 @@ class CallbackRouter:
     ) -> Any:
         """
         توزيع الكولباك إلى المعالج المناسب
-        
+
         Args:
             callback_data: بيانات الكولباك من Telegram
             chat_id: معرف المستخدم
@@ -79,9 +93,7 @@ class CallbackRouter:
 
         for regex, handler in self.routes:
 
-            match = regex.match(
-                callback_data
-            )
+            match = regex.match(callback_data)
 
             if not match:
                 continue

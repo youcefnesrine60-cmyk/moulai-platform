@@ -11,6 +11,11 @@
 # تدير تسعير الميزات وحدود الاستخدام وعدادات الاستخدام
 # ==============================================
 
+"""MoulAI operational module for feature pricing.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -28,16 +33,17 @@ from .base import BaseModel
 # تسعير الميزة
 # ==============================================
 
+
 class FeaturePricing(BaseModel):
     """
     نموذج تسعير الميزة
-    
+
     يدير:
         - تسعير الميزات حسب دورة الفوترة
         - السعر لكل ميزة
         - حالة النشاط
         - العلاقة مع الميزة
-    
+
     Attributes:
         feature_id: معرف الميزة (ForeignKey)
         billing_cycle: دورة الفوترة (monthly, yearly)
@@ -45,12 +51,13 @@ class FeaturePricing(BaseModel):
         active: حالة النشاط
         feature: علاقة مع نموذج Feature
     """
+
     __tablename__ = "feature_pricing"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     feature_id = Column(
         Integer,
         ForeignKey("features.id", ondelete="CASCADE"),
@@ -72,33 +79,30 @@ class FeaturePricing(BaseModel):
         default=True,
         comment="حالة النشاط",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     feature = relationship(
         "Feature",
         back_populates="pricing",
         lazy="selectin",
         # comment="الميزة المرتبطة",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على معرف الميزة والسعر
         """
-        return (
-            f"<FeaturePricing(feature_id={self.feature_id}, "
-            f"price={self.price})>"
-        )
+        return f"<FeaturePricing(feature_id={self.feature_id}, " f"price={self.price})>"
 
 
 # ==============================================
@@ -106,15 +110,16 @@ class FeaturePricing(BaseModel):
 # حد استخدام الميزة
 # ==============================================
 
+
 class FeatureUsageLimit(BaseModel):
     """
     نموذج حد استخدام الميزة
-    
+
     يدير:
         - حدود استخدام الميزات حسب الخطة
         - نوع الحد (hard, soft)
         - العلاقات مع الخطة والميزة
-    
+
     Attributes:
         plan_id: معرف الخطة (ForeignKey)
         feature_id: معرف الميزة (ForeignKey)
@@ -123,12 +128,13 @@ class FeatureUsageLimit(BaseModel):
         plan: علاقة مع نموذج SubscriptionPlan
         feature: علاقة مع نموذج Feature
     """
+
     __tablename__ = "feature_usage_limits"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     plan_id = Column(
         Integer,
         ForeignKey("subscription_plans.id"),
@@ -149,11 +155,11 @@ class FeatureUsageLimit(BaseModel):
         String(50),
         comment="نوع الحد: hard, soft",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     plan = relationship(
         "SubscriptionPlan",
         back_populates="usage_limits",
@@ -166,15 +172,15 @@ class FeatureUsageLimit(BaseModel):
         lazy="selectin",
         # comment="الميزة المرتبطة",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على معرف الخطة ومعرف الميزة والحد
         """
@@ -189,15 +195,16 @@ class FeatureUsageLimit(BaseModel):
 # عداد استخدام الميزة
 # ==============================================
 
+
 class FeatureUsageCounter(BaseModel):
     """
     نموذج عداد استخدام الميزة
-    
+
     يدير:
         - تتبع استخدام الميزات لكل مطعم
         - العد الشهري والسنوي
         - العلاقات مع المطعم والميزة
-    
+
     Attributes:
         restaurant_id: معرف المطعم (ForeignKey)
         feature_id: معرف الميزة (ForeignKey)
@@ -207,12 +214,13 @@ class FeatureUsageCounter(BaseModel):
         restaurant: علاقة مع نموذج Restaurant
         feature: علاقة مع نموذج Feature
     """
+
     __tablename__ = "feature_usage_counters"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     restaurant_id = Column(
         Integer,
         ForeignKey("restaurants.id", ondelete="CASCADE"),
@@ -239,11 +247,11 @@ class FeatureUsageCounter(BaseModel):
         Integer,
         comment="الشهر",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     restaurant = relationship(
         "Restaurant",
         back_populates="feature_usage_counters",
@@ -256,15 +264,15 @@ class FeatureUsageCounter(BaseModel):
         lazy="selectin",
         # comment="الميزة المرتبطة",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على معرف المطعم ومعرف الميزة والاستخدام
         """
@@ -279,17 +287,18 @@ class FeatureUsageCounter(BaseModel):
 # تسعير الفروع
 # ==============================================
 
+
 class BranchPricing(BaseModel):
     """
     نموذج تسعير الفروع
-    
+
     يدير:
         - تسعير الفروع حسب عدد الفروع
         - حدود عدد الفروع (الحد الأدنى والأقصى)
         - السعر لكل فرع
         - حالة النشاط
         - العلاقة مع خطة الاشتراك
-    
+
     Attributes:
         plan_id: معرف خطة الاشتراك (ForeignKey) - اختياري
         min_branches: الحد الأدنى لعدد الفروع
@@ -298,12 +307,13 @@ class BranchPricing(BaseModel):
         active: حالة النشاط
         plan: علاقة مع نموذج SubscriptionPlan
     """
+
     __tablename__ = "branch_pricing"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     plan_id = Column(
         Integer,
         ForeignKey("subscription_plans.id", ondelete="CASCADE"),
@@ -329,26 +339,26 @@ class BranchPricing(BaseModel):
         default=True,
         comment="حالة النشاط",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     plan = relationship(
         "SubscriptionPlan",
         back_populates="branch_pricing",
         lazy="selectin",
         # comment="خطة الاشتراك المرتبطة (اختياري)",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على الحد الأدنى والحد الأقصى والسعر
         """

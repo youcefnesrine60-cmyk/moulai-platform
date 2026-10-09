@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها للمستخدمين
 # ==============================================
 
+"""MoulAI operational module for user.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     Field,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,18 +43,20 @@ UserList = List["UserResponse"]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class UserBase(BaseModel):
     """
     المخطط الأساسي للمستخدم.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات المستخدم.
-    
+
     Attributes:
         chat_id: معرف المستخدم في تيليجرام
         consent: موافقة المستخدم على الشروط والأحكام
         customer_name: اسم العميل
         customer_phone: رقم هاتف العميل
     """
+
     chat_id: Optional[int] = Field(
         None,
         description="معرف المستخدم في تيليجرام",
@@ -79,16 +85,18 @@ class UserBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class UserCreate(BaseModel):
     """
     مخطط إنشاء مستخدم جديد.
-    
+
     Attributes:
         chat_id: معرف المستخدم في تيليجرام
         consent: موافقة المستخدم (اختياري)
         customer_name: اسم العميل (اختياري)
         customer_phone: رقم هاتف العميل (اختياري)
     """
+
     chat_id: int = Field(
         ...,
         description="معرف المستخدم في تيليجرام",
@@ -117,15 +125,17 @@ class UserCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class UserUpdate(BaseModel):
     """
     مخطط تحديث المستخدم - جميع الحقول اختيارية.
-    
+
     Attributes:
         consent: موافقة المستخدم
         customer_name: اسم العميل
         customer_phone: رقم هاتف العميل
     """
+
     consent: Optional[bool] = Field(
         None,
         description="موافقة المستخدم على الشروط والأحكام",
@@ -149,13 +159,15 @@ class UserUpdate(BaseModel):
 # ✅ CONSENT UPDATE SCHEMA
 # ==============================================
 
+
 class UserConsentUpdate(BaseModel):
     """
     مخطط تحديث موافقة المستخدم.
-    
+
     Attributes:
         consent: حالة الموافقة الجديدة
     """
+
     consent: bool = Field(
         ...,
         description="حالة الموافقة الجديدة",
@@ -167,15 +179,17 @@ class UserConsentUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class UserResponse(UserBase):
     """
     مخطط استجابة المستخدم - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف المستخدم
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -197,16 +211,18 @@ class UserResponse(UserBase):
 # 📋 USER LIST RESPONSE
 # ==============================================
 
+
 class UserListResponse(BaseModel):
     """
     مخطط استجابة قائمة المستخدمين.
-    
+
     Attributes:
         items: قائمة المستخدمين
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: UserList = Field(
@@ -234,10 +250,11 @@ class UserListResponse(BaseModel):
 # 📊 USER SUMMARY
 # ==============================================
 
+
 class UserSummary(BaseModel):
     """
     مخطط ملخص المستخدمين.
-    
+
     Attributes:
         total_users: إجمالي عدد المستخدمين
         users_with_consent: عدد المستخدمين بالموافقة
@@ -247,6 +264,7 @@ class UserSummary(BaseModel):
         consent_rate: نسبة الموافقة
         profile_completion_rate: نسبة اكتمال الملف الشخصي
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_users: int = Field(
@@ -290,15 +308,17 @@ class UserSummary(BaseModel):
 # 🔍 USER SEARCH
 # ==============================================
 
+
 class UserSearch(BaseModel):
     """
     مخطط البحث عن المستخدمين.
-    
+
     Attributes:
         query: نص البحث
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     query: str = Field(
         ...,
         min_length=1,
@@ -324,15 +344,17 @@ class UserSearch(BaseModel):
 # ✅ CONSENT RESPONSE
 # ==============================================
 
+
 class ConsentResponse(BaseModel):
     """
     مخطط استجابة الموافقة.
-    
+
     Attributes:
         chat_id: معرف المستخدم
         has_consent: حالة الموافقة
         message: رسالة توضيحية
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     chat_id: int = Field(

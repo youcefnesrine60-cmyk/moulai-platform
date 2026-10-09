@@ -1,7 +1,19 @@
 # ==============================================
-# 🍽️ RESTAURANT MENU CALLBACKS
-# معالجة أزرار قائمة المطعم
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / RESTAURANT / MENU
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for menu.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -15,11 +27,16 @@ from app.repositories.categories_repo import get_restaurant_categories
 
 from app.views.ui import button
 
-
 # ==============================================
 # 🍽️ SHOW RESTAURANT MENU
 # عرض قائمة المطعم
 # ==============================================
+
+
+# ==============================================
+# RESTAURANT MENU CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,
@@ -73,8 +90,7 @@ async def restaurant_menu_callback(
         for category in categories:
             text += f"📂 **{category.get('name', 'غير محدد')}**\n"
             category_products = [
-                p for p in products
-                if p.get("category_id") == category.get("id")
+                p for p in products if p.get("category_id") == category.get("id")
             ]
             for product in category_products[:5]:
                 text += f"  • {product.get('name')} - {product.get('price')} دج\n"

@@ -1,7 +1,19 @@
 # ==============================================
-# 📜 ORDER HISTORY UI
-# عرض تاريخ طلبات العميل السابقة
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / VIEWS / ORDER HISTORY UI
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order history ui.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.views.ui import button
@@ -9,6 +21,7 @@ from app.views.ui import button
 # ==============================================
 # 📜 ORDER HISTORY UI
 # ==============================================
+
 
 async def order_history_ui(
     *,
@@ -18,12 +31,12 @@ async def order_history_ui(
 ) -> dict:
     """
     بناء واجهة عرض تاريخ الطلبات
-    
+
     Args:
         orders: قائمة الطلبات
         page: رقم الصفحة الحالية
         page_size: عدد العناصر في الصفحة
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """

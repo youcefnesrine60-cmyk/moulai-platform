@@ -1,7 +1,19 @@
 # ==============================================
-# 🛒 CART STEP
-# منطق التعامل مع السلة
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CUSTOMER_HANDLER / CART STEP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for cart step.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 
@@ -10,11 +22,16 @@ from app.repositories.state_repo import get_state, set_state
 
 from app.views.cart_ui import cart_ui, cart_empty_ui
 
-
 # ==============================================
 # ➕ ADD TO CART
 # إضافة منتج إلى السلة
 # ==============================================
+
+
+# ==============================================
+# ADD TO CART
+# ==============================================
+
 
 async def add_to_cart(
     *,
@@ -26,7 +43,7 @@ async def add_to_cart(
 ) -> None:
     """
     إضافة منتج إلى سلة التسوق
-    
+
     Args:
         chat_id: معرف المستخدم
         product_id: معرف المنتج
@@ -92,10 +109,7 @@ async def add_to_cart(
     )
 
     # حساب المجموع الكلي
-    total = sum(
-        float(item.get("price", 0))
-        for item in cart
-    )
+    total = sum(float(item.get("price", 0)) for item in cart)
 
     logger.info(
         "product_added_to_cart",
@@ -112,6 +126,12 @@ async def add_to_cart(
 # 🛒 SHOW CART
 # عرض السلة للمستخدم
 # ==============================================
+
+
+# ==============================================
+# SHOW CART
+# ==============================================
+
 
 async def show_cart(
     *,
@@ -153,10 +173,7 @@ async def show_cart(
         return
 
     # حساب المجموع الكلي
-    total = sum(
-        float(item.get("price", 0))
-        for item in cart
-    )
+    total = sum(float(item.get("price", 0)) for item in cart)
 
     await UIManager.update(
         chat_id=chat_id,
@@ -173,6 +190,12 @@ async def show_cart(
 # معالجة رسائل المستخدم أثناء السلة
 # ==============================================
 
+
+# ==============================================
+# HANDLE CART STEP
+# ==============================================
+
+
 async def handle_cart_step(
     *,
     chat_id: int,
@@ -181,7 +204,7 @@ async def handle_cart_step(
 ) -> None:
     """
     معالجة رسائل المستخدم في مرحلة السلة
-    
+
     Args:
         chat_id: معرف المستخدم
         text: النص المرسل

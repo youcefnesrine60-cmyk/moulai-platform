@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,15 +10,18 @@
 # المكونات الأساسية للمشروع
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 # ==============================================
 # 📦 EXCEPTIONS
 # ==============================================
 
 from app.core.exceptions import (
-
     # Base
     AppException,
-    
     # Not Found
     NotFoundError,
     RestaurantNotFoundError,
@@ -27,52 +30,41 @@ from app.core.exceptions import (
     ProductNotFoundError,
     OrderNotFoundError,
     UserNotFoundError,
-    
     # Conflict
     ConflictError,
     DuplicateUsernameError,
     DuplicateEmailError,
     DuplicateChatIdError,
-    
     # Unauthorized
     UnauthorizedError,
     InvalidCredentialsError,
     InvalidSessionError,
     InsufficientPermissionError,
     AccountInactiveError,
-    
     # Validation
     ValidationError,
     InvalidInputError,
     MissingRequiredFieldError,
-    
     # Forbidden
     ForbiddenError,
     RestaurantAccessDeniedError,
-    
     # Payment
     PaymentError,
     InsufficientBalanceError,
-    
     # Database
     DatabaseError,
     DuplicateEntryError,
-    
     # Telegram
     TelegramAPIError,
     TelegramSendMessageError,
-    
     # Rate Limit
     RateLimitError,
-    
     # Subscription
     SubscriptionError,
     SubscriptionExpiredError,
-    
     # Branch
     BranchLimitExceededError,
 )
-
 
 # ==============================================
 # 🔐 SECURITY
@@ -83,26 +75,21 @@ from app.core.security import (
     hash_password,
     verify_password,
     get_password_hash,
-    
     # Tokens
     generate_session_token,
     generate_verification_token,
     generate_api_key,
-    
     # JWT
     create_jwt_token,
     decode_jwt_token,
     verify_jwt_token,
-    
     # Encryption
     encrypt_data,
     decrypt_data,
-    
     # Helpers
     sanitize_input,
     validate_password_strength,
 )
-
 
 # ==============================================
 # 📊 DATABASE
@@ -124,20 +111,13 @@ from app.core.database import (
 # 🤖 AI CLIENT
 # ==============================================
 
-from app.core.ai_client import (
-    AIClient,
-    ai_client,
-    AIMessage,
-    AIMessages,
-    AIResponse
-)
+from app.core.ai_client import AIClient, ai_client, AIMessage, AIMessages, AIResponse
 
 # ==============================================
 # 📋 EXPORTS
 # ==============================================
 
 __all__ = [
-
     # Exceptions
     "AppException",
     "NotFoundError",
@@ -171,7 +151,6 @@ __all__ = [
     "SubscriptionError",
     "SubscriptionExpiredError",
     "BranchLimitExceededError",
-    
     # Security
     "hash_password",
     "verify_password",
@@ -186,7 +165,6 @@ __all__ = [
     "decrypt_data",
     "sanitize_input",
     "validate_password_strength",
-    
     # Database
     "Base",
     "get_db",
@@ -197,12 +175,10 @@ __all__ = [
     "close_db",
     "check_db_connection",
     "AsyncSessionLocal",
-
     # AI CLIENT
     "AIClient",
     "ai_client",
     "AIMessage",
     "AIMessages",
     "AIResponse",
-
 ]

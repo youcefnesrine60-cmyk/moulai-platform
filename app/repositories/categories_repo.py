@@ -10,6 +10,11 @@
 # عمليات قاعدة البيانات للتصنيفات باستخدام SQLAlchemy
 # ==============================================
 
+"""MoulAI operational module for categories repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -18,7 +23,6 @@ from typing import (
 )
 
 from sqlalchemy import (
-    or_,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,16 +47,20 @@ CategoryList = List[Category]
 class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdateData]):
     """
     مستودع التصنيفات - يوفر عمليات خاصة بالتصنيفات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للتصنيفات
         - البحث والتصفية حسب المطعم
         - تحديث الترتيب والاسم
-    
+
     Attributes:
         model: نموذج Category
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -60,7 +68,7 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
     ) -> None:
         """
         تهيئة مستودع التصنيفات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -83,12 +91,12 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
     ) -> CategoryList:
         """
         الحصول على تصنيفات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة التصنيفات
         """
@@ -130,11 +138,11 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
     ) -> Optional[Category]:
         """
         الحصول على تصنيف بواسطة اسمه.
-        
+
         Args:
             restaurant_id: معرف المطعم
             name: اسم التصنيف
-            
+
         Returns:
             كائن Category أو None
         """
@@ -175,13 +183,13 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
     ) -> CategoryList:
         """
         البحث عن تصنيفات.
-        
+
         Args:
             query: نص البحث
             restaurant_id: معرف المطعم (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة التصنيفات
         """
@@ -236,11 +244,11 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
     ) -> Optional[Category]:
         """
         تحديث ترتيب التصنيف.
-        
+
         Args:
             category_id: معرف التصنيف
             sort_order: الترتيب الجديد
-            
+
         Returns:
             كائن Category المحدث أو None
         """
@@ -269,11 +277,11 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
     ) -> Optional[Category]:
         """
         تحديث اسم التصنيف.
-        
+
         Args:
             category_id: معرف التصنيف
             name: الاسم الجديد
-            
+
         Returns:
             كائن Category المحدث أو None
         """
@@ -305,10 +313,10 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
     ) -> int:
         """
         حساب عدد تصنيفات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             عدد التصنيفات
         """
@@ -324,6 +332,7 @@ class CategoriesRepository(BaseRepository[Category, CategoryData, CategoryUpdate
 # CREATE CATEGORY (COMPATIBILITY)
 # ==============================================
 
+
 async def create_category(
     *,
     restaurant_id: int,
@@ -333,13 +342,13 @@ async def create_category(
 ) -> int:
     """
     إنشاء تصنيف جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         name: اسم التصنيف
         sort_order: ترتيب العرض
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف التصنيف
     """
@@ -368,6 +377,7 @@ async def create_category(
 # GET CATEGORY BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_category_by_id(
     *,
     category_id: int,
@@ -375,11 +385,11 @@ async def get_category_by_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على تصنيف بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         category_id: معرف التصنيف
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات التصنيف أو None
     """
@@ -403,6 +413,7 @@ async def get_category_by_id(
 # GET RESTAURANT CATEGORIES (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurant_categories(
     *,
     restaurant_id: int,
@@ -412,13 +423,13 @@ async def get_restaurant_categories(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على تصنيفات مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة التصنيفات
     """
@@ -433,13 +444,15 @@ async def get_restaurant_categories(
     result = []
 
     for category in categories:
-        result.append({
-            "id": category.id,
-            "restaurant_id": category.restaurant_id,
-            "name": category.name,
-            "sort_order": category.sort_order,
-            "created_at": category.created_at,
-        })
+        result.append(
+            {
+                "id": category.id,
+                "restaurant_id": category.restaurant_id,
+                "name": category.name,
+                "sort_order": category.sort_order,
+                "created_at": category.created_at,
+            }
+        )
 
     return result
 
@@ -448,6 +461,7 @@ async def get_restaurant_categories(
 # DELETE CATEGORY (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_category(
     *,
     category_id: int,
@@ -455,7 +469,7 @@ async def delete_category(
 ) -> None:
     """
     حذف تصنيف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         category_id: معرف التصنيف
         session: جلسة قاعدة البيانات غير المتزامنة

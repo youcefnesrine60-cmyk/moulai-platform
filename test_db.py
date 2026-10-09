@@ -1,33 +1,31 @@
 # ==============================================
-# 📁 test_db.py
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
-# 🧪 DATABASE CONNECTION TEST
-# اختبار اتصال قاعدة البيانات باستخدام SQLAlchemy و Psycopg3
-# Production Ready
+
 # ==============================================
+# MOULAI MODULE - TEST DB
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for test db.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import asyncio
 import sys
 import selectors
-from typing import (
-    Any, 
-    Dict
-)
+from typing import Any, Dict
 
 from sqlalchemy import text
 
 from app.core.config import settings
-from app.core.database import (
-    AsyncSessionLocal, 
-    engine
-)
-from app.core.db import (
-    fetchrow, 
-    get_pool, 
-    close_db
-)
+from app.core.database import AsyncSessionLocal, engine
+from app.core.db import fetchrow, get_pool, close_db
 from app.core.logger import logger
-
 
 # ==============================================
 # 🧩 TYPES
@@ -39,6 +37,7 @@ TestResult = Dict[str, Any]
 # ==============================================
 # 🧪 TEST SQLALCHEMY CONNECTION
 # ==============================================
+
 
 async def test_sqlalchemy_connection() -> TestResult:
     """
@@ -90,6 +89,7 @@ async def test_sqlalchemy_connection() -> TestResult:
 # 🧪 TEST PSYCOPG3 CONNECTION
 # ==============================================
 
+
 async def test_psycopg3_connection() -> TestResult:
     """
     اختبار اتصال Psycopg3 بقاعدة البيانات
@@ -137,6 +137,7 @@ async def test_psycopg3_connection() -> TestResult:
 # 🧪 TEST POOL STATUS
 # ==============================================
 
+
 async def test_pool_status() -> TestResult:
     """
     اختبار حالة تجمع الاتصالات
@@ -156,7 +157,7 @@ async def test_pool_status() -> TestResult:
         if pool:
             result["status"] = "success"
             result["message"] = "Pool is active"
-            
+
             result["data"] = {
                 "min_size": getattr(pool, "min_size", "N/A"),
                 "max_size": getattr(pool, "max_size", "N/A"),
@@ -183,6 +184,7 @@ async def test_pool_status() -> TestResult:
 # ==============================================
 # 🧪 TEST DATABASE URL
 # ==============================================
+
 
 async def test_database_url() -> TestResult:
     """
@@ -229,6 +231,7 @@ async def test_database_url() -> TestResult:
 # 🧪 RUN ALL TESTS
 # ==============================================
 
+
 async def run_all_tests() -> None:
     """
     تشغيل جميع الاختبارات وعرض النتائج
@@ -274,12 +277,14 @@ async def run_all_tests() -> None:
     print("\n" + "=" * 60)
 
     # التحقق من النجاح الكلي
-    all_success = all([
-        url_result["status"] == "success",
-        sqlalchemy_result["status"] == "success",
-        psycopg3_result["status"] == "success",
-        pool_result["status"] == "success",
-    ])
+    all_success = all(
+        [
+            url_result["status"] == "success",
+            sqlalchemy_result["status"] == "success",
+            psycopg3_result["status"] == "success",
+            pool_result["status"] == "success",
+        ]
+    )
 
     if all_success:
         print("✅ ALL TESTS PASSED! Database is working correctly.")
@@ -292,6 +297,7 @@ async def run_all_tests() -> None:
 # ==============================================
 # 🚀 MAIN
 # ==============================================
+
 
 async def main() -> None:
     """
@@ -311,7 +317,7 @@ async def main() -> None:
             await close_db()
         except Exception:
             pass
-            
+
         try:
             await engine.dispose()
         except Exception:
@@ -327,9 +333,7 @@ if __name__ == "__main__":
     if sys.platform == "win32":
         asyncio.run(
             main(),
-            loop_factory=lambda: asyncio.SelectorEventLoop(
-                selectors.SelectSelector()
-            )
+            loop_factory=lambda: asyncio.SelectorEventLoop(selectors.SelectSelector()),
         )
     else:
-        asyncio.run(main()) #الدالة الرئيسية لتشغيل الكود غير المتزامن
+        asyncio.run(main())  # الدالة الرئيسية لتشغيل الكود غير المتزامن

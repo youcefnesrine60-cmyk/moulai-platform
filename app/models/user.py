@@ -11,6 +11,11 @@
 # يدير بيانات المستخدمين وموافقاتهم
 # ==============================================
 
+"""MoulAI operational module for user.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -21,20 +26,20 @@ from sqlalchemy.orm import relationship
 
 from .base import BaseModel
 
-
 # ==============================================
 # 👤 USER
 # ==============================================
 
+
 class User(BaseModel):
     """
     نموذج المستخدم الأساسي
-    
+
     يدير:
         - معرف المستخدم في تيليجرام (chat_id)
         - موافقة المستخدم على الشروط والأحكام
         - العلاقات مع الطلبات والمدفوعات
-    
+
     Attributes:
         chat_id: معرف المستخدم في تيليجرام (فريد)
         customer_name: اسم المستخدم
@@ -43,12 +48,13 @@ class User(BaseModel):
         orders: قائمة الطلبات التابعة للمستخدم
         payments: قائمة المدفوعات التابعة للمستخدم
     """
+
     __tablename__ = "users"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     chat_id = Column(
         BigInteger,
         unique=True,
@@ -57,32 +63,27 @@ class User(BaseModel):
         comment="معرف المستخدم في تيليجرام",
     )
     customer_name = Column(
-        String(255), 
+        String(255),
         nullable=True,
         comment="اسم العميل",
-    )   
-    customer_phone = Column(
-        String(20), 
-        nullable=True,
-        comment="رقم هاتف العميل"
     )
+    customer_phone = Column(String(20), nullable=True, comment="رقم هاتف العميل")
     consent = Column(
         Boolean,
         default=False,
         comment="موافقة المستخدم على الشروط والأحكام",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     # قائمة الطلبات التابعة للمستخدم
     orders = relationship(
         "Order",
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
-        
     )
     # قائمة المدفوعات التابعة للمستخدم
     payments = relationship(
@@ -91,15 +92,15 @@ class User(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف ومعرف المستخدم
         """

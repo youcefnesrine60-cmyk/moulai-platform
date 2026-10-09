@@ -1,6 +1,19 @@
 # ==============================================
-# 🔙 NAVIGATION HELPER
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HELPERS / NAVIGATION
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for navigation.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Any
 
@@ -62,16 +75,17 @@ STEP_CLEANUP: dict[str, list[str]] = {
 # 🔙 GO BACK
 # ==============================================
 
+
 async def go_back(
     *,
     chat_id: int,
 ) -> str | None:
     """
     العودة إلى الخطوة السابقة في تدفق المستخدم
-    
+
     Args:
         chat_id: معرف المستخدم
-        
+
     Returns:
         str | None: اسم الخطوة السابقة أو None
     """

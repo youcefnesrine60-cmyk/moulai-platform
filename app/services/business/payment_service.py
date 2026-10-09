@@ -1,15 +1,19 @@
 # ==============================================
-# 💳 PAYMENT SERVICE
-# Business Logic Layer
-# منطق الأعمال للمدفوعات
-#
-# إنشاء عملية دفع جديدة.
-# منع الدفع المكرر لنفس الاشتراك.
-# تأكيد الدفع.
-# فشل الدفع.
-# إلغاء الدفع.
-# قراءة حالة الدفع.
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / PAYMENT SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for payment service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -28,9 +32,6 @@ from app.core.exceptions import (
 )
 
 # ✅ استيراد دوال الأمان
-from app.core.security import (
-    sanitize_input,
-)
 
 from app.core.logger import logger
 from app.models.payment import Payment
@@ -44,7 +45,6 @@ from app.schemas.payment import (
     PaymentStatusUpdate,
     PaymentSummary,
 )
-
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -70,7 +70,7 @@ PaymentList = List[Payment]
 class PaymentService:
     """
     خدمة المدفوعات - تدير منطق الأعمال للمدفوعات.
-    
+
     مسؤولة عن:
         - إنشاء طلبات الدفع
         - تأكيد الدفع
@@ -78,12 +78,16 @@ class PaymentService:
         - إلغاء الدفع
         - التحقق من حالة الدفع
         - منع الدفع المكرر
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع المدفوعات
         subscription_repo: مستودع الاشتراكات
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -91,7 +95,7 @@ class PaymentService:
     ) -> None:
         """
         تهيئة خدمة المدفوعات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -115,11 +119,11 @@ class PaymentService:
     ) -> None:
         """
         التحقق من صحة انتقال حالة الدفع.
-        
+
         Args:
             current_status: الحالة الحالية
             new_status: الحالة الجديدة
-            
+
         Raises:
             ValidationError: إذا كان الانتقال غير صالح
         """
@@ -149,7 +153,9 @@ class PaymentService:
                 details={
                     "current_status": current_status,
                     "new_status": new_status,
-                    "allowed_transitions": list(valid_transitions.get(current_status, set())),
+                    "allowed_transitions": list(
+                        valid_transitions.get(current_status, set())
+                    ),
                 },
             )
 
@@ -168,13 +174,13 @@ class PaymentService:
     ) -> PaymentResponse:
         """
         الحصول على دفع بالمعرف.
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Returns:
             PaymentResponse: بيانات الدفع
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفع
         """
@@ -205,10 +211,10 @@ class PaymentService:
     ) -> Optional[PaymentResponse]:
         """
         الحصول على دفع بواسطة المرجع الخارجي.
-        
+
         Args:
             external_reference: المرجع الخارجي من بوابة الدفع
-            
+
         Returns:
             Optional[PaymentResponse]: بيانات الدفع أو None
         """
@@ -239,12 +245,12 @@ class PaymentService:
     ) -> List[PaymentResponse]:
         """
         الحصول على مدفوعات اشتراك معين.
-        
+
         Args:
             subscription_id: معرف الاشتراك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[PaymentResponse]: قائمة المدفوعات
         """
@@ -278,15 +284,15 @@ class PaymentService:
     ) -> List[PaymentResponse]:
         """
         الحصول على مدفوعات حسب الحالة.
-        
+
         Args:
             status: حالة الدفع (pending, paid, failed, cancelled)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[PaymentResponse]: قائمة المدفوعات
-            
+
         Raises:
             ValidationError: إذا كانت الحالة غير صالحة
         """
@@ -328,11 +334,11 @@ class PaymentService:
     ) -> PaymentSummary:
         """
         الحصول على ملخص المدفوعات.
-        
+
         Args:
             restaurant_id: معرف المطعم (اختياري)
             owner_id: معرف المالك (اختياري)
-            
+
         Returns:
             PaymentSummary: ملخص المدفوعات
         """
@@ -399,13 +405,13 @@ class PaymentService:
     ) -> PaymentResponse:
         """
         إنشاء طلب دفع جديد.
-        
+
         Args:
             payment_data: بيانات الدفع
-            
+
         Returns:
             PaymentResponse: بيانات الدفع المنشأ
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الاشتراك
             ConflictError: إذا كان هناك دفع معلق أو مدفوع لنفس الاشتراك
@@ -500,14 +506,14 @@ class PaymentService:
     ) -> PaymentResponse:
         """
         تحديث حالة الدفع.
-        
+
         Args:
             payment_id: معرف الدفع
             status_data: بيانات تحديث الحالة
-            
+
         Returns:
             PaymentResponse: بيانات الدفع المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفع
             ValidationError: إذا كان الانتقال غير صالح
@@ -566,13 +572,13 @@ class PaymentService:
     ) -> PaymentResponse:
         """
         تأكيد الدفع (تعيين الحالة إلى paid).
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Returns:
             PaymentResponse: بيانات الدفع المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفع
             ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -621,13 +627,13 @@ class PaymentService:
     ) -> PaymentResponse:
         """
         تعيين الدفع كفاشل.
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Returns:
             PaymentResponse: بيانات الدفع المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفع
             ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -675,13 +681,13 @@ class PaymentService:
     ) -> PaymentResponse:
         """
         إلغاء الدفع.
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Returns:
             PaymentResponse: بيانات الدفع المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفع
             ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -729,13 +735,13 @@ class PaymentService:
     ) -> PaymentResponse:
         """
         استرداد الدفع.
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Returns:
             PaymentResponse: بيانات الدفع المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفع
             ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -786,10 +792,10 @@ class PaymentService:
     ) -> None:
         """
         حذف دفع.
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفع
             ValidationError: إذا كان الدفع مدفوعاً أو معلقاً
@@ -833,6 +839,7 @@ class PaymentService:
 # CREATE PAYMENT REQUEST (COMPATIBILITY)
 # ==============================================
 
+
 async def create_payment_request(
     *,
     owner_id: int,
@@ -845,7 +852,7 @@ async def create_payment_request(
 ) -> int:
     """
     إنشاء طلب دفع جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         restaurant_id: معرف المطعم
@@ -854,10 +861,10 @@ async def create_payment_request(
         amount: المبلغ
         external_reference: المرجع الخارجي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف الدفع
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الاشتراك
         ConflictError: إذا كان هناك دفع معلق أو مدفوع
@@ -885,6 +892,7 @@ async def create_payment_request(
 # GET PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_payment(
     *,
     payment_id: int,
@@ -892,11 +900,11 @@ async def get_payment(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على دفع بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات الدفع أو None
     """
@@ -913,6 +921,7 @@ async def get_payment(
 # GET PAYMENT BY EXTERNAL REFERENCE (COMPATIBILITY)
 # ==============================================
 
+
 async def get_payment_by_external_reference(
     *,
     external_reference: str,
@@ -920,11 +929,11 @@ async def get_payment_by_external_reference(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على دفع بواسطة المرجع الخارجي (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         external_reference: المرجع الخارجي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات الدفع أو None
     """
@@ -944,6 +953,7 @@ async def get_payment_by_external_reference(
 # CONFIRM PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def confirm_payment(
     *,
     payment_id: int,
@@ -951,11 +961,11 @@ async def confirm_payment(
 ) -> None:
     """
     تأكيد الدفع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الدفع
         ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -974,6 +984,7 @@ async def confirm_payment(
 # FAIL PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def fail_payment(
     *,
     payment_id: int,
@@ -981,11 +992,11 @@ async def fail_payment(
 ) -> None:
     """
     تعيين الدفع كفاشل (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الدفع
         ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -1004,6 +1015,7 @@ async def fail_payment(
 # CANCEL PAYMENT REQUEST (COMPATIBILITY)
 # ==============================================
 
+
 async def cancel_payment_request(
     *,
     payment_id: int,
@@ -1011,11 +1023,11 @@ async def cancel_payment_request(
 ) -> None:
     """
     إلغاء الدفع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الدفع
         ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -1034,6 +1046,7 @@ async def cancel_payment_request(
 # REFUND PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def refund_payment(
     *,
     payment_id: int,
@@ -1041,11 +1054,11 @@ async def refund_payment(
 ) -> None:
     """
     استرداد الدفع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الدفع
         ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -1064,6 +1077,7 @@ async def refund_payment(
 # IS PAYMENT PAID (COMPATIBILITY)
 # ==============================================
 
+
 async def is_payment_paid(
     *,
     payment_id: int,
@@ -1071,11 +1085,11 @@ async def is_payment_paid(
 ) -> bool:
     """
     التحقق من أن الدفع مدفوع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         bool: True إذا كان مدفوعاً
     """
@@ -1088,6 +1102,7 @@ async def is_payment_paid(
 # IS PAYMENT PENDING (COMPATIBILITY)
 # ==============================================
 
+
 async def is_payment_pending(
     *,
     payment_id: int,
@@ -1095,11 +1110,11 @@ async def is_payment_pending(
 ) -> bool:
     """
     التحقق من أن الدفع معلق (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         bool: True إذا كان معلقاً
     """

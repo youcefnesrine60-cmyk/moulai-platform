@@ -1,6 +1,19 @@
 # ==============================================
-# 👤 OWNER NAME STEP - VERSION PRO
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / OWNER_HANDLER / NAME STEP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for name step.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Any
 
@@ -8,10 +21,7 @@ from app.core.logger import logger
 
 from app.helpers.ui_helpers import send_restaurant_name
 from app.helpers.safe_sanitize import safe_sanitize
-from app.helpers.state_helper import (
-    get_user_state,
-    update_state_field
-)
+from app.helpers.state_helper import get_user_state, update_state_field
 from app.helpers.state_transition import transition_to
 from app.helpers.ui_manager import UIManager
 
@@ -29,6 +39,7 @@ StateData = dict[str, Any]
 # ==============================================
 # 👤 HANDLE OWNER NAME STEP
 # ==============================================
+
 
 async def handle_name_step(
     *,

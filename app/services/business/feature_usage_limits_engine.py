@@ -12,6 +12,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for feature usage limits engine.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,6 +32,7 @@ from app.repositories.feature_usage_limits_repo import (
 # ==============================================
 # 🔍 GET FEATURE LIMIT
 # ==============================================
+
 
 async def get_feature_limit(
     *,
@@ -75,6 +81,7 @@ async def get_feature_limit(
 # 🔍 HAS AVAILABLE USAGE
 # ==============================================
 
+
 async def has_available_usage(
     *,
     session: AsyncSession,
@@ -110,6 +117,7 @@ async def has_available_usage(
 # ==============================================
 # 🚫 REQUIRE AVAILABLE USAGE
 # ==============================================
+
 
 async def require_available_usage(
     *,

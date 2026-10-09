@@ -11,6 +11,11 @@
 # يدير بيانات المالك وصلاحياته واشتراكاته
 # ==============================================
 
+"""MoulAI operational module for owner.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -25,16 +30,17 @@ from .base import BaseModel
 # 👤 OWNER
 # ==============================================
 
+
 class Owner(BaseModel):
     """
     نموذج مالك المطعم
-    
+
     يدير:
         - البيانات الشخصية للمالك
         - حالة التسجيل (pending/approved/rejected)
         - صلاحية الاستخدام التجريبي
         - العلاقات مع المطاعم والمجموعات والاشتراكات
-    
+
     Attributes:
         chat_id: معرف المستخدم في تيليجرام (فريد)
         full_name: الاسم الكامل للمالك
@@ -49,12 +55,13 @@ class Owner(BaseModel):
         registration_requests: قائمة طلبات التسجيل
         loyalty_discounts: قائمة خصومات الولاء
     """
+
     __tablename__ = "owners"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     chat_id = Column(
         BigInteger,
         unique=True,
@@ -92,11 +99,11 @@ class Owner(BaseModel):
         default=False,
         comment="هل تم استخدام الفترة التجريبية",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     restaurants = relationship(
         "Restaurant",
         back_populates="owner",
@@ -138,15 +145,15 @@ class Owner(BaseModel):
         lazy="selectin",
         # comment="قائمة خصومات الولاء",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والاسم
         """

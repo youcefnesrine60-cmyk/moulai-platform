@@ -1,6 +1,19 @@
 # ==============================================
-# 🎨 UI MANAGER - VERSION PRO
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HELPERS / UI MANAGER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for ui manager.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from collections.abc import Awaitable
 
@@ -28,6 +41,7 @@ ReplyMarkupInput = ReplyMarkup | Awaitable[ReplyMarkup]
 # ==============================================
 # 🎨 UI MANAGER
 # ==============================================
+
 
 class UIManager:
 
@@ -355,9 +369,7 @@ class UIManager:
 
             # تصفية الرسائل المراد حذفها
             messages_to_delete = [
-                msg_id
-                for msg_id in message_ids
-                if msg_id != preserve_message_id
+                msg_id for msg_id in message_ids if msg_id != preserve_message_id
             ]
 
             if not messages_to_delete:
@@ -457,17 +469,14 @@ class UIManager:
                 final_reply_markup = reply_markup
 
             # التحقق من صحة الـ reply_markup
-            if (
-                final_reply_markup is not None
-                and not isinstance(final_reply_markup, dict)
+            if final_reply_markup is not None and not isinstance(
+                final_reply_markup, dict
             ):
                 logger.warning(
                     "invalid_reply_markup_type",
                     extra={
                         "chat_id": chat_id,
-                        "reply_markup_type": type(
-                            final_reply_markup
-                        ).__name__,
+                        "reply_markup_type": type(final_reply_markup).__name__,
                     },
                 )
                 final_reply_markup = None

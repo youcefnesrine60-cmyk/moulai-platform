@@ -10,6 +10,11 @@
 # نماذج Pydantic لجلسات المديرين
 # ==============================================
 
+"""MoulAI operational module for admin session.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,10 +43,11 @@ AdminSessionListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class AdminSessionBase(BaseModel):
     """
     المخطط الأساسي لجلسة المدير.
-    
+
     Attributes:
         admin_id: معرف المدير
         session_token: رمز الجلسة
@@ -52,6 +57,7 @@ class AdminSessionBase(BaseModel):
         is_active: حالة النشاط
         last_activity: تاريخ آخر نشاط
     """
+
     admin_id: int = Field(
         ...,
         description="معرف المدير",
@@ -99,13 +105,13 @@ class AdminSessionBase(BaseModel):
     def validate_expires_at(cls, value: datetime) -> datetime:
         """
         التحقق من أن تاريخ الانتهاء في المستقبل.
-        
+
         Args:
             value: تاريخ الانتهاء
-            
+
         Returns:
             datetime: تاريخ الانتهاء المدقق
-            
+
         Raises:
             ValueError: إذا كان التاريخ في الماضي
         """
@@ -113,18 +119,22 @@ class AdminSessionBase(BaseModel):
             raise ValueError("تاريخ انتهاء الجلسة يجب أن يكون في المستقبل")
         return value
 
+    # ==============================================
+    # VALIDATE SESSION TOKEN
+    # ==============================================
+
     @field_validator("session_token")
     @classmethod
     def validate_session_token(cls, value: str) -> str:
         """
         التحقق من صحة رمز الجلسة.
-        
+
         Args:
             value: رمز الجلسة
-            
+
         Returns:
             str: رمز الجلسة المدقق
-            
+
         Raises:
             ValueError: إذا كان رمز الجلسة فارغاً
         """
@@ -137,16 +147,18 @@ class AdminSessionBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class AdminSessionCreate(BaseModel):
     """
     مخطط إنشاء جلسة مدير جديدة.
-    
+
     Attributes:
         admin_id: معرف المدير
         expires_at: تاريخ انتهاء الجلسة
         ip_address: عنوان IP (اختياري)
         user_agent: متصفح المدير (اختياري)
     """
+
     admin_id: int = Field(
         ...,
         description="معرف المدير",
@@ -179,13 +191,13 @@ class AdminSessionCreate(BaseModel):
     def validate_expires_at(cls, value: datetime) -> datetime:
         """
         التحقق من أن تاريخ الانتهاء في المستقبل.
-        
+
         Args:
             value: تاريخ الانتهاء
-            
+
         Returns:
             datetime: تاريخ الانتهاء المدقق
-            
+
         Raises:
             ValueError: إذا كان التاريخ في الماضي
         """
@@ -198,14 +210,16 @@ class AdminSessionCreate(BaseModel):
 # 📤 EXTEND SCHEMA
 # ==============================================
 
+
 class AdminSessionExtend(BaseModel):
     """
     مخطط تمديد صلاحية الجلسة.
-    
+
     Attributes:
         session_token: رمز الجلسة
         expires_at: تاريخ الانتهاء الجديد
     """
+
     session_token: str = Field(
         ...,
         max_length=255,
@@ -226,13 +240,13 @@ class AdminSessionExtend(BaseModel):
     def validate_expires_at(cls, value: datetime) -> datetime:
         """
         التحقق من أن تاريخ الانتهاء في المستقبل.
-        
+
         Args:
             value: تاريخ الانتهاء
-            
+
         Returns:
             datetime: تاريخ الانتهاء المدقق
-            
+
         Raises:
             ValueError: إذا كان التاريخ في الماضي
         """
@@ -240,18 +254,22 @@ class AdminSessionExtend(BaseModel):
             raise ValueError("تاريخ انتهاء الجلسة يجب أن يكون في المستقبل")
         return value
 
+    # ==============================================
+    # VALIDATE SESSION TOKEN
+    # ==============================================
+
     @field_validator("session_token")
     @classmethod
     def validate_session_token(cls, value: str) -> str:
         """
         التحقق من صحة رمز الجلسة.
-        
+
         Args:
             value: رمز الجلسة
-            
+
         Returns:
             str: رمز الجلسة المدقق
-            
+
         Raises:
             ValueError: إذا كان رمز الجلسة فارغاً
         """
@@ -264,15 +282,17 @@ class AdminSessionExtend(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class AdminSessionResponse(AdminSessionBase):
     """
     مخطط استجابة جلسة المدير.
-    
+
     Attributes:
         id: معرف الجلسة
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -295,16 +315,18 @@ class AdminSessionResponse(AdminSessionBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class AdminSessionListResponse(BaseModel):
     """
     مخطط استجابة قائمة جلسات المدير.
-    
+
     Attributes:
         items: قائمة جلسات المدير
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[AdminSessionResponse] = Field(
@@ -335,16 +357,18 @@ class AdminSessionListResponse(BaseModel):
 # 📊 SESSION STATISTICS
 # ==============================================
 
+
 class AdminSessionStatistics(BaseModel):
     """
     مخطط إحصائيات جلسات المدير.
-    
+
     Attributes:
         total_sessions: إجمالي عدد الجلسات
         active_sessions: عدد الجلسات النشطة
         expired_sessions: عدد الجلسات المنتهية
         admin_id: معرف المدير (اختياري)
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_sessions: int = Field(

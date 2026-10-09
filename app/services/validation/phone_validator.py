@@ -9,6 +9,11 @@
 # 📞 PHONE VALIDATION
 # ==============================================
 
+"""MoulAI operational module for phone validator.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import re
 
 from app.core.logger import logger
@@ -32,6 +37,7 @@ INTERNATIONAL_PHONE_PATTERN = re.compile(
 # ==============================================
 # 📞 NORMALIZE PHONE
 # ==============================================
+
 
 async def normalize_phone(
     *,
@@ -59,9 +65,11 @@ async def normalize_phone(
 
     return phone
 
+
 # ==============================================
 # 📞 VALIDATE PHONE
 # ==============================================
+
 
 async def validate_phone(
     *,
@@ -118,10 +126,8 @@ async def validate_phone(
     # ==========================================
 
     is_valid = (
-        ALGERIAN_PHONE_PATTERN.fullmatch(phone)
-        is not None
-        or INTERNATIONAL_PHONE_PATTERN.fullmatch(phone)
-        is not None
+        ALGERIAN_PHONE_PATTERN.fullmatch(phone) is not None
+        or INTERNATIONAL_PHONE_PATTERN.fullmatch(phone) is not None
     )
 
     if not is_valid:

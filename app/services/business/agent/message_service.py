@@ -10,6 +10,11 @@
 # منطق الأعمال للرسائل
 # ==============================================
 
+"""MoulAI operational module for message service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -33,7 +38,6 @@ from app.schemas.agent.message import (
     MessageListResponse,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -46,21 +50,26 @@ MessageStats = Dict[str, Any]
 # 💬 MESSAGE SERVICE
 # ==============================================
 
+
 class MessageService:
     """
     خدمة الرسائل - تدير منطق الأعمال للرسائل.
-    
+
     مسؤول عن:
         - إنشاء وتحديث الرسائل
         - البحث عن الرسائل حسب المحادثة والدور
         - تحليل الرسائل (النوايا، الكيانات، الثقة)
         - إدارة الرسائل (حذف، تنظيف)
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع الرسائل
         conversation_repo: مستودع المحادثات
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -68,7 +77,7 @@ class MessageService:
     ) -> None:
         """
         تهيئة خدمة الرسائل.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -91,13 +100,13 @@ class MessageService:
     ) -> MessageResponse:
         """
         الحصول على رسالة بالمعرف.
-        
+
         Args:
             message_id: معرف الرسالة
-            
+
         Returns:
             MessageResponse: بيانات الرسالة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الرسالة
         """
@@ -128,12 +137,12 @@ class MessageService:
     ) -> MessageListResponse:
         """
         الحصول على رسائل محادثة معينة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             MessageListResponse: قائمة الرسائل مع الإحصائيات
         """
@@ -187,13 +196,13 @@ class MessageService:
     ) -> MessageListResponse:
         """
         الحصول على رسائل حسب الدور.
-        
+
         Args:
             conversation_id: معرف المحادثة
             role: دور المرسل
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             MessageListResponse: قائمة الرسائل مع الإحصائيات
         """
@@ -238,13 +247,13 @@ class MessageService:
     ) -> MessageListResponse:
         """
         الحصول على رسائل حسب نوع المحتوى.
-        
+
         Args:
             conversation_id: معرف المحادثة
             content_type: نوع المحتوى (text, image, audio, video, file)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             MessageListResponse: قائمة الرسائل مع الإحصائيات
         """
@@ -286,10 +295,10 @@ class MessageService:
     ) -> Optional[MessageResponse]:
         """
         الحصول على آخر رسالة في المحادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             Optional[MessageResponse]: آخر رسالة أو None
         """
@@ -318,10 +327,10 @@ class MessageService:
     ) -> Optional[MessageResponse]:
         """
         الحصول على أول رسالة في المحادثة.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             Optional[MessageResponse]: أول رسالة أو None
         """
@@ -354,14 +363,14 @@ class MessageService:
     ) -> MessageListResponse:
         """
         البحث عن الرسائل.
-        
+
         Args:
             query: نص البحث
             conversation_id: معرف المحادثة (اختياري)
             role: دور المرسل (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             MessageListResponse: قائمة الرسائل مع الإحصائيات
         """
@@ -406,13 +415,13 @@ class MessageService:
     ) -> MessageResponse:
         """
         إنشاء رسالة جديدة.
-        
+
         Args:
             message_data: بيانات الرسالة
-            
+
         Returns:
             MessageResponse: بيانات الرسالة المنشأة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -489,7 +498,7 @@ class MessageService:
     ) -> MessageResponse:
         """
         إنشاء رسالة مستخدم.
-        
+
         Args:
             conversation_id: معرف المحادثة
             content: محتوى الرسالة
@@ -497,7 +506,7 @@ class MessageService:
             intent: النية (اختياري)
             confidence: الثقة (اختياري)
             entities: الكيانات (اختياري)
-            
+
         Returns:
             MessageResponse: بيانات الرسالة المنشأة
         """
@@ -529,7 +538,7 @@ class MessageService:
     ) -> MessageResponse:
         """
         إنشاء رسالة مساعد.
-        
+
         Args:
             conversation_id: معرف المحادثة
             content: محتوى الرسالة
@@ -537,7 +546,7 @@ class MessageService:
             intent: النية (اختياري)
             confidence: الثقة (اختياري)
             entities: الكيانات (اختياري)
-            
+
         Returns:
             MessageResponse: بيانات الرسالة المنشأة
         """
@@ -568,14 +577,14 @@ class MessageService:
     ) -> MessageResponse:
         """
         إنشاء رسالة نظام.
-        
+
         Args:
             conversation_id: معرف المحادثة
             content: محتوى الرسالة
             intent: النية (اختياري)
             confidence: الثقة (اختياري)
             entities: الكيانات (اختياري)
-            
+
         Returns:
             MessageResponse: بيانات الرسالة المنشأة
         """
@@ -603,14 +612,14 @@ class MessageService:
     ) -> List[MessageResponse]:
         """
         إنشاء مجموعة من الرسائل دفعة واحدة.
-        
+
         Args:
             conversation_id: معرف المحادثة
             messages: قائمة بيانات الرسائل
-            
+
         Returns:
             List[MessageResponse]: قائمة الرسائل المنشأة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -677,14 +686,14 @@ class MessageService:
     ) -> MessageResponse:
         """
         تحديث رسالة.
-        
+
         Args:
             message_id: معرف الرسالة
             update_data: بيانات التحديث
-            
+
         Returns:
             MessageResponse: بيانات الرسالة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الرسالة
         """
@@ -740,10 +749,10 @@ class MessageService:
     ) -> None:
         """
         حذف رسالة.
-        
+
         Args:
             message_id: معرف الرسالة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الرسالة
         """
@@ -779,13 +788,13 @@ class MessageService:
     ) -> int:
         """
         حذف جميع رسائل محادثة معينة.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             int: عدد الرسائل المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -831,14 +840,14 @@ class MessageService:
     ) -> int:
         """
         حذف الرسائل القديمة مع الاحتفاظ بعدد محدد من أحدث الرسائل.
-        
+
         Args:
             conversation_id: معرف المحادثة
             keep_count: عدد الرسائل التي سيتم الاحتفاظ بها
-            
+
         Returns:
             int: عدد الرسائل المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """
@@ -892,13 +901,13 @@ class MessageService:
     ) -> MessageStats:
         """
         الحصول على إحصائيات الرسائل لمحادثة معينة.
-        
+
         Args:
             conversation_id: معرف المحادثة
-            
+
         Returns:
             MessageStats: إحصائيات الرسائل
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المحادثة
         """

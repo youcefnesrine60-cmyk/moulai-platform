@@ -12,6 +12,11 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+"""MoulAI operational module for owner repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 # ==============================================
 # 👤 OWNER REPOSITORY
 # عمليات قاعدة البيانات للمالكين باستخدام SQLAlchemy
@@ -50,17 +55,21 @@ OwnerList = List[Owner]
 class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     """
     مستودع المالكين - يوفر عمليات خاصة بالمالكين.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للمالكين
         - البحث والتصفية حسب chat_id والحالة
         - التحقق من وجود المالكين
         - إدارة الفترة التجريبية
-    
+
     Attributes:
         model: نموذج Owner
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -68,7 +77,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     ) -> None:
         """
         تهيئة مستودع المالكين.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -89,10 +98,10 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     ) -> Optional[Owner]:
         """
         الحصول على مالك بواسطة chat_id.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             كائن Owner أو None
         """
@@ -142,12 +151,12 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     ) -> OwnerList:
         """
         الحصول على المالكين حسب حالة التسجيل.
-        
+
         Args:
             status: حالة التسجيل (pending, approved, rejected)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المالكين
         """
@@ -187,12 +196,12 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     ) -> OwnerList:
         """
         البحث عن مالكين.
-        
+
         Args:
             query: نص البحث
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المالكين
         """
@@ -236,10 +245,10 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     ) -> bool:
         """
         التحقق من وجود مالك بواسطة chat_id.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             True إذا كان موجوداً، False إذا لم يكن
         """
@@ -278,10 +287,10 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     ) -> Optional[Any]:
         """
         الحصول على تاريخ إنشاء المالك.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             تاريخ الإنشاء أو None
         """
@@ -319,11 +328,11 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     ) -> Optional[Owner]:
         """
         تحديث حالة تسجيل المالك.
-        
+
         Args:
             owner_id: معرف المالك
             status: الحالة الجديدة (pending, approved, rejected)
-            
+
         Returns:
             كائن Owner المحدث أو None
         """
@@ -351,10 +360,10 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     ) -> Optional[Owner]:
         """
         تعيين trial_used = True.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             كائن Owner المحدث أو None
         """
@@ -379,10 +388,10 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
     ) -> bool:
         """
         التحقق من استخدام الفترة التجريبية.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             True إذا استخدم الفترة التجريبية، False إذا لم يستخدم
         """
@@ -414,6 +423,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
 # CREATE OWNER (COMPATIBILITY)
 # ==============================================
 
+
 async def create_owner(
     *,
     chat_id: int,
@@ -424,14 +434,14 @@ async def create_owner(
 ) -> int:
     """
     إنشاء مالك جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         full_name: الاسم الكامل
         phone: رقم الهاتف
         email: البريد الإلكتروني
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف المالك
     """
@@ -463,6 +473,7 @@ async def create_owner(
 # GET OWNER BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_owner_by_id(
     *,
     owner_id: int,
@@ -470,11 +481,11 @@ async def get_owner_by_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مالك بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات المالك أو None
     """
@@ -505,6 +516,7 @@ async def get_owner_by_id(
 # GET OWNER BY CHAT ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_owner_by_chat_id(
     *,
     chat_id: int,
@@ -512,11 +524,11 @@ async def get_owner_by_chat_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مالك بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات المالك أو None
     """
@@ -543,6 +555,7 @@ async def get_owner_by_chat_id(
 # OWNER EXISTS (COMPATIBILITY)
 # ==============================================
 
+
 async def owner_exists(
     *,
     chat_id: int,
@@ -550,11 +563,11 @@ async def owner_exists(
 ) -> bool:
     """
     التحقق من وجود مالك بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         True إذا كان موجوداً
     """
@@ -567,6 +580,7 @@ async def owner_exists(
 # GET OWNER CREATED AT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_owner_created_at(
     *,
     owner_id: int,
@@ -574,11 +588,11 @@ async def get_owner_created_at(
 ) -> Optional[Any]:
     """
     الحصول على تاريخ إنشاء المالك (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         تاريخ الإنشاء أو None
     """
@@ -591,6 +605,7 @@ async def get_owner_created_at(
 # UPDATE REGISTRATION STATUS (COMPATIBILITY)
 # ==============================================
 
+
 async def update_registration_status(
     *,
     owner_id: int,
@@ -599,7 +614,7 @@ async def update_registration_status(
 ) -> None:
     """
     تحديث حالة تسجيل المالك (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         status: الحالة الجديدة
@@ -625,6 +640,7 @@ async def update_registration_status(
 # MARK TRIAL USED (COMPATIBILITY)
 # ==============================================
 
+
 async def mark_trial_used(
     *,
     owner_id: int,
@@ -632,7 +648,7 @@ async def mark_trial_used(
 ) -> None:
     """
     تعيين trial_used = True (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -651,6 +667,7 @@ async def mark_trial_used(
 # HAS USED TRIAL (COMPATIBILITY)
 # ==============================================
 
+
 async def has_used_trial(
     *,
     owner_id: int,
@@ -658,11 +675,11 @@ async def has_used_trial(
 ) -> bool:
     """
     التحقق من استخدام الفترة التجريبية (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         True إذا استخدم الفترة التجريبية
     """
@@ -675,6 +692,7 @@ async def has_used_trial(
 # GET ALL OWNERS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_all_owners(
     session: AsyncSession,
     *,
@@ -683,12 +701,12 @@ async def get_all_owners(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على جميع المالكين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة المالكين
     """
@@ -704,16 +722,18 @@ async def get_all_owners(
     result = []
 
     for owner in owners:
-        result.append({
-            "id": owner.id,
-            "chat_id": owner.chat_id,
-            "full_name": owner.full_name,
-            "phone": owner.phone,
-            "email": owner.email,
-            "registration_status": owner.registration_status,
-            "trial_used": owner.trial_used,
-            "created_at": owner.created_at,
-        })
+        result.append(
+            {
+                "id": owner.id,
+                "chat_id": owner.chat_id,
+                "full_name": owner.full_name,
+                "phone": owner.phone,
+                "email": owner.email,
+                "registration_status": owner.registration_status,
+                "trial_used": owner.trial_used,
+                "created_at": owner.created_at,
+            }
+        )
 
     logger.info(
         "owners_fetched",

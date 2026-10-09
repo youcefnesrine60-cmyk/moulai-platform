@@ -1,7 +1,20 @@
-from app.handlers.customer_handler.customer_router import (
-    handle_customer_state
-)
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
 
-__all__ = [
-    "handle_customer_state"
-]
+# ==============================================
+# PACKAGE INITIALIZER - APP / HANDLERS / CUSTOMER_HANDLER /   INIT
+# Package initialization and public exports component.
+# ==============================================
+
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+from app.handlers.customer_handler.customer_router import handle_customer_state
+
+__all__ = ["handle_customer_state"]

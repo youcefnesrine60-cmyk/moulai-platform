@@ -11,6 +11,11 @@
 # يدير خطط الاشتراك والميزات والاشتراكات النشطة
 # ==============================================
 
+"""MoulAI operational module for subscription.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -31,16 +36,17 @@ from .base import BaseModel
 # خطة الاشتراك
 # ==============================================
 
+
 class SubscriptionPlan(BaseModel):
     """
     نموذج خطة الاشتراك
-    
+
     يدير:
         - بيانات الخطة (الكود، الاسم، الوصف)
         - السعر الأساسي ونسبة الخصم
         - ترتيب العرض وحالة النشاط
         - العلاقات مع الاشتراكات والميزات وتسعير الفروع
-    
+
     Attributes:
         code: كود الخطة (فريد)
         name: اسم الخطة
@@ -54,12 +60,13 @@ class SubscriptionPlan(BaseModel):
         usage_limits: قائمة حدود الاستخدام
         branch_pricing: قائمة تسعير الفروع
     """
+
     __tablename__ = "subscription_plans"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     code = Column(
         String(50),
         unique=True,
@@ -97,11 +104,11 @@ class SubscriptionPlan(BaseModel):
         default=True,
         comment="حالة النشاط",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     subscriptions = relationship(
         "Subscription",
         back_populates="plan",
@@ -129,33 +136,35 @@ class SubscriptionPlan(BaseModel):
         lazy="selectin",
         # comment="قائمة تسعير الفروع",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والكود والاسم
         """
         return f"<SubscriptionPlan(id={self.id}, code={self.code}, name={self.name})>"
+
 
 # ==============================================
 # ⚙️ FEATURE
 # الميزة
 # ==============================================
 
+
 class Feature(BaseModel):
     """
     نموذج الميزة
-    
+
     يدير:
         - بيانات الميزة (الكود، الاسم، الوصف)
         - العلاقات مع الخطط والاشتراكات
-    
+
     Attributes:
         code: كود الميزة (فريد)
         name: اسم الميزة
@@ -167,12 +176,13 @@ class Feature(BaseModel):
         usage_limits: قائمة حدود الاستخدام
         usage_counters: قائمة عدادات الاستخدام
     """
+
     __tablename__ = "features"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     code = Column(
         String(50),
         unique=True,
@@ -188,11 +198,11 @@ class Feature(BaseModel):
         Text,
         comment="وصف الميزة",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     plan_features = relationship(
         "PlanFeature",
         back_populates="feature",
@@ -235,15 +245,15 @@ class Feature(BaseModel):
         lazy="selectin",
         # comment="قائمة عدادات الاستخدام",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والكود والاسم
         """
@@ -255,12 +265,13 @@ class Feature(BaseModel):
 # ميزة الخطة
 # ==============================================
 
+
 class PlanFeature(BaseModel):
     """
     نموذج ميزة الخطة
-    
+
     يربط الميزات بالخطط ويحدد ما إذا كانت مدرجة في الخطة.
-    
+
     Attributes:
         plan_id: معرف الخطة (ForeignKey)
         feature_id: معرف الميزة (ForeignKey)
@@ -268,12 +279,13 @@ class PlanFeature(BaseModel):
         plan: علاقة مع نموذج SubscriptionPlan
         feature: علاقة مع نموذج Feature
     """
+
     __tablename__ = "plan_features"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     plan_id = Column(
         Integer,
         ForeignKey("subscription_plans.id", ondelete="CASCADE"),
@@ -291,11 +303,11 @@ class PlanFeature(BaseModel):
         default=True,
         comment="هل الميزة مدرجة في الخطة",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     plan = relationship(
         "SubscriptionPlan",
         back_populates="features",
@@ -308,15 +320,15 @@ class PlanFeature(BaseModel):
         lazy="selectin",
         # comment="الميزة",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على معرف الخطة ومعرف الميزة وحالة التضمين
         """
@@ -331,17 +343,18 @@ class PlanFeature(BaseModel):
 # الاشتراك
 # ==============================================
 
+
 class Subscription(BaseModel):
     """
     نموذج الاشتراك
-    
+
     يدير:
         - اشتراكات المالكين والمطاعم
         - دورة الفوترة والمبلغ
         - تواريخ البدء والانتهاء
         - حالة الاشتراك
         - العلاقات مع المالك والمطعم والخطة
-    
+
     Attributes:
         owner_id: معرف المالك (ForeignKey)
         restaurant_id: معرف المطعم (ForeignKey)
@@ -358,12 +371,13 @@ class Subscription(BaseModel):
         feature_requests: قائمة طلبات الميزات
         payments: قائمة المدفوعات
     """
+
     __tablename__ = "subscriptions"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     owner_id = Column(
         Integer,
         ForeignKey("owners.id", ondelete="CASCADE"),
@@ -406,25 +420,25 @@ class Subscription(BaseModel):
         default="pending",
         comment="حالة الاشتراك: pending, trial, active, expired, cancelled",
     )
-    
+
     # ==========================================
     # 🔒 CONSTRAINTS
     # ==========================================
-    
+
     __table_args__ = (
         Index(
-            'uq_active_subscription',
-            'restaurant_id',
+            "uq_active_subscription",
+            "restaurant_id",
             unique=True,
             postgresql_where="status IN ('trial', 'active')",
-            #comment="تأكد من وجود اشتراك نشط واحد فقط لكل مطعم",
+            # comment="تأكد من وجود اشتراك نشط واحد فقط لكل مطعم",
         ),
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     owner = relationship(
         "Owner",
         back_populates="subscriptions",
@@ -463,15 +477,15 @@ class Subscription(BaseModel):
         lazy="selectin",
         # comment="قائمة المدفوعات",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والحالة ومعرف المطعم
         """
@@ -486,24 +500,26 @@ class Subscription(BaseModel):
 # ميزة الاشتراك
 # ==============================================
 
+
 class SubscriptionFeature(BaseModel):
     """
     نموذج ميزة الاشتراك
-    
+
     يربط الميزات بالاشتراكات الفعلية.
-    
+
     Attributes:
         subscription_id: معرف الاشتراك (ForeignKey)
         feature_id: معرف الميزة (ForeignKey)
         subscription: علاقة مع نموذج Subscription
         feature: علاقة مع نموذج Feature
     """
+
     __tablename__ = "subscription_features"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     subscription_id = Column(
         Integer,
         ForeignKey("subscriptions.id", ondelete="CASCADE"),
@@ -516,11 +532,11 @@ class SubscriptionFeature(BaseModel):
         nullable=False,
         comment="معرف الميزة",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     subscription = relationship(
         "Subscription",
         back_populates="features",
@@ -533,15 +549,15 @@ class SubscriptionFeature(BaseModel):
         lazy="selectin",
         # comment="الميزة",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على معرف الاشتراك ومعرف الميزة
         """
@@ -556,24 +572,26 @@ class SubscriptionFeature(BaseModel):
 # طلب ميزة الاشتراك
 # ==============================================
 
+
 class SubscriptionFeatureRequest(BaseModel):
     """
     نموذج طلب ميزة الاشتراك
-    
+
     يتتبع طلبات الميزات الإضافية من قبل المشتركين.
-    
+
     Attributes:
         subscription_id: معرف الاشتراك (ForeignKey)
         feature_id: معرف الميزة (ForeignKey)
         subscription: علاقة مع نموذج Subscription
         feature: علاقة مع نموذج Feature
     """
+
     __tablename__ = "subscription_feature_requests"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     subscription_id = Column(
         Integer,
         ForeignKey("subscriptions.id", ondelete="CASCADE"),
@@ -586,28 +604,28 @@ class SubscriptionFeatureRequest(BaseModel):
         nullable=False,
         comment="معرف الميزة",
     )
-    
+
     # ==========================================
     # 🔒 CONSTRAINTS
     # ==========================================
-    
+
     __table_args__ = (
         Index(
-            'idx_subscription_feature_requests_subscription',
-            'subscription_id',
-            #comment="مؤشر لتحسين أداء البحث عن طلبات اشتراك معين",
+            "idx_subscription_feature_requests_subscription",
+            "subscription_id",
+            # comment="مؤشر لتحسين أداء البحث عن طلبات اشتراك معين",
         ),
         Index(
-            'idx_subscription_feature_requests_feature',
-            'feature_id',
-            #comment="مؤشر لتحسين أداء البحث عن طلبات ميزة معينة",
+            "idx_subscription_feature_requests_feature",
+            "feature_id",
+            # comment="مؤشر لتحسين أداء البحث عن طلبات ميزة معينة",
         ),
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     subscription = relationship(
         "Subscription",
         back_populates="feature_requests",
@@ -620,15 +638,15 @@ class SubscriptionFeatureRequest(BaseModel):
         lazy="selectin",
         # comment="الميزة",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على معرف الاشتراك ومعرف الميزة
         """

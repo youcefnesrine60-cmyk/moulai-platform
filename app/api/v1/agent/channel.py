@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,6 +10,11 @@
 # نقاط نهاية API للقنوات (CRUD)
 # تدير عمليات إنشاء واستعراض وتحديث وحذف القنوات
 # ==============================================
+
+"""MoulAI operational module for channel.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional, Any, Dict
 
@@ -38,7 +43,6 @@ from app.schemas.agent import (
 )
 from app.services.business.agent.channel_service import ChannelService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -53,15 +57,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_channel_service(
     session: AsyncSession = Depends(get_db),
 ) -> ChannelService:
     """
     الحصول على خدمة القنوات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         ChannelService: مثيل من ChannelService
     """
@@ -75,6 +80,7 @@ async def get_channel_service(
 # ==============================================
 # CREATE CHANNEL
 # ==============================================
+
 
 @router.post(
     "/",
@@ -90,13 +96,13 @@ async def create_channel(
 ) -> ChannelResponse:
     """
     إنشاء قناة جديدة.
-    
+
     Args:
         data: بيانات القناة
-        
+
     Returns:
         ChannelResponse: القناة المنشأة
-        
+
     Raises:
         HTTPException: إذا كانت القناة موجودة مسبقاً
     """
@@ -158,6 +164,7 @@ async def create_channel(
 # GET CHANNEL BY ID
 # ==============================================
 
+
 @router.get(
     "/{channel_id}",
     response_model=ChannelResponse,
@@ -172,14 +179,14 @@ async def get_channel_by_id(
 ) -> ChannelResponse:
     """
     الحصول على قناة بالمعرف.
-    
+
     Args:
         channel_id: معرف القناة
         include_inactive: تضمين القنوات غير النشطة
-        
+
     Returns:
         ChannelResponse: القناة المطلوبة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على القناة
     """
@@ -228,6 +235,7 @@ async def get_channel_by_id(
 # LIST CHANNELS BY AGENT
 # ==============================================
 
+
 @router.get(
     "/agent/{agent_id}",
     response_model=ChannelListResponse,
@@ -244,13 +252,13 @@ async def list_channels_by_agent(
 ) -> ChannelListResponse:
     """
     الحصول على قائمة قنوات وكيل معين.
-    
+
     Args:
         agent_id: معرف الوكيل
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         only_active: جلب القنوات النشطة فقط
-        
+
     Returns:
         ChannelListResponse: قائمة القنوات مع الإحصائيات
     """
@@ -302,6 +310,7 @@ async def list_channels_by_agent(
 # GET CHANNEL BY TYPE
 # ==============================================
 
+
 @router.get(
     "/type",
     response_model=Optional[ChannelResponse],
@@ -317,12 +326,12 @@ async def get_channel_by_type(
 ) -> Optional[ChannelResponse]:
     """
     الحصول على قناة حسب النوع.
-    
+
     Args:
         agent_id: معرف الوكيل
         channel_type: نوع القناة
         only_active: جلب القناة النشطة فقط
-        
+
     Returns:
         Optional[ChannelResponse]: القناة المطلوبة أو None
     """
@@ -361,6 +370,7 @@ async def get_channel_by_type(
 # SEARCH CHANNELS
 # ==============================================
 
+
 @router.get(
     "/search",
     response_model=ChannelListResponse,
@@ -378,14 +388,14 @@ async def search_channels(
 ) -> ChannelListResponse:
     """
     البحث عن القنوات.
-    
+
     Args:
         query: نص البحث
         agent_id: معرف الوكيل (اختياري)
         only_active: جلب القنوات النشطة فقط
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         ChannelListResponse: قائمة القنوات مع الإحصائيات
     """
@@ -426,6 +436,7 @@ async def search_channels(
 # UPDATE CHANNEL
 # ==============================================
 
+
 @router.patch(
     "/{channel_id}",
     response_model=ChannelResponse,
@@ -440,14 +451,14 @@ async def update_channel(
 ) -> ChannelResponse:
     """
     تحديث قناة موجودة.
-    
+
     Args:
         channel_id: معرف القناة
         data: بيانات التحديث
-        
+
     Returns:
         ChannelResponse: القناة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على القناة
     """
@@ -508,6 +519,7 @@ async def update_channel(
 # UPDATE CHANNEL CONFIG
 # ==============================================
 
+
 @router.patch(
     "/{channel_id}/config",
     response_model=ChannelResponse,
@@ -522,14 +534,14 @@ async def update_channel_config(
 ) -> ChannelResponse:
     """
     تحديث إعدادات القناة.
-    
+
     Args:
         channel_id: معرف القناة
         config: إعدادات القناة الجديدة
-        
+
     Returns:
         ChannelResponse: القناة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على القناة
     """
@@ -577,6 +589,7 @@ async def update_channel_config(
 # TOGGLE CHANNEL STATUS
 # ==============================================
 
+
 @router.patch(
     "/{channel_id}/toggle-status",
     response_model=ChannelResponse,
@@ -590,13 +603,13 @@ async def toggle_channel_status(
 ) -> ChannelResponse:
     """
     تبديل حالة القناة (نشط/غير نشط).
-    
+
     Args:
         channel_id: معرف القناة
-        
+
     Returns:
         ChannelResponse: القناة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على القناة
     """
@@ -639,6 +652,7 @@ async def toggle_channel_status(
 # DELETE CHANNEL
 # ==============================================
 
+
 @router.delete(
     "/{channel_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -653,11 +667,11 @@ async def delete_channel(
 ) -> None:
     """
     حذف قناة.
-    
+
     Args:
         channel_id: معرف القناة
         permanent: حذف نهائي
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على القناة
     """
@@ -725,6 +739,7 @@ async def delete_channel(
 # DELETE CHANNELS BY AGENT
 # ==============================================
 
+
 @router.delete(
     "/agent/{agent_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -739,11 +754,11 @@ async def delete_channels_by_agent(
 ) -> None:
     """
     حذف جميع قنوات وكيل معين.
-    
+
     Args:
         agent_id: معرف الوكيل
         permanent: حذف نهائي
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الوكيل
     """
@@ -799,6 +814,7 @@ async def delete_channels_by_agent(
 # GET CHANNEL STATISTICS
 # ==============================================
 
+
 @router.get(
     "/statistics/{agent_id}",
     response_model=Dict[str, Any],
@@ -812,10 +828,10 @@ async def get_channel_statistics(
 ) -> Dict[str, Any]:
     """
     الحصول على إحصائيات القنوات لوكيل معين.
-    
+
     Args:
         agent_id: معرف الوكيل
-        
+
     Returns:
         Dict[str, Any]: إحصائيات القنوات
     """

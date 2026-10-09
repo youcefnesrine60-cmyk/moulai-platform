@@ -6,6 +6,16 @@
 # ==============================================
 
 # ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / RESTAURANT / METRICS / SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+# ==============================================
 # 📊 RESTAURANT METRICS SERVICE
 # Business Logic Layer - منطق الأعمال لمقاييس المطعم
 #
@@ -66,6 +76,10 @@ class RestaurantMetricsService:
         repo: مستودع مقاييس المطعم
     """
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         session: AsyncSession,
@@ -115,9 +129,7 @@ class RestaurantMetricsService:
 
         if not metrics:
             raise NotFoundError(
-                message=(
-                    f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة"
-                ),
+                message=(f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة"),
             )
 
         return RestaurantMetricResponse.model_validate(metrics)
@@ -193,9 +205,7 @@ class RestaurantMetricsService:
         # ✅ حساب products_per_category بأمان
         products_per_category = 0.0
         if metrics.categories_count > 0:
-            products_per_category = (
-                metrics.products_count / metrics.categories_count
-            )
+            products_per_category = metrics.products_count / metrics.categories_count
 
         return RestaurantMetricSummary(
             restaurant_id=metrics.restaurant_id,
@@ -243,10 +253,7 @@ class RestaurantMetricsService:
 
         if existing:
             raise ValidationError(
-                message=(
-                    f"مقاييس المطعم بـ ID '{restaurant_id}' "
-                    f"موجودة مسبقاً"
-                ),
+                message=(f"مقاييس المطعم بـ ID '{restaurant_id}' " f"موجودة مسبقاً"),
             )
 
         metrics = await self.repo.create_default(
@@ -300,9 +307,7 @@ class RestaurantMetricsService:
 
         if not metrics:
             raise NotFoundError(
-                message=(
-                    f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة"
-                ),
+                message=(f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة"),
             )
 
         updates = update_data.model_dump(exclude_unset=True)
@@ -317,9 +322,7 @@ class RestaurantMetricsService:
 
         if not updated:
             raise NotFoundError(
-                message=(
-                    f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة"
-                ),
+                message=(f"مقاييس المطعم بـ ID '{restaurant_id}' غير موجودة"),
             )
 
         logger.info(
@@ -389,34 +392,22 @@ class RestaurantMetricsService:
         Raises:
             ValidationError: إذا كانت أي قيمة غير صالحة
         """
-        if (
-            "products_count" in updates
-            and updates["products_count"] < 0
-        ):
+        if "products_count" in updates and updates["products_count"] < 0:
             raise ValidationError(
                 message="عدد المنتجات لا يمكن أن يكون سالباً",
             )
 
-        if (
-            "categories_count" in updates
-            and updates["categories_count"] < 0
-        ):
+        if "categories_count" in updates and updates["categories_count"] < 0:
             raise ValidationError(
                 message="عدد التصنيفات لا يمكن أن يكون سالباً",
             )
 
-        if (
-            "monthly_orders" in updates
-            and updates["monthly_orders"] < 0
-        ):
+        if "monthly_orders" in updates and updates["monthly_orders"] < 0:
             raise ValidationError(
                 message="عدد الطلبات الشهرية لا يمكن أن يكون سالباً",
             )
 
-        if (
-            "average_order_value" in updates
-            and updates["average_order_value"] < 0
-        ):
+        if "average_order_value" in updates and updates["average_order_value"] < 0:
             raise ValidationError(
                 message="متوسط قيمة الطلب لا يمكن أن يكون سالباً",
             )
@@ -430,6 +421,7 @@ class RestaurantMetricsService:
 # ==============================================
 # GET METRICS (COMPATIBILITY)
 # ==============================================
+
 
 async def get_metrics(
     *,
@@ -456,6 +448,7 @@ async def get_metrics(
 # ==============================================
 # INITIALIZE METRICS (COMPATIBILITY)
 # ==============================================
+
 
 async def initialize_metrics(
     *,
@@ -485,6 +478,7 @@ async def initialize_metrics(
 # ==============================================
 # RESET METRICS (COMPATIBILITY)
 # ==============================================
+
 
 async def reset_metrics(
     *,

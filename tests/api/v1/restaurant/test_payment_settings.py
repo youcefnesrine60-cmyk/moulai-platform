@@ -5,6 +5,16 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# TEST MODULE - TESTS / API / V1 / RESTAURANT / TEST PAYMENT SETTINGS
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test payment settings.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy import event, select
@@ -14,15 +24,19 @@ from app.models.restaurant_payment_setting import RestaurantPaymentSetting
 from app.models.owner import Owner
 from app.models.restaurant import Restaurant
 
-
 # ==============================================
 # 📋 TESTS - PAYMENT SETTINGS
 # ==============================================
+
 
 class TestPaymentSettingsAPI:
     """
     اختبارات نقاط نهاية إعدادات الدفع.
     """
+
+    # ==============================================
+    # SETUP
+    # ==============================================
 
     @pytest.fixture(autouse=True)
     async def setup(
@@ -33,9 +47,9 @@ class TestPaymentSettingsAPI:
     ) -> None:
         """
         تهيئة بيانات الاختبار.
-        
+
         ✅ التصحيح: استخدام flush() بدلاً من commit()
-        
+
         Args:
             db_session: جلسة قاعدة البيانات
             sample_owner_data: بيانات مالك نموذجية
@@ -67,22 +81,19 @@ class TestPaymentSettingsAPI:
     ) -> None:
         """
         اختبار إنشاء إعدادات الدفع.
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_payment_settings_data: بيانات إعدادات دفع نموذجية
         """
-        data = {
-            "restaurant_id": self.restaurant_id,
-            **sample_payment_settings_data
-        }
+        data = {"restaurant_id": self.restaurant_id, **sample_payment_settings_data}
         response = await client.post(
             "/api/v1/restaurant-payment-settings/",
             json=data,
         )
-        
+
         assert response.status_code == 201
-        
+
         data = response.json()
         assert data["restaurant_id"] == self.restaurant_id
         assert data["allow_cash"] is True
@@ -99,7 +110,7 @@ class TestPaymentSettingsAPI:
     ) -> None:
         """
         اختبار الحصول على إعدادات الدفع.
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_payment_settings_data: بيانات إعدادات دفع نموذجية
@@ -107,16 +118,16 @@ class TestPaymentSettingsAPI:
         # إنشاء الإعدادات أولاً
         create_data = {
             "restaurant_id": self.restaurant_id,
-            **sample_payment_settings_data
+            **sample_payment_settings_data,
         }
         await client.post("/api/v1/restaurant-payment-settings/", json=create_data)
 
         response = await client.get(
             f"/api/v1/restaurant-payment-settings/{self.restaurant_id}"
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["restaurant_id"] == self.restaurant_id
 
@@ -132,7 +143,7 @@ class TestPaymentSettingsAPI:
     ) -> None:
         """
         اختبار تحديث طرق الدفع.
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_payment_settings_data: بيانات إعدادات دفع نموذجية
@@ -140,14 +151,20 @@ class TestPaymentSettingsAPI:
         # إنشاء الإعدادات أولاً
         create_data = {
             "restaurant_id": self.restaurant_id,
-            **sample_payment_settings_data
+            **sample_payment_settings_data,
         }
         await client.post("/api/v1/restaurant-payment-settings/", json=create_data)
 
         # تحديث طرق الدفع
         statements = []
+
+        # ==============================================
+        # RECORD SQL
+        # ==============================================
+
         def record_sql(connection, cursor, statement, parameters, context, executemany):
             statements.append(statement.lower())
+
         engine = db_session.bind.sync_engine
         event.listen(engine, "before_cursor_execute", record_sql)
         try:
@@ -159,17 +176,26 @@ class TestPaymentSettingsAPI:
             event.remove(engine, "before_cursor_execute", record_sql)
 
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["allow_ccp"] is True
         assert data["allow_paypal"] is True
 
         # Updating settings must not traverse the restaurant/catalog graph.
-        assert not any("from products" in sql or "from restaurants" in sql
-                       or "from categories" in sql for sql in statements)
-        persisted = (await db_session.execute(select(
-            RestaurantPaymentSetting.allow_ccp, RestaurantPaymentSetting.allow_paypal
-        ).where(RestaurantPaymentSetting.restaurant_id == self.restaurant_id))).one()
+        assert not any(
+            "from products" in sql
+            or "from restaurants" in sql
+            or "from categories" in sql
+            for sql in statements
+        )
+        persisted = (
+            await db_session.execute(
+                select(
+                    RestaurantPaymentSetting.allow_ccp,
+                    RestaurantPaymentSetting.allow_paypal,
+                ).where(RestaurantPaymentSetting.restaurant_id == self.restaurant_id)
+            )
+        ).one()
         assert tuple(persisted) == (True, True)
 
     # ==============================================
@@ -183,7 +209,7 @@ class TestPaymentSettingsAPI:
     ) -> None:
         """
         اختبار تفعيل طريقة دفع.
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_payment_settings_data: بيانات إعدادات دفع نموذجية
@@ -191,7 +217,7 @@ class TestPaymentSettingsAPI:
         # إنشاء الإعدادات أولاً
         create_data = {
             "restaurant_id": self.restaurant_id,
-            **sample_payment_settings_data
+            **sample_payment_settings_data,
         }
         await client.post("/api/v1/restaurant-payment-settings/", json=create_data)
 
@@ -199,9 +225,9 @@ class TestPaymentSettingsAPI:
         response = await client.post(
             f"/api/v1/restaurant-payment-settings/{self.restaurant_id}/methods/stripe/enable"
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["allow_stripe"] is True
 

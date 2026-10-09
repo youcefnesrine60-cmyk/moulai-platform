@@ -11,6 +11,11 @@
 # يتضمن: التحقق من الرمز، صلاحيات المالك، عزل بيانات المطاعم
 # ==============================================
 
+"""MoulAI operational module for auth.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Optional
@@ -30,7 +35,9 @@ from app.core.database import get_db
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.owner import Owner
+from app.models.payment import Payment
 from app.models.restaurant import Restaurant
+from app.models.subscription import Subscription
 
 # ==============================================
 # 📋 CONSTANTS
@@ -60,6 +67,7 @@ bearer_scheme = HTTPBearer(auto_error=False)
 # هوية المالك بعد التحقق من الرمز
 # ==============================================
 
+
 @dataclass(frozen=True)
 class OwnerPrincipal:
     """
@@ -68,6 +76,7 @@ class OwnerPrincipal:
     Attributes:
         owner_id: معرف المالك في قاعدة البيانات.
     """
+
     owner_id: int
 
 
@@ -75,6 +84,12 @@ class OwnerPrincipal:
 # 🔑 JWKS CLIENT CACHE
 # ذاكرة تخزين مؤقت لعملاء JWKS
 # ==============================================
+
+
+# ==============================================
+#  GET JWKS CLIENT
+# ==============================================
+
 
 @lru_cache(maxsize=_JWKS_CLIENT_CACHE_SIZE)
 def _get_jwks_client(jwks_url: str) -> jwt.PyJWKClient:
@@ -98,6 +113,12 @@ def _get_jwks_client(jwks_url: str) -> jwt.PyJWKClient:
 # ⚙️ OIDC CONFIGURATION
 # التحقق من إعدادات OIDC
 # ==============================================
+
+
+# ==============================================
+#  OIDC CONFIGURATION
+# ==============================================
+
 
 def _oidc_configuration() -> tuple[str, str, str]:
     """
@@ -138,6 +159,12 @@ def _oidc_configuration() -> tuple[str, str, str]:
 # استعلامات أساسية لجلب المعرفات مع عزل المالك
 # ==============================================
 
+
+# ==============================================
+#  BASE RESTAURANT SELECT
+# ==============================================
+
+
 def _base_restaurant_select() -> Select:
     """
     استعلام أساسي لجلب معرف المطعم مع عزل المالك.
@@ -148,6 +175,11 @@ def _base_restaurant_select() -> Select:
     return select(Restaurant.id)
 
 
+# ==============================================
+#  BASE ORDER SELECT
+# ==============================================
+
+
 def _base_order_select() -> Select:
     """
     استعلام أساسي لجلب معرف الطلب مع ربط المطعم.
@@ -155,10 +187,15 @@ def _base_order_select() -> Select:
     Returns:
         Select: استعلام SQLAlchemy الأساسي مع join على جدول المطعم.
     """
-    return (
-        select(Order.id)
-        .join(Restaurant, Order.restaurant_id == Restaurant.id)
+    return select(Order.restaurant_id).join(
+        Restaurant,
+        Order.restaurant_id == Restaurant.id,
     )
+
+
+# ==============================================
+#  BASE ORDER ITEM SELECT
+# ==============================================
 
 
 def _base_order_item_select() -> Select:
@@ -176,9 +213,35 @@ def _base_order_item_select() -> Select:
 
 
 # ==============================================
+#  BASE PAYMENT SELECT
+# ==============================================
+
+
+def _base_payment_select() -> Select:
+    """Return the tenant-scoped base select for platform payments."""
+    return select(Payment.id)
+
+
+# ==============================================
+#  BASE SUBSCRIPTION SELECT
+# ==============================================
+
+
+def _base_subscription_select() -> Select:
+    """Return the tenant-scoped base select for subscriptions."""
+    return select(Subscription.id)
+
+
+# ==============================================
 # 🔐 GET CURRENT OWNER
 # التحقق من الرمز واستخراج هوية المالك
 # ==============================================
+
+
+# ==============================================
+# GET CURRENT OWNER
+# ==============================================
+
 
 async def get_current_owner(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
@@ -272,6 +335,12 @@ async def get_current_owner(
 # التحقق من ملكية المطعم مع عزل البيانات
 # ==============================================
 
+
+# ==============================================
+# REQUIRE OWNED RESTAURANT
+# ==============================================
+
+
 async def require_owned_restaurant(
     *,
     restaurant_id: int,
@@ -307,12 +376,18 @@ async def require_owned_restaurant(
 # التحقق من ملكية الطلب مع عزل بيانات المطعم
 # ==============================================
 
+
+# ==============================================
+# REQUIRE OWNED ORDER
+# ==============================================
+
+
 async def require_owned_order(
     *,
     order_id: int,
     owner: OwnerPrincipal,
     session: AsyncSession,
-) -> None:
+) -> int:
     """
     التحقق من أن الطلب يخص مطعماً يملكه المالك الحالي.
 
@@ -330,10 +405,62 @@ async def require_owned_order(
             Restaurant.owner_id == owner.owner_id,
         ),
     )
-    if result.scalar_one_or_none() is None:
+    restaurant_id = result.scalar_one_or_none()
+    if restaurant_id is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order not found",
+        )
+    return restaurant_id
+
+
+# ==============================================
+# REQUIRE OWNED PAYMENT
+# ==============================================
+
+
+async def require_owned_payment(
+    *,
+    payment_id: int,
+    owner: OwnerPrincipal,
+    session: AsyncSession,
+) -> None:
+    """Hide payments that do not belong to the authenticated owner."""
+    result = await session.execute(
+        _base_payment_select().where(
+            Payment.id == payment_id,
+            Payment.owner_id == owner.owner_id,
+        ),
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Payment not found",
+        )
+
+
+# ==============================================
+# REQUIRE OWNED SUBSCRIPTION
+# ==============================================
+
+
+async def require_owned_subscription(
+    *,
+    subscription_id: int,
+    owner: OwnerPrincipal,
+    session: AsyncSession,
+) -> None:
+    """Hide subscriptions that do not belong to the authenticated owner."""
+    result = await session.execute(
+        _base_subscription_select().where(
+            Subscription.id == subscription_id,
+            Subscription.owner_id == owner.owner_id,
+        ),
+    )
+    if result.scalar_one_or_none() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Subscription not found",
         )
 
 
@@ -341,6 +468,12 @@ async def require_owned_order(
 # 🧾 REQUIRE OWNED ORDER ITEM
 # التحقق من ملكية عنصر الطلب مع عزل البيانات
 # ==============================================
+
+
+# ==============================================
+# REQUIRE OWNED ORDER ITEM
+# ==============================================
+
 
 async def require_owned_order_item(
     *,

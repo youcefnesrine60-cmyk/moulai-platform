@@ -11,6 +11,11 @@
 # يدير بيانات المديرين وأدوارهم وصلاحياتهم
 # ==============================================
 
+"""MoulAI operational module for admin.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -25,16 +30,17 @@ from .base import BaseModel
 # 🔐 ADMIN
 # ==============================================
 
+
 class Admin(BaseModel):
     """
     نموذج المدير - صلاحيات الإدارة والتحكم
-    
+
     يدير:
         - بيانات المدير الأساسية (chat_id, username, full_name)
         - الأدوار والصلاحيات (admin, super_admin, support)
         - كلمة المرور المشفرة
         - حالة النشاط
-    
+
     Attributes:
         chat_id: معرف المستخدم في تيليجرام (فريد)
         username: اسم المستخدم
@@ -45,12 +51,13 @@ class Admin(BaseModel):
         logs: سجل أنشطة المدير
         sessions: جلسات المدير النشطة
     """
+
     __tablename__ = "admins"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     chat_id = Column(
         BigInteger,
         unique=True,
@@ -82,11 +89,11 @@ class Admin(BaseModel):
         default=True,
         comment="حالة النشاط",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     logs = relationship(
         "AdminLog",
         back_populates="admin",
@@ -101,15 +108,15 @@ class Admin(BaseModel):
         lazy="selectin",
         # comment="جلسات المدير النشطة",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف واسم المستخدم والدور
         """

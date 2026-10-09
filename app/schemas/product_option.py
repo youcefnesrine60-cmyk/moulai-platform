@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها لخيارات المنتج
 # ==============================================
 
+"""MoulAI operational module for product option.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     Field,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,12 +43,13 @@ ProductOptionList = List["ProductOptionResponse"]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class ProductOptionBase(BaseModel):
     """
     المخطط الأساسي لخيار المنتج.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات خيار المنتج.
-    
+
     Attributes:
         group_id: معرف مجموعة الخيارات
         name: اسم الخيار
@@ -52,6 +57,7 @@ class ProductOptionBase(BaseModel):
         is_available: حالة التوفر
         sort_order: ترتيب العرض
     """
+
     group_id: int = Field(
         ...,
         description="معرف مجموعة الخيارات",
@@ -85,16 +91,18 @@ class ProductOptionBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class ProductOptionCreate(BaseModel):
     """
     مخطط إنشاء خيار منتج جديد.
-    
+
     Attributes:
         name: اسم الخيار
         extra_price: السعر الإضافي (اختياري)
         is_available: حالة التوفر (اختياري)
         sort_order: ترتيب العرض (اختياري)
     """
+
     name: str = Field(
         ...,
         max_length=255,
@@ -123,16 +131,18 @@ class ProductOptionCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class ProductOptionUpdate(BaseModel):
     """
     مخطط تحديث خيار المنتج - جميع الحقول اختيارية.
-    
+
     Attributes:
         name: اسم الخيار
         extra_price: السعر الإضافي
         is_available: حالة التوفر
         sort_order: ترتيب العرض
     """
+
     name: Optional[str] = Field(
         None,
         max_length=255,
@@ -161,13 +171,15 @@ class ProductOptionUpdate(BaseModel):
 # 📤 AVAILABILITY UPDATE SCHEMA
 # ==============================================
 
+
 class ProductOptionAvailabilityUpdate(BaseModel):
     """
     مخطط تحديث حالة توفر خيار المنتج.
-    
+
     Attributes:
         is_available: حالة التوفر الجديدة
     """
+
     is_available: bool = Field(
         ...,
         description="حالة التوفر الجديدة",
@@ -179,15 +191,17 @@ class ProductOptionAvailabilityUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class ProductOptionResponse(ProductOptionBase):
     """
     مخطط استجابة خيار المنتج - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف الخيار
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -209,16 +223,18 @@ class ProductOptionResponse(ProductOptionBase):
 # 📋 PRODUCT OPTION LIST RESPONSE
 # ==============================================
 
+
 class ProductOptionListResponse(BaseModel):
     """
     مخطط استجابة قائمة خيارات المنتج.
-    
+
     Attributes:
         items: قائمة الخيارات
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: ProductOptionList = Field(
@@ -246,10 +262,11 @@ class ProductOptionListResponse(BaseModel):
 # 📊 PRODUCT OPTION SUMMARY
 # ==============================================
 
+
 class ProductOptionSummary(BaseModel):
     """
     مخطط ملخص خيارات المنتج.
-    
+
     Attributes:
         group_id: معرف مجموعة الخيارات
         total_options: إجمالي عدد الخيارات
@@ -260,6 +277,7 @@ class ProductOptionSummary(BaseModel):
         min_extra_price: أقل سعر إضافي
         max_extra_price: أعلى سعر إضافي
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     group_id: int = Field(
@@ -308,15 +326,17 @@ class ProductOptionSummary(BaseModel):
 # ✅ PRODUCT OPTION VALIDATION
 # ==============================================
 
+
 class ProductOptionValidation(BaseModel):
     """
     مخطط التحقق من صحة خيار المنتج.
-    
+
     Attributes:
         is_valid: هل الخيار صالح
         errors: قائمة الأخطاء
         warnings: قائمة التحذيرات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     is_valid: bool = Field(
@@ -340,14 +360,16 @@ class ProductOptionValidation(BaseModel):
 # 📊 BULK PRODUCT OPTION CREATE
 # ==============================================
 
+
 class ProductOptionBulkCreate(BaseModel):
     """
     مخطط إنشاء عدة خيارات دفعة واحدة.
-    
+
     Attributes:
         group_id: معرف مجموعة الخيارات
         options: قائمة الخيارات
     """
+
     group_id: int = Field(
         ...,
         description="معرف مجموعة الخيارات",

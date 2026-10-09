@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 📊 RESTAURANT METRICS EVENT HANDLERS
 # معالجات أحداث مقاييس المطعم
 # ==============================================
+
+"""MoulAI operational module for handlers.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,24 +24,28 @@ from app.core.exceptions import (
 from app.core.logger import logger
 from app.services.business.restaurant.metrics.service import RestaurantMetricsService
 
-
 # ==============================================
 # 📊 METRICS EVENT HANDLERS
 # ==============================================
 
+
 class MetricsEventHandlers:
     """
     معالجات أحداث مقاييس المطعم.
-    
+
     تتعامل مع تحديث المقاييس عند حدوث أحداث:
         - إنشاء/حذف منتج
         - إنشاء/حذف تصنيف
         - تسجيل طلب
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         service: خدمة مقاييس المطعم
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -44,7 +53,7 @@ class MetricsEventHandlers:
     ) -> None:
         """
         تهيئة معالجات الأحداث.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -67,11 +76,11 @@ class MetricsEventHandlers:
     ) -> None:
         """
         معالج حدث إنشاء منتج جديد.
-        
+
         Args:
             restaurant_id: معرف المطعم
             amount: عدد المنتجات المضافة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المقاييس
             ValidationError: إذا كان العدد غير صالح
@@ -119,11 +128,11 @@ class MetricsEventHandlers:
     ) -> None:
         """
         معالج حدث حذف منتج.
-        
+
         Args:
             restaurant_id: معرف المطعم
             amount: عدد المنتجات المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المقاييس
             ValidationError: إذا كان العدد غير صالح
@@ -175,11 +184,11 @@ class MetricsEventHandlers:
     ) -> None:
         """
         معالج حدث إنشاء تصنيف جديد.
-        
+
         Args:
             restaurant_id: معرف المطعم
             amount: عدد التصنيفات المضافة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المقاييس
             ValidationError: إذا كان العدد غير صالح
@@ -227,11 +236,11 @@ class MetricsEventHandlers:
     ) -> None:
         """
         معالج حدث حذف تصنيف.
-        
+
         Args:
             restaurant_id: معرف المطعم
             amount: عدد التصنيفات المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المقاييس
             ValidationError: إذا كان العدد غير صالح
@@ -283,11 +292,11 @@ class MetricsEventHandlers:
     ) -> None:
         """
         معالج حدث تسجيل طلب جديد.
-        
+
         Args:
             restaurant_id: معرف المطعم
             order_total: إجمالي قيمة الطلب
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المقاييس
             ValidationError: إذا كانت قيمة الطلب غير صالحة

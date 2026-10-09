@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🍽️ RESTAURANT ROUTER - LIST
 # نقاط نهاية القوائم المختلفة
 # ==============================================
+
+"""MoulAI operational module for restaurant list router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional
 
@@ -25,11 +30,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.logger import logger
 from app.schemas.restaurant import (
-    RestaurantResponse,
     RestaurantListResponse,
 )
 from app.services.business.restaurant.restaurants.service import RestaurantService
-
 
 # ==============================================
 # 🏗️ ROUTER
@@ -44,6 +47,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_restaurant_service(
     session: AsyncSession = Depends(get_db),
@@ -60,6 +64,7 @@ async def get_restaurant_service(
 # LIST RESTAURANTS
 # ==============================================
 
+
 @router.get(
     "/",
     response_model=RestaurantListResponse,
@@ -70,7 +75,9 @@ async def list_restaurants(
     *,
     owner_id: Optional[int] = Query(None, description="معرف المالك", ge=1),
     wilaya: Optional[str] = Query(None, max_length=100, description="الولاية"),
-    search: Optional[str] = Query(None, min_length=1, max_length=255, description="نص البحث"),
+    search: Optional[str] = Query(
+        None, min_length=1, max_length=255, description="نص البحث"
+    ),
     only_active: bool = Query(True, description="جلب المطاعم النشطة فقط"),
     skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
     limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
@@ -150,6 +157,7 @@ async def list_restaurants(
 # ==============================================
 # GET OWNER RESTAURANTS
 # ==============================================
+
 
 @router.get(
     "/owner/{owner_id}/list",

@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🔄 RESTAURANT COMPATIBILITY
 # دوال متوافقة مع الاستيرادات القديمة
 # ==============================================
+
+"""MoulAI operational module for compat.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -24,9 +29,10 @@ from app.schemas.restaurant import (
     RestaurantCreate,
     RestaurantUpdate,
 )
-from app.services.business.restaurant.restaurants.handlers import RestaurantEventHandlers
+from app.services.business.restaurant.restaurants.handlers import (
+    RestaurantEventHandlers,
+)
 from app.services.business.restaurant.restaurants.service import RestaurantService
-
 
 # ==============================================
 # 📦 RESTAURANT OPERATIONS (COMPATIBILITY)
@@ -35,6 +41,7 @@ from app.services.business.restaurant.restaurants.service import RestaurantServi
 # ==============================================
 # CREATE RESTAURANT
 # ==============================================
+
 
 async def create_restaurant(
     *,
@@ -51,7 +58,7 @@ async def create_restaurant(
 ) -> int:
     """
     إنشاء مطعم جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Returns:
         int: معرف المطعم
     """
@@ -80,6 +87,7 @@ async def create_restaurant(
 # GET RESTAURANT
 # ==============================================
 
+
 async def get_restaurant(
     *,
     restaurant_id: int,
@@ -100,6 +108,7 @@ async def get_restaurant(
 # ==============================================
 # GET RESTAURANTS
 # ==============================================
+
 
 async def get_restaurants(
     *,
@@ -123,6 +132,7 @@ async def get_restaurants(
 # ==============================================
 # GET ALL RESTAURANTS
 # ==============================================
+
 
 async def get_all_restaurants(
     *,
@@ -148,6 +158,7 @@ async def get_all_restaurants(
 # ==============================================
 # UPDATE RESTAURANT
 # ==============================================
+
 
 async def update_restaurant(
     *,
@@ -177,6 +188,7 @@ async def update_restaurant(
 # DELETE RESTAURANT
 # ==============================================
 
+
 async def delete_restaurant(
     *,
     restaurant_id: int,
@@ -198,6 +210,7 @@ async def delete_restaurant(
 # ==============================================
 # TOGGLE RESTAURANT STATUS
 # ==============================================
+
 
 async def toggle_restaurant_status(
     *,

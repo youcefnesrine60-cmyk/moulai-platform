@@ -11,6 +11,11 @@
 # تدير عمليات إنشاء واستعراض وتحديث وحذف الطلبات
 # ==============================================
 
+"""MoulAI operational module for orders.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     List,
     Optional,
@@ -32,6 +37,7 @@ from app.api.auth import (
     require_owned_restaurant,
     OwnerPrincipal,
 )
+
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
     ConflictError,
@@ -43,7 +49,6 @@ from app.core.database import get_db
 from app.core.logger import logger
 from app.schemas.order import (
     OrderCreate,
-    OrderItemCreate,
     OrderResponse,
     OrderStatusUpdate,
     OrderSummary,
@@ -75,19 +80,25 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_order_service(
     session: AsyncSession = Depends(get_db),
 ) -> OrderService:
     """
     الحصول على خدمة الطلبات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OrderService: مثيل من OrderService
     """
     return OrderService(session)
+
+
+# ==============================================
+# GET ORDER ITEMS SERVICE
+# ==============================================
 
 
 async def get_order_items_service(
@@ -95,10 +106,10 @@ async def get_order_items_service(
 ) -> OrderItemsService:
     """
     الحصول على خدمة عناصر الطلبات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OrderItemsService: مثيل من OrderItemsService
     """
@@ -112,6 +123,7 @@ async def get_order_items_service(
 # ==============================================
 # LIST ORDERS
 # ==============================================
+
 
 @router.get(
     "/",
@@ -149,14 +161,14 @@ async def list_orders(
 ) -> OrderListResponse:
     """
     الحصول على قائمة الطلبات.
-    
+
     Args:
         restaurant_id: معرف المطعم للتصفية
         status_filter: حالة الطلب للتصفية
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة الطلبات
-        
+
     Returns:
         OrderListResponse: قائمة الطلبات مع الإحصائيات
     """
@@ -223,6 +235,7 @@ async def list_orders(
 # GET ORDER BY ID
 # ==============================================
 
+
 @router.get(
     "/{order_id}",
     response_model=OrderWithItemsResponse,
@@ -238,15 +251,15 @@ async def get_order(
 ) -> OrderWithItemsResponse:
     """
     الحصول على طلب بالمعرف مع جميع تفاصيله.
-    
+
     Args:
         order_id: معرف الطلب
         service: خدمة الطلبات
         items_service: خدمة عناصر الطلبات
-        
+
     Returns:
         OrderWithItemsResponse: الطلب مع جميع تفاصيله
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب
     """
@@ -327,6 +340,7 @@ async def get_order(
 # ==============================================
 # CREATE ORDER
 # ==============================================
+
 
 @router.post(
     "/",
@@ -428,6 +442,7 @@ async def create_order(
 # UPDATE ORDER
 # ==============================================
 
+
 @router.patch(
     "/{order_id}",
     response_model=OrderResponse,
@@ -443,15 +458,15 @@ async def update_order(
 ) -> OrderResponse:
     """
     تحديث طلب موجود.
-    
+
     Args:
         order_id: معرف الطلب
         data: بيانات التحديث
         service: خدمة الطلبات
-        
+
     Returns:
         OrderResponse: الطلب المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب أو حدث تعارض
     """
@@ -518,6 +533,7 @@ async def update_order(
 # UPDATE ORDER STATUS
 # ==============================================
 
+
 @router.patch(
     "/{order_id}/status",
     response_model=OrderResponse,
@@ -533,15 +549,15 @@ async def update_order_status(
 ) -> OrderResponse:
     """
     تغيير حالة الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         data: بيانات تحديث الحالة
         service: خدمة الطلبات
-        
+
     Returns:
         OrderResponse: الطلب المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب
     """
@@ -609,6 +625,7 @@ async def update_order_status(
 # COMPLETE ORDER
 # ==============================================
 
+
 @router.post(
     "/{order_id}/complete",
     response_model=OrderResponse,
@@ -633,13 +650,13 @@ async def complete_order_endpoint(
 ) -> OrderResponse:
     """
     إكمال الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         employee_id: معرف الموظف (اختياري)
         note: ملاحظة (اختياري)
         service: خدمة الطلبات
-        
+
     Returns:
         OrderResponse: الطلب المحدث
     """
@@ -707,6 +724,7 @@ async def complete_order_endpoint(
 # CANCEL ORDER
 # ==============================================
 
+
 @router.post(
     "/{order_id}/cancel",
     response_model=OrderResponse,
@@ -731,13 +749,13 @@ async def cancel_order_endpoint(
 ) -> OrderResponse:
     """
     إلغاء الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         employee_id: معرف الموظف (اختياري)
         reason: سبب الإلغاء (اختياري)
         service: خدمة الطلبات
-        
+
     Returns:
         OrderResponse: الطلب المحدث
     """
@@ -806,6 +824,7 @@ async def cancel_order_endpoint(
 # MARK ORDER AS PAID
 # ==============================================
 
+
 @router.post(
     "/{order_id}/paid",
     response_model=OrderResponse,
@@ -825,12 +844,12 @@ async def mark_order_paid_endpoint(
 ) -> OrderResponse:
     """
     تحديد الطلب كمدفوع.
-    
+
     Args:
         order_id: معرف الطلب
         payment_id: معرف الدفعة
         service: خدمة الطلبات
-        
+
     Returns:
         OrderResponse: الطلب المحدث
     """
@@ -842,7 +861,7 @@ async def mark_order_paid_endpoint(
         },
     )
 
-    await require_owned_order(
+    restaurant_id = await require_owned_order(
         order_id=order_id,
         owner=owner,
         session=service.session,
@@ -851,6 +870,7 @@ async def mark_order_paid_endpoint(
     try:
         order = await service.mark_as_paid(
             order_id=order_id,
+            restaurant_id=restaurant_id,
             payment_id=payment_id,
         )
         return order
@@ -897,6 +917,7 @@ async def mark_order_paid_endpoint(
 # DELETE ORDER
 # ==============================================
 
+
 @router.delete(
     "/{order_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -915,12 +936,12 @@ async def delete_order(
 ) -> None:
     """
     حذف طلب.
-    
+
     Args:
         order_id: معرف الطلب
         permanent: حذف نهائي
         service: خدمة الطلبات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الطلب
     """
@@ -994,6 +1015,7 @@ async def delete_order(
 # GET ORDER SUMMARY
 # ==============================================
 
+
 @router.get(
     "/stats/summary",
     response_model=OrderSummary,
@@ -1012,14 +1034,14 @@ async def get_order_summary(
 ) -> OrderSummary:
     """
     الحصول على ملخص الطلبات.
-    
+
     Args:
         restaurant_id: معرف المطعم
         service: خدمة الطلبات
-        
+
     Returns:
         OrderSummary: ملخص الطلبات
-        
+
     Raises:
         HTTPException: إذا حدث خطأ
     """

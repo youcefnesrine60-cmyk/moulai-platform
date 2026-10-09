@@ -1,13 +1,22 @@
-from app.repositories.orders_repo import lock_order
-from app.services.business.orders.transaction import transactional_order
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
 # ==============================================
 # 📦 ORDERS SERVICE - CANCEL
 # إلغاء الطلب (cancel_order)
 # ==============================================
 
+"""MoulAI operational module for cancel.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import Optional
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # ✅ استيراد الاستثناءات
@@ -17,8 +26,8 @@ from app.core.exceptions import (
 )
 
 from app.core.logger import logger
-from app.models.order import Order
-from app.repositories.orders_repo import OrdersRepository
+from app.repositories.orders_repo import lock_order
+from app.services.business.orders.transaction import transactional_order
 from app.services.business.orders.update import change_order_status
 
 # ==============================================
@@ -36,6 +45,7 @@ NON_CANCELLABLE_STATUSES = {"completed", "delivered", "cancelled"}
 # ❌ CANCEL ORDER
 # ==============================================
 
+
 @transactional_order
 async def cancel_order(
     *,
@@ -46,13 +56,13 @@ async def cancel_order(
 ) -> None:
     """
     إلغاء الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         employee_id: معرف الموظف (اختياري)
         reason: سبب الإلغاء (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كانت حالة الطلب لا تسمح بالإلغاء
@@ -123,6 +133,7 @@ async def cancel_order(
 # ❌ CANCEL ORDER WITH REFUND
 # ==============================================
 
+
 @transactional_order
 async def cancel_order_with_refund(
     *,
@@ -133,13 +144,13 @@ async def cancel_order_with_refund(
 ) -> None:
     """
     إلغاء الطلب مع استرداد المبلغ (للطلبات المدفوعة).
-    
+
     Args:
         order_id: معرف الطلب
         employee_id: معرف الموظف (اختياري)
         reason: سبب الإلغاء (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كانت حالة الطلب لا تسمح بالإلغاء أو لم يتم الدفع
@@ -185,6 +196,7 @@ async def cancel_order_with_refund(
 
     # Record the refund in the internal ledger; gateway settlement is separate.
     from app.services.business.order_payments_service import OrderPaymentsService
+
     payment_service = OrderPaymentsService(session=session)
     for payment in order.payments:
         if payment.payment_status == "paid":
@@ -203,6 +215,7 @@ async def cancel_order_with_refund(
 # ❌ BULK CANCEL ORDERS
 # ==============================================
 
+
 @transactional_order
 async def bulk_cancel_orders(
     *,
@@ -213,16 +226,16 @@ async def bulk_cancel_orders(
 ) -> dict:
     """
     إلغاء مجموعة من الطلبات دفعة واحدة.
-    
+
     Args:
         order_ids: قائمة معرفات الطلبات
         employee_id: معرف الموظف (اختياري)
         reason: سبب الإلغاء (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         dict: نتائج الإلغاء (cancelled, failed)
-        
+
     Raises:
         ValueError: إذا كانت القائمة فارغة
     """
@@ -262,10 +275,12 @@ async def bulk_cancel_orders(
                     "error": str(e),
                 },
             )
-            results["failed"].append({
-                "order_id": order_id,
-                "error": str(e),
-            })
+            results["failed"].append(
+                {
+                    "order_id": order_id,
+                    "error": str(e),
+                }
+            )
 
         except Exception as e:
             logger.error(
@@ -275,10 +290,12 @@ async def bulk_cancel_orders(
                     "error": str(e),
                 },
             )
-            results["failed"].append({
-                "order_id": order_id,
-                "error": f"خطأ غير متوقع: {str(e)}",
-            })
+            results["failed"].append(
+                {
+                    "order_id": order_id,
+                    "error": f"خطأ غير متوقع: {str(e)}",
+                }
+            )
 
     logger.info(
         "bulk_cancel_orders_completed",
@@ -296,7 +313,13 @@ async def bulk_cancel_orders(
 # 🔄 COMPATIBILITY FUNCTIONS
 # ==============================================
 
+
 # دالة التوافق مع الإصدار القديم
+# ==============================================
+# CANCEL ORDER COMPAT
+# ==============================================
+
+
 async def cancel_order_compat(
     *,
     order_id: int,
@@ -306,7 +329,7 @@ async def cancel_order_compat(
 ) -> None:
     """
     دالة متوافقة مع الإصدار القديم (مغلفة).
-    
+
     Args:
         order_id: معرف الطلب
         employee_id: معرف الموظف (اختياري)

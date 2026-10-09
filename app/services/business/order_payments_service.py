@@ -1,5 +1,23 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDER PAYMENTS SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order payments service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.repositories.orders_repo import lock_order
 from app.services.business.orders.transaction import transactional_order
+
 # ==============================================
 # 💳 ORDER PAYMENTS SERVICE
 # Business Logic Layer
@@ -34,9 +52,6 @@ from app.core.exceptions import (
 )
 
 # ✅ استيراد دوال الأمان
-from app.core.security import (
-    sanitize_input,
-)
 
 from app.core.logger import logger
 from app.models.order_item import OrderPayment
@@ -53,7 +68,6 @@ from app.schemas.order_payment import (
     PaymentStatusUpdate,
     PaymentSummary,
 )
-
 
 # ==============================================
 # 🧩 CONSTANTS (DEFAULT VALUES)
@@ -90,13 +104,13 @@ AllowedMethodsSet = Set[str]
 class OrderPaymentsService:
     """
     خدمة مدفوعات الطلبات - تدير منطق الأعمال لمدفوعات الطلبات.
-    
+
     مسؤولة عن:
         - إنشاء مدفوعات الطلبات
         - تأكيد وفشل وإلغاء المدفوعات
         - التحقق من حالة المدفوعات
         - جلب طرق الدفع المسموح بها
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع مدفوعات الطلبات
@@ -104,13 +118,17 @@ class OrderPaymentsService:
         settings_repo: مستودع إعدادات الدفع
     """
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         session: AsyncSession,
     ) -> None:
         """
         تهيئة خدمة مدفوعات الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -132,8 +150,14 @@ class OrderPaymentsService:
         if payment is None:
             raise NotFoundError(message="Payment not found")
         await lock_order(order_id=payment.order_id, session=self.session)
-        await self.session.refresh(payment, attribute_names=["payment_status", "amount", "paid_at"])
+        await self.session.refresh(
+            payment, attribute_names=["payment_status", "amount", "paid_at"]
+        )
         return payment
+
+    # ==============================================
+    #  GET ALLOWED PAYMENT METHODS
+    # ==============================================
 
     async def _get_allowed_payment_methods(
         self,
@@ -142,10 +166,10 @@ class OrderPaymentsService:
     ) -> AllowedMethodsSet:
         """
         جلب طرق الدفع المسموح بها لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             Set[str]: مجموعة طرق الدفع المسموح بها
         """
@@ -196,11 +220,11 @@ class OrderPaymentsService:
     ) -> None:
         """
         التحقق من صحة طريقة الدفع لطلب معين.
-        
+
         Args:
             order_id: معرف الطلب
             payment_method: طريقة الدفع
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كانت طريقة الدفع غير مسموح بها
@@ -243,11 +267,11 @@ class OrderPaymentsService:
     ) -> None:
         """
         التحقق من صحة انتقال حالة الدفعة.
-        
+
         Args:
             current_status: الحالة الحالية
             new_status: الحالة الجديدة
-            
+
         Raises:
             ValidationError: إذا كان الانتقال غير صالح
         """
@@ -277,7 +301,9 @@ class OrderPaymentsService:
                 details={
                     "current_status": current_status,
                     "new_status": new_status,
-                    "allowed_transitions": list(valid_transitions.get(current_status, set())),
+                    "allowed_transitions": list(
+                        valid_transitions.get(current_status, set())
+                    ),
                 },
             )
 
@@ -296,13 +322,13 @@ class OrderPaymentsService:
     ) -> PaymentResponse:
         """
         الحصول على دفعة بالمعرف.
-        
+
         Args:
             payment_id: معرف الدفعة
-            
+
         Returns:
             PaymentResponse: بيانات الدفعة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفعة
         """
@@ -335,12 +361,12 @@ class OrderPaymentsService:
     ) -> List[PaymentResponse]:
         """
         الحصول على مدفوعات طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[PaymentResponse]: قائمة مدفوعات الطلب
         """
@@ -372,10 +398,10 @@ class OrderPaymentsService:
     ) -> Optional[PaymentResponse]:
         """
         الحصول على دفعة بواسطة مرجع المعاملة.
-        
+
         Args:
             transaction_reference: مرجع المعاملة
-            
+
         Returns:
             Optional[PaymentResponse]: بيانات الدفعة أو None
         """
@@ -404,10 +430,10 @@ class OrderPaymentsService:
     ) -> AllowedMethodsSet:
         """
         جلب طرق الدفع المسموح بها لطلب معين.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             Set[str]: مجموعة طرق الدفع المسموح بها
         """
@@ -431,10 +457,10 @@ class OrderPaymentsService:
     ) -> AllowedMethodsSet:
         """
         جلب طرق الدفع المسموح بها لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             Set[str]: مجموعة طرق الدفع المسموح بها
         """
@@ -453,10 +479,10 @@ class OrderPaymentsService:
     ) -> PaymentSummary:
         """
         الحصول على ملخص مدفوعات الطلب.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             PaymentSummary: ملخص المدفوعات
         """
@@ -485,7 +511,9 @@ class OrderPaymentsService:
             elif payment.payment_status == "pending":
                 pending_amount += payment.amount
 
-            status_counts[payment.payment_status] = status_counts.get(payment.payment_status, 0) + 1
+            status_counts[payment.payment_status] = (
+                status_counts.get(payment.payment_status, 0) + 1
+            )
 
         return PaymentSummary(
             total_payments=total_payments,
@@ -511,13 +539,13 @@ class OrderPaymentsService:
     ) -> PaymentResponse:
         """
         إنشاء دفعة جديدة للطلب.
-        
+
         Args:
             payment_data: بيانات الدفعة
-            
+
         Returns:
             PaymentResponse: بيانات الدفعة المنشأة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كانت البيانات غير صالحة
@@ -600,14 +628,14 @@ class OrderPaymentsService:
     ) -> PaymentResponse:
         """
         تحديث حالة الدفعة.
-        
+
         Args:
             payment_id: معرف الدفعة
             status_data: بيانات تحديث الحالة
-            
+
         Returns:
             PaymentResponse: بيانات الدفعة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفعة
             ValidationError: إذا كان الانتقال غير صالح
@@ -667,13 +695,13 @@ class OrderPaymentsService:
     ) -> PaymentResponse:
         """
         تأكيد الدفعة (تعيين الحالة إلى paid).
-        
+
         Args:
             payment_id: معرف الدفعة
-            
+
         Returns:
             PaymentResponse: بيانات الدفعة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفعة
             ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -723,13 +751,13 @@ class OrderPaymentsService:
     ) -> PaymentResponse:
         """
         تعيين الدفعة كفاشل.
-        
+
         Args:
             payment_id: معرف الدفعة
-            
+
         Returns:
             PaymentResponse: بيانات الدفعة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفعة
             ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -779,13 +807,13 @@ class OrderPaymentsService:
     ) -> PaymentResponse:
         """
         إلغاء الدفعة.
-        
+
         Args:
             payment_id: معرف الدفعة
-            
+
         Returns:
             PaymentResponse: بيانات الدفعة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفعة
             ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -835,13 +863,13 @@ class OrderPaymentsService:
     ) -> PaymentResponse:
         """
         استرداد الدفعة.
-        
+
         Args:
             payment_id: معرف الدفعة
-            
+
         Returns:
             PaymentResponse: بيانات الدفعة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفعة
             ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -894,10 +922,10 @@ class OrderPaymentsService:
     ) -> None:
         """
         حذف دفعة.
-        
+
         Args:
             payment_id: معرف الدفعة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الدفعة
             ValidationError: إذا كانت الدفعة مدفوعة أو معلقة
@@ -941,6 +969,7 @@ class OrderPaymentsService:
 # CREATE PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def create_payment(
     *,
     order_id: int,
@@ -951,17 +980,17 @@ async def create_payment(
 ) -> int:
     """
     إنشاء دفعة جديدة للطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         payment_method: طريقة الدفع
         amount: المبلغ
         transaction_reference: مرجع المعاملة (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف الدفعة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كانت البيانات غير صالحة
@@ -986,6 +1015,7 @@ async def create_payment(
 # GET ALLOWED PAYMENT METHODS FOR ORDER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_allowed_payment_methods_for_order(
     *,
     order_id: int,
@@ -993,11 +1023,11 @@ async def get_allowed_payment_methods_for_order(
 ) -> AllowedMethodsSet:
     """
     جلب طرق الدفع المسموح بها لطلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Set[str]: مجموعة طرق الدفع المسموح بها
     """
@@ -1010,6 +1040,7 @@ async def get_allowed_payment_methods_for_order(
 # GET ALLOWED PAYMENT METHODS BY RESTAURANT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_allowed_payment_methods_by_restaurant(
     *,
     restaurant_id: int,
@@ -1017,11 +1048,11 @@ async def get_allowed_payment_methods_by_restaurant(
 ) -> AllowedMethodsSet:
     """
     جلب طرق الدفع المسموح بها لمطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Set[str]: مجموعة طرق الدفع المسموح بها
     """
@@ -1036,6 +1067,7 @@ async def get_allowed_payment_methods_by_restaurant(
 # CONFIRM PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def confirm_payment(
     *,
     payment_id: int,
@@ -1043,11 +1075,11 @@ async def confirm_payment(
 ) -> None:
     """
     تأكيد دفعة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفعة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الدفعة
         ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -1066,6 +1098,7 @@ async def confirm_payment(
 # FAIL PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def fail_payment(
     *,
     payment_id: int,
@@ -1073,11 +1106,11 @@ async def fail_payment(
 ) -> None:
     """
     تعيين الدفعة كفاشل (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفعة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الدفعة
         ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -1096,6 +1129,7 @@ async def fail_payment(
 # CANCEL PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def cancel_payment(
     *,
     payment_id: int,
@@ -1103,11 +1137,11 @@ async def cancel_payment(
 ) -> None:
     """
     إلغاء دفعة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفعة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الدفعة
         ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -1126,6 +1160,7 @@ async def cancel_payment(
 # REFUND PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def refund_payment(
     *,
     payment_id: int,
@@ -1133,11 +1168,11 @@ async def refund_payment(
 ) -> None:
     """
     استرداد دفعة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفعة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الدفعة
         ValidationError: إذا كانت الحالة غير صالحة للانتقال
@@ -1156,6 +1191,7 @@ async def refund_payment(
 # REMOVE PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def remove_payment(
     *,
     payment_id: int,
@@ -1163,11 +1199,11 @@ async def remove_payment(
 ) -> None:
     """
     حذف دفعة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفعة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الدفعة
         ValidationError: إذا كانت الدفعة مدفوعة أو معلقة
@@ -1186,6 +1222,7 @@ async def remove_payment(
 # IS PAID (COMPATIBILITY)
 # ==============================================
 
+
 async def is_paid(
     *,
     payment_id: int,
@@ -1193,11 +1230,11 @@ async def is_paid(
 ) -> bool:
     """
     التحقق من أن الدفعة مدفوعة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفعة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         bool: True إذا كانت مدفوعة
     """
@@ -1214,6 +1251,7 @@ async def is_paid(
 # IS PENDING (COMPATIBILITY)
 # ==============================================
 
+
 async def is_pending(
     *,
     payment_id: int,
@@ -1221,11 +1259,11 @@ async def is_pending(
 ) -> bool:
     """
     التحقق من أن الدفعة معلقة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفعة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         bool: True إذا كانت معلقة
     """

@@ -10,6 +10,11 @@
 # نقاط نهاية تهيئة عداد طلبات المطعم
 # ==============================================
 
+"""MoulAI operational module for router initialize.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -33,7 +38,6 @@ from app.services.business.restaurant.order_counter.service import (
 )
 from app.services.business.restaurant.restaurants.service import RestaurantService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -48,11 +52,17 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_order_counter_service(
     session: AsyncSession = Depends(get_db),
 ) -> RestaurantOrderCounterService:
     """الحصول على خدمة عداد طلبات المطعم."""
     return RestaurantOrderCounterService(session)
+
+
+# ==============================================
+# GET RESTAURANT SERVICE
+# ==============================================
 
 
 async def get_restaurant_service(
@@ -69,6 +79,7 @@ async def get_restaurant_service(
 # ==============================================
 # INITIALIZE ORDER COUNTER
 # ==============================================
+
 
 @router.post(
     "/{restaurant_id}/initialize",

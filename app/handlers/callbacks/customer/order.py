@@ -1,7 +1,19 @@
 # ==============================================
-# 📦 ORDER CALLBACKS
-# معالجة أزرار الطلبات
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / CUSTOMER / ORDER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -12,11 +24,16 @@ from app.helpers.ui_manager import UIManager
 
 from app.services.business.orders import get_restaurant_order
 
-
 # ==============================================
 # 📦 ORDER DETAILS
 # عرض تفاصيل الطلب
 # ==============================================
+
+
+# ==============================================
+# ORDER DETAILS CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,

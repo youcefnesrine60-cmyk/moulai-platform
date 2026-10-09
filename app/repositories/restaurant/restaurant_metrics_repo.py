@@ -1,7 +1,19 @@
 # ==============================================
-# 📊 RESTAURANT METRICS REPOSITORY
-# عمليات قاعدة البيانات لمقاييس المطعم باستخدام SQLAlchemy
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / RESTAURANT / RESTAURANT METRICS REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for restaurant metrics repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -10,7 +22,6 @@ from typing import (
 )
 
 from sqlalchemy import (
-    func,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -40,17 +51,21 @@ class RestaurantMetricsRepository(
 ):
     """
     مستودع مقاييس المطعم - يوفر عمليات خاصة بمقاييس المطاعم.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لمقاييس المطعم
         - إنشاء مقاييس افتراضية للمطعم الجديد
         - تحديث عدد المنتجات والتصنيفات
         - تسجيل الطلبات وتحديث المقاييس
-    
+
     Attributes:
         model: نموذج RestaurantMetric
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -58,7 +73,7 @@ class RestaurantMetricsRepository(
     ) -> None:
         """
         تهيئة مستودع مقاييس المطعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -79,10 +94,10 @@ class RestaurantMetricsRepository(
     ) -> Optional[RestaurantMetric]:
         """
         الحصول على مقاييس مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             كائن RestaurantMetric أو None
         """
@@ -120,10 +135,10 @@ class RestaurantMetricsRepository(
     ) -> RestaurantMetric:
         """
         إنشاء مقاييس افتراضية لمطعم جديد.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             كائن RestaurantMetric المنشأ
         """
@@ -174,11 +189,11 @@ class RestaurantMetricsRepository(
     ) -> Optional[RestaurantMetric]:
         """
         زيادة عدد المنتجات.
-        
+
         Args:
             restaurant_id: معرف المطعم
             amount: مقدار الزيادة
-            
+
         Returns:
             كائن RestaurantMetric المحدث أو None
         """
@@ -218,11 +233,11 @@ class RestaurantMetricsRepository(
     ) -> Optional[RestaurantMetric]:
         """
         تقليل عدد المنتجات.
-        
+
         Args:
             restaurant_id: معرف المطعم
             amount: مقدار النقصان
-            
+
         Returns:
             كائن RestaurantMetric المحدث أو None
         """
@@ -262,11 +277,11 @@ class RestaurantMetricsRepository(
     ) -> Optional[RestaurantMetric]:
         """
         زيادة عدد التصنيفات.
-        
+
         Args:
             restaurant_id: معرف المطعم
             amount: مقدار الزيادة
-            
+
         Returns:
             كائن RestaurantMetric المحدث أو None
         """
@@ -306,11 +321,11 @@ class RestaurantMetricsRepository(
     ) -> Optional[RestaurantMetric]:
         """
         تقليل عدد التصنيفات.
-        
+
         Args:
             restaurant_id: معرف المطعم
             amount: مقدار النقصان
-            
+
         Returns:
             كائن RestaurantMetric المحدث أو None
         """
@@ -350,11 +365,11 @@ class RestaurantMetricsRepository(
     ) -> Optional[RestaurantMetric]:
         """
         تسجيل طلب جديد وتحديث المقاييس.
-        
+
         Args:
             restaurant_id: معرف المطعم
             order_total: إجمالي قيمة الطلب
-            
+
         Returns:
             كائن RestaurantMetric المحدث أو None
         """
@@ -410,10 +425,10 @@ class RestaurantMetricsRepository(
     ) -> float:
         """
         الحصول على متوسط قيمة الطلب لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             متوسط قيمة الطلب
         """
@@ -434,10 +449,10 @@ class RestaurantMetricsRepository(
     ) -> int:
         """
         الحصول على عدد الطلبات الشهرية لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             عدد الطلبات الشهرية
         """
@@ -458,10 +473,10 @@ class RestaurantMetricsRepository(
     ) -> int:
         """
         الحصول على عدد المنتجات لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             عدد المنتجات
         """
@@ -482,10 +497,10 @@ class RestaurantMetricsRepository(
     ) -> int:
         """
         الحصول على عدد التصنيفات لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             عدد التصنيفات
         """
@@ -505,6 +520,7 @@ class RestaurantMetricsRepository(
 # GET RESTAURANT METRICS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurant_metrics(
     *,
     restaurant_id: int,
@@ -512,11 +528,11 @@ async def get_restaurant_metrics(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مقاييس مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         مقاييس المطعم أو None
     """
@@ -543,6 +559,7 @@ async def get_restaurant_metrics(
 # CREATE RESTAURANT METRICS (COMPATIBILITY)
 # ==============================================
 
+
 async def create_restaurant_metrics(
     *,
     restaurant_id: int,
@@ -550,7 +567,7 @@ async def create_restaurant_metrics(
 ) -> None:
     """
     إنشاء مقاييس افتراضية لمطعم جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -569,6 +586,7 @@ async def create_restaurant_metrics(
 # INCREMENT PRODUCTS COUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def increment_products_count(
     *,
     restaurant_id: int,
@@ -577,7 +595,7 @@ async def increment_products_count(
 ) -> None:
     """
     زيادة عدد المنتجات (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         amount: مقدار الزيادة
@@ -603,6 +621,7 @@ async def increment_products_count(
 # DECREMENT PRODUCTS COUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def decrement_products_count(
     *,
     restaurant_id: int,
@@ -611,7 +630,7 @@ async def decrement_products_count(
 ) -> None:
     """
     تقليل عدد المنتجات (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         amount: مقدار النقصان
@@ -637,6 +656,7 @@ async def decrement_products_count(
 # INCREMENT CATEGORIES COUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def increment_categories_count(
     *,
     restaurant_id: int,
@@ -645,7 +665,7 @@ async def increment_categories_count(
 ) -> None:
     """
     زيادة عدد التصنيفات (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         amount: مقدار الزيادة
@@ -671,6 +691,7 @@ async def increment_categories_count(
 # DECREMENT CATEGORIES COUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def decrement_categories_count(
     *,
     restaurant_id: int,
@@ -679,7 +700,7 @@ async def decrement_categories_count(
 ) -> None:
     """
     تقليل عدد التصنيفات (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         amount: مقدار النقصان
@@ -705,6 +726,7 @@ async def decrement_categories_count(
 # REGISTER ORDER METRICS (COMPATIBILITY)
 # ==============================================
 
+
 async def register_order_metrics(
     *,
     restaurant_id: int,
@@ -713,7 +735,7 @@ async def register_order_metrics(
 ) -> None:
     """
     تسجيل طلب جديد وتحديث المقاييس (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         order_total: إجمالي قيمة الطلب

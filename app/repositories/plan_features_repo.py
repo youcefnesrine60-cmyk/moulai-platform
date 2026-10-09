@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for plan features repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -58,6 +63,10 @@ class PlanFeatureRepository(
         model: نموذج PlanFeature
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -451,6 +460,7 @@ class PlanFeatureRepository(
 # ADD FEATURE TO PLAN (COMPATIBILITY)
 # ==============================================
 
+
 async def add_feature_to_plan(
     *,
     plan_id: int,
@@ -485,6 +495,7 @@ async def add_feature_to_plan(
 # GET PLAN FEATURES (COMPATIBILITY)
 # ==============================================
 
+
 async def get_plan_features(
     *,
     plan_id: int,
@@ -507,13 +518,15 @@ async def get_plan_features(
     result = []
 
     for pf in plan_features:
-        result.append({
-            "id": pf.id,
-            "plan_id": pf.plan_id,
-            "feature_id": pf.feature_id,
-            "included": pf.included,
-            "created_at": pf.created_at,
-        })
+        result.append(
+            {
+                "id": pf.id,
+                "plan_id": pf.plan_id,
+                "feature_id": pf.feature_id,
+                "included": pf.included,
+                "created_at": pf.created_at,
+            }
+        )
 
     return result
 
@@ -521,6 +534,7 @@ async def get_plan_features(
 # ==============================================
 # GET INCLUDED FEATURES (COMPATIBILITY)
 # ==============================================
+
 
 async def get_included_features(
     *,
@@ -544,13 +558,15 @@ async def get_included_features(
     result = []
 
     for pf in plan_features:
-        result.append({
-            "id": pf.id,
-            "plan_id": pf.plan_id,
-            "feature_id": pf.feature_id,
-            "included": pf.included,
-            "created_at": pf.created_at,
-        })
+        result.append(
+            {
+                "id": pf.id,
+                "plan_id": pf.plan_id,
+                "feature_id": pf.feature_id,
+                "included": pf.included,
+                "created_at": pf.created_at,
+            }
+        )
 
     return result
 
@@ -558,6 +574,7 @@ async def get_included_features(
 # ==============================================
 # PLAN HAS FEATURE (COMPATIBILITY)
 # ==============================================
+
 
 async def plan_has_feature(
     *,
@@ -588,6 +605,7 @@ async def plan_has_feature(
 # REMOVE FEATURE FROM PLAN (COMPATIBILITY)
 # ==============================================
 
+
 async def remove_feature_from_plan(
     *,
     plan_id: int,
@@ -613,6 +631,7 @@ async def remove_feature_from_plan(
 # ==============================================
 # UPDATE FEATURE INCLUDED STATUS (COMPATIBILITY)
 # ==============================================
+
 
 async def update_feature_included_status(
     *,

@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,6 +10,11 @@
 # نقاط نهاية API للوكلاء (CRUD)
 # تدير عمليات إنشاء واستعراض وتحديث وحذف الوكلاء
 # ==============================================
+
+"""MoulAI operational module for agent.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional
 
@@ -40,7 +45,6 @@ from app.schemas.agent import (
 )
 from app.services.business.agent.agent_service import AgentService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -55,15 +59,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_agent_service(
     session: AsyncSession = Depends(get_db),
 ) -> AgentService:
     """
     الحصول على خدمة الوكلاء.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         AgentService: مثيل من AgentService
     """
@@ -77,6 +82,7 @@ async def get_agent_service(
 # ==============================================
 # CREATE AGENT
 # ==============================================
+
 
 @router.post(
     "/",
@@ -92,13 +98,13 @@ async def create_agent(
 ) -> AgentResponse:
     """
     إنشاء وكيل جديد.
-    
+
     Args:
         data: بيانات الوكيل
-        
+
     Returns:
         AgentResponse: الوكيل المنشأ
-        
+
     Raises:
         HTTPException: إذا كان الاسم موجوداً مسبقاً
     """
@@ -159,6 +165,7 @@ async def create_agent(
 # GET AGENT BY ID
 # ==============================================
 
+
 @router.get(
     "/{agent_id}",
     response_model=AgentResponse,
@@ -173,14 +180,14 @@ async def get_agent_by_id(
 ) -> AgentResponse:
     """
     الحصول على وكيل بالمعرف.
-    
+
     Args:
         agent_id: معرف الوكيل
         include_inactive: تضمين الوكلاء غير النشطين
-        
+
     Returns:
         AgentResponse: الوكيل المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الوكيل
     """
@@ -229,6 +236,7 @@ async def get_agent_by_id(
 # GET AGENT WITH CHANNELS
 # ==============================================
 
+
 @router.get(
     "/{agent_id}/with-channels",
     response_model=AgentResponse,
@@ -243,14 +251,14 @@ async def get_agent_with_channels(
 ) -> AgentResponse:
     """
     الحصول على وكيل مع قنواته.
-    
+
     Args:
         agent_id: معرف الوكيل
         include_inactive: تضمين الوكلاء غير النشطين
-        
+
     Returns:
         AgentResponse: الوكيل المطلوب مع القنوات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الوكيل
     """
@@ -299,6 +307,7 @@ async def get_agent_with_channels(
 # LIST AGENTS BY RESTAURANT
 # ==============================================
 
+
 @router.get(
     "/restaurant/{restaurant_id}",
     response_model=AgentListResponse,
@@ -315,13 +324,13 @@ async def list_agents_by_restaurant(
 ) -> AgentListResponse:
     """
     الحصول على قائمة وكلاء مطعم معين.
-    
+
     Args:
         restaurant_id: معرف المطعم
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         only_active: جلب الوكلاء النشطين فقط
-        
+
     Returns:
         AgentListResponse: قائمة الوكلاء مع الإحصائيات
     """
@@ -361,6 +370,7 @@ async def list_agents_by_restaurant(
 # LIST AGENTS BY STATUS
 # ==============================================
 
+
 @router.get(
     "/status",
     response_model=AgentListResponse,
@@ -377,13 +387,13 @@ async def list_agents_by_status(
 ) -> AgentListResponse:
     """
     الحصول على قائمة الوكلاء حسب الحالة.
-    
+
     Args:
         restaurant_id: معرف المطعم (اختياري)
         is_active: حالة الوكيل
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         AgentListResponse: قائمة الوكلاء مع الإحصائيات
     """
@@ -423,6 +433,7 @@ async def list_agents_by_status(
 # SEARCH AGENTS
 # ==============================================
 
+
 @router.get(
     "/search",
     response_model=AgentListResponse,
@@ -440,14 +451,14 @@ async def search_agents(
 ) -> AgentListResponse:
     """
     البحث عن الوكلاء.
-    
+
     Args:
         query: نص البحث
         restaurant_id: معرف المطعم (اختياري)
         only_active: جلب الوكلاء النشطين فقط
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         AgentListResponse: قائمة الوكلاء مع الإحصائيات
     """
@@ -488,6 +499,7 @@ async def search_agents(
 # UPDATE AGENT
 # ==============================================
 
+
 @router.patch(
     "/{agent_id}",
     response_model=AgentResponse,
@@ -502,14 +514,14 @@ async def update_agent(
 ) -> AgentResponse:
     """
     تحديث وكيل موجود.
-    
+
     Args:
         agent_id: معرف الوكيل
         data: بيانات التحديث
-        
+
     Returns:
         AgentResponse: الوكيل المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الوكيل أو حدث تعارض
     """
@@ -582,6 +594,7 @@ async def update_agent(
 # UPDATE AGENT CONFIG
 # ==============================================
 
+
 @router.patch(
     "/{agent_id}/config",
     response_model=AgentResponse,
@@ -596,14 +609,14 @@ async def update_agent_config(
 ) -> AgentResponse:
     """
     تحديث إعدادات الوكيل.
-    
+
     Args:
         agent_id: معرف الوكيل
         data: بيانات الإعدادات
-        
+
     Returns:
         AgentResponse: الوكيل المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الوكيل
     """
@@ -651,6 +664,7 @@ async def update_agent_config(
 # TOGGLE AGENT STATUS
 # ==============================================
 
+
 @router.patch(
     "/{agent_id}/toggle-status",
     response_model=AgentResponse,
@@ -664,13 +678,13 @@ async def toggle_agent_status(
 ) -> AgentResponse:
     """
     تبديل حالة الوكيل (نشط/غير نشط).
-    
+
     Args:
         agent_id: معرف الوكيل
-        
+
     Returns:
         AgentResponse: الوكيل المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الوكيل
     """
@@ -713,6 +727,7 @@ async def toggle_agent_status(
 # BULK TOGGLE AGENTS STATUS
 # ==============================================
 
+
 @router.patch(
     "/bulk/toggle-status",
     response_model=dict,
@@ -727,11 +742,11 @@ async def bulk_toggle_agents_status(
 ) -> dict:
     """
     تبديل حالة مجموعة من الوكلاء.
-    
+
     Args:
         agent_ids: قائمة معرفات الوكلاء
         is_active: الحالة الجديدة
-        
+
     Returns:
         dict: عدد الوكلاء المحدثين
     """
@@ -771,6 +786,7 @@ async def bulk_toggle_agents_status(
 # DELETE AGENT
 # ==============================================
 
+
 @router.delete(
     "/{agent_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -785,11 +801,11 @@ async def delete_agent(
 ) -> None:
     """
     حذف وكيل.
-    
+
     Args:
         agent_id: معرف الوكيل
         permanent: حذف نهائي
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الوكيل
     """
@@ -857,6 +873,7 @@ async def delete_agent(
 # GET AGENT STATISTICS
 # ==============================================
 
+
 @router.get(
     "/statistics/{restaurant_id}",
     response_model=AgentStatistics,
@@ -870,10 +887,10 @@ async def get_agent_statistics(
 ) -> AgentStatistics:
     """
     الحصول على إحصائيات الوكلاء لمطعم معين.
-    
+
     Args:
         restaurant_id: معرف المطعم
-        
+
     Returns:
         AgentStatistics: إحصائيات الوكلاء
     """

@@ -11,6 +11,11 @@
 # يدير تصنيفات المنتجات داخل المطاعم
 # ==============================================
 
+"""MoulAI operational module for category.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Column,
     ForeignKey,
@@ -25,15 +30,16 @@ from .base import BaseModel
 # 📂 CATEGORY
 # ==============================================
 
+
 class Category(BaseModel):
     """
     نموذج تصنيف المنتجات
-    
+
     يدير:
         - اسم التصنيف
         - ترتيب التصنيف
         - العلاقات مع المطعم والمنتجات
-    
+
     Attributes:
         restaurant_id: معرف المطعم (ForeignKey)
         name: اسم التصنيف
@@ -41,12 +47,13 @@ class Category(BaseModel):
         restaurant: علاقة مع نموذج Restaurant
         products: قائمة المنتجات التابعة للتصنيف
     """
+
     __tablename__ = "categories"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     restaurant_id = Column(
         Integer,
         ForeignKey("restaurants.id", ondelete="CASCADE"),
@@ -63,11 +70,11 @@ class Category(BaseModel):
         default=0,
         comment="ترتيب التصنيف",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     restaurant = relationship(
         "Restaurant",
         back_populates="categories",
@@ -81,15 +88,15 @@ class Category(BaseModel):
         lazy="selectin",
         # comment="قائمة المنتجات التابعة للتصنيف",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والاسم ومعرف المطعم
         """

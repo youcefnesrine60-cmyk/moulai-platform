@@ -10,6 +10,11 @@
 # جلسات المدير - تتبع جلسات تسجيل الدخول
 # ==============================================
 
+"""MoulAI operational module for admin session.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Column,
     DateTime,
@@ -26,7 +31,7 @@ from .base import BaseModel
 class AdminSession(BaseModel):
     """
     جلسات المدير - تتبع جلسات تسجيل الدخول.
-    
+
     Attributes:
         admin_id: معرف المدير
         session_token: رمز الجلسة الفريد
@@ -36,13 +41,13 @@ class AdminSession(BaseModel):
         is_active: حالة الجلسة
         last_activity: آخر نشاط
     """
-    
+
     __tablename__ = "admin_sessions"
 
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     admin_id = Column(
         Integer,
         ForeignKey("admins.id", ondelete="CASCADE"),
@@ -81,11 +86,11 @@ class AdminSession(BaseModel):
         nullable=True,
         comment="آخر نشاط",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     admin = relationship(
         "Admin",
         back_populates="sessions",
@@ -95,6 +100,6 @@ class AdminSession(BaseModel):
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-        
+
     def __repr__(self) -> str:
         return f"<AdminSession(id={self.id}, admin_id={self.admin_id}, is_active={self.is_active})>"

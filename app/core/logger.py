@@ -5,17 +5,31 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# MOULAI MODULE - APP / CORE / LOGGER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for logger.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import logging
 import sys
 
 from pythonjsonlogger import json
 
-
 # ==========================================
 # SAFE JSON FORMATTER
 # ==========================================
 
+
 class SafeJsonFormatter(json.JsonFormatter):
+
+    # ==============================================
+    # ADD FIELDS
+    # ==============================================
 
     def add_fields(
         self,

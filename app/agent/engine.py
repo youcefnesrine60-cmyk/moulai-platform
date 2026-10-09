@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🤖 AGENT ENGINE
 # المحرك الرئيسي للوكيل الذكي
 # ==============================================
+
+"""MoulAI operational module for engine.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -39,7 +44,6 @@ from app.agent.prompts.translations import (
 )
 from app.agent.response_generator import (
     ResponseGenerator,
-    generate_response,
     response_generator as default_response_generator,
 )
 from app.core.logger import logger
@@ -59,7 +63,7 @@ ProcessResult = Dict[str, Any]
 class AgentEngine:
     """
     المحرك الرئيسي للوكيل الذكي.
-    
+
     يجمع جميع المكونات:
         - كاشف اللغة
         - مصنف النوايا
@@ -67,7 +71,7 @@ class AgentEngine:
         - منفذ الإجراءات
         - مدير الذاكرة
         - مولد الردود
-    
+
     Attributes:
         config: إعدادات الوكيل
         intent_classifier: مصنف النوايا
@@ -76,6 +80,10 @@ class AgentEngine:
         memory_manager: مدير الذاكرة
         response_generator: مولد الردود
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -89,7 +97,7 @@ class AgentEngine:
     ) -> None:
         """
         تهيئة محرك الوكيل.
-        
+
         Args:
             config: إعدادات الوكيل (اختياري)
             intent_classifier: مصنف النوايا (اختياري)
@@ -104,15 +112,9 @@ class AgentEngine:
         self.intent_classifier: IntentClassifier = (
             intent_classifier or IntentClassifier()
         )
-        self.entity_extractor: EntityExtractor = (
-            entity_extractor or EntityExtractor()
-        )
-        self.action_executor: ActionExecutor = (
-            action_executor or ActionExecutor()
-        )
-        self.memory_manager: MemoryManager = (
-            memory_manager or default_memory
-        )
+        self.entity_extractor: EntityExtractor = entity_extractor or EntityExtractor()
+        self.action_executor: ActionExecutor = action_executor or ActionExecutor()
+        self.memory_manager: MemoryManager = memory_manager or default_memory
         self.response_generator: ResponseGenerator = (
             response_generator or default_response_generator
         )
@@ -145,14 +147,14 @@ class AgentEngine:
     ) -> ProcessResult:
         """
         معالجة رسالة المستخدم.
-        
+
         Args:
             user_id: معرف المستخدم
             message: نص الرسالة
             session_id: معرف الجلسة (اختياري)
             channel: القناة (telegram, web, whatsapp)
             context: سياق إضافي (اختياري)
-            
+
         Returns:
             ProcessResult: {
                 "response": str,
@@ -396,16 +398,20 @@ class AgentEngine:
     ) -> Dict[str, Any]:
         """
         الحصول على معلومات الجلسة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             معلومات الجلسة
         """
         return await self.memory_manager.get_session_summary(
             session_id=session_id,
         )
+
+    # ==============================================
+    # GET CONTEXT
+    # ==============================================
 
     async def get_context(
         self,
@@ -414,16 +420,20 @@ class AgentEngine:
     ) -> Dict[str, Any]:
         """
         الحصول على سياق الجلسة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             سياق الجلسة
         """
         return await self.memory_manager.get_context(
             session_id=session_id,
         )
+
+    # ==============================================
+    # CLEAR SESSION
+    # ==============================================
 
     async def clear_session(
         self,
@@ -432,10 +442,10 @@ class AgentEngine:
     ) -> bool:
         """
         مسح الجلسة.
-        
+
         Args:
             session_id: معرف الجلسة
-            
+
         Returns:
             True إذا تم المسح
         """
@@ -460,6 +470,7 @@ agent_engine = AgentEngine()
 # PROCESS MESSAGE
 # ==============================================
 
+
 async def process_message(
     *,
     user_id: int,
@@ -470,14 +481,14 @@ async def process_message(
 ) -> ProcessResult:
     """
     معالجة رسالة المستخدم (دالة مساعدة).
-    
+
     Args:
         user_id: معرف المستخدم
         message: نص الرسالة
         session_id: معرف الجلسة (اختياري)
         channel: القناة
         engine: محرك الوكيل (اختياري)
-        
+
     Returns:
         نتيجة المعالجة
     """

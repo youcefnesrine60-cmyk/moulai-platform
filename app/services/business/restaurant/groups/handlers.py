@@ -10,6 +10,11 @@
 # معالجات أحداث مجموعات المطاعم
 # ==============================================
 
+"""MoulAI operational module for handlers.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import logger
@@ -20,21 +25,25 @@ from app.schemas.restaurant.restaurant_group import (
 )
 from app.services.business.restaurant.groups.service import RestaurantGroupService
 
-
 # ==============================================
 # 🏢 RESTAURANT GROUP EVENT HANDLERS
 # ==============================================
 
+
 class RestaurantGroupEventHandlers:
     """
     معالجات أحداث مجموعات المطاعم.
-    
+
     تتعامل مع عمليات إنشاء وتحديث وحذف مجموعات المطاعم.
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         service: خدمة مجموعات المطاعم
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -42,7 +51,7 @@ class RestaurantGroupEventHandlers:
     ) -> None:
         """
         تهيئة معالجات الأحداث.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -64,13 +73,13 @@ class RestaurantGroupEventHandlers:
     ) -> RestaurantGroupResponse:
         """
         إنشاء مجموعة مطاعم جديدة.
-        
+
         Args:
             group_data: بيانات المجموعة
-            
+
         Returns:
             RestaurantGroupResponse: بيانات المجموعة المنشأة
-            
+
         Raises:
             ConflictError: إذا كان الاسم موجوداً مسبقاً
         """
@@ -96,14 +105,14 @@ class RestaurantGroupEventHandlers:
     ) -> RestaurantGroupResponse:
         """
         تحديث مجموعة مطاعم.
-        
+
         Args:
             group_id: معرف المجموعة
             update_data: بيانات التحديث
-            
+
         Returns:
             RestaurantGroupResponse: بيانات المجموعة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
             ConflictError: إذا كان الاسم موجوداً مسبقاً
@@ -133,21 +142,19 @@ class RestaurantGroupEventHandlers:
     ) -> RestaurantGroupResponse:
         """
         تبديل حالة المجموعة (نشط/غير نشط).
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             RestaurantGroupResponse: بيانات المجموعة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
         logger.info(
             "handler_toggle_group_active",
-            extra={
-                "group_id": group_id
-            },
+            extra={"group_id": group_id},
         )
 
         return await self.service.toggle_active(group_id=group_id)
@@ -164,11 +171,11 @@ class RestaurantGroupEventHandlers:
     ) -> None:
         """
         حذف مجموعة مطاعم.
-        
+
         Args:
             group_id: معرف المجموعة
             permanent: حذف نهائي
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """

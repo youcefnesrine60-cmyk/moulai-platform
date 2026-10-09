@@ -11,6 +11,11 @@
 # يدير المدفوعات والاشتراكات والمعاملات المالية
 # ==============================================
 
+"""MoulAI operational module for payment.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Column,
     DateTime,
@@ -28,10 +33,11 @@ from .base import BaseModel
 # 💳 PAYMENT
 # ==============================================
 
+
 class Payment(BaseModel):
     """
     نموذج المدفوعات
-    
+
     يدير:
         - مدفوعات الاشتراكات
         - طرق الدفع (بطاقة، تحويل بنكي، يدوي)
@@ -39,7 +45,7 @@ class Payment(BaseModel):
         - المراجع الخارجية
         - تاريخ الدفع
         - العلاقات مع المالك والمطعم والاشتراك
-    
+
     Attributes:
         owner_id: معرف المالك (ForeignKey)
         user_id : معرف المستخدم (ForeignKey)
@@ -55,12 +61,13 @@ class Payment(BaseModel):
         restaurant: علاقة مع نموذج Restaurant (بدون back_populates)
         subscription: علاقة مع نموذج Subscription
     """
+
     __tablename__ = "payments"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     owner_id = Column(
         Integer,
         ForeignKey("owners.id", ondelete="CASCADE"),
@@ -109,11 +116,11 @@ class Payment(BaseModel):
         DateTime,
         comment="تاريخ ووقت الدفع",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     owner = relationship(
         "Owner",
         back_populates="payments",
@@ -138,19 +145,18 @@ class Payment(BaseModel):
         lazy="selectin",
         # comment="الاشتراك",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والمبلغ والحالة
         """
         return (
-            f"<Payment(id={self.id}, amount={self.amount}, "
-            f"status={self.status})>"
+            f"<Payment(id={self.id}, amount={self.amount}, " f"status={self.status})>"
         )

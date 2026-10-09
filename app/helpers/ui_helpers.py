@@ -1,8 +1,19 @@
 # ==============================================
-# 🧠 UI HELPERS - VERSION PRO
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
-from typing import Any
+# ==============================================
+# MOULAI MODULE - APP / HELPERS / UI HELPERS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for ui helpers.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 
@@ -29,6 +40,7 @@ ReplyMarkup = dict[str, object] | None
 # ==============================================
 # 📤 SEND SCREEN
 # ==============================================
+
 
 async def send_screen(
     *,
@@ -65,6 +77,7 @@ async def send_screen(
 # ==============================================
 # 🏠 MAIN MENU
 # ==============================================
+
 
 async def send_main_menu(
     *,
@@ -114,6 +127,7 @@ async def send_main_menu(
 # ==============================================
 # 🍽️ RESTAURANT NAME (معدلة)
 # ==============================================
+
 
 async def send_restaurant_name(
     *,
@@ -175,6 +189,7 @@ async def send_restaurant_name(
 # 🗺️ WILAYA NAME (معدلة)
 # ==============================================
 
+
 async def send_wilaya_name(
     *,
     chat_id: int,
@@ -234,6 +249,7 @@ async def send_wilaya_name(
 # ==============================================
 # 🧹 CLEANUP USER SCREENS
 # ==============================================
+
 
 async def cleanup_user_screens(
     *,

@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🏦 RESTAURANT PAYMENT SETTINGS ROUTER - SINGLE METHOD
 # نقاط نهاية تفعيل/إلغاء تفعيل طريقة دفع مفردة
 # ==============================================
+
+"""MoulAI operational module for router single method.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -32,7 +37,6 @@ from app.services.business.restaurant.payment_setting.service import (
     RestaurantPaymentSettingsService,
 )
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -46,6 +50,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_payment_settings_service(
     session: AsyncSession = Depends(get_db),
@@ -62,6 +67,7 @@ async def get_payment_settings_service(
 # ENABLE PAYMENT METHOD
 # ==============================================
 
+
 @router.post(
     "/{restaurant_id}/methods/{method}/enable",
     response_model=RestaurantPaymentSettingResponse,
@@ -71,7 +77,9 @@ async def get_payment_settings_service(
 async def enable_payment_method(
     *,
     restaurant_id: int = Path(..., ge=1, description="معرف المطعم"),
-    method: str = Path(..., description="طريقة الدفع (cash, card, ccp, baridimob, stripe, paypal)"),
+    method: str = Path(
+        ..., description="طريقة الدفع (cash, card, ccp, baridimob, stripe, paypal)"
+    ),
     service: RestaurantPaymentSettingsService = Depends(get_payment_settings_service),
 ) -> RestaurantPaymentSettingResponse:
     """تفعيل طريقة دفع معينة لمطعم."""
@@ -122,6 +130,7 @@ async def enable_payment_method(
 # DISABLE PAYMENT METHOD
 # ==============================================
 
+
 @router.post(
     "/{restaurant_id}/methods/{method}/disable",
     response_model=RestaurantPaymentSettingResponse,
@@ -131,7 +140,9 @@ async def enable_payment_method(
 async def disable_payment_method(
     *,
     restaurant_id: int = Path(..., ge=1, description="معرف المطعم"),
-    method: str = Path(..., description="طريقة الدفع (cash, card, ccp, baridimob, stripe, paypal)"),
+    method: str = Path(
+        ..., description="طريقة الدفع (cash, card, ccp, baridimob, stripe, paypal)"
+    ),
     service: RestaurantPaymentSettingsService = Depends(get_payment_settings_service),
 ) -> RestaurantPaymentSettingResponse:
     """إلغاء تفعيل طريقة دفع معينة لمطعم."""

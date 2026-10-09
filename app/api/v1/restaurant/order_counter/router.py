@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🔢 RESTAURANT ORDER COUNTER ROUTER - BASIC
 # نقاط نهاية عداد طلبات المطعم الأساسية
 # ==============================================
+
+"""MoulAI operational module for router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -35,7 +40,6 @@ from app.services.business.restaurant.order_counter.service import (
     RestaurantOrderCounterService,
 )
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -49,6 +53,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_order_counter_service(
     session: AsyncSession = Depends(get_db),
@@ -64,6 +69,7 @@ async def get_order_counter_service(
 # ==============================================
 # LIST ORDER COUNTERS
 # ==============================================
+
 
 @router.get(
     "/",
@@ -113,6 +119,7 @@ async def list_order_counters(
 # GET ORDER COUNTER
 # ==============================================
 
+
 @router.get(
     "/{restaurant_id}",
     response_model=RestaurantOrderCounterResponse,
@@ -156,6 +163,7 @@ async def get_order_counter(
 # ==============================================
 # UPDATE ORDER COUNTER
 # ==============================================
+
 
 @router.patch(
     "/{restaurant_id}",

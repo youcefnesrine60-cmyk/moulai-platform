@@ -9,7 +9,15 @@
 # 📊 RESTAURANT METRICS SERVICES - PACKAGE INIT
 # ==============================================
 
-from app.services.business.restaurant.metrics.service import RestaurantMetricsService, MetricsDict
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+from app.services.business.restaurant.metrics.service import (
+    RestaurantMetricsService,
+    MetricsDict,
+)
 from app.services.business.restaurant.metrics.handlers import MetricsEventHandlers
 from app.services.business.restaurant.metrics.compat import (
     initialize_metrics,
@@ -22,7 +30,6 @@ from app.services.business.restaurant.metrics.compat import (
     get_metrics_summary,
     reset_metrics,
 )
-
 
 # ==============================================
 # 📋 EXPORTS

@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for multi restaurant discount repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -58,6 +63,10 @@ class MultiRestaurantDiscountRepository(
         model: نموذج MultiRestaurantDiscount
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -264,6 +273,7 @@ class MultiRestaurantDiscountRepository(
 # CREATE MULTI RESTAURANT DISCOUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def create_multi_restaurant_discount(
     *,
     min_restaurants: int,
@@ -305,6 +315,7 @@ async def create_multi_restaurant_discount(
 # GET BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_multi_restaurant_discount_by_id(
     *,
     discount_id: int,
@@ -338,6 +349,7 @@ async def get_multi_restaurant_discount_by_id(
 # GET ALL (COMPATIBILITY)
 # ==============================================
 
+
 async def get_all_multi_restaurant_discounts(
     session: AsyncSession,
     *,
@@ -362,11 +374,13 @@ async def get_all_multi_restaurant_discounts(
     result = []
 
     for discount in discounts:
-        result.append({
-            "id": discount.id,
-            "min_restaurants": discount.min_restaurants,
-            "discount_percent": float(discount.discount_percent),
-        })
+        result.append(
+            {
+                "id": discount.id,
+                "min_restaurants": discount.min_restaurants,
+                "discount_percent": float(discount.discount_percent),
+            }
+        )
 
     return result
 
@@ -374,6 +388,7 @@ async def get_all_multi_restaurant_discounts(
 # ==============================================
 # GET APPLICABLE DISCOUNT (COMPATIBILITY)
 # ==============================================
+
 
 async def get_multi_restaurant_discount_for_count(
     *,
@@ -410,6 +425,7 @@ async def get_multi_restaurant_discount_for_count(
 # GET DISCOUNT PERCENT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_multi_restaurant_discount_percent(
     *,
     restaurants_count: int,
@@ -435,6 +451,7 @@ async def get_multi_restaurant_discount_percent(
 # ==============================================
 # UPDATE DISCOUNT (COMPATIBILITY)
 # ==============================================
+
 
 async def update_multi_restaurant_discount(
     *,
@@ -464,6 +481,7 @@ async def update_multi_restaurant_discount(
 # ==============================================
 # DELETE DISCOUNT (COMPATIBILITY)
 # ==============================================
+
 
 async def delete_multi_restaurant_discount(
     *,

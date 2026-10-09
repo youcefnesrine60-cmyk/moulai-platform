@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,12 +10,16 @@
 # توليد الردود الذكية
 # ==============================================
 
+"""MoulAI operational module for response generator.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
     List,
     Optional,
-    Union,
 )
 
 from app.agent.config import LanguageCode
@@ -28,7 +32,6 @@ from app.agent.prompts.templates import (
     get_success_prompt,
 )
 from app.agent.prompts.translations import (
-    ERROR_RESPONSES,
     GOODBYE_RESPONSES,
     GREETING_RESPONSES,
     HELP_RESPONSES,
@@ -52,17 +55,21 @@ MessageHistory = List[Dict[str, Any]]
 class ResponseGenerator:
     """
     مولد الردود - مسؤول عن توليد ردود طبيعية وذكية.
-    
+
     مسؤول عن:
         - توليد ردود بناءً على السياق والنية
         - تخصيص الردود حسب اللغة والمستخدم
         - استخدام الذكاء الاصطناعي لتوليد ردود متقدمة
         - التعامل مع الحالات الخاصة (تحية، وداع، مساعدة)
-    
+
     Attributes:
         ai_client: عميل الذكاء الاصطناعي
         use_ai: تفعيل الذكاء الاصطناعي لتوليد الردود
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -72,7 +79,7 @@ class ResponseGenerator:
     ) -> None:
         """
         تهيئة مولد الردود.
-        
+
         Args:
             ai_client: عميل الذكاء الاصطناعي (اختياري)
             use_ai: تفعيل الذكاء الاصطناعي لتوليد الردود
@@ -105,7 +112,7 @@ class ResponseGenerator:
     ) -> str:
         """
         توليد رد مناسب حسب السياق.
-        
+
         Args:
             intent: النية المستخرجة
             language: رمز اللغة
@@ -114,7 +121,7 @@ class ResponseGenerator:
             user_message: رسالة المستخدم الأصلية (اختياري)
             history: تاريخ المحادثة (اختياري)
             entities: الكيانات المستخرجة (اختياري)
-            
+
         Returns:
             الرد النهائي
         """
@@ -180,12 +187,12 @@ class ResponseGenerator:
     ) -> Optional[str]:
         """
         الحصول على ردود خاصة للحالات المحددة.
-        
+
         Args:
             intent: النية
             language: رمز اللغة
             action_result: نتيجة الإجراء
-            
+
         Returns:
             الرد الخاص أو None
         """
@@ -241,7 +248,7 @@ class ResponseGenerator:
     ) -> Optional[str]:
         """
         توليد رد باستخدام الذكاء الاصطناعي.
-        
+
         Args:
             intent: النية
             language: رمز اللغة
@@ -250,7 +257,7 @@ class ResponseGenerator:
             user_message: رسالة المستخدم
             history: تاريخ المحادثة
             entities: الكيانات المستخرجة
-            
+
         Returns:
             الرد المولد أو None
         """
@@ -307,13 +314,13 @@ class ResponseGenerator:
     ) -> Optional[str]:
         """
         توليد رد باستخدام القوالب الجاهزة.
-        
+
         Args:
             intent: النية
             language: رمز اللغة
             action_result: نتيجة الإجراء
             entities: الكيانات المستخرجة
-            
+
         Returns:
             الرد المولد أو None
         """
@@ -341,13 +348,17 @@ class ResponseGenerator:
 
         return action_result.message
 
+    # ==============================================
+    #  GET SUCCESS TYPE
+    # ==============================================
+
     def _get_success_type(self, intent: str) -> Optional[str]:
         """
         تحديد نوع النجاح بناءً على النية.
-        
+
         Args:
             intent: النية
-            
+
         Returns:
             نوع النجاح أو None
         """
@@ -369,10 +380,10 @@ class ResponseGenerator:
     def _format_context(self, context: Dict[str, Any]) -> str:
         """
         تنسيق السياق للنص.
-        
+
         Args:
             context: سياق المحادثة
-            
+
         Returns:
             السياق المنسق
         """
@@ -386,13 +397,17 @@ class ResponseGenerator:
 
         return "\n".join(lines) if lines else "لا يوجد سياق"
 
+    # ==============================================
+    #  FORMAT ENTITIES
+    # ==============================================
+
     def _format_entities(self, entities: Dict[str, Any]) -> str:
         """
         تنسيق الكيانات للنص.
-        
+
         Args:
             entities: الكيانات المستخرجة
-            
+
         Returns:
             الكيانات المنسقة
         """
@@ -406,13 +421,17 @@ class ResponseGenerator:
 
         return "\n".join(lines) if lines else "لا توجد كيانات"
 
+    # ==============================================
+    #  FORMAT ACTION RESULT
+    # ==============================================
+
     def _format_action_result(self, action_result: ActionResponse) -> str:
         """
         تنسيق نتيجة الإجراء للنص.
-        
+
         Args:
             action_result: نتيجة الإجراء
-            
+
         Returns:
             النتيجة المنسقة
         """
@@ -432,13 +451,17 @@ class ResponseGenerator:
 
         return "\n".join(lines)
 
+    # ==============================================
+    #  GET DEFAULT RESPONSE
+    # ==============================================
+
     def _get_default_response(self, language: LanguageCode) -> str:
         """
         الحصول على رد افتراضي.
-        
+
         Args:
             language: رمز اللغة
-            
+
         Returns:
             الرد الافتراضي
         """
@@ -468,6 +491,7 @@ response_generator = ResponseGenerator()
 # GENERATE RESPONSE
 # ==============================================
 
+
 async def generate_response(
     *,
     intent: str,
@@ -481,7 +505,7 @@ async def generate_response(
 ) -> str:
     """
     توليد رد (دالة مساعدة).
-    
+
     Args:
         intent: النية
         language: رمز اللغة
@@ -491,7 +515,7 @@ async def generate_response(
         history: تاريخ المحادثة
         entities: الكيانات المستخرجة
         generator: مولد الردود (اختياري)
-        
+
     Returns:
         الرد المولد
     """

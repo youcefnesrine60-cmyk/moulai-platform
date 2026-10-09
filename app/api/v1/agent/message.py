@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,6 +10,11 @@
 # نقاط نهاية API للرسائل (CRUD)
 # تدير عمليات إنشاء واستعراض وتحديث وحذف الرسائل
 # ==============================================
+
+"""MoulAI operational module for message.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional, Any, Dict, List
 
@@ -37,7 +42,6 @@ from app.schemas.agent import (
 )
 from app.services.business.agent.message_service import MessageService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -52,15 +56,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_message_service(
     session: AsyncSession = Depends(get_db),
 ) -> MessageService:
     """
     الحصول على خدمة الرسائل.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         MessageService: مثيل من MessageService
     """
@@ -74,6 +79,7 @@ async def get_message_service(
 # ==============================================
 # CREATE MESSAGE
 # ==============================================
+
 
 @router.post(
     "/",
@@ -89,13 +95,13 @@ async def create_message(
 ) -> MessageResponse:
     """
     إنشاء رسالة جديدة.
-    
+
     Args:
         data: بيانات الرسالة
-        
+
     Returns:
         MessageResponse: الرسالة المنشأة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -153,6 +159,7 @@ async def create_message(
 # CREATE USER MESSAGE
 # ==============================================
 
+
 @router.post(
     "/user",
     response_model=MessageResponse,
@@ -171,14 +178,14 @@ async def create_user_message(
 ) -> MessageResponse:
     """
     إنشاء رسالة مستخدم.
-    
+
     Args:
         conversation_id: معرف المحادثة
         content: محتوى الرسالة
         content_type: نوع المحتوى
         intent: نية الرسالة
         confidence: درجة الثقة
-        
+
     Returns:
         MessageResponse: الرسالة المنشأة
     """
@@ -241,6 +248,7 @@ async def create_user_message(
 # CREATE ASSISTANT MESSAGE
 # ==============================================
 
+
 @router.post(
     "/assistant",
     response_model=MessageResponse,
@@ -259,14 +267,14 @@ async def create_assistant_message(
 ) -> MessageResponse:
     """
     إنشاء رسالة مساعد.
-    
+
     Args:
         conversation_id: معرف المحادثة
         content: محتوى الرسالة
         content_type: نوع المحتوى
         intent: نية الرسالة
         confidence: درجة الثقة
-        
+
     Returns:
         MessageResponse: الرسالة المنشأة
     """
@@ -329,6 +337,7 @@ async def create_assistant_message(
 # CREATE SYSTEM MESSAGE
 # ==============================================
 
+
 @router.post(
     "/system",
     response_model=MessageResponse,
@@ -346,13 +355,13 @@ async def create_system_message(
 ) -> MessageResponse:
     """
     إنشاء رسالة نظام.
-    
+
     Args:
         conversation_id: معرف المحادثة
         content: محتوى الرسالة
         intent: نية الرسالة
         confidence: درجة الثقة
-        
+
     Returns:
         MessageResponse: الرسالة المنشأة
     """
@@ -414,6 +423,7 @@ async def create_system_message(
 # BULK CREATE MESSAGES
 # ==============================================
 
+
 @router.post(
     "/bulk",
     response_model=List[MessageResponse],
@@ -429,11 +439,11 @@ async def bulk_create_messages(
 ) -> List[MessageResponse]:
     """
     إنشاء مجموعة من الرسائل دفعة واحدة.
-    
+
     Args:
         conversation_id: معرف المحادثة
         messages: قائمة بيانات الرسائل
-        
+
     Returns:
         List[MessageResponse]: قائمة الرسائل المنشأة
     """
@@ -494,6 +504,7 @@ async def bulk_create_messages(
 # GET MESSAGE BY ID
 # ==============================================
 
+
 @router.get(
     "/{message_id}",
     response_model=MessageResponse,
@@ -507,13 +518,13 @@ async def get_message_by_id(
 ) -> MessageResponse:
     """
     الحصول على رسالة بالمعرف.
-    
+
     Args:
         message_id: معرف الرسالة
-        
+
     Returns:
         MessageResponse: الرسالة المطلوبة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الرسالة
     """
@@ -556,6 +567,7 @@ async def get_message_by_id(
 # LIST MESSAGES BY CONVERSATION
 # ==============================================
 
+
 @router.get(
     "/conversation/{conversation_id}",
     response_model=MessageListResponse,
@@ -571,12 +583,12 @@ async def list_messages_by_conversation(
 ) -> MessageListResponse:
     """
     الحصول على قائمة رسائل محادثة معينة.
-    
+
     Args:
         conversation_id: معرف المحادثة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         MessageListResponse: قائمة الرسائل مع الإحصائيات
     """
@@ -626,6 +638,7 @@ async def list_messages_by_conversation(
 # LIST MESSAGES BY ROLE
 # ==============================================
 
+
 @router.get(
     "/conversation/{conversation_id}/role/{role}",
     response_model=MessageListResponse,
@@ -642,13 +655,13 @@ async def list_messages_by_role(
 ) -> MessageListResponse:
     """
     الحصول على قائمة رسائل حسب الدور.
-    
+
     Args:
         conversation_id: معرف المحادثة
         role: دور المرسل
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         MessageListResponse: قائمة الرسائل مع الإحصائيات
     """
@@ -702,6 +715,7 @@ async def list_messages_by_role(
 # LIST MESSAGES BY CONTENT TYPE
 # ==============================================
 
+
 @router.get(
     "/conversation/{conversation_id}/type/{content_type}",
     response_model=MessageListResponse,
@@ -711,20 +725,22 @@ async def list_messages_by_role(
 async def list_messages_by_content_type(
     *,
     conversation_id: int = Path(..., ge=1, description="معرف المحادثة"),
-    content_type: str = Path(..., description="نوع المحتوى: text, image, audio, video, file"),
+    content_type: str = Path(
+        ..., description="نوع المحتوى: text, image, audio, video, file"
+    ),
     skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
     limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
     service: MessageService = Depends(get_message_service),
 ) -> MessageListResponse:
     """
     الحصول على قائمة رسائل حسب نوع المحتوى.
-    
+
     Args:
         conversation_id: معرف المحادثة
         content_type: نوع المحتوى
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         MessageListResponse: قائمة الرسائل مع الإحصائيات
     """
@@ -778,6 +794,7 @@ async def list_messages_by_content_type(
 # GET LAST MESSAGE
 # ==============================================
 
+
 @router.get(
     "/conversation/{conversation_id}/last",
     response_model=Optional[MessageResponse],
@@ -791,10 +808,10 @@ async def get_last_message(
 ) -> Optional[MessageResponse]:
     """
     الحصول على آخر رسالة في المحادثة.
-    
+
     Args:
         conversation_id: معرف المحادثة
-        
+
     Returns:
         Optional[MessageResponse]: آخر رسالة أو None
     """
@@ -826,6 +843,7 @@ async def get_last_message(
 # GET FIRST MESSAGE
 # ==============================================
 
+
 @router.get(
     "/conversation/{conversation_id}/first",
     response_model=Optional[MessageResponse],
@@ -839,10 +857,10 @@ async def get_first_message(
 ) -> Optional[MessageResponse]:
     """
     الحصول على أول رسالة في المحادثة.
-    
+
     Args:
         conversation_id: معرف المحادثة
-        
+
     Returns:
         Optional[MessageResponse]: أول رسالة أو None
     """
@@ -874,6 +892,7 @@ async def get_first_message(
 # SEARCH MESSAGES
 # ==============================================
 
+
 @router.get(
     "/search",
     response_model=MessageListResponse,
@@ -883,7 +902,9 @@ async def get_first_message(
 async def search_messages(
     *,
     query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
-    conversation_id: Optional[int] = Query(None, ge=1, description="معرف المحادثة (اختياري)"),
+    conversation_id: Optional[int] = Query(
+        None, ge=1, description="معرف المحادثة (اختياري)"
+    ),
     role: Optional[str] = Query(None, description="دور المرسل (اختياري)"),
     skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
     limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
@@ -891,14 +912,14 @@ async def search_messages(
 ) -> MessageListResponse:
     """
     البحث عن الرسائل.
-    
+
     Args:
         query: نص البحث
         conversation_id: معرف المحادثة (اختياري)
         role: دور المرسل (اختياري)
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         MessageListResponse: قائمة الرسائل مع الإحصائيات
     """
@@ -940,6 +961,7 @@ async def search_messages(
 # UPDATE MESSAGE
 # ==============================================
 
+
 @router.patch(
     "/{message_id}",
     response_model=MessageResponse,
@@ -954,14 +976,14 @@ async def update_message(
 ) -> MessageResponse:
     """
     تحديث رسالة موجودة.
-    
+
     Args:
         message_id: معرف الرسالة
         data: بيانات التحديث
-        
+
     Returns:
         MessageResponse: الرسالة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الرسالة
     """
@@ -1022,6 +1044,7 @@ async def update_message(
 # DELETE MESSAGE
 # ==============================================
 
+
 @router.delete(
     "/{message_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -1035,10 +1058,10 @@ async def delete_message(
 ) -> None:
     """
     حذف رسالة.
-    
+
     Args:
         message_id: معرف الرسالة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الرسالة
     """
@@ -1085,6 +1108,7 @@ async def delete_message(
 # DELETE MESSAGES BY CONVERSATION
 # ==============================================
 
+
 @router.delete(
     "/conversation/{conversation_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -1098,10 +1122,10 @@ async def delete_messages_by_conversation(
 ) -> None:
     """
     حذف جميع رسائل محادثة معينة.
-    
+
     Args:
         conversation_id: معرف المحادثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -1152,6 +1176,7 @@ async def delete_messages_by_conversation(
 # DELETE OLD MESSAGES
 # ==============================================
 
+
 @router.delete(
     "/conversation/{conversation_id}/old",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -1166,11 +1191,11 @@ async def delete_old_messages(
 ) -> None:
     """
     حذف الرسائل القديمة مع الاحتفاظ بعدد محدد من أحدث الرسائل.
-    
+
     Args:
         conversation_id: معرف المحادثة
         keep_count: عدد الرسائل التي سيتم الاحتفاظ بها
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -1226,6 +1251,7 @@ async def delete_old_messages(
 # GET MESSAGE STATISTICS
 # ==============================================
 
+
 @router.get(
     "/statistics/{conversation_id}",
     response_model=Dict[str, Any],
@@ -1239,10 +1265,10 @@ async def get_message_statistics(
 ) -> Dict[str, Any]:
     """
     الحصول على إحصائيات الرسائل لمحادثة معينة.
-    
+
     Args:
         conversation_id: معرف المحادثة
-        
+
     Returns:
         Dict[str, Any]: إحصائيات الرسائل
     """

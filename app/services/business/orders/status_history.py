@@ -1,8 +1,19 @@
 # ==============================================
-# 📦 ORDERS SERVICE - STATUS HISTORY
-# إدارة الحالات 
-# (get_status_history, get_order_timeline, get_last_status)
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDERS / STATUS HISTORY
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for status history.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -39,6 +50,7 @@ StatusDistribution = Dict[str, int]
 # 📜 STATUS HISTORY
 # ==============================================
 
+
 async def get_status_history(
     *,
     order_id: int,
@@ -48,13 +60,13 @@ async def get_status_history(
 ) -> StatusHistoryList:
     """
     جلب سجل حالات الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         StatusHistoryList: قائمة سجل الحالات
     """
@@ -89,6 +101,7 @@ async def get_status_history(
 # 📈 STATUS TIMELINE
 # ==============================================
 
+
 async def get_order_timeline(
     *,
     order_id: int,
@@ -96,11 +109,11 @@ async def get_order_timeline(
 ) -> List[Dict[str, Any]]:
     """
     جلب الخط الزمني لحالات الطلب مع أسماء الحالات المعروضة.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         List[Dict[str, Any]]: قائمة الخط الزمني
     """
@@ -137,6 +150,7 @@ async def get_order_timeline(
 # 🔍 LAST STATUS CHANGE
 # ==============================================
 
+
 async def get_last_status(
     *,
     order_id: int,
@@ -144,11 +158,11 @@ async def get_last_status(
 ) -> Optional[OrderStatusHistory]:
     """
     جلب آخر تغيير في حالة الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[OrderStatusHistory]: بيانات آخر تغيير أو None
     """
@@ -182,6 +196,7 @@ async def get_last_status(
 # 🔍 GET STATUS HISTORY COUNT
 # ==============================================
 
+
 async def get_status_history_count(
     *,
     order_id: int,
@@ -189,11 +204,11 @@ async def get_status_history_count(
 ) -> int:
     """
     حساب عدد تغييرات حالة الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: عدد التغييرات
     """
@@ -220,6 +235,7 @@ async def get_status_history_count(
 # 🔍 GET ORDERS REACHED STATUS
 # ==============================================
 
+
 async def get_orders_reached_status(
     *,
     status: str,
@@ -227,14 +243,14 @@ async def get_orders_reached_status(
 ) -> List[int]:
     """
     الحصول على معرفات الطلبات التي وصلت إلى حالة معينة.
-    
+
     Args:
         status: حالة الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         List[int]: قائمة معرفات الطلبات
-        
+
     Raises:
         ValidationError: إذا كانت الحالة غير صالحة
     """
@@ -270,6 +286,7 @@ async def get_orders_reached_status(
 # 📊 GET STATUS DISTRIBUTION
 # ==============================================
 
+
 async def get_status_distribution(
     *,
     restaurant_id: int,
@@ -277,11 +294,11 @@ async def get_status_distribution(
 ) -> StatusDistribution:
     """
     الحصول على توزيع حالات الطلبات لمطعم معين.
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         StatusDistribution: توزيع الحالات
     """
@@ -313,9 +330,12 @@ async def get_status_distribution(
 
     # ترتيب النتائج حسب الترتيب المحدد
     from app.services.business.orders.constants import STATUS_ORDER
+
     sorted_distribution = {
         status: distribution.get(status, 0)
-        for status in sorted(distribution.keys(), key=lambda x: STATUS_ORDER.get(x, 999))
+        for status in sorted(
+            distribution.keys(), key=lambda x: STATUS_ORDER.get(x, 999)
+        )
     }
 
     logger.info(
@@ -333,6 +353,7 @@ async def get_status_distribution(
 # ⏱️ GET AVERAGE STATUS DURATION
 # ==============================================
 
+
 async def get_average_status_duration(
     *,
     restaurant_id: int,
@@ -341,15 +362,15 @@ async def get_average_status_duration(
 ) -> Optional[float]:
     """
     حساب متوسط مدة البقاء في حالة معينة (بالدقائق).
-    
+
     Args:
         restaurant_id: معرف المطعم
         status: حالة الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[float]: متوسط المدة بالدقائق أو None إذا لم توجد بيانات
-        
+
     Raises:
         ValidationError: إذا كانت الحالة غير صالحة
     """
@@ -392,6 +413,7 @@ async def get_average_status_duration(
 # 🔍 GET CURRENT STATUS HISTORY
 # ==============================================
 
+
 async def get_current_status_history(
     *,
     order_id: int,
@@ -399,11 +421,11 @@ async def get_current_status_history(
 ) -> Optional[OrderStatusHistory]:
     """
     الحصول على سجل الحالة الحالية للطلب (آخر تغيير).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[OrderStatusHistory]: سجل الحالة الحالية أو None
     """
@@ -417,7 +439,13 @@ async def get_current_status_history(
 # 🔄 COMPATIBILITY FUNCTIONS
 # ==============================================
 
+
 # دوال التوافق مع الإصدار القديم
+# ==============================================
+# GET STATUS HISTORY COMPAT
+# ==============================================
+
+
 async def get_status_history_compat(
     *,
     order_id: int,
@@ -427,13 +455,13 @@ async def get_status_history_compat(
 ) -> StatusHistoryList:
     """
     دالة متوافقة مع الإصدار القديم (مغلفة).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         StatusHistoryList: قائمة سجل الحالات
     """
@@ -445,6 +473,11 @@ async def get_status_history_compat(
     )
 
 
+# ==============================================
+# GET LAST STATUS COMPAT
+# ==============================================
+
+
 async def get_last_status_compat(
     *,
     order_id: int,
@@ -452,11 +485,11 @@ async def get_last_status_compat(
 ) -> Optional[OrderStatusHistory]:
     """
     دالة متوافقة مع الإصدار القديم (مغلفة).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[OrderStatusHistory]: آخر تغيير أو None
     """

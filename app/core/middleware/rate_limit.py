@@ -1,6 +1,19 @@
 # ==============================================
-# 🚫 RATE LIMIT DECORATOR
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / CORE / MIDDLEWARE / RATE LIMIT
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for rate limit.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from collections.abc import Awaitable
 from collections.abc import Callable
@@ -21,6 +34,7 @@ Handler = Callable[..., Awaitable[Any]]
 # 🚫 RATE LIMIT DECORATOR
 # ==============================================
 
+
 def rate_limit(
     *,
     limit: int = 5,
@@ -28,9 +42,17 @@ def rate_limit(
     key_prefix: str = "global",
 ) -> Callable[[Handler], Handler]:
 
+    # ==============================================
+    # DECORATOR
+    # ==============================================
+
     def decorator(
         func: Handler,
     ) -> Handler:
+
+        # ==============================================
+        # WRAPPER
+        # ==============================================
 
         @wraps(func)
         async def wrapper(
@@ -45,12 +67,10 @@ def rate_limit(
 
             key = f"{key_prefix}:{chat_id}"
 
-            allowed = await (
-                SlidingWindowLimiter.is_allowed(
-                    key=key,
-                    limit=limit,
-                    window=window,
-                )
+            allowed = await SlidingWindowLimiter.is_allowed(
+                key=key,
+                limit=limit,
+                window=window,
             )
 
             # ==================================

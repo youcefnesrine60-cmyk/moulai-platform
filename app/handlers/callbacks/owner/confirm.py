@@ -1,9 +1,19 @@
 # ==============================================
-# ✅ CONFIRM CALLBACK
-# Registration Approval
-# استدعاء الخدمة وعرض النتيجة للمستخدم
-# Async Version
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / OWNER / CONFIRM
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for confirm.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -17,6 +27,7 @@ from app.services.business.registration_request_service import approve_registrat
 # ==============================================
 # ✅ CONFIRM CALLBACK
 # ==============================================
+
 
 @rate_limit(
     limit=2,

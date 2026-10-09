@@ -1,22 +1,34 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 📊 RESTAURANT METRICS API
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import APIRouter
 
 from app.api.v1.restaurant.metrics.metrics_router import router as metrics_basic_router
-from app.api.v1.restaurant.metrics.metrics_summary_router import router as metrics_summary_router
-from app.api.v1.restaurant.metrics.metrics_products_router import router as metrics_products_router
-from app.api.v1.restaurant.metrics.metrics_trend_router import router as metrics_trend_router
-from app.api.v1.restaurant.metrics.metrics_test_router import router as metrics_test_router
-
+from app.api.v1.restaurant.metrics.metrics_summary_router import (
+    router as metrics_summary_router,
+)
+from app.api.v1.restaurant.metrics.metrics_products_router import (
+    router as metrics_products_router,
+)
+from app.api.v1.restaurant.metrics.metrics_trend_router import (
+    router as metrics_trend_router,
+)
+from app.api.v1.restaurant.metrics.metrics_test_router import (
+    router as metrics_test_router,
+)
 
 # ==============================================
 # 📋 MAIN ROUTER

@@ -1,3 +1,15 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# DATABASE MIGRATION - ALEMBIC / VERSIONS / 2026 08 13 16 05 12 ADD UPDATED AT TO RESTAURANTS
+# Database migration and schema management component.
+# ==============================================
+
 """add_updated_at_to_restaurants
 
 Revision ID: 1452679b0eb0
@@ -19,16 +31,21 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+# ==============================================
+# UPGRADE
+# ==============================================
+
+
 def upgrade() -> None:
     """
     إضافة عمود updated_at إلى جدول restaurants.
     """
     conn = op.get_bind()
     inspector = inspect(conn)
-    
+
     #  التحقق من وجود العمود
     columns = [col["name"] for col in inspector.get_columns("restaurants")]
-    
+
     if "updated_at" not in columns:
         #  إضافة العمود مع تحديث تلقائي
         op.add_column(
@@ -39,11 +56,16 @@ def upgrade() -> None:
                 nullable=True,
                 server_default=sa.text("now()"),
                 comment="تاريخ ووقت آخر تحديث",
-            )
+            ),
         )
         print("[OK] Added updated_at column to restaurants")
     else:
         print("[INFO] updated_at column already exists in restaurants")
+
+
+# ==============================================
+# DOWNGRADE
+# ==============================================
 
 
 def downgrade() -> None:

@@ -10,6 +10,11 @@
 # حذف جميع البيانات من قاعدة البيانات الاختبارية
 # ==============================================
 
+"""Operational maintenance script for clear test data.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import sys
 from pathlib import Path
 
@@ -20,6 +25,10 @@ import asyncio
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
 from app.core.config import settings
+
+# ==============================================
+# CLEAR TEST DATA
+# ==============================================
 
 
 async def clear_test_data():

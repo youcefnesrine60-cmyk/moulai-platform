@@ -1,7 +1,19 @@
 # ==============================================
-# 🍽️ RESTAURANT DETAILS
-# عرض تفاصيل المطعم
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / RESTAURANT / DETAILS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for details.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -16,11 +28,16 @@ from app.repositories.products_repo import count_restaurant_products
 
 from app.views.ui import button
 
-
 # ==============================================
 # 🍽️ RESTAURANT DETAILS
 # عرض تفاصيل المطعم
 # ==============================================
+
+
+# ==============================================
+# RESTAURANT DETAILS CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,
@@ -82,10 +99,14 @@ async def restaurant_details_callback(
     )
 
     # بناء الرسالة
-    branches_text = "\n".join(
-        f"• {b.get('name', 'فرع')} - {b.get('wilaya', 'غير محدد')}"
-        for b in branches[:3]
-    ) if branches else "⚠️ لا توجد فروع."
+    branches_text = (
+        "\n".join(
+            f"• {b.get('name', 'فرع')} - {b.get('wilaya', 'غير محدد')}"
+            for b in branches[:3]
+        )
+        if branches
+        else "⚠️ لا توجد فروع."
+    )
 
     text = (
         f"🍽️ **{restaurant.get('name', 'مطعم')}**\n\n"

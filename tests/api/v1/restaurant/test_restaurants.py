@@ -10,6 +10,11 @@
 # اختبارات واجهات برمجة التطبيقات للمطاعم
 # ==============================================
 
+"""Automated tests for test restaurants.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -19,15 +24,15 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
 # ==============================================
 # 🏪 TEST RESTAURANTS API
 # ==============================================
 
+
 class TestRestaurantsAPI:
     """
     اختبارات نقاط نهاية المطاعم.
-    
+
     تختبر جميع عمليات CRUD للمطاعم:
         - إنشاء مطعم
         - قراءة مطعم
@@ -36,6 +41,10 @@ class TestRestaurantsAPI:
         - إحصائيات المطاعم
     """
 
+    # ==============================================
+    # SETUP
+    # ==============================================
+
     @pytest.fixture(autouse=True)
     async def setup(
         self,
@@ -43,7 +52,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         تهيئة بيانات الاختبار.
-        
+
         Args:
             db_session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -60,27 +69,28 @@ class TestRestaurantsAPI:
     ) -> int:
         """
         إنشاء مالك عبر API.
-        
+
         ✅ استخدام API بدلاً من DB المباشر
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_owner_data: بيانات المالك
-            
+
         Returns:
             int: معرف المالك المنشأ
         """
         response = await client.post("/api/v1/owners/", json=sample_owner_data)
-        
+
         # إذا فشل الإنشاء، نحاول مرة أخرى مع بيانات فريدة
         if response.status_code != 201:
             # تعديل البيانات لجعلها فريدة
             import time
+
             unique_id = int(time.time() * 1000) % 1000000000
             sample_owner_data["chat_id"] = unique_id
             sample_owner_data["email"] = f"owner_{unique_id}@example.com"
             response = await client.post("/api/v1/owners/", json=sample_owner_data)
-            
+
         assert response.status_code == 201
         return response.json()["id"]
 
@@ -95,17 +105,21 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار جلب قائمة المطاعم عندما تكون فارغة.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
         """
         response = await client.get("/api/v1/restaurants/")
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["total"] == 0
         assert data["items"] == []
+
+    # ==============================================
+    # TEST LIST RESTAURANTS WITH DATA
+    # ==============================================
 
     @pytest.mark.asyncio
     async def test_list_restaurants_with_data(
@@ -116,7 +130,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار جلب قائمة المطاعم عندما تحتوي على بيانات.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_restaurant_data: بيانات مطعم نموذجية
@@ -141,9 +155,9 @@ class TestRestaurantsAPI:
         await client.post("/api/v1/restaurants/", json=second_restaurant)
 
         response = await client.get("/api/v1/restaurants/")
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["total"] >= 2
         assert len(data["items"]) >= 2
@@ -161,7 +175,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار إنشاء مطعم جديد بنجاح.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_restaurant_data: بيانات مطعم نموذجية
@@ -179,12 +193,16 @@ class TestRestaurantsAPI:
         response = await client.post("/api/v1/restaurants/", json=data)
 
         assert response.status_code == 201
-        
+
         data = response.json()
         assert data["name"] == sample_restaurant_data["name"]
         assert data["owner_id"] == owner_id
         assert data["is_active"] is True
         assert "id" in data
+
+    # ==============================================
+    # TEST CREATE RESTAURANT DUPLICATE NAME
+    # ==============================================
 
     @pytest.mark.asyncio
     async def test_create_restaurant_duplicate_name(
@@ -195,7 +213,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار إنشاء مطعم باسم مكرر.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_restaurant_data: بيانات مطعم نموذجية
@@ -213,9 +231,13 @@ class TestRestaurantsAPI:
         await client.post("/api/v1/restaurants/", json=data)
 
         response = await client.post("/api/v1/restaurants/", json=data)
-        
+
         assert response.status_code == 409
         assert "موجود مسبقاً" in response.json()["detail"]
+
+    # ==============================================
+    # TEST CREATE RESTAURANT INVALID DATA
+    # ==============================================
 
     @pytest.mark.asyncio
     async def test_create_restaurant_invalid_data(
@@ -225,7 +247,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار إنشاء مطعم ببيانات غير صالحة.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_owner_data: بيانات مالك نموذجية
@@ -242,7 +264,7 @@ class TestRestaurantsAPI:
             "phone": "123",
         }
         response = await client.post("/api/v1/restaurants/", json=data)
-        
+
         assert response.status_code == 422
 
     # ==========================================
@@ -258,7 +280,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار الحصول على مطعم بالمعرف بنجاح.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_restaurant_data: بيانات مطعم نموذجية
@@ -274,18 +296,22 @@ class TestRestaurantsAPI:
             "owner_id": owner_id,
         }
         create_response = await client.post("/api/v1/restaurants/", json=data)
-        
+
         assert create_response.status_code == 201
-        
+
         restaurant_id: int = create_response.json()["id"]
 
         response = await client.get(f"/api/v1/restaurants/{restaurant_id}")
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["id"] == restaurant_id
         assert data["name"] == sample_restaurant_data["name"]
+
+    # ==============================================
+    # TEST GET RESTAURANT BY ID NOT FOUND
+    # ==============================================
 
     @pytest.mark.asyncio
     async def test_get_restaurant_by_id_not_found(
@@ -294,12 +320,12 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار الحصول على مطعم غير موجود.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
         """
         response = await client.get("/api/v1/restaurants/99999")
-        
+
         assert response.status_code == 404
         assert "غير موجود" in response.json()["detail"]
 
@@ -316,7 +342,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار تحديث مطعم بنجاح.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_restaurant_data: بيانات مطعم نموذجية
@@ -332,9 +358,9 @@ class TestRestaurantsAPI:
             "owner_id": owner_id,
         }
         create_response = await client.post("/api/v1/restaurants/", json=data)
-        
+
         assert create_response.status_code == 201
-        
+
         restaurant_id: int = create_response.json()["id"]
 
         update_data: Dict[str, Any] = {"name": "مطعم البيتزا الذهبية - فرع 2"}
@@ -342,12 +368,16 @@ class TestRestaurantsAPI:
             f"/api/v1/restaurants/{restaurant_id}",
             json=update_data,
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["id"] == restaurant_id
         assert data["name"] == update_data["name"]
+
+    # ==============================================
+    # TEST UPDATE RESTAURANT NOT FOUND
+    # ==============================================
 
     @pytest.mark.asyncio
     async def test_update_restaurant_not_found(
@@ -356,13 +386,13 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار تحديث مطعم غير موجود.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
         """
         update_data: Dict[str, Any] = {"name": "مطعم جديد"}
         response = await client.patch("/api/v1/restaurants/99999", json=update_data)
-        
+
         assert response.status_code == 404
 
     # ==========================================
@@ -378,7 +408,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار تبديل حالة المطعم بنجاح.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_restaurant_data: بيانات مطعم نموذجية
@@ -394,9 +424,9 @@ class TestRestaurantsAPI:
             "owner_id": owner_id,
         }
         create_response = await client.post("/api/v1/restaurants/", json=data)
-        
+
         assert create_response.status_code == 201
-        
+
         restaurant_id: int = create_response.json()["id"]
 
         response = await client.patch(
@@ -404,7 +434,7 @@ class TestRestaurantsAPI:
             params={"is_active": False},
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["is_active"] is False
 
@@ -413,9 +443,13 @@ class TestRestaurantsAPI:
             params={"is_active": True},
         )
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["is_active"] is True
+
+    # ==============================================
+    # TEST TOGGLE RESTAURANT STATUS NOT FOUND
+    # ==============================================
 
     @pytest.mark.asyncio
     async def test_toggle_restaurant_status_not_found(
@@ -424,7 +458,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار تبديل حالة مطعم غير موجود.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
         """
@@ -432,7 +466,7 @@ class TestRestaurantsAPI:
             "/api/v1/restaurants/99999/status",
             params={"is_active": False},
         )
-        
+
         assert response.status_code == 404
 
     # ==========================================
@@ -448,7 +482,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار الحذف المنطقي للمطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_restaurant_data: بيانات مطعم نموذجية
@@ -464,9 +498,9 @@ class TestRestaurantsAPI:
             "owner_id": owner_id,
         }
         create_response = await client.post("/api/v1/restaurants/", json=data)
-        
+
         assert create_response.status_code == 201
-        
+
         restaurant_id: int = create_response.json()["id"]
 
         response = await client.delete(
@@ -478,6 +512,10 @@ class TestRestaurantsAPI:
         response = await client.get(f"/api/v1/restaurants/{restaurant_id}")
         assert response.status_code == 404
 
+    # ==============================================
+    # TEST DELETE RESTAURANT PERMANENT
+    # ==============================================
+
     @pytest.mark.asyncio
     async def test_delete_restaurant_permanent(
         self,
@@ -487,7 +525,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار الحذف النهائي للمطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_restaurant_data: بيانات مطعم نموذجية
@@ -503,9 +541,9 @@ class TestRestaurantsAPI:
             "owner_id": owner_id,
         }
         create_response = await client.post("/api/v1/restaurants/", json=data)
-        
+
         assert create_response.status_code == 201
-        
+
         restaurant_id: int = create_response.json()["id"]
 
         response = await client.delete(
@@ -520,6 +558,10 @@ class TestRestaurantsAPI:
         )
         assert response.status_code == 404
 
+    # ==============================================
+    # TEST DELETE RESTAURANT NOT FOUND
+    # ==============================================
+
     @pytest.mark.asyncio
     async def test_delete_restaurant_not_found(
         self,
@@ -527,12 +569,12 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار حذف مطعم غير موجود.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
         """
         response = await client.delete("/api/v1/restaurants/99999")
-        
+
         assert response.status_code == 404
 
     # ==========================================
@@ -548,7 +590,7 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار الحصول على إحصائيات المطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
             sample_restaurant_data: بيانات مطعم نموذجية
@@ -573,12 +615,16 @@ class TestRestaurantsAPI:
         await client.post("/api/v1/restaurants/", json=second_restaurant)
 
         response = await client.get(f"/api/v1/restaurants/stats/{owner_id}")
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["total_restaurants"] >= 2
         assert data["active_restaurants"] >= 2
+
+    # ==============================================
+    # TEST GET RESTAURANT STATS OWNER NOT FOUND
+    # ==============================================
 
     @pytest.mark.asyncio
     async def test_get_restaurant_stats_owner_not_found(
@@ -587,12 +633,12 @@ class TestRestaurantsAPI:
     ) -> None:
         """
         اختبار الحصول على إحصائيات لمالك غير موجود.
-        
+
         Args:
             client: عميل HTTP غير متزامن للاختبار
         """
         response = await client.get("/api/v1/restaurants/stats/99999")
-        
+
         assert response.status_code == 404
 
 

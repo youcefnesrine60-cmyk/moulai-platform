@@ -1,7 +1,19 @@
 # ==============================================
-# 💳 PAYMENT CALLBACKS
-# معالجة أزرار الدفع الخاصة بالزبون
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / CUSTOMER / PAYMENT
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for payment.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -24,11 +36,16 @@ from app.services.business.order_payments_service import (
     get_allowed_payment_methods_for_order,
 )
 
-
 # ==============================================
 # 💳 PAYMENT METHOD SELECTED
 # اختيار طريقة الدفع
 # ==============================================
+
+
+# ==============================================
+# PAYMENT METHOD CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=5,
@@ -82,10 +99,7 @@ async def payment_method_callback(
     state["order_id"] = order_id
 
     cart = state.get("cart", [])
-    total = sum(
-        float(item.get("price", 0))
-        for item in cart
-    )
+    total = sum(float(item.get("price", 0)) for item in cart)
     state["total_amount"] = total
 
     await set_state(
@@ -114,6 +128,12 @@ async def payment_method_callback(
 # ✅ PAYMENT CONFIRM
 # تأكيد الدفع
 # ==============================================
+
+
+# ==============================================
+# PAYMENT CONFIRM CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=5,
@@ -172,12 +192,16 @@ async def payment_confirm_callback(
     if not owner_id or not restaurant_id:
         # محاولة جلب restaurant_id من order_id
         from app.repositories.orders_repo import get_order
+
         order = await get_order(order_id=order_id)
         if order:
             restaurant_id = order.get("restaurant_id")
             # owner_id لا يمكن جلبها من order مباشرة، نحتاج إلى جلبها من restaurant
             if restaurant_id:
-                from app.repositories.restaurant.restaurant_repo import get_restaurant_by_id
+                from app.repositories.restaurant.restaurant_repo import (
+                    get_restaurant_by_id,
+                )
+
                 restaurant = await get_restaurant_by_id(restaurant_id=restaurant_id)
                 if restaurant:
                     owner_id = restaurant.get("owner_id")
@@ -285,6 +309,12 @@ async def payment_confirm_callback(
 # إعادة محاولة الدفع
 # ==============================================
 
+
+# ==============================================
+# RETRY PAYMENT CALLBACK
+# ==============================================
+
+
 @rate_limit(
     limit=5,
     window=30,
@@ -356,6 +386,12 @@ async def retry_payment_callback(
 # 🔙 BACK TO PAYMENT
 # الرجوع إلى واجهة الدفع
 # ==============================================
+
+
+# ==============================================
+# BACK TO PAYMENT CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,

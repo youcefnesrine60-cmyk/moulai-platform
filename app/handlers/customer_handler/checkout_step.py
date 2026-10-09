@@ -1,7 +1,19 @@
 # ==============================================
-# 💳 CHECKOUT STEP
-# معالجة خطوات الدفع
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CUSTOMER_HANDLER / CHECKOUT STEP
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for checkout step.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.helpers.ui_manager import UIManager
@@ -15,6 +27,7 @@ from app.services.business.order_payments_service import (
 # 💳 HANDLE CHECKOUT STEP
 # ==============================================
 
+
 async def handle_checkout_step(
     *,
     chat_id: int,
@@ -23,7 +36,7 @@ async def handle_checkout_step(
 ) -> None:
     """
     معالجة رسائل المستخدم في مرحلة الدفع
-    
+
     Args:
         chat_id: معرف المستخدم
         text: النص المرسل
@@ -56,10 +69,7 @@ async def handle_checkout_step(
         return
 
     # حساب المجموع الكلي
-    total = sum(
-        float(item.get("price", 0))
-        for item in cart
-    )
+    total = sum(float(item.get("price", 0)) for item in cart)
 
     # الحصول على معرف المطعم
     restaurant_id = state.get("restaurant_id")
@@ -101,9 +111,7 @@ async def handle_checkout_step(
     await UIManager.update(
         chat_id=chat_id,
         text=(
-            f"💳 الدفع\n\n"
-            f"المجموع الكلي: {total:.2f} دج\n\n"
-            f"اختر طريقة الدفع:"
+            f"💳 الدفع\n\n" f"المجموع الكلي: {total:.2f} دج\n\n" f"اختر طريقة الدفع:"
         ),
         reply_markup=await payment_ui(
             allowed_methods=allowed_methods,

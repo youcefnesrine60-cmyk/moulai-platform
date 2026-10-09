@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,8 +10,12 @@
 # واجهات API لجلسات المديرين
 # ==============================================
 
+"""MoulAI operational module for admin session.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
-    List,
     Optional,
 )
 
@@ -41,7 +45,6 @@ from app.schemas.admin_session import (
 )
 from app.services.business.admin.admin_session_service import AdminSessionService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -56,15 +59,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_admin_session_service(
     session: AsyncSession = Depends(get_db),
 ) -> AdminSessionService:
     """
     الحصول على خدمة جلسات المديرين.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         AdminSessionService: مثيل من AdminSessionService
     """
@@ -78,6 +82,7 @@ async def get_admin_session_service(
 # ==============================================
 # CREATE SESSION
 # ==============================================
+
 
 @router.post(
     "/",
@@ -93,13 +98,13 @@ async def create_admin_session(
 ) -> AdminSessionResponse:
     """
     إنشاء جلسة جديدة للمدير.
-    
+
     Args:
         data: بيانات الجلسة
-        
+
     Returns:
         AdminSessionResponse: الجلسة المنشأة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المدير
     """
@@ -157,6 +162,7 @@ async def create_admin_session(
 # GET SESSION BY TOKEN
 # ==============================================
 
+
 @router.get(
     "/token/{session_token}",
     response_model=AdminSessionResponse,
@@ -170,13 +176,13 @@ async def get_session_by_token(
 ) -> AdminSessionResponse:
     """
     الحصول على جلسة بواسطة رمز الجلسة.
-    
+
     Args:
         session_token: رمز الجلسة
-        
+
     Returns:
         AdminSessionResponse: الجلسة المطلوبة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الجلسة
     """
@@ -216,6 +222,7 @@ async def get_session_by_token(
 # GET ACTIVE SESSION
 # ==============================================
 
+
 @router.get(
     "/token/{session_token}/active",
     response_model=AdminSessionResponse,
@@ -229,13 +236,13 @@ async def get_active_session(
 ) -> AdminSessionResponse:
     """
     الحصول على جلسة نشطة بواسطة رمز الجلسة.
-    
+
     Args:
         session_token: رمز الجلسة
-        
+
     Returns:
         AdminSessionResponse: الجلسة النشطة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الجلسة أو كانت منتهية
     """
@@ -287,6 +294,7 @@ async def get_active_session(
 # GET SESSION STATUS
 # ==============================================
 
+
 @router.get(
     "/token/{session_token}/status",
     summary="حالة الجلسة",
@@ -299,13 +307,13 @@ async def get_session_status(
 ) -> dict:
     """
     الحصول على حالة الجلسة.
-    
+
     Args:
         session_token: رمز الجلسة
-        
+
     Returns:
         dict: حالة الجلسة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الجلسة
     """
@@ -344,6 +352,7 @@ async def get_session_status(
 # GET SESSIONS BY ADMIN
 # ==============================================
 
+
 @router.get(
     "/admin/{admin_id}",
     response_model=AdminSessionListResponse,
@@ -360,13 +369,13 @@ async def get_sessions_by_admin(
 ) -> AdminSessionListResponse:
     """
     الحصول على جلسات مدير معين.
-    
+
     Args:
         admin_id: معرف المدير
         only_active: جلب الجلسات النشطة فقط
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         AdminSessionListResponse: قائمة جلسات المدير
     """
@@ -404,6 +413,7 @@ async def get_sessions_by_admin(
 # GET ACTIVE SESSIONS BY ADMIN
 # ==============================================
 
+
 @router.get(
     "/admin/{admin_id}/active",
     response_model=AdminSessionListResponse,
@@ -419,12 +429,12 @@ async def get_active_sessions_by_admin(
 ) -> AdminSessionListResponse:
     """
     الحصول على الجلسات النشطة لمدير معين.
-    
+
     Args:
         admin_id: معرف المدير
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         AdminSessionListResponse: قائمة الجلسات النشطة
     """
@@ -460,6 +470,7 @@ async def get_active_sessions_by_admin(
 # UPDATE ACTIVITY
 # ==============================================
 
+
 @router.patch(
     "/token/{session_token}/activity",
     response_model=AdminSessionResponse,
@@ -473,13 +484,13 @@ async def update_activity(
 ) -> AdminSessionResponse:
     """
     تحديث آخر نشاط للجلسة.
-    
+
     Args:
         session_token: رمز الجلسة
-        
+
     Returns:
         AdminSessionResponse: الجلسة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الجلسة
     """
@@ -519,6 +530,7 @@ async def update_activity(
 # DEACTIVATE SESSION
 # ==============================================
 
+
 @router.delete(
     "/token/{session_token}",
     response_model=AdminSessionResponse,
@@ -532,13 +544,13 @@ async def deactivate_session(
 ) -> AdminSessionResponse:
     """
     إلغاء تنشيط جلسة مدير (تسجيل الخروج).
-    
+
     Args:
         session_token: رمز الجلسة
-        
+
     Returns:
         AdminSessionResponse: الجلسة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الجلسة
     """
@@ -578,6 +590,7 @@ async def deactivate_session(
 # DEACTIVATE ALL SESSIONS
 # ==============================================
 
+
 @router.delete(
     "/admin/{admin_id}/all",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -592,11 +605,11 @@ async def deactivate_all_sessions(
 ) -> None:
     """
     إلغاء تنشيط جميع جلسات مدير معين.
-    
+
     Args:
         admin_id: معرف المدير
         except_session_token: استثناء جلسة معينة
-        
+
     Raises:
         HTTPException: إذا حدث خطأ
     """
@@ -604,7 +617,9 @@ async def deactivate_all_sessions(
         "api_deactivate_all_sessions",
         extra={
             "admin_id": admin_id,
-            "except_session_token": except_session_token[:20] + "..." if except_session_token else None,
+            "except_session_token": (
+                except_session_token[:20] + "..." if except_session_token else None
+            ),
         },
     )
 
@@ -637,6 +652,7 @@ async def deactivate_all_sessions(
 # EXTEND SESSION
 # ==============================================
 
+
 @router.patch(
     "/extend",
     response_model=AdminSessionResponse,
@@ -650,13 +666,13 @@ async def extend_session(
 ) -> AdminSessionResponse:
     """
     تمديد صلاحية الجلسة.
-    
+
     Args:
         data: بيانات تمديد الجلسة
-        
+
     Returns:
         AdminSessionResponse: الجلسة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الجلسة أو كان التاريخ غير صحيح
     """
@@ -711,6 +727,7 @@ async def extend_session(
 # GET SESSION STATISTICS
 # ==============================================
 
+
 @router.get(
     "/statistics",
     response_model=AdminSessionStatistics,
@@ -724,10 +741,10 @@ async def get_session_statistics(
 ) -> AdminSessionStatistics:
     """
     الحصول على إحصائيات جلسات المديرين.
-    
+
     Args:
         admin_id: معرف المدير (اختياري)
-        
+
     Returns:
         AdminSessionStatistics: إحصائيات الجلسات
     """
@@ -760,6 +777,7 @@ async def get_session_statistics(
 # CLEANUP EXPIRED SESSIONS
 # ==============================================
 
+
 @router.post(
     "/cleanup",
     summary="تنظيف الجلسات المنتهية",
@@ -767,15 +785,17 @@ async def get_session_statistics(
 )
 async def cleanup_expired_sessions(
     *,
-    days: int = Query(30, ge=1, le=365, description="عدد الأيام للاحتفاظ بالجلسات المنتهية"),
+    days: int = Query(
+        30, ge=1, le=365, description="عدد الأيام للاحتفاظ بالجلسات المنتهية"
+    ),
     service: AdminSessionService = Depends(get_admin_session_service),
 ) -> dict:
     """
     تنظيف الجلسات المنتهية.
-    
+
     Args:
         days: عدد الأيام للاحتفاظ بالجلسات المنتهية
-        
+
     Returns:
         dict: عدد الجلسات المنظفة
     """
@@ -786,7 +806,7 @@ async def cleanup_expired_sessions(
 
     try:
         count = await service.cleanup_expired_sessions(days=days)
-        
+
         return {
             "status": "success",
             "cleaned_count": count,

@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها للمطاعم
 # ==============================================
 
+"""MoulAI operational module for restaurant.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -26,7 +31,6 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -40,12 +44,13 @@ RestaurantListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class RestaurantBase(BaseModel):
     """
     المخطط الأساسي للمطعم.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات المطعم.
-    
+
     Attributes:
         owner_id: معرف المالك
         group_id: معرف المجموعة
@@ -57,6 +62,7 @@ class RestaurantBase(BaseModel):
         lng: خط الطول (اختياري)
         is_active: حالة النشاط
     """
+
     owner_id: int = Field(
         ...,
         description="معرف المالك",
@@ -119,15 +125,15 @@ class RestaurantBase(BaseModel):
     def validate_phone(cls, value: str) -> str:
         """
         التحقق من صحة رقم الهاتف.
-        
+
         ✅ السماح بـ + في البداية
-        
+
         Args:
             value: رقم الهاتف
-            
+
         Returns:
             str: رقم الهاتف المدقق
-            
+
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
         """
@@ -147,18 +153,22 @@ class RestaurantBase(BaseModel):
         # إرجاع الرقم مع + إذا كان موجوداً
         return value if value.startswith("+") else cleaned
 
+    # ==============================================
+    # VALIDATE TYPE
+    # ==============================================
+
     @field_validator("type")
     @classmethod
     def validate_type(cls, value: str) -> str:
         """
         التحقق من صحة نوع المطعم.
-        
+
         Args:
             value: نوع المطعم
-            
+
         Returns:
             str: نوع المطعم المدقق
-            
+
         Raises:
             ValueError: إذا كان النوع غير صالح
         """
@@ -174,12 +184,14 @@ class RestaurantBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class RestaurantCreate(RestaurantBase):
     """
     مخطط إنشاء مطعم جديد.
-    
+
     يرث جميع حقول RestaurantBase.
     """
+
     pass
 
 
@@ -187,10 +199,11 @@ class RestaurantCreate(RestaurantBase):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class RestaurantUpdate(BaseModel):
     """
     مخطط تحديث مطعم - جميع الحقول اختيارية.
-    
+
     Attributes:
         owner_id: معرف المالك
         group_id: معرف المجموعة
@@ -202,6 +215,7 @@ class RestaurantUpdate(BaseModel):
         lng: خط الطول
         is_active: حالة النشاط
     """
+
     owner_id: Optional[int] = Field(
         None,
         description="معرف المالك",
@@ -255,15 +269,15 @@ class RestaurantUpdate(BaseModel):
     def validate_phone(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة رقم الهاتف.
-        
+
         ✅ السماح بـ + في البداية
-        
+
         Args:
             value: رقم الهاتف
-            
+
         Returns:
             Optional[str]: رقم الهاتف المدقق
-            
+
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
         """
@@ -285,23 +299,34 @@ class RestaurantUpdate(BaseModel):
             return value if value.startswith("+") else cleaned
         return value
 
+    # ==============================================
+    # VALIDATE TYPE
+    # ==============================================
+
     @field_validator("type")
     @classmethod
     def validate_type(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة نوع المطعم.
-        
+
         Args:
             value: نوع المطعم
-            
+
         Returns:
             Optional[str]: نوع المطعم المدقق
-            
+
         Raises:
             ValueError: إذا كان النوع غير صالح
         """
         if value is not None:
-            valid_types = {"restaurant", "cafe", "fast_food", "bakery", "pizza", "other"}
+            valid_types = {
+                "restaurant",
+                "cafe",
+                "fast_food",
+                "bakery",
+                "pizza",
+                "other",
+            }
             if value.lower() not in valid_types:
                 raise ValueError(
                     f"نوع المطعم يجب أن يكون واحداً من: {', '.join(valid_types)}"
@@ -314,17 +339,19 @@ class RestaurantUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class RestaurantResponse(RestaurantBase):
     """
     مخطط استجابة المطعم.
-    
+
     يحتوي على جميع حقول المطعم مع الحقول الإضافية للاستجابة.
-    
+
     Attributes:
         id: معرف المطعم
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -347,18 +374,20 @@ class RestaurantResponse(RestaurantBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class RestaurantListResponse(BaseModel):
     """
     مخطط استجابة قائمة المطاعم.
-    
+
     يحتوي على قائمة المطاعم مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة المطاعم
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[RestaurantResponse] = Field(
@@ -389,12 +418,13 @@ class RestaurantListResponse(BaseModel):
 # 📊 STATS SCHEMA
 # ==============================================
 
+
 class RestaurantStats(BaseModel):
     """
     مخطط إحصائيات المطعم.
-    
+
     يحتوي على إحصائيات ومعلومات موجزة عن المطعم.
-    
+
     Attributes:
         total_restaurants: إجمالي عدد المطاعم
         active_restaurants: عدد المطاعم النشطة
@@ -402,6 +432,7 @@ class RestaurantStats(BaseModel):
         type_distribution: توزيع المطاعم حسب النوع
         wilaya_distribution: توزيع المطاعم حسب الولاية
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_restaurants: int = Field(

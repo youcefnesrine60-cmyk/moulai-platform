@@ -1,8 +1,19 @@
 # ==============================================
-# 🌐 CORS MIDDLEWARE
-# مسؤول عن إعداد CORS
-# للسماح للواجهة الأمامية بالاتصال بالـ API
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / CORE / MIDDLEWARE / CORS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for cors.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import List
 
@@ -22,6 +33,7 @@ OriginsList = List[str]
 # 🚀 SETUP CORS
 # ==============================================
 
+
 def setup_cors(
     app: FastAPI,
 ) -> None:
@@ -36,9 +48,7 @@ def setup_cors(
     # تحويل النطاقات من نص إلى قائمة
     origins_raw: str = settings.ALLOWED_ORIGINS
     origins: OriginsList = [
-        origin.strip()
-        for origin in origins_raw.split(",")
-        if origin.strip()
+        origin.strip() for origin in origins_raw.split(",") if origin.strip()
     ]
 
     logger.info(

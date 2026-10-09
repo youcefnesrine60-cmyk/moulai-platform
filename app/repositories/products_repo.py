@@ -1,4 +1,22 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / PRODUCTS REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for products repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy.orm import raiseload
+
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -18,7 +36,6 @@ from typing import (
 )
 
 from sqlalchemy import (
-    and_,
     or_,
     select,
 )
@@ -43,24 +60,39 @@ ProductList = List[Product]
 class ProductRepository(BaseRepository[Product, dict, dict]):
     """
     مستودع المنتجات - يوفر عمليات خاصة بالمنتجات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للمنتجات
         - البحث والتصفية حسب المطعم والتصنيف
         - جلب المنتجات مع العلاقات
         - تحديث التوفر والسعر والترتيب
-    
+
     Attributes:
         model: نموذج Product
         session: جلسة قاعدة البيانات غير المتزامنة
     """
 
+    # ==============================================
+    # GET FOR ORDER
+    # ==============================================
+
     async def get_for_order(self, *, product_id, restaurant_id):
-        return (await self.session.execute(
-            select(self.model).options(raiseload("*")).where(self.model.id == product_id,
-                self.model.restaurant_id == restaurant_id)
-            .with_for_update(of=self.model).execution_options(populate_existing=True)
-        )).scalar_one_or_none()
+        return (
+            await self.session.execute(
+                select(self.model)
+                .options(raiseload("*"))
+                .where(
+                    self.model.id == product_id,
+                    self.model.restaurant_id == restaurant_id,
+                )
+                .with_for_update(of=self.model)
+                .execution_options(populate_existing=True)
+            )
+        ).scalar_one_or_none()
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -68,7 +100,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> None:
         """
         تهيئة مستودع المنتجات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -93,14 +125,14 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> ProductList:
         """
         الحصول على منتجات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_available: جلب المنتجات المتاحة فقط
             category_id: فلتر حسب التصنيف
-            
+
         Returns:
             قائمة المنتجات
         """
@@ -115,10 +147,14 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
             if category_id is not None:
                 query = query.where(self.model.category_id == category_id)
 
-            query = query.order_by(
-                self.model.sort_order.asc(),
-                self.model.id.asc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.sort_order.asc(),
+                    self.model.id.asc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -148,13 +184,13 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> ProductList:
         """
         الحصول على منتجات تصنيف معين.
-        
+
         Args:
             category_id: معرف التصنيف
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_available: جلب المنتجات المتاحة فقط
-            
+
         Returns:
             قائمة المنتجات
         """
@@ -166,10 +202,14 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
             if only_available:
                 query = query.where(self.model.is_available == True)
 
-            query = query.order_by(
-                self.model.sort_order.asc(),
-                self.model.id.asc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.sort_order.asc(),
+                    self.model.id.asc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -196,10 +236,10 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> Optional[Product]:
         """
         الحصول على منتج مع جميع علاقاته.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             المنتج مع العلاقات أو None
         """
@@ -241,12 +281,12 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> ProductList:
         """
         الحصول على المنتجات المتاحة فقط لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المنتجات المتاحة
         """
@@ -269,11 +309,11 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> ProductList:
         """
         الحصول على منتجات حسب قائمة المعرفات.
-        
+
         Args:
             product_ids: قائمة معرفات المنتجات
             only_available: جلب المنتجات المتاحة فقط
-            
+
         Returns:
             قائمة المنتجات
         """
@@ -313,13 +353,13 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> ProductList:
         """
         البحث عن منتجات.
-        
+
         Args:
             query: نص البحث
             restaurant_id: معرف المطعم (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المنتجات
         """
@@ -366,11 +406,11 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> int:
         """
         حساب عدد منتجات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             only_available: حساب المنتجات المتاحة فقط
-            
+
         Returns:
             عدد المنتجات
         """
@@ -393,11 +433,11 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> int:
         """
         حساب عدد منتجات تصنيف معين.
-        
+
         Args:
             category_id: معرف التصنيف
             only_available: حساب المنتجات المتاحة فقط
-            
+
         Returns:
             عدد المنتجات
         """
@@ -424,11 +464,11 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> Optional[Product]:
         """
         تحديث حالة توفر المنتج.
-        
+
         Args:
             product_id: معرف المنتج
             is_available: حالة التوفر الجديدة
-            
+
         Returns:
             المنتج المُحدّث أو None
         """
@@ -449,11 +489,11 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> Optional[Product]:
         """
         تحديث سعر المنتج.
-        
+
         Args:
             product_id: معرف المنتج
             price: السعر الجديد
-            
+
         Returns:
             المنتج المُحدّث أو None
         """
@@ -474,11 +514,11 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     ) -> Optional[Product]:
         """
         تحديث ترتيب المنتج.
-        
+
         Args:
             product_id: معرف المنتج
             sort_order: الترتيب الجديد
-            
+
         Returns:
             المنتج المُحدّث أو None
         """
@@ -497,6 +537,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
 # GET PRODUCT BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_product_by_id(
     *,
     product_id: int,
@@ -504,11 +545,11 @@ async def get_product_by_id(
 ) -> Optional[Product]:
     """
     الحصول على منتج بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         المنتج أو None
     """
@@ -523,6 +564,7 @@ async def get_product_by_id(
 # GET RESTAURANT PRODUCTS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurant_products(
     *,
     restaurant_id: int,
@@ -533,14 +575,14 @@ async def get_restaurant_products(
 ) -> ProductList:
     """
     الحصول على منتجات مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         only_available: جلب المنتجات المتاحة فقط
-        
+
     Returns:
         قائمة المنتجات
     """
@@ -558,6 +600,7 @@ async def get_restaurant_products(
 # COUNT RESTAURANT PRODUCTS (COMPATIBILITY)
 # ==============================================
 
+
 async def count_restaurant_products(
     *,
     restaurant_id: int,
@@ -566,12 +609,12 @@ async def count_restaurant_products(
 ) -> int:
     """
     حساب عدد منتجات مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         only_available: حساب المنتجات المتاحة فقط
-        
+
     Returns:
         عدد المنتجات
     """

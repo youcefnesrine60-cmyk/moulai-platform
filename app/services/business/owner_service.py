@@ -12,6 +12,11 @@
 # يدير عمليات إنشاء واستعراض وتحديث وحذف المالكين
 # ==============================================
 
+"""MoulAI operational module for owner service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -46,7 +51,6 @@ from app.schemas.owner import (
     OwnerStatusUpdate,
 )
 
-
 # ==============================================
 # 🧩 CONSTANTS
 # ==============================================
@@ -67,20 +71,25 @@ OwnerList = List[Owner]
 # 👤 OWNER SERVICE
 # ==============================================
 
+
 class OwnerService:
     """
     خدمة المالكين - تدير منطق الأعمال للمالكين.
-    
+
     مسؤولة عن:
         - إنشاء وإدارة المالكين
         - اعتماد ورفض المالكين
         - إدارة الفترة التجريبية
         - البحث والتصفية
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع المالكين
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -88,7 +97,7 @@ class OwnerService:
     ) -> None:
         """
         تهيئة خدمة المالكين.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -110,13 +119,13 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         الحصول على مالك بالمعرف.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             OwnerResponse: بيانات المالك
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
         """
@@ -147,10 +156,10 @@ class OwnerService:
     ) -> Optional[OwnerResponse]:
         """
         الحصول على مالك بواسطة chat_id.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             Optional[OwnerResponse]: بيانات المالك أو None
         """
@@ -181,12 +190,12 @@ class OwnerService:
     ) -> List[OwnerResponse]:
         """
         الحصول على جميع المالكين.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_approved: جلب المالكين المعتمدين فقط
-            
+
         Returns:
             List[OwnerResponse]: قائمة المالكين
         """
@@ -227,15 +236,15 @@ class OwnerService:
     ) -> List[OwnerResponse]:
         """
         الحصول على المالكين حسب حالة التسجيل.
-        
+
         Args:
             status: حالة التسجيل (pending, approved, rejected)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[OwnerResponse]: قائمة المالكين
-            
+
         Raises:
             ValidationError: إذا كانت الحالة غير صالحة
         """
@@ -280,12 +289,12 @@ class OwnerService:
     ) -> List[OwnerResponse]:
         """
         البحث عن المالكين.
-        
+
         Args:
             query: نص البحث (full_name, phone, email)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[OwnerResponse]: قائمة المالكين
         """
@@ -323,10 +332,10 @@ class OwnerService:
     ) -> int:
         """
         حساب عدد المالكين.
-        
+
         Args:
             status: حالة التسجيل (اختياري)
-            
+
         Returns:
             int: عدد المالكين
         """
@@ -354,7 +363,7 @@ class OwnerService:
     ) -> Dict[str, int]:
         """
         الحصول على إحصائيات المالكين.
-        
+
         Returns:
             Dict[str, int]: إحصائيات المالكين
         """
@@ -387,15 +396,15 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         إنشاء مالك جديد.
-        
+
         ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
-        
+
         Args:
             owner_data: بيانات المالك
-            
+
         Returns:
             OwnerResponse: بيانات المالك المنشأ
-            
+
         Raises:
             ConflictError: إذا كان chat_id موجوداً مسبقاً
             ValidationError: إذا كانت البيانات غير صالحة
@@ -442,7 +451,7 @@ class OwnerService:
         try:
             # ✅ base.py يقوم بـ commit() و refresh()
             owner = await self.repo.create(data=data)
-            
+
             # ✅ لا داعي لـ commit() هنا لأن base.py يقوم بها
 
             logger.info(
@@ -488,16 +497,16 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         تحديث مالك.
-        
+
         ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
-        
+
         Args:
             owner_id: معرف المالك
             update_data: بيانات التحديث
-            
+
         Returns:
             OwnerResponse: بيانات المالك المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
             ConflictError: إذا كان chat_id موجوداً مسبقاً
@@ -573,16 +582,16 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         تحديث حالة المالك.
-        
+
         ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
-        
+
         Args:
             owner_id: معرف المالك
             status_data: بيانات تحديث الحالة
-            
+
         Returns:
             OwnerResponse: بيانات المالك المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
             ValidationError: إذا كانت الحالة غير صالحة
@@ -640,15 +649,15 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         اعتماد مالك (تغيير الحالة إلى approved).
-        
+
         ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             OwnerResponse: بيانات المالك المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
         """
@@ -688,15 +697,15 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         رفض مالك (تغيير الحالة إلى rejected).
-        
+
         ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             OwnerResponse: بيانات المالك المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
         """
@@ -736,15 +745,15 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         تعيين حالة المالك إلى pending.
-        
+
         ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             OwnerResponse: بيانات المالك المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
         """
@@ -785,16 +794,16 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         تحديث حالة استخدام الفترة التجريبية.
-        
+
         ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
-        
+
         Args:
             owner_id: معرف المالك
             trial_used: حالة الاستخدام
-            
+
         Returns:
             OwnerResponse: بيانات المالك المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
         """
@@ -844,10 +853,10 @@ class OwnerService:
     ) -> bool:
         """
         التحقق من إمكانية استخدام الفترة التجريبية.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             bool: True إذا كان يمكن استخدام الفترة التجريبية
         """
@@ -872,15 +881,15 @@ class OwnerService:
     ) -> OwnerResponse:
         """
         تفعيل استخدام الفترة التجريبية.
-        
+
         ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             OwnerResponse: بيانات المالك المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
             ValidationError: إذا كان المالك غير مؤهل للفترة التجريبية
@@ -946,12 +955,12 @@ class OwnerService:
     ) -> None:
         """
         حذف مالك.
-        
+
         ✅ التصحيح: إزالة commit() لأن base.py يقوم بها
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المالك
             ValidationError: إذا كان المالك مرتبطاً بمطاعم
@@ -1006,6 +1015,7 @@ class OwnerService:
 # GET OR CREATE OWNER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_or_create_owner(
     *,
     chat_id: int,
@@ -1016,14 +1026,14 @@ async def get_or_create_owner(
 ) -> int:
     """
     الحصول على مالك أو إنشاؤه (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         full_name: الاسم الكامل
         phone: رقم الهاتف
         email: البريد الإلكتروني
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف المالك
     """
@@ -1069,6 +1079,7 @@ async def get_or_create_owner(
 # CAN USE TRIAL (COMPATIBILITY)
 # ==============================================
 
+
 async def can_use_trial(
     *,
     owner_id: int,
@@ -1076,11 +1087,11 @@ async def can_use_trial(
 ) -> bool:
     """
     التحقق من إمكانية استخدام الفترة التجريبية.
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         bool: True إذا كان يمكن استخدام الفترة التجريبية
     """
@@ -1093,6 +1104,7 @@ async def can_use_trial(
 # ACTIVATE TRIAL USAGE (COMPATIBILITY)
 # ==============================================
 
+
 async def activate_trial_usage(
     *,
     owner_id: int,
@@ -1100,7 +1112,7 @@ async def activate_trial_usage(
 ) -> None:
     """
     تفعيل استخدام الفترة التجريبية.
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -1114,6 +1126,7 @@ async def activate_trial_usage(
 # APPROVE OWNER (COMPATIBILITY)
 # ==============================================
 
+
 async def approve_owner(
     *,
     owner_id: int,
@@ -1121,7 +1134,7 @@ async def approve_owner(
 ) -> None:
     """
     اعتماد مالك.
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -1135,6 +1148,7 @@ async def approve_owner(
 # REJECT OWNER (COMPATIBILITY)
 # ==============================================
 
+
 async def reject_owner(
     *,
     owner_id: int,
@@ -1142,7 +1156,7 @@ async def reject_owner(
 ) -> None:
     """
     رفض مالك.
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -1156,6 +1170,7 @@ async def reject_owner(
 # SET OWNER PENDING (COMPATIBILITY)
 # ==============================================
 
+
 async def set_owner_pending(
     *,
     owner_id: int,
@@ -1163,7 +1178,7 @@ async def set_owner_pending(
 ) -> None:
     """
     تعيين حالة المالك إلى pending.
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -1177,6 +1192,7 @@ async def set_owner_pending(
 # GET OWNER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_owner(
     *,
     owner_id: int,
@@ -1184,11 +1200,11 @@ async def get_owner(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مالك بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات المالك أو None
     """
@@ -1205,6 +1221,7 @@ async def get_owner(
 # GET OWNER BY CHAT ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_owner_by_chat_id(
     *,
     chat_id: int,
@@ -1212,11 +1229,11 @@ async def get_owner_by_chat_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مالك بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات المالك أو None
     """
@@ -1234,6 +1251,7 @@ async def get_owner_by_chat_id(
 # GET ALL OWNERS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_all_owners(
     *,
     session: AsyncSession,
@@ -1243,13 +1261,13 @@ async def get_all_owners(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على جميع المالكين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         only_approved: جلب المالكين المعتمدين فقط
-        
+
     Returns:
         List[Dict[str, Any]]: قائمة المالكين
     """
@@ -1268,6 +1286,7 @@ async def get_all_owners(
 # GET OWNERS BY STATUS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_owners_by_status(
     *,
     status: str,
@@ -1277,13 +1296,13 @@ async def get_owners_by_status(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على المالكين حسب حالة التسجيل (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         status: حالة التسجيل (pending, approved, rejected)
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         List[Dict[str, Any]]: قائمة المالكين
     """

@@ -10,6 +10,11 @@
 # مخططات Pydantic للرسائل
 # ==============================================
 
+"""MoulAI operational module for message.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,10 +43,11 @@ MessageListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class MessageBase(BaseModel):
     """
     المخطط الأساسي للرسالة.
-    
+
     Attributes:
         conversation_id: معرف المحادثة
         role: دور المرسل (user, assistant, system)
@@ -53,6 +58,7 @@ class MessageBase(BaseModel):
         entities: الكيانات المستخرجة
         meta_data: بيانات وصفية
     """
+
     conversation_id: int = Field(
         ...,
         description="معرف المحادثة",
@@ -110,13 +116,13 @@ class MessageBase(BaseModel):
     def validate_role(cls, value: str) -> str:
         """
         التحقق من صحة دور المرسل.
-        
+
         Args:
             value: دور المرسل
-            
+
         Returns:
             str: دور المرسل المدقق
-            
+
         Raises:
             ValueError: إذا كان الدور غير صالح
         """
@@ -127,18 +133,22 @@ class MessageBase(BaseModel):
             )
         return value.lower()
 
+    # ==============================================
+    # VALIDATE CONTENT TYPE
+    # ==============================================
+
     @field_validator("content_type")
     @classmethod
     def validate_content_type(cls, value: str) -> str:
         """
         التحقق من صحة نوع المحتوى.
-        
+
         Args:
             value: نوع المحتوى
-            
+
         Returns:
             str: نوع المحتوى المدقق
-            
+
         Raises:
             ValueError: إذا كان النوع غير صالح
         """
@@ -149,18 +159,22 @@ class MessageBase(BaseModel):
             )
         return value.lower()
 
+    # ==============================================
+    # VALIDATE CONTENT
+    # ==============================================
+
     @field_validator("content")
     @classmethod
     def validate_content(cls, value: str) -> str:
         """
         التحقق من صحة محتوى الرسالة.
-        
+
         Args:
             value: محتوى الرسالة
-            
+
         Returns:
             str: محتوى الرسالة المدقق
-            
+
         Raises:
             ValueError: إذا كان المحتوى فارغاً
         """
@@ -173,10 +187,12 @@ class MessageBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class MessageCreate(MessageBase):
     """
     مخطط إنشاء رسالة جديدة.
     """
+
     pass
 
 
@@ -184,10 +200,11 @@ class MessageCreate(MessageBase):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class MessageUpdate(BaseModel):
     """
     مخطط تحديث الرسالة.
-    
+
     Attributes:
         content: محتوى الرسالة
         intent: نية الرسالة
@@ -195,6 +212,7 @@ class MessageUpdate(BaseModel):
         entities: الكيانات المستخرجة
         meta_data: بيانات وصفية
     """
+
     content: Optional[str] = Field(
         None,
         description="محتوى الرسالة",
@@ -233,13 +251,13 @@ class MessageUpdate(BaseModel):
     def validate_content(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة محتوى الرسالة.
-        
+
         Args:
             value: محتوى الرسالة
-            
+
         Returns:
             Optional[str]: محتوى الرسالة المدقق
-            
+
         Raises:
             ValueError: إذا كان المحتوى فارغاً
         """
@@ -254,15 +272,17 @@ class MessageUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class MessageResponse(MessageBase):
     """
     مخطط استجابة الرسالة.
-    
+
     Attributes:
         id: معرف الرسالة
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -285,16 +305,18 @@ class MessageResponse(MessageBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class MessageListResponse(BaseModel):
     """
     مخطط استجابة قائمة الرسائل.
-    
+
     Attributes:
         items: قائمة الرسائل
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[MessageResponse] = Field(
@@ -325,10 +347,11 @@ class MessageListResponse(BaseModel):
 # 📊 STATISTICS SCHEMA
 # ==============================================
 
+
 class MessageStatistics(BaseModel):
     """
     مخطط إحصائيات الرسائل.
-    
+
     Attributes:
         total_messages: إجمالي عدد الرسائل
         user_messages: عدد رسائل المستخدم
@@ -336,6 +359,7 @@ class MessageStatistics(BaseModel):
         system_messages: عدد رسائل النظام
         role_summary: ملخص أدوار الرسائل
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_messages: int = Field(

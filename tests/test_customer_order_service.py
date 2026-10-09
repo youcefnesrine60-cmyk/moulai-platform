@@ -1,3 +1,20 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# TEST MODULE - TESTS / TEST CUSTOMER ORDER SERVICE
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test customer order service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from types import SimpleNamespace
 
 import pytest
@@ -11,12 +28,24 @@ from app.services.business.orders.customer import (
 
 
 class FakeTransaction:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self):
         self.committed = False
         self.rolled_back = False
 
+    # ==============================================
+    #   AENTER
+    # ==============================================
+
     async def __aenter__(self):
         return self
+
+    # ==============================================
+    #   AEXIT
+    # ==============================================
 
     async def __aexit__(self, exc_type, exc, traceback):
         self.committed = exc_type is None
@@ -25,45 +54,94 @@ class FakeTransaction:
 
 
 class ScalarResult:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self, value):
         self.value = value
+
+    # ==============================================
+    # SCALAR ONE OR NONE
+    # ==============================================
 
     def scalar_one_or_none(self):
         return self.value
 
 
 class ListResult:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self, values):
         self.values = values
 
+    # ==============================================
+    # SCALARS
+    # ==============================================
+
     def scalars(self):
         return self
+
+    # ==============================================
+    # ALL
+    # ==============================================
 
     def all(self):
         return self.values
 
 
 class FakeSession:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self, query_results):
         self.info = {}
         self.query_results = iter(query_results)
         self.transaction = FakeTransaction()
         self.added = []
 
+    # ==============================================
+    # BEGIN
+    # ==============================================
+
     def begin(self):
         return self.transaction
+
+    # ==============================================
+    # IN TRANSACTION
+    # ==============================================
 
     def in_transaction(self):
         return False
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(self, statement):
         return next(self.query_results)
+
+    # ==============================================
+    # ADD
+    # ==============================================
 
     def add(self, instance):
         self.added.append(instance)
 
+    # ==============================================
+    # FLUSH
+    # ==============================================
+
     async def flush(self):
         return None
+
+
+# ==============================================
+# TEST MODIFY CUSTOMER ORDER QUANTITY RECALCULATES TOTALS ATOMICALLY
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -105,6 +183,11 @@ async def test_modify_customer_order_quantity_recalculates_totals_atomically():
     assert session.transaction.committed is True
 
 
+# ==============================================
+# TEST MODIFY CUSTOMER ORDER REJECTS NON PENDING ORDER
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_modify_customer_order_rejects_non_pending_order():
     order = SimpleNamespace(id=17, status="confirmed", items=[])
@@ -123,6 +206,11 @@ async def test_modify_customer_order_rejects_non_pending_order():
     assert session.transaction.rolled_back is True
 
 
+# ==============================================
+# TEST CUSTOMER ORDER MODIFICATION CANNOT ACCESS ANOTHER CUSTOMER ORDER
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_customer_order_modification_cannot_access_another_customer_order():
     session = FakeSession([ScalarResult(None)])
@@ -138,6 +226,11 @@ async def test_customer_order_modification_cannot_access_another_customer_order(
 
     assert exc_info.value.error_code == "ORDER_NOT_FOUND"
     assert session.transaction.rolled_back is True
+
+
+# ==============================================
+# TEST CUSTOMER CANCELLATION UPDATES STATUS AND HISTORY ATOMICALLY
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -162,6 +255,11 @@ async def test_customer_cancellation_updates_status_and_history_atomically():
     assert session.transaction.committed is True
 
 
+# ==============================================
+# TEST CUSTOMER CANCELLATION REPLAY IS REJECTED WITHOUT DUPLICATE HISTORY
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_customer_cancellation_replay_is_rejected_without_duplicate_history():
     order = SimpleNamespace(id=17, order_number="RST1-000017", status="cancelled")
@@ -178,6 +276,11 @@ async def test_customer_cancellation_replay_is_rejected_without_duplicate_histor
     assert exc_info.value.error_code == "ORDER_NOT_CANCELLABLE"
     assert session.added == []
     assert session.transaction.rolled_back is True
+
+
+# ==============================================
+# TEST REPLAYING SAME QUANTITY CHANGE DOES NOT DOUBLE CHARGE
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -217,12 +320,23 @@ async def test_replaying_same_quantity_change_does_not_double_charge():
     assert order.total_amount == 150.0
 
 
+# ==============================================
+# APPEND HISTORY TO FAKE SESSION
+# ==============================================
+
+
 @pytest.fixture(autouse=True)
 def append_history_to_fake_session(monkeypatch):
     from app.repositories.order_status_history_repo import OrderStatusHistoryRepository
+
+    # ==============================================
+    # CREATE
+    # ==============================================
+
     async def create(self, *, data):
         record = OrderStatusHistory(**data)
         self.session.add(record)
         await self.session.flush()
         return record
+
     monkeypatch.setattr(OrderStatusHistoryRepository, "create", create)

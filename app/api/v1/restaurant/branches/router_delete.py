@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🔗 RESTAURANT BRANCHES ROUTER - DELETE
 # نقاط نهاية حذف فروع المطاعم
 # ==============================================
+
+"""MoulAI operational module for router delete.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -24,7 +29,6 @@ from app.core.exceptions import NotFoundError
 from app.core.logger import logger
 from app.services.business.restaurant.branches.service import RestaurantBranchService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -38,6 +42,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_restaurant_branch_service(
     session: AsyncSession = Depends(get_db),
@@ -53,6 +58,7 @@ async def get_restaurant_branch_service(
 # ==============================================
 # DELETE BRANCH
 # ==============================================
+
 
 @router.delete(
     "/{branch_id}",

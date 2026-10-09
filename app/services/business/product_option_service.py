@@ -1,15 +1,19 @@
 # ==============================================
-# 🎯 PRODUCT OPTION SERVICE
-# منطق الأعمال لخيارات المنتج
-#
-# إنشاء خيار منتج
-# قراءة خيار منتج
-# قراءة خيارات مجموعة
-# تحديث خيار منتج
-# تحديث حالة التوفر
-# تحديث السعر الإضافي
-# حذف خيار منتج
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / PRODUCT OPTION SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for product option service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -47,7 +51,6 @@ from app.schemas.product_option import (
     ProductOptionSummary,
 )
 
-
 # ==============================================
 # 🧩 CONSTANTS
 # ==============================================
@@ -73,18 +76,22 @@ ProductOptionList = List[ProductOption]
 class ProductOptionService:
     """
     خدمة خيارات المنتج - تدير منطق الأعمال لخيارات المنتج.
-    
+
     مسؤولة عن:
         - إنشاء خيارات المنتج
         - قراءة خيارات المنتج
         - تحديث خيارات المنتج
         - حذف خيارات المنتج
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع خيارات المنتج
         group_repo: مستودع مجموعات الخيارات
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -92,7 +99,7 @@ class ProductOptionService:
     ) -> None:
         """
         تهيئة خدمة خيارات المنتج.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -115,13 +122,13 @@ class ProductOptionService:
     ) -> ProductOptionResponse:
         """
         الحصول على خيار منتج بالمعرف.
-        
+
         Args:
             option_id: معرف الخيار
-            
+
         Returns:
             ProductOptionResponse: بيانات الخيار
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
         """
@@ -155,13 +162,13 @@ class ProductOptionService:
     ) -> ProductOptionListResponse:
         """
         الحصول على خيارات مجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_available: جلب الخيارات المتاحة فقط
-            
+
         Returns:
             ProductOptionListResponse: قائمة خيارات المنتج مع الإحصائيات
         """
@@ -207,12 +214,12 @@ class ProductOptionService:
     ) -> ProductOptionListResponse:
         """
         الحصول على الخيارات المتاحة لمجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             ProductOptionListResponse: قائمة الخيارات المتاحة
         """
@@ -257,14 +264,14 @@ class ProductOptionService:
     ) -> ProductOptionListResponse:
         """
         البحث عن خيارات المنتج.
-        
+
         Args:
             query: نص البحث
             group_id: معرف مجموعة الخيارات (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_available: جلب الخيارات المتاحة فقط
-            
+
         Returns:
             ProductOptionListResponse: قائمة خيارات المنتج
         """
@@ -315,11 +322,11 @@ class ProductOptionService:
     ) -> int:
         """
         حساب عدد خيارات مجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             only_available: حساب الخيارات المتاحة فقط
-            
+
         Returns:
             int: عدد الخيارات
         """
@@ -339,10 +346,10 @@ class ProductOptionService:
     ) -> int:
         """
         حساب عدد الخيارات المتاحة لمجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
-            
+
         Returns:
             int: عدد الخيارات المتاحة
         """
@@ -361,10 +368,10 @@ class ProductOptionService:
     ) -> ProductOptionSummary:
         """
         الحصول على ملخص خيارات المجموعة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
-            
+
         Returns:
             ProductOptionSummary: ملخص الخيارات
         """
@@ -419,13 +426,13 @@ class ProductOptionService:
     ) -> ProductOptionResponse:
         """
         إنشاء خيار منتج جديد.
-        
+
         Args:
             option_data: بيانات الخيار
-            
+
         Returns:
             ProductOptionResponse: بيانات الخيار المنشأ
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
             ConflictError: إذا كان الاسم مكرراً
@@ -496,7 +503,11 @@ class ProductOptionService:
             "group_id": option_data.group_id,
             "name": name,
             "extra_price": option_data.extra_price,
-            "is_available": option_data.is_available if option_data.is_available is not None else True,
+            "is_available": (
+                option_data.is_available
+                if option_data.is_available is not None
+                else True
+            ),
             "sort_order": option_data.sort_order or 0,
         }
 
@@ -524,14 +535,14 @@ class ProductOptionService:
     ) -> ProductOptionResponse:
         """
         تحديث خيار منتج.
-        
+
         Args:
             option_id: معرف الخيار
             update_data: بيانات التحديث
-            
+
         Returns:
             ProductOptionResponse: بيانات الخيار المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
             ConflictError: إذا كان الاسم مكرراً
@@ -618,14 +629,14 @@ class ProductOptionService:
     ) -> ProductOptionResponse:
         """
         تحديث حالة توفر الخيار.
-        
+
         Args:
             option_id: معرف الخيار
             availability_data: بيانات حالة التوفر
-            
+
         Returns:
             ProductOptionResponse: بيانات الخيار المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
         """
@@ -669,14 +680,14 @@ class ProductOptionService:
     ) -> ProductOptionResponse:
         """
         تحديث السعر الإضافي للخيار.
-        
+
         Args:
             option_id: معرف الخيار
             extra_price: السعر الإضافي الجديد
-            
+
         Returns:
             ProductOptionResponse: بيانات الخيار المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
             ValidationError: إذا كان السعر غير صالح
@@ -731,14 +742,14 @@ class ProductOptionService:
     ) -> ProductOptionResponse:
         """
         تحديث ترتيب الخيار.
-        
+
         Args:
             option_id: معرف الخيار
             sort_order: الترتيب الجديد
-            
+
         Returns:
             ProductOptionResponse: بيانات الخيار المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
         """
@@ -781,13 +792,13 @@ class ProductOptionService:
     ) -> ProductOptionResponse:
         """
         تفعيل الخيار.
-        
+
         Args:
             option_id: معرف الخيار
-            
+
         Returns:
             ProductOptionResponse: بيانات الخيار المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
         """
@@ -823,13 +834,13 @@ class ProductOptionService:
     ) -> ProductOptionResponse:
         """
         إلغاء تفعيل الخيار.
-        
+
         Args:
             option_id: معرف الخيار
-            
+
         Returns:
             ProductOptionResponse: بيانات الخيار المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
         """
@@ -865,10 +876,10 @@ class ProductOptionService:
     ) -> None:
         """
         حذف خيار منتج.
-        
+
         Args:
             option_id: معرف الخيار
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
         """
@@ -906,13 +917,13 @@ class ProductOptionService:
     ) -> int:
         """
         حذف جميع خيارات مجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
-            
+
         Returns:
             int: عدد الخيارات المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -958,11 +969,11 @@ class ProductOptionService:
     ) -> None:
         """
         إعادة ترتيب خيارات المجموعة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             option_order: قائمة معرفات الخيارات بالترتيب الجديد
-            
+
         Raises:
             NotFoundError: إذا كان أحد الخيارات غير موجود
             ValidationError: إذا كانت القائمة فارغة أو تحتوي على معرفات مكررة
@@ -1033,6 +1044,7 @@ class ProductOptionService:
 # CREATE PRODUCT OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def create_product_option(
     *,
     group_id: int,
@@ -1044,7 +1056,7 @@ async def create_product_option(
 ) -> int:
     """
     إنشاء خيار منتج جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         name: اسم الخيار
@@ -1052,10 +1064,10 @@ async def create_product_option(
         is_available: حالة التوفر
         sort_order: ترتيب العرض
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف الخيار
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المجموعة
         ConflictError: إذا كان الاسم مكرراً
@@ -1082,6 +1094,7 @@ async def create_product_option(
 # GET PRODUCT OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def get_product_option(
     *,
     option_id: int,
@@ -1089,11 +1102,11 @@ async def get_product_option(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على خيار منتج بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات الخيار أو None
     """
@@ -1110,6 +1123,7 @@ async def get_product_option(
 # GET PRODUCT OPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_product_options(
     *,
     group_id: int,
@@ -1120,14 +1134,14 @@ async def get_product_options(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على خيارات مجموعة معينة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         only_available: جلب الخيارات المتاحة فقط
-        
+
     Returns:
         List[Dict[str, Any]]: قائمة خيارات المنتج
     """
@@ -1147,6 +1161,7 @@ async def get_product_options(
 # UPDATE PRODUCT OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def update_product_option(
     *,
     option_id: int,
@@ -1155,12 +1170,12 @@ async def update_product_option(
 ) -> None:
     """
     تحديث خيار منتج (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         data: بيانات التحديث
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الخيار
         ConflictError: إذا كان الاسم مكرراً
@@ -1180,6 +1195,7 @@ async def update_product_option(
 # DELETE PRODUCT OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_product_option(
     *,
     option_id: int,
@@ -1187,11 +1203,11 @@ async def delete_product_option(
 ) -> None:
     """
     حذف خيار منتج (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الخيار
     """
@@ -1209,6 +1225,7 @@ async def delete_product_option(
 # GET OPTIONS COUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_options_count(
     *,
     group_id: int,
@@ -1217,12 +1234,12 @@ async def get_options_count(
 ) -> int:
     """
     حساب عدد خيارات مجموعة معينة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         session: جلسة قاعدة البيانات غير المتزامنة
         only_available: حساب الخيارات المتاحة فقط
-        
+
     Returns:
         int: عدد الخيارات
     """
@@ -1238,6 +1255,7 @@ async def get_options_count(
 # UPDATE OPTION AVAILABILITY (COMPATIBILITY)
 # ==============================================
 
+
 async def update_option_availability(
     *,
     option_id: int,
@@ -1246,12 +1264,12 @@ async def update_option_availability(
 ) -> None:
     """
     تحديث حالة توفر الخيار (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         is_available: حالة التوفر الجديدة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الخيار
     """
@@ -1279,6 +1297,7 @@ async def update_option_availability(
 # UPDATE OPTION PRICE (COMPATIBILITY)
 # ==============================================
 
+
 async def update_option_price(
     *,
     option_id: int,
@@ -1287,12 +1306,12 @@ async def update_option_price(
 ) -> None:
     """
     تحديث السعر الإضافي للخيار (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         extra_price: السعر الإضافي الجديد
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الخيار
         ValidationError: إذا كان السعر غير صالح

@@ -6,6 +6,16 @@
 # ==============================================
 
 # ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS
+# / CATEGORY SERVICE
+# ==============================================
+
+"""MoulAI operational module for category service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+# ==============================================
 # 📂 CATEGORY SERVICE
 # Business Logic Layer - منطق الأعمال للتصنيفات
 #
@@ -86,6 +96,10 @@ class CategoryService:
         product_repo: مستودع المنتجات
         metrics_repo: مستودع مقاييس المطعم
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -375,9 +389,7 @@ class CategoryService:
             if product_count > 0:
                 categories_with_products_count += 1
 
-        avg_products_per_category = (
-            total_products / total if total > 0 else 0.0
-        )
+        avg_products_per_category = total_products / total if total > 0 else 0.0
 
         return CategorySummary(
             total_categories=total,
@@ -543,8 +555,7 @@ class CategoryService:
             if existing and existing.id != category_id:
                 raise ConflictError(
                     message=(
-                        f"يوجد تصنيف باسم '{updates['name']}' "
-                        f"بالفعل لهذا المطعم"
+                        f"يوجد تصنيف باسم '{updates['name']}' " f"بالفعل لهذا المطعم"
                     ),
                 )
 
@@ -769,6 +780,7 @@ class CategoryService:
 # CREATE RESTAURANT CATEGORY (COMPATIBILITY)
 # ==============================================
 
+
 async def create_restaurant_category(
     *,
     restaurant_id: int,
@@ -810,6 +822,7 @@ async def create_restaurant_category(
 # GET CATEGORY (COMPATIBILITY)
 # ==============================================
 
+
 async def get_category(
     *,
     category_id: int,
@@ -837,6 +850,7 @@ async def get_category(
 # ==============================================
 # GET CATEGORIES (COMPATIBILITY)
 # ==============================================
+
 
 async def get_categories(
     *,
@@ -872,6 +886,7 @@ async def get_categories(
 # REMOVE CATEGORY (COMPATIBILITY)
 # ==============================================
 
+
 async def remove_category(
     *,
     category_id: int,
@@ -902,6 +917,7 @@ async def remove_category(
 # GET CATEGORIES COUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_categories_count(
     *,
     restaurant_id: int,
@@ -927,6 +943,7 @@ async def get_categories_count(
 # ==============================================
 # REORDER CATEGORIES (COMPATIBILITY)
 # ==============================================
+
 
 async def reorder_categories(
     *,

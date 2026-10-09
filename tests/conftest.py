@@ -10,6 +10,11 @@
 # إعدادات مشتركة لجميع الاختبارات
 # ==============================================
 
+"""Automated tests for conftest.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import asyncio
 import time
 from typing import (
@@ -36,7 +41,6 @@ from app.core.database import get_db
 from app.models.base import Base
 from app.main import app
 
-
 # ==============================================
 # 🔧 TEST DATABASE
 # ==============================================
@@ -49,10 +53,15 @@ engine = create_async_engine(
     pool_size=5,
     max_overflow=0,
     pool_pre_ping=True,
-    connect_args={"timeout": 60, "command_timeout": 60,
-                  "server_settings": {"lock_timeout": "5000",
-                                      # Fixtures keep transactions open between API requests.
-                                      "idle_in_transaction_session_timeout": "0"}},
+    connect_args={
+        "timeout": 60,
+        "command_timeout": 60,
+        "server_settings": {
+            "lock_timeout": "5000",
+            # Fixtures keep transactions open between API requests.
+            "idle_in_transaction_session_timeout": "0",
+        },
+    },
 )
 
 TestingSessionLocal = async_sessionmaker(
@@ -62,6 +71,11 @@ TestingSessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
+
+# ==============================================
+# DISPOSE TEST ENGINE
+# ==============================================
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -75,11 +89,12 @@ async def dispose_test_engine():
 # 🔧 ASYNCIO FIXTURE
 # ==============================================
 
+
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """
     إنشاء event loop للاختبارات غير المتزامنة.
-    
+
     Returns:
         Generator[asyncio.AbstractEventLoop, None, None]: Event loop
     """
@@ -92,13 +107,14 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 # ✅ DB SESSION FIXTURE
 # ==============================================
 
+
 @pytest.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     إنشاء جلسة قاعدة بيانات اختبارية.
-    
+
     ✅ rollback بعد كل اختبار لضمان عزل البيانات
-    
+
     Yields:
         AsyncGenerator[AsyncSession, None]: جلسة قاعدة البيانات
     """
@@ -114,17 +130,23 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 # ✅ CLIENT FIXTURE
 # ==============================================
 
+
 @pytest.fixture(scope="function")
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """
     إنشاء عميل اختبار HTTP مع جلسة قاعدة بيانات مستقلة لكل طلب.
-    
+
     ✅ كل طلب HTTP يحصل على جلسة DB جديدة
     ✅ rollback بعد كل طلب لضمان عزل البيانات
-    
+
     Yields:
         AsyncGenerator[AsyncClient, None]: عميل HTTP
     """
+
+    # ==============================================
+    # OVERRIDE GET DB
+    # ==============================================
+
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         async with TestingSessionLocal() as session:
             try:
@@ -150,11 +172,14 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
 # 🔧 TEST DATABASE CLEANUP FIXTURE
 # ==============================================
 
+
 @pytest.fixture(autouse=True, scope="function")
-async def cleanup_test_database(request: pytest.FixtureRequest) -> AsyncGenerator[None, None]:
+async def cleanup_test_database(
+    request: pytest.FixtureRequest,
+) -> AsyncGenerator[None, None]:
     """
     تنظيف قاعدة البيانات التجريبية قبل وبعد كل اختبار.
-    
+
     تستخدم واجهات API عمليات commit مستقلة؛ لذلك rollback الجلسة
     وحده لا يعزل الاختبارات.
     """
@@ -162,12 +187,15 @@ async def cleanup_test_database(request: pytest.FixtureRequest) -> AsyncGenerato
         yield
         return
 
-    import app.models
+    import app.models  # noqa: F401  # Register ORM models in Base.metadata.
 
     table_names = ", ".join(
-        f'"{table.name}"'
-        for table in reversed(Base.metadata.sorted_tables)
+        f'"{table.name}"' for table in reversed(Base.metadata.sorted_tables)
     )
+
+    # ==============================================
+    # TRUNCATE ALL TABLES
+    # ==============================================
 
     async def truncate_all_tables() -> None:
         if not table_names:
@@ -187,11 +215,12 @@ async def cleanup_test_database(request: pytest.FixtureRequest) -> AsyncGenerato
 # 📦 DATA FACTORIES - SAMPLE DATA
 # ==============================================
 
+
 @pytest.fixture
 def sample_owner_data() -> Dict[str, Any]:
     """
     بيانات مالك نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات المالك
     """
@@ -206,11 +235,16 @@ def sample_owner_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE RESTAURANT DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_restaurant_data() -> Dict[str, Any]:
     """
     بيانات مطعم نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات المطعم
     """
@@ -225,13 +259,18 @@ def sample_restaurant_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE RESTAURANT GROUP DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_restaurant_group_data() -> Dict[str, Any]:
     """
     بيانات مجموعة مطاعم نموذجية للاختبار.
-    
+
     ✅ لا يحتوي على is_active لأن RestaurantGroup لا يدعمه
-    
+
     Returns:
         Dict[str, Any]: بيانات المجموعة
     """
@@ -240,11 +279,16 @@ def sample_restaurant_group_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE RESTAURANT BRANCH DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_restaurant_branch_data() -> Dict[str, Any]:
     """
     بيانات فرع مطعم نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات الفرع
     """
@@ -254,11 +298,16 @@ def sample_restaurant_branch_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE BULK BRANCHES DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_bulk_branches_data() -> Dict[str, Any]:
     """
     بيانات فروع متعددة نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات الفروع المتعددة
     """
@@ -268,11 +317,16 @@ def sample_bulk_branches_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE METRIC DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_metric_data() -> Dict[str, Any]:
     """
     بيانات مقاييس نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات المقاييس
     """
@@ -284,11 +338,16 @@ def sample_metric_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE ORDER COUNTER DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_order_counter_data() -> Dict[str, Any]:
     """
     بيانات عداد طلبات نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات عداد الطلبات
     """
@@ -297,11 +356,16 @@ def sample_order_counter_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE PAYMENT SETTINGS DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_payment_settings_data() -> Dict[str, Any]:
     """
     بيانات إعدادات دفع نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات إعدادات الدفع
     """
@@ -315,11 +379,16 @@ def sample_payment_settings_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE ORDER DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_order_data() -> Dict[str, Any]:
     """
     بيانات طلب نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات الطلب
     """
@@ -339,11 +408,16 @@ def sample_order_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE PRODUCT DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_product_data() -> Dict[str, Any]:
     """
     بيانات منتج نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات المنتج
     """
@@ -358,11 +432,16 @@ def sample_product_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE CATEGORY DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_category_data() -> Dict[str, Any]:
     """
     بيانات تصنيف نموذجية للاختبار.
-    
+
     Returns:
         Dict[str, Any]: بيانات التصنيف
     """
@@ -374,13 +453,18 @@ def sample_category_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE GROUP DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_group_data() -> Dict[str, Any]:
     """
     بيانات مجموعة نموذجية للاختبار (متوافقة مع الاختبارات القديمة).
-    
+
     ✅ لا يحتوي على is_active
-    
+
     Returns:
         Dict[str, Any]: بيانات المجموعة
     """
@@ -393,19 +477,20 @@ def sample_group_data() -> Dict[str, Any]:
 # 🏗️ HELPER FUNCTIONS
 # ==============================================
 
+
 async def create_test_owner(
     db_session: AsyncSession,
     owner_data: Dict[str, Any],
 ) -> Any:
     """
     إنشاء مالك للاختبارات باستخدام DB مباشر.
-    
+
     ⚠️ تستخدم فقط في إعدادات الاختبارات (setup)
-    
+
     Args:
         db_session: جلسة قاعدة البيانات
         owner_data: بيانات المالك
-        
+
     Returns:
         Any: كائن المالك المنشأ
     """
@@ -418,6 +503,11 @@ async def create_test_owner(
     return owner
 
 
+# ==============================================
+# CREATE TEST RESTAURANT
+# ==============================================
+
+
 async def create_test_restaurant(
     db_session: AsyncSession,
     restaurant_data: Dict[str, Any],
@@ -425,26 +515,29 @@ async def create_test_restaurant(
 ) -> Any:
     """
     إنشاء مطعم للاختبارات باستخدام DB مباشر.
-    
+
     ⚠️ تستخدم فقط في إعدادات الاختبارات (setup)
-    
+
     Args:
         db_session: جلسة قاعدة البيانات
         restaurant_data: بيانات المطعم
         owner_id: معرف المالك
-        
+
     Returns:
         Any: كائن المطعم المنشأ
     """
     from app.models.restaurant import Restaurant
 
-    restaurant = Restaurant(
-        **{**restaurant_data, "owner_id": owner_id}
-    )
+    restaurant = Restaurant(**{**restaurant_data, "owner_id": owner_id})
     db_session.add(restaurant)
     await db_session.flush()
     await db_session.refresh(restaurant)
     return restaurant
+
+
+# ==============================================
+# CREATE TEST GROUP
+# ==============================================
 
 
 async def create_test_group(
@@ -454,26 +547,29 @@ async def create_test_group(
 ) -> Any:
     """
     إنشاء مجموعة مطاعم للاختبارات باستخدام DB مباشر.
-    
+
     ⚠️ تستخدم فقط في إعدادات الاختبارات (setup)
-    
+
     Args:
         db_session: جلسة قاعدة البيانات
         group_data: بيانات المجموعة
         owner_id: معرف المالك
-        
+
     Returns:
         Any: كائن المجموعة المنشأ
     """
     from app.models.restaurant_group import RestaurantGroup
 
-    group = RestaurantGroup(
-        **{**group_data, "owner_id": owner_id}
-    )
+    group = RestaurantGroup(**{**group_data, "owner_id": owner_id})
     db_session.add(group)
     await db_session.flush()
     await db_session.refresh(group)
     return group
+
+
+# ==============================================
+# CREATE TEST BRANCH
+# ==============================================
 
 
 async def create_test_branch(
@@ -483,14 +579,14 @@ async def create_test_branch(
 ) -> Any:
     """
     إنشاء فرع مطعم للاختبارات باستخدام DB مباشر.
-    
+
     ⚠️ تستخدم فقط في إعدادات الاختبارات (setup)
-    
+
     Args:
         db_session: جلسة قاعدة البيانات
         group_id: معرف المجموعة
         restaurant_id: معرف المطعم
-        
+
     Returns:
         Any: كائن الفرع المنشأ
     """

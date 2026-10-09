@@ -11,6 +11,11 @@
 # يربط الشكوى بالمستخدم والمطعم والطلب المرتبط
 # ==============================================
 
+"""MoulAI operational module for complaint.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Column,
     ForeignKey,
@@ -25,6 +30,7 @@ from .base import BaseModel
 # ==============================================
 # 📣 COMPLAINT
 # ==============================================
+
 
 class Complaint(BaseModel):
     """
@@ -42,6 +48,7 @@ class Complaint(BaseModel):
         description: وصف الشكوى.
         status: حالة الشكوى (open, in_progress, resolved, closed).
     """
+
     __tablename__ = "complaints"
 
     # ==========================================

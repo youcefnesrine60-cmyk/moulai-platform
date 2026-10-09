@@ -1,26 +1,19 @@
 # ==============================================
-# 📝 REGISTRATION REQUEST SERVICE
-# منطق الأعمال لطلبات التسجيل
-# يدير عمليات إنشاء واستعراض وتحديث وحذف طلبات التسجيل
-#
-# Registration Request
-#        ↓
-# Admin Approval
-#        ↓
-# Create Owner
-#        ↓
-# Create Restaurant
-#        ↓
-# Create Restaurant Metrics
-#        ↓
-# Create Trial Subscription
-#        ↓
-# Create Subscription Features
-#        ↓
-# Owner Approved
-#        ↓
-# Registration Request Approved
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / REGISTRATION REQUEST SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for registration request service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -62,7 +55,6 @@ from app.schemas.registration_request import (
     RegistrationRequestStatusUpdate,
 )
 
-
 # ==============================================
 # 🧩 CONSTANTS
 # ==============================================
@@ -89,13 +81,13 @@ RegistrationList = List[RegistrationRequest]
 class RegistrationRequestService:
     """
     خدمة طلبات التسجيل - تدير منطق الأعمال لطلبات التسجيل.
-    
+
     مسؤولة عن:
         - إنشاء وإدارة طلبات التسجيل
         - الموافقة على الطلبات وإنشاء المالك والمطعم والاشتراك
         - رفض الطلبات
         - البحث والتصفية
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع طلبات التسجيل
@@ -104,13 +96,17 @@ class RegistrationRequestService:
         subscription_service: خدمة الاشتراكات
     """
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         session: AsyncSession,
     ) -> None:
         """
         تهيئة خدمة طلبات التسجيل.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -135,13 +131,13 @@ class RegistrationRequestService:
     ) -> RegistrationRequestResponse:
         """
         الحصول على طلب تسجيل بالمعرف.
-        
+
         Args:
             request_id: معرف طلب التسجيل
-            
+
         Returns:
             RegistrationRequestResponse: بيانات طلب التسجيل
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
         """
@@ -172,10 +168,10 @@ class RegistrationRequestService:
     ) -> Optional[RegistrationRequestResponse]:
         """
         الحصول على طلب تسجيل بواسطة chat_id.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             Optional[RegistrationRequestResponse]: بيانات طلب التسجيل أو None
         """
@@ -206,12 +202,12 @@ class RegistrationRequestService:
     ) -> List[RegistrationRequestResponse]:
         """
         الحصول على جميع طلبات التسجيل لمستخدم معين.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RegistrationRequestResponse]: قائمة طلبات التسجيل
         """
@@ -245,15 +241,15 @@ class RegistrationRequestService:
     ) -> List[RegistrationRequestResponse]:
         """
         الحصول على طلبات التسجيل حسب الحالة.
-        
+
         Args:
             status: حالة الطلب (pending, approved, rejected)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RegistrationRequestResponse]: قائمة طلبات التسجيل
-            
+
         Raises:
             ValidationError: إذا كانت الحالة غير صالحة
         """
@@ -295,11 +291,11 @@ class RegistrationRequestService:
     ) -> List[RegistrationRequestResponse]:
         """
         الحصول على طلبات التسجيل المعلقة.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RegistrationRequestResponse]: قائمة طلبات التسجيل المعلقة
         """
@@ -330,11 +326,11 @@ class RegistrationRequestService:
     ) -> List[RegistrationRequestResponse]:
         """
         الحصول على جميع طلبات التسجيل.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RegistrationRequestResponse]: قائمة طلبات التسجيل
         """
@@ -366,12 +362,12 @@ class RegistrationRequestService:
     ) -> List[RegistrationRequestResponse]:
         """
         البحث عن طلبات التسجيل.
-        
+
         Args:
             query: نص البحث
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[RegistrationRequestResponse]: قائمة طلبات التسجيل
         """
@@ -409,10 +405,10 @@ class RegistrationRequestService:
     ) -> int:
         """
         حساب عدد طلبات التسجيل حسب الحالة.
-        
+
         Args:
             status: حالة الطلب
-            
+
         Returns:
             int: عدد الطلبات
         """
@@ -436,7 +432,7 @@ class RegistrationRequestService:
     ) -> int:
         """
         حساب عدد طلبات التسجيل المعلقة.
-        
+
         Returns:
             int: عدد الطلبات المعلقة
         """
@@ -457,13 +453,13 @@ class RegistrationRequestService:
     ) -> RegistrationRequestResponse:
         """
         إنشاء طلب تسجيل جديد.
-        
+
         Args:
             request_data: بيانات طلب التسجيل
-            
+
         Returns:
             RegistrationRequestResponse: بيانات طلب التسجيل المنشأ
-            
+
         Raises:
             ConflictError: إذا كان هناك طلب معلق لنفس المستخدم
             ValidationError: إذا كانت البيانات غير صالحة
@@ -500,10 +496,12 @@ class RegistrationRequestService:
             )
 
         # التحقق من الحد الأقصى للطلبات
-        requests_count = len(await self.repo.get_all_by_chat_id(
-            chat_id=request_data.chat_id,
-            limit=100,
-        ))
+        requests_count = len(
+            await self.repo.get_all_by_chat_id(
+                chat_id=request_data.chat_id,
+                limit=100,
+            )
+        )
 
         if requests_count >= MAX_REQUESTS_PER_CHAT:
             raise ValidationError(
@@ -561,14 +559,14 @@ class RegistrationRequestService:
     ) -> RegistrationRequestResponse:
         """
         تحديث طلب تسجيل.
-        
+
         Args:
             request_id: معرف طلب التسجيل
             update_data: بيانات التحديث
-            
+
         Returns:
             RegistrationRequestResponse: بيانات طلب التسجيل المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كانت البيانات غير صالحة
@@ -620,7 +618,9 @@ class RegistrationRequestService:
                 )
 
         if "wilaya" in updates:
-            updates["wilaya"] = sanitize_input(updates["wilaya"]) if updates["wilaya"] else None
+            updates["wilaya"] = (
+                sanitize_input(updates["wilaya"]) if updates["wilaya"] else None
+            )
 
         # تحديث الطلب
         request = await self.repo.update(
@@ -652,14 +652,14 @@ class RegistrationRequestService:
     ) -> RegistrationRequestResponse:
         """
         تحديث حالة طلب التسجيل.
-        
+
         Args:
             request_id: معرف طلب التسجيل
             status_data: بيانات تحديث الحالة
-            
+
         Returns:
             RegistrationRequestResponse: بيانات طلب التسجيل المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كانت الحالة غير صالحة
@@ -732,14 +732,14 @@ class RegistrationRequestService:
     ) -> RegistrationRequestResponse:
         """
         الموافقة على طلب التسجيل وإنشاء المالك والمطعم والاشتراك.
-        
+
         Args:
             request_id: معرف طلب التسجيل
             owner_id: معرف المالك (اختياري - إذا كان المالك موجوداً مسبقاً)
-            
+
         Returns:
             RegistrationRequestResponse: بيانات طلب التسجيل المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كان الطلب معتمداً أو مرفوضاً مسبقاً
@@ -861,13 +861,13 @@ class RegistrationRequestService:
     ) -> RegistrationRequestResponse:
         """
         رفض طلب التسجيل.
-        
+
         Args:
             request_id: معرف طلب التسجيل
-            
+
         Returns:
             RegistrationRequestResponse: بيانات طلب التسجيل المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كان الطلب معتمداً أو مرفوضاً مسبقاً
@@ -920,10 +920,10 @@ class RegistrationRequestService:
     ) -> None:
         """
         حذف طلب تسجيل.
-        
+
         Args:
             request_id: معرف طلب التسجيل
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كان الطلب معتمداً
@@ -973,6 +973,7 @@ class RegistrationRequestService:
 # APPROVE REGISTRATION (COMPATIBILITY)
 # ==============================================
 
+
 async def approve_registration(
     *,
     request_id: int,
@@ -980,14 +981,14 @@ async def approve_registration(
 ) -> RegistrationResult:
     """
     الموافقة على طلب التسجيل (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         request_id: معرف طلب التسجيل
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         RegistrationResult: نتائج الموافقة (owner_id, restaurant_id, subscription_id)
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كان الطلب معتمداً أو مرفوضاً
@@ -1023,6 +1024,7 @@ async def approve_registration(
 # REJECT REGISTRATION (COMPATIBILITY)
 # ==============================================
 
+
 async def reject_registration(
     *,
     request_id: int,
@@ -1030,11 +1032,11 @@ async def reject_registration(
 ) -> None:
     """
     رفض طلب التسجيل (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         request_id: معرف طلب التسجيل
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كان الطلب معتمداً أو مرفوضاً
@@ -1048,6 +1050,7 @@ async def reject_registration(
 # GET REGISTRATION PREVIEW (COMPATIBILITY)
 # ==============================================
 
+
 async def get_registration_preview(
     *,
     request_id: int,
@@ -1055,11 +1058,11 @@ async def get_registration_preview(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على معاينة طلب التسجيل (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         request_id: معرف طلب التسجيل
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات الطلب أو None
     """
@@ -1076,6 +1079,7 @@ async def get_registration_preview(
 # GET PENDING REQUESTS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_pending_requests(
     *,
     session: AsyncSession,
@@ -1084,12 +1088,12 @@ async def get_pending_requests(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على طلبات التسجيل المعلقة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         List[Dict[str, Any]]: قائمة طلبات التسجيل المعلقة
     """
@@ -1107,6 +1111,7 @@ async def get_pending_requests(
 # GET REGISTRATION REQUEST BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_registration_request_by_id(
     *,
     request_id: int,
@@ -1114,11 +1119,11 @@ async def get_registration_request_by_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على طلب تسجيل بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         request_id: معرف طلب التسجيل
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات الطلب أو None
     """

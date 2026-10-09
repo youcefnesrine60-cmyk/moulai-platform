@@ -6,6 +6,16 @@
 # ==============================================
 
 # ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / RESTAURANT / ORDER_COUNTER / SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+# ==============================================
 # 🔢 RESTAURANT ORDER COUNTER SERVICE
 # Business Logic Layer - منطق الأعمال لعداد طلبات المطعم
 #
@@ -77,6 +87,10 @@ class RestaurantOrderCounterService:
         restaurant_repo: مستودع المطاعم
     """
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         session: AsyncSession,
@@ -127,10 +141,7 @@ class RestaurantOrderCounterService:
 
         if not counter:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         return RestaurantOrderCounterResponse.model_validate(counter)
@@ -167,10 +178,7 @@ class RestaurantOrderCounterService:
 
         if not counter:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         return counter.last_number
@@ -207,10 +215,7 @@ class RestaurantOrderCounterService:
 
         if not counter:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         previous_number = counter.last_number
@@ -345,10 +350,7 @@ class RestaurantOrderCounterService:
 
         if existing:
             raise ConflictError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"موجود مسبقاً"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"موجود مسبقاً"),
             )
 
         # 3️⃣ إنشاء عداد جديد
@@ -407,10 +409,7 @@ class RestaurantOrderCounterService:
 
         if not counter:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         updates = update_data.model_dump(exclude_unset=True)
@@ -430,10 +429,7 @@ class RestaurantOrderCounterService:
 
         if not updated:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         logger.info(
@@ -476,10 +472,7 @@ class RestaurantOrderCounterService:
 
         if not counter:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         # 2️⃣ زيادة العداد
@@ -494,10 +487,7 @@ class RestaurantOrderCounterService:
 
         if not updated:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         logger.info(
@@ -543,10 +533,7 @@ class RestaurantOrderCounterService:
 
         if not counter:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         # 2️⃣ إعادة تعيين العداد
@@ -557,10 +544,7 @@ class RestaurantOrderCounterService:
 
         if not updated:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         logger.info(
@@ -603,10 +587,7 @@ class RestaurantOrderCounterService:
 
         if not counter:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         # 2️⃣ حفظ الرقم السابق
@@ -624,10 +605,7 @@ class RestaurantOrderCounterService:
 
         if not updated:
             raise NotFoundError(
-                message=(
-                    f"عداد طلبات المطعم بـ ID '{restaurant_id}' "
-                    f"غير موجود"
-                ),
+                message=(f"عداد طلبات المطعم بـ ID '{restaurant_id}' " f"غير موجود"),
             )
 
         logger.info(
@@ -683,6 +661,7 @@ class RestaurantOrderCounterService:
 # INITIALIZE ORDER COUNTER (COMPATIBILITY)
 # ==============================================
 
+
 async def initialize_order_counter(
     *,
     restaurant_id: int,
@@ -713,6 +692,7 @@ async def initialize_order_counter(
 # GET ORDER COUNTER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_counter(
     *,
     restaurant_id: int,
@@ -740,6 +720,7 @@ async def get_order_counter(
 # ==============================================
 # GENERATE NEXT ORDER NUMBER (COMPATIBILITY)
 # ==============================================
+
 
 async def generate_next_order_number(
     *,
@@ -772,6 +753,7 @@ async def generate_next_order_number(
 # GET ORDER COUNTER SUMMARY (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_counter_summary(
     *,
     restaurant_id: int,
@@ -799,6 +781,7 @@ async def get_order_counter_summary(
 # ==============================================
 # RESET ORDER COUNTER (COMPATIBILITY)
 # ==============================================
+
 
 async def reset_order_counter(
     *,
@@ -829,6 +812,7 @@ async def reset_order_counter(
 # INCREMENT ORDER COUNTER (COMPATIBILITY)
 # ==============================================
 
+
 async def increment_order_counter(
     *,
     restaurant_id: int,
@@ -858,6 +842,7 @@ async def increment_order_counter(
 # GET CURRENT ORDER NUMBER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_current_order_number(
     *,
     restaurant_id: int,
@@ -886,6 +871,7 @@ async def get_current_order_number(
 # ==============================================
 # BUILD ORDER NUMBER (COMPATIBILITY)
 # ==============================================
+
 
 def build_order_number(
     restaurant_id: int,

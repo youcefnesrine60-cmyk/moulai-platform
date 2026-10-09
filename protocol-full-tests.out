@@ -1,0 +1,552 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.4, pytest-9.1.1, pluggy-1.6.0 -- D:\MoulAI\.venv\Scripts\python.exe
+cachedir: .cache\pytest
+rootdir: D:\MoulAI
+configfile: pytest.ini
+testpaths: tests
+plugins: anyio-4.13.0, asyncio-1.4.0, cov-5.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=session, asyncio_default_test_loop_scope=session
+collecting ... collected 178 items
+
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_create_branch PASSED [  0%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_get_branch_by_id PASSED [  1%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_get_branch_with_details PASSED [  1%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_list_branches_by_group PASSED [  2%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_list_branches_by_restaurant PASSED [  2%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_get_branch_not_found PASSED [  3%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_create_duplicate_branch PASSED [  3%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_delete_branch PASSED [  4%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_delete_branch_not_found PASSED [  5%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_create_branch_non_existent_group PASSED [  5%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_create_branch_non_existent_restaurant PASSED [  6%]
+tests/api/v1/restaurant/test_branches.py::TestRestaurantBranchesAPI::test_list_branches_by_group_with_pagination PASSED [  6%]
+tests/api/v1/restaurant/test_groups.py::TestRestaurantGroupsAPI::test_create_group PASSED [  7%]
+tests/api/v1/restaurant/test_groups.py::TestRestaurantGroupsAPI::test_get_group_by_id PASSED [  7%]
+tests/api/v1/restaurant/test_groups.py::TestRestaurantGroupsAPI::test_add_branches_to_group PASSED [  8%]
+tests/api/v1/restaurant/test_groups.py::TestRestaurantGroupsAPI::test_remove_branch_from_group PASSED [  8%]
+tests/api/v1/restaurant/test_metrics.py::TestMetricsAPI::test_initialize_metrics PASSED [  9%]
+tests/api/v1/restaurant/test_metrics.py::TestMetricsAPI::test_get_metrics PASSED [ 10%]
+tests/api/v1/restaurant/test_metrics.py::TestMetricsAPI::test_update_metrics PASSED [ 10%]
+tests/api/v1/restaurant/test_metrics.py::TestMetricsAPI::test_get_metrics_summary PASSED [ 11%]
+tests/api/v1/restaurant/test_metrics.py::TestMetricsAPI::test_reset_metrics PASSED [ 11%]
+tests/api/v1/restaurant/test_order_counter.py::TestOrderCounterAPI::test_initialize_order_counter PASSED [ 12%]
+tests/api/v1/restaurant/test_order_counter.py::TestOrderCounterAPI::test_get_order_counter PASSED [ 12%]
+tests/api/v1/restaurant/test_order_counter.py::TestOrderCounterAPI::test_generate_next_order_number PASSED [ 13%]
+tests/api/v1/restaurant/test_order_counter.py::TestOrderCounterAPI::test_increment_order_counter PASSED [ 14%]
+tests/api/v1/restaurant/test_payment_settings.py::TestPaymentSettingsAPI::test_create_payment_settings PASSED [ 14%]
+tests/api/v1/restaurant/test_payment_settings.py::TestPaymentSettingsAPI::test_get_payment_settings PASSED [ 15%]
+tests/api/v1/restaurant/test_payment_settings.py::TestPaymentSettingsAPI::test_update_payment_methods PASSED [ 15%]
+tests/api/v1/restaurant/test_payment_settings.py::TestPaymentSettingsAPI::test_enable_payment_method PASSED [ 16%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_list_restaurants_empty PASSED [ 16%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_list_restaurants_with_data PASSED [ 17%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_create_restaurant_success PASSED [ 17%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_create_restaurant_duplicate_name PASSED [ 18%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_create_restaurant_invalid_data PASSED [ 19%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_get_restaurant_by_id_success PASSED [ 19%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_get_restaurant_by_id_not_found PASSED [ 20%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_update_restaurant_success PASSED [ 20%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_update_restaurant_not_found PASSED [ 21%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_toggle_restaurant_status_success PASSED [ 21%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_toggle_restaurant_status_not_found PASSED [ 22%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_delete_restaurant_soft PASSED [ 23%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_delete_restaurant_permanent PASSED [ 23%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_delete_restaurant_not_found PASSED [ 24%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_get_restaurant_stats PASSED [ 24%]
+tests/api/v1/restaurant/test_restaurants.py::TestRestaurantsAPI::test_get_restaurant_stats_owner_not_found PASSED [ 25%]
+tests/test_agent_order_action_safety.py::test_order_actions_require_an_explicit_order_reference[CancelOrderAction] PASSED [ 25%]
+tests/test_agent_order_action_safety.py::test_order_actions_require_an_explicit_order_reference[TrackOrderAction] PASSED [ 26%]
+tests/test_agent_order_action_safety.py::test_owned_order_lookup_never_defaults_to_latest_order PASSED [ 26%]
+tests/test_agent_order_action_safety.py::test_owned_order_lookup_scopes_by_customer_chat_id PASSED [ 27%]
+tests/test_agent_order_action_safety.py::test_customer_cancellation_updates_status_and_history_in_one_transaction PASSED [ 28%]
+tests/test_agent_order_action_safety.py::test_modify_order_requires_confirmation_and_calls_business_service PASSED [ 28%]
+tests/test_agent_order_action_safety.py::test_track_order_returns_only_customer_scoped_order PASSED [ 29%]
+tests/test_agent_order_action_safety.py::test_executor_stages_mutation_until_user_confirmation PASSED [ 29%]
+tests/test_agent_order_action_safety.py::test_executor_does_not_return_raw_exception_details PASSED [ 30%]
+tests/test_agent_order_entity_extraction.py::test_order_reference_and_quantity_are_extracted_without_confusion[Track order RST1-000017-RST1-000017-None] PASSED [ 30%]
+tests/test_agent_order_entity_extraction.py::test_order_reference_and_quantity_are_extracted_without_confusion[Change quantity of Pizza in order RST1-000017 to 4-RST1-000017-4] PASSED [ 31%]
+tests/test_agent_order_entity_extraction.py::test_order_reference_and_quantity_are_extracted_without_confusion[Modifier la quantit\xe9 de Pizza de la commande RST1-000017 \xe0 3-RST1-000017-3] PASSED [ 32%]
+tests/test_complaint_action.py::test_complaint_prepare_uses_message_and_requires_confirmation PASSED [ 32%]
+tests/test_complaint_action.py::test_complaint_prepare_rejects_missing_description PASSED [ 33%]
+tests/test_complaint_action.py::test_complaint_action_persists_with_authenticated_customer_and_context_tenant PASSED [ 33%]
+tests/test_complaint_action.py::test_pending_confirmation_is_not_rendered_as_completed_success PASSED [ 34%]
+tests/test_complaint_action.py::test_complaint_success_prompt_is_localized PASSED [ 34%]
+tests/test_customer_complaint_service.py::test_creates_open_complaint_for_customer_and_restaurant PASSED [ 35%]
+tests/test_customer_complaint_service.py::test_order_reference_links_only_customer_owned_order PASSED [ 35%]
+tests/test_customer_complaint_service.py::test_rejects_order_from_a_different_restaurant_atomically PASSED [ 36%]
+tests/test_customer_complaint_service.py::test_rejects_order_not_owned_by_customer PASSED [ 37%]
+tests/test_customer_order_service.py::test_modify_customer_order_quantity_recalculates_totals_atomically PASSED [ 37%]
+tests/test_customer_order_service.py::test_modify_customer_order_rejects_non_pending_order PASSED [ 38%]
+tests/test_customer_order_service.py::test_customer_order_modification_cannot_access_another_customer_order PASSED [ 38%]
+tests/test_customer_order_service.py::test_customer_cancellation_updates_status_and_history_atomically PASSED [ 39%]
+tests/test_customer_order_service.py::test_customer_cancellation_replay_is_rejected_without_duplicate_history PASSED [ 39%]
+tests/test_customer_order_service.py::test_replaying_same_quantity_change_does_not_double_charge PASSED [ 40%]
+tests/test_message_handler_agent.py::test_message_without_state_uses_agent_and_sends_response PASSED [ 41%]
+tests/test_message_handler_agent.py::test_customer_free_text_uses_agent_with_selected_restaurant PASSED [ 41%]
+tests/test_message_handler_agent.py::test_order_action_waits_for_explicit_confirmation PASSED [ 42%]
+tests/test_message_handler_agent.py::test_order_action_without_product_does_not_claim_success PASSED [ 42%]
+tests/test_order_architecture_boundaries.py::test_order_action_delegates_without_pricing_or_transaction_rules PASSED [ 43%]
+tests/test_order_architecture_boundaries.py::test_invalid_prices_and_quantities_cannot_enter_order_calculation[nan-1] PASSED [ 43%]
+tests/test_order_architecture_boundaries.py::test_invalid_prices_and_quantities_cannot_enter_order_calculation[inf-1] PASSED [ 44%]
+tests/test_order_architecture_boundaries.py::test_invalid_prices_and_quantities_cannot_enter_order_calculation[-1-1] PASSED [ 44%]
+tests/test_order_architecture_boundaries.py::test_invalid_prices_and_quantities_cannot_enter_order_calculation[1-True] PASSED [ 45%]
+tests/test_order_architecture_boundaries.py::test_invalid_prices_and_quantities_cannot_enter_order_calculation[1-0] PASSED [ 46%]
+tests/test_order_architecture_boundaries.py::test_invalid_prices_and_quantities_cannot_enter_order_calculation[1-101] PASSED [ 46%]
+tests/test_order_architecture_boundaries.py::test_invalid_prices_and_quantities_cannot_enter_order_calculation[1-1.5] PASSED [ 47%]
+tests/test_order_creation_transaction.py::test_order_creation_uses_one_transaction_and_restores_session_mode[False] PASSED [ 47%]
+tests/test_order_creation_transaction.py::test_order_creation_uses_one_transaction_and_restores_session_mode[True] PASSED [ 48%]
+tests/test_order_creation_transaction.py::test_order_creation_rolls_back_and_restores_existing_session_mode PASSED [ 48%]
+tests/test_order_creation_transaction.py::test_restaurant_order_creation_generates_number_and_is_transactional[False] PASSED [ 49%]
+tests/test_order_creation_transaction.py::test_restaurant_order_creation_generates_number_and_is_transactional[True] PASSED [ 50%]
+tests/test_order_creation_transaction.py::test_create_order_with_items_writes_order_item_history_and_metrics_atomically PASSED [ 50%]
+tests/test_order_creation_transaction.py::test_create_order_with_items_rolls_back_partial_order_when_item_is_invalid PASSED [ 51%]
+tests/test_order_postgres_transactions.py::test_postgres_autobegin_commit_and_explicit_outer_rollback PASSED [ 51%]
+tests/test_order_postgres_transactions.py::test_postgres_api_creation_persists_catalog_prices PASSED [ 52%]
+tests/test_order_postgres_transactions.py::test_postgres_creation_failure_rolls_back_every_write[item] PASSED [ 52%]
+tests/test_order_postgres_transactions.py::test_postgres_creation_failure_rolls_back_every_write[history] PASSED [ 53%]
+tests/test_order_postgres_transactions.py::test_postgres_creation_failure_rolls_back_every_write[metrics] PASSED [ 53%]
+tests/test_order_postgres_transactions.py::test_postgres_creation_failure_rolls_back_every_write[usage] PASSED [ 54%]
+tests/test_order_postgres_transactions.py::test_postgres_cross_restaurant_product_is_rejected_without_order PASSED [ 55%]
+tests/test_order_postgres_transactions.py::test_postgres_authorized_status_change_is_persistent PASSED [ 55%]
+tests/test_order_postgres_transactions.py::test_postgres_payment_is_idempotent_and_keeps_fulfillment_status PASSED [ 56%]
+tests/test_order_postgres_transactions.py::test_postgres_payment_failure_rolls_back_persisted_payment PASSED [ 56%]
+tests/test_order_postgres_transactions.py::test_postgres_item_quantity_and_total_commit_together PASSED [ 57%]
+tests/test_order_postgres_transactions.py::test_postgres_status_history_failure_rolls_back_order PASSED [ 57%]
+tests/test_order_postgres_transactions.py::test_postgres_cross_owner_api_operations_leave_order_unchanged PASSED [ 58%]
+tests/test_order_postgres_transactions.py::test_postgres_cancellation_persists_and_replay_is_rejected PASSED [ 58%]
+tests/test_order_postgres_transactions.py::test_postgres_fulfillment_uses_only_legal_transitions PASSED [ 59%]
+tests/test_order_postgres_transactions.py::test_postgres_permanent_deletion_commits_children_atomically PASSED [ 60%]
+tests/test_order_postgres_transactions.py::test_postgres_cancel_and_ledger_refund_are_atomic[False] PASSED [ 60%]
+tests/test_order_postgres_transactions.py::test_postgres_cancel_and_ledger_refund_are_atomic[True] PASSED [ 61%]
+tests/test_order_service_contracts.py::test_status_change_updates_order_and_history_in_same_transaction PASSED [ 61%]
+tests/test_order_service_contracts.py::test_status_change_preserves_callers_outer_transaction PASSED [ 62%]
+tests/test_order_service_contracts.py::test_status_change_rejects_invalid_and_disallowed_transitions PASSED [ 62%]
+tests/test_order_service_contracts.py::test_update_order_uses_repository_primary_key_signature PASSED [ 63%]
+tests/test_order_service_contracts.py::test_calculate_order_totals_includes_options_and_rounds PASSED [ 64%]
+tests/test_order_service_contracts.py::test_update_totals_rejects_each_negative_component[subtotal_amount--1] PASSED [ 64%]
+tests/test_order_service_contracts.py::test_update_totals_rejects_each_negative_component[discount_amount--1] PASSED [ 65%]
+tests/test_order_service_contracts.py::test_update_totals_rejects_each_negative_component[tax_amount--1] PASSED [ 65%]
+tests/test_order_service_contracts.py::test_update_totals_rejects_each_negative_component[delivery_amount--1] PASSED [ 66%]
+tests/test_order_service_contracts.py::test_update_totals_rejects_each_negative_component[total_amount--1] PASSED [ 66%]
+tests/test_order_service_contracts.py::test_update_totals_rejects_locked_order PASSED [ 67%]
+tests/test_order_service_contracts.py::test_read_orders_always_scopes_pagination_and_status_to_restaurant PASSED [ 67%]
+tests/test_order_service_contracts.py::test_orders_repository_query_is_scoped_to_restaurant PASSED [ 68%]
+tests/test_order_service_contracts.py::test_customer_order_query_is_scoped_to_chat_and_locks_order PASSED [ 69%]
+tests/test_order_service_contracts.py::test_get_orders_by_status_rejects_invalid_status_before_repository PASSED [ 69%]
+tests/test_order_service_contracts.py::test_cancel_order_locks_record_and_rejects_replay PASSED [ 70%]
+tests/test_order_service_contracts.py::test_cancel_order_uses_savepoint_when_caller_owns_transaction PASSED [ 70%]
+tests/test_order_service_contracts.py::test_cancel_order_with_refund_requires_payment_and_delegates_cancellation PASSED [ 71%]
+tests/test_order_service_contracts.py::test_cancel_order_not_found_rolls_back PASSED [ 71%]
+tests/test_order_service_contracts.py::test_status_history_timeline_uses_new_status_for_display PASSED [ 72%]
+tests/test_order_service_contracts.py::test_status_history_reached_status_validates_and_returns_repository_result PASSED [ 73%]
+tests/test_order_tenant_isolation.py::test_order_owner_isolation_executes_sql[1-100-True] PASSED [ 73%]
+tests/test_order_tenant_isolation.py::test_order_owner_isolation_executes_sql[2-100-False] PASSED [ 74%]
+tests/test_order_tenant_isolation.py::test_order_owner_isolation_executes_sql[1-200-False] PASSED [ 74%]
+tests/test_order_tenant_isolation.py::test_order_owner_isolation_executes_sql[2-200-True] PASSED [ 75%]
+tests/test_order_tenant_isolation.py::test_cross_tenant_http_operations_denied_before_service[get-/orders/100-None] PASSED [ 75%]
+tests/test_order_tenant_isolation.py::test_cross_tenant_http_operations_denied_before_service[patch-/orders/100-payload1] PASSED [ 76%]
+tests/test_order_tenant_isolation.py::test_cross_tenant_http_operations_denied_before_service[patch-/orders/100/status-payload2] PASSED [ 76%]
+tests/test_order_tenant_isolation.py::test_cross_tenant_http_operations_denied_before_service[post-/orders/100/cancel-None] PASSED [ 77%]
+tests/test_order_tenant_isolation.py::test_cross_tenant_http_operations_denied_before_service[post-/orders/100/complete-None] PASSED [ 78%]
+tests/test_order_tenant_isolation.py::test_cross_tenant_http_operations_denied_before_service[post-/orders/100/paid?payment_id=1-None] PASSED [ 78%]
+tests/test_order_tenant_isolation.py::test_cross_tenant_http_operations_denied_before_service[delete-/orders/100-None] PASSED [ 79%]
+tests/test_order_tenant_isolation.py::test_cross_tenant_http_operations_denied_before_service[get-/orders/?restaurant_id=10-None] PASSED [ 79%]
+tests/test_order_tenant_isolation.py::test_cross_tenant_http_operations_denied_before_service[get-/orders/stats/summary?restaurant_id=10-None] PASSED [ 80%]
+tests/test_order_tenant_isolation.py::test_customer_tracking_is_bound_to_customer_and_restaurant[700-10-True] PASSED [ 80%]
+tests/test_order_tenant_isolation.py::test_customer_tracking_is_bound_to_customer_and_restaurant[800-10-False] PASSED [ 81%]
+tests/test_order_tenant_isolation.py::test_customer_tracking_is_bound_to_customer_and_restaurant[700-20-False] PASSED [ 82%]
+tests/test_order_tenant_isolation.py::test_customer_tracking_is_bound_to_customer_and_restaurant[700-30-False] PASSED [ 82%]
+tests/test_order_tenant_isolation.py::test_cross_customer_or_restaurant_mutations_have_no_side_effects[800-10-cancel] PASSED [ 83%]
+tests/test_order_tenant_isolation.py::test_cross_customer_or_restaurant_mutations_have_no_side_effects[800-10-modify] PASSED [ 83%]
+tests/test_order_tenant_isolation.py::test_cross_customer_or_restaurant_mutations_have_no_side_effects[700-20-cancel] PASSED [ 84%]
+tests/test_order_tenant_isolation.py::test_cross_customer_or_restaurant_mutations_have_no_side_effects[700-20-modify] PASSED [ 84%]
+tests/test_order_tenant_isolation.py::test_cross_customer_or_restaurant_mutations_have_no_side_effects[700-30-cancel] PASSED [ 85%]
+tests/test_order_tenant_isolation.py::test_cross_customer_or_restaurant_mutations_have_no_side_effects[700-30-modify] PASSED [ 85%]
+tests/test_order_tenant_isolation.py::test_actions_preserve_channel_restaurant_over_extracted_entity[TrackOrderAction-get_customer_order] PASSED [ 86%]
+tests/test_order_tenant_isolation.py::test_actions_preserve_channel_restaurant_over_extracted_entity[CancelOrderAction-cancel_customer_order] PASSED [ 87%]
+tests/test_order_tenant_isolation.py::test_actions_preserve_channel_restaurant_over_extracted_entity[ModifyOrderAction-change_customer_order_item_quantity] PASSED [ 87%]
+tests/test_orders_api_auth.py::test_orders_authentication_fails_closed_without_bearer_token PASSED [ 88%]
+tests/test_orders_api_auth.py::test_orders_authentication_fails_closed_without_oidc_configuration PASSED [ 88%]
+tests/test_orders_api_auth.py::test_current_owner_requires_verified_oidc_claims_and_maps_subject PASSED [ 89%]
+tests/test_orders_api_auth.py::test_current_owner_rejects_invalid_token[signature] PASSED [ 89%]
+tests/test_orders_api_auth.py::test_current_owner_rejects_invalid_token[issuer] PASSED [ 90%]
+tests/test_orders_api_auth.py::test_current_owner_rejects_invalid_token[audience] PASSED [ 91%]
+tests/test_orders_api_auth.py::test_current_owner_rejects_invalid_token[expiry] PASSED [ 91%]
+tests/test_orders_api_auth.py::test_current_owner_rejects_subject_without_owner_mapping PASSED [ 92%]
+tests/test_orders_api_auth.py::test_owned_restaurant_query_is_bound_to_owner PASSED [ 92%]
+tests/test_orders_api_auth.py::test_other_owners_restaurant_is_not_found PASSED [ 93%]
+tests/test_orders_api_auth.py::test_owned_order_query_joins_through_restaurant_owner PASSED [ 93%]
+tests/test_orders_api_auth.py::test_owned_order_item_query_joins_through_order_and_restaurant PASSED [ 94%]
+tests/test_orders_api_auth.py::test_every_orders_route_requires_authenticated_owner PASSED [ 94%]
+tests/test_orders_api_auth.py::test_orders_http_endpoint_rejects_requests_without_bearer_token PASSED [ 95%]
+tests/test_repository_transaction_mode.py::test_repository_update_defers_commit_inside_composed_transaction PASSED [ 96%]
+tests/test_repository_transaction_mode.py::test_repository_update_keeps_default_commit_behavior PASSED [ 96%]
+tests/test_repository_transaction_mode.py::test_order_repositories_never_commit_or_rollback_the_callers_transaction[OrdersRepository] PASSED [ 97%]
+tests/test_repository_transaction_mode.py::test_order_repositories_never_commit_or_rollback_the_callers_transaction[OrderItemsRepository] PASSED [ 97%]
+tests/test_repository_transaction_mode.py::test_order_repositories_never_commit_or_rollback_the_callers_transaction[OrderItemOptionsRepository] PASSED [ 98%]
+tests/test_repository_transaction_mode.py::test_order_repositories_never_commit_or_rollback_the_callers_transaction[OrderStatusHistoryRepository] PASSED [ 98%]
+tests/test_repository_transaction_mode.py::test_order_repositories_never_commit_or_rollback_the_callers_transaction[OrderPaymentsRepository] PASSED [ 99%]
+tests/test_subscription_compat.py::test_subscription_repository_api_exists PASSED [100%]
+
+---------- coverage: platform win32, python 3.14.4-final-0 -----------
+Name                                                              Stmts   Miss  Cover   Missing
+-----------------------------------------------------------------------------------------------
+app\agent\__init__.py                                                 8      0   100%
+app\agent\config.py                                                  50      9    82%   268-273, 293-298, 312-319, 333-338
+app\agent\engine.py                                                  70     41    41%   169-374, 406, 424, 442, 484-497
+app\agent\executor\__init__.py                                        3      0   100%
+app\agent\executor\action_executor.py                               124     52    58%   126-130, 139-143, 161-190, 220-234, 260, 343-382, 405-407, 409-411, 429-448, 490-508, 612-623
+app\agent\executor\actions.py                                       300    107    64%   44, 56-57, 73-74, 79, 83-84, 92-101, 193, 227, 232-242, 276-318, 354-373, 425, 428, 431-432, 434, 452-460, 518, 541-542, 594, 656-675, 715-737, 780-782, 835-837, 877-879, 924, 932, 976, 985, 1000-1016, 1157, 1186-1191, 1208-1213
+app\agent\language\__init__.py                                        2      0   100%
+app\agent\language\detector.py                                       80     68    15%   63-87, 113-191, 212-289, 313-320, 340-345
+app\agent\language\supported.py                                      49     49     0%   13-263
+app\agent\memory\__init__.py                                          2      0   100%
+app\agent\memory\memory_manager.py                                  194    151    22%   112-135, 151-164, 182-209, 225-244, 274-322, 340-354, 370-375, 391-397, 413-428, 450-473, 489-494, 514-515, 537-559, 575-580, 600-601, 621-645, 673, 685-700, 715-730, 745-748, 782-790, 818-830
+app\agent\menu_rag.py                                                 0      0   100%
+app\agent\nlu\__init__.py                                             3      0   100%
+app\agent\nlu\entity_extractor.py                                   152     80    47%   110-173, 199-264, 347-352, 382-387, 400-408, 420-427, 439-444, 455-460, 498-506, 521-539, 552, 591-602
+app\agent\nlu\intent_classifier.py                                  147    120    18%   201-268, 290-347, 369-430, 456-526, 546-556, 578-689, 717-728
+app\agent\prompts\__init__.py                                         3      0   100%
+app\agent\prompts\templates.py                                       43     16    63%   578-583, 602-607, 629-634, 656-661, 683-688, 714-728, 761-765
+app\agent\prompts\translations.py                                    25     11    56%   366-390, 411-419
+app\agent\response_generator.py                                     103     65    37%   123, 144-168, 194, 201, 208, 215-216, 225, 257-294, 320-342, 354-363, 379-387, 399-407, 419-433, 445-450, 498-510
+app\api\auth.py                                                      84      9    89%   90, 129, 213-223, 247, 369
+app\api\v1\admin\__init__.py                                          4      0   100%
+app\api\v1\admin\admin.py                                           143    113    21%   69, 104-148, 183-218, 253-288, 323-358, 400-440, 475-534, 569-616, 649-678, 710-761, 790-806
+app\api\v1\admin\admin_log.py                                        84     57    32%   69, 101-121, 154-183, 221-250, 286-310, 342-367, 399-418, 456-481, 517-541
+app\api\v1\admin\admin_session.py                                   146    112    23%   71, 106-150, 183-209, 242-280, 312-337, 373-397, 431-453, 486-512, 545-571, 603-630, 663-704, 734-753, 782-801
+app\api\v1\agent\__init__.py                                          5      0   100%
+app\api\v1\agent\agent.py                                           149    115    23%   70, 105-152, 187-222, 257-292, 328-354, 390-416, 454-481, 516-575, 610-644, 677-706, 738-764, 796-847, 880-903
+app\api\v1\agent\channel.py                                         142    110    23%   68, 103-151, 186-221, 257-295, 329-354, 392-419, 454-501, 536-570, 603-632, 664-715, 750-792, 822-850
+app\api\v1\agent\conversation.py                                    169    133    21%   69, 104-151, 186-221, 256-291, 325-350, 386-424, 460-500, 538-565, 600-647, 682-716, 751-800, 833-864, 896-947, 980-1014
+app\api\v1\agent\message.py                                         217    173    20%   67, 102-146, 185-234, 273-322, 359-407, 440-487, 520-549, 583-619, 655-695, 731-771, 801-819, 849-867, 905-933, 968-1015, 1045-1078, 1108-1145, 1177-1219, 1249-1279
+app\api\v1\branches.py                                              172    139    19%   72, 139-223, 257-286, 327-387, 423-482, 518-553, 587-616, 650-679, 715-766, 807-838, 887-914, 947-996
+app\api\v1\categories.py                                            139    107    23%   77, 92, 148-196, 230-259, 300-348, 384-443, 483-529, 560-605, 642-673, 717-742, 796-839
+app\api\v1\option_group.py                                          179    142    21%   75, 90, 146-193, 227-258, 307-346, 387-448, 484-543, 583-618, 657-692, 731-766, 806-852, 883-930, 961-996, 1030-1049
+app\api\v1\order_item.py                                            158    125    21%   78, 93, 143-186, 223-261, 297-363, 405-458, 499-552, 584-625, 657-698, 737-774, 810-889
+app\api\v1\orders.py                                                173     64    63%   175, 184-198, 202-216, 301-321, 390-397, 402-409, 472-511, 571-578, 583-590, 669-676, 692-700, 768-775, 791-799, 859-866, 947-979, 1037-1051
+app\api\v1\owners.py                                                165    127    23%   107-142, 176-207, 241-278, 325-355, 402-447, 496-529, 565-624, 660-707, 741-772, 806-837, 868-915, 944-963
+app\api\v1\payments.py                                              200    162    19%   71, 86, 148-205, 239-268, 302-341, 376-435, 471-518, 554-601, 635-676, 710-751, 785-826, 860-901, 932-977, 1018-1038, 1082-1115
+app\api\v1\product_option.py                                        198    159    20%   76, 91, 152-207, 256-283, 317-348, 389-451, 483-551, 587-646, 682-717, 757-804, 844-879, 919-965, 996-1031, 1062-1097, 1128-1147
+app\api\v1\products.py                                              172    137    20%   71, 138-201, 235-264, 305-367, 403-462, 498-533, 567-596, 630-659, 690-735, 773-792, 841-868, 917-944, 978-1013
+app\api\v1\registration_request.py                                  167    137    18%   65, 130-194, 230-261, 297-332, 369-415, 453-500, 544-598, 640-687, 723-766, 799-846, 876-896
+app\api\v1\restaurant\__init__.py                                    15      0   100%
+app\api\v1\restaurant\branches\__init__.py                            9      0   100%
+app\api\v1\restaurant\branches\router.py                             50     15    70%   115-137, 176-181, 211-225
+app\api\v1\restaurant\branches\router_delete.py                      22      3    86%   86-91
+app\api\v1\restaurant\branches\router_list.py                        26      6    77%   88-93, 133-138
+app\api\v1\restaurant\groups\__init__.py                             11      0   100%
+app\api\v1\restaurant\groups\router.py                               82     51    38%   104-139, 176-190, 212-234, 259-282, 308-331, 354-400
+app\api\v1\restaurant\groups\router_branches.py                      51     26    49%   93, 99-131, 168-190, 220-255
+app\api\v1\restaurant\groups\router_statistics.py                    26     13    50%   50, 73-86, 110-131
+app\api\v1\restaurant\groups\router_status.py                        33     20    39%   53, 76-98, 121-154
+app\api\v1\restaurant\metrics\__init__.py                            13      0   100%
+app\api\v1\restaurant\metrics\metrics_products_router.py             30     17    43%   48, 71-117
+app\api\v1\restaurant\metrics\metrics_router.py                      65     30    54%   92-106, 143-166, 205-228, 258-272
+app\api\v1\restaurant\metrics\metrics_summary_router.py              22      6    73%   80-94
+app\api\v1\restaurant\metrics\metrics_test_router.py                 25     14    44%   50, 78-120
+app\api\v1\restaurant\metrics\metrics_trend_router.py                35     21    40%   51, 79-133
+app\api\v1\restaurant\order_counter\__init__.py                      13      0   100%
+app\api\v1\restaurant\order_counter\router.py                        46     26    43%   81-106, 136-150, 173-210
+app\api\v1\restaurant\order_counter\router_generate.py               22      6    73%   85-99
+app\api\v1\restaurant\order_counter\router_initialize.py             29      9    69%   102-125
+app\api\v1\restaurant\order_counter\router_reset.py                  33     15    55%   74-96, 126-140
+app\api\v1\restaurant\order_counter\router_summary.py                33     19    42%   52, 75-88, 110-148
+app\api\v1\restaurant\payment_setting\__init__.py                    11      0   100%
+app\api\v1\restaurant\payment_setting\router.py                      73     45    38%   90-115, 145-159, 190-213, 236-273, 295-322
+app\api\v1\restaurant\payment_setting\router_methods.py              39     20    49%   81-114, 166-189
+app\api\v1\restaurant\payment_setting\router_single_method.py        39     21    46%   92-115, 138-175
+app\api\v1\restaurant\payment_setting\router_summary.py              33     19    42%   52, 75-97, 119-141
+app\api\v1\restaurant\restaurants\__init__.py                        11      0   100%
+app\api\v1\restaurant\restaurants\restaurant_list_router.py          40     17    58%   95-101, 104-109, 112-117, 139-144, 169-201
+app\api\v1\restaurant\restaurants\restaurant_router.py               73     24    67%   140-163, 216-221, 280-303, 363-377
+app\api\v1\restaurant\restaurants\restaurant_stats_router.py         33     12    64%   90-114, 166-171
+app\api\v1\restaurant\restaurants\restaurant_status_router.py        44     21    52%   116-121, 155-180, 214-239
+app\api\v1\user.py                                                  136    106    22%   66, 121-170, 204-235, 269-306, 341-387, 423-476, 512-552, 583-607, 638-661, 690-701, 732-773
+app\api\webhook.py                                                   58     44    24%   36, 53-213, 225
+app\core\__init__.py                                                  5      0   100%
+app\core\ai_client.py                                                57     34    40%   86, 122-179, 206-215, 240-264
+app\core\callback_router.py                                          20      9    55%   50, 80-116
+app\core\config.py                                                   63      2    97%   315, 325
+app\core\database.py                                                 64     39    39%   107-118, 134, 147-166, 180-193, 206-214, 228-238
+app\core\db.py                                                      109     86    21%   65-93, 108-111, 133-167, 189-223, 245-279, 301-336, 350-354, 366-372
+app\core\dispatcher.py                                               19     13    32%   26-74
+app\core\event_bus.py                                                 0      0   100%
+app\core\exceptions.py                                              120     47    61%   71-72, 87-88, 103-104, 119-120, 135-136, 151-152, 188-189, 204-205, 220-221, 241, 257, 272, 287-288, 303, 340-341, 356-357, 377, 393-394, 414, 430, 450, 467-468, 492-494, 505-506, 525, 546, 562-563, 583-584
+app\core\limiter\sliding_window.py                                   21     14    33%   82-137
+app\core\logger.py                                                   16      0   100%
+app\core\middleware\gateway.py                                        6      2    67%   20-27
+app\core\middleware\idempotency.py                                   16     10    38%   29-80
+app\core\middleware\rate_limit.py                                    21      7    67%   46-84
+app\core\middleware\request_logger.py                                 5      1    80%   17
+app\core\redis_client.py                                             17      4    76%   50-60
+app\core\router_instance.py                                           2      0   100%
+app\core\security\__init__.py                                        88     62    30%   45, 62, 77, 96, 111, 128-129, 152-163, 187-189, 210-213, 236, 254, 294-357
+app\core\security\abuse_detector.py                                  30     30     0%   5-116
+app\core\security\anti_bot.py                                        34     34     0%   8-131
+app\core\security\anti_spam.py                                       13     13     0%   6-55
+app\core\security\ban_manager.py                                     27     27     0%   6-109
+app\core\security\captcha_generator.py                               11      6    45%   32-67
+app\core\security\captcha_manager.py                                 43     29    33%   31-47, 65-83, 97-127, 140-149
+app\core\security\fraud_detector.py                                  20     20     0%   5-90
+app\core\security\fraud_rules.py                                      5      5     0%   6-30
+app\core\security\fraud_score.py                                      5      5     0%   5-13
+app\core\security\fraud_storage.py                                   29     29     0%   6-134
+app\core\security\risk_engine.py                                      6      2    67%   19-26
+app\core\state_dispatcher.py                                         13      7    46%   29-67
+app\guards\__init__.py                                                3      3     0%   14-38
+app\guards\feature_guard.py                                          47     47     0%   16-250
+app\guards\subscription_guard.py                                     44     44     0%   15-272
+app\handlers\callback_handler.py                                     13      9    31%   22-56
+app\handlers\callback_routes.py                                      34     23    32%   59-215
+app\handlers\callbacks\admin\admin_handlers.py                       90     69    23%   62-116, 145-167, 196-244, 273-340, 369-429
+app\handlers\callbacks\customer\__init__.py                           6      0   100%
+app\handlers\callbacks\customer\cart.py                             139    117    16%   47-93, 125-177, 208-258, 290-356, 388-445, 476-504, 532-606
+app\handlers\callbacks\customer\cart_routes.py                       13      9    31%   27-73
+app\handlers\callbacks\customer\order.py                             19     12    37%   36-78
+app\handlers\callbacks\customer\payment.py                          104     88    15%   48-96, 133-266, 303-344, 375-416
+app\handlers\callbacks\customer\restaurant_details.py                17     12    29%   31-90
+app\handlers\callbacks\customer\restaurant_list.py                   25     14    44%   39-79, 95-122
+app\handlers\callbacks\customer\router.py                            15      8    47%   34-85
+app\handlers\callbacks\order\__init__.py                              2      0   100%
+app\handlers\callbacks\order\router.py                                7      3    57%   20-30
+app\handlers\callbacks\order_callbacks.py                            19     12    37%   40-100
+app\handlers\callbacks\owner\__init__.py                              3      0   100%
+app\handlers\callbacks\owner\confirm.py                              22     14    36%   38-117
+app\handlers\callbacks\owner\navigation.py                          171    155     9%   65-157, 176-206, 231-560, 582-611, 628, 649-672
+app\handlers\callbacks\owner\owner_dashboard_handlers.py             78     61    22%   51-161, 195-262, 298-364
+app\handlers\callbacks\owner\owner_dashboard_routes.py               12      8    33%   24-64
+app\handlers\callbacks\owner\register.py                             47     34    28%   34-128, 152-209
+app\handlers\callbacks\owner\router.py                               13      7    46%   30-68
+app\handlers\callbacks\payment\__init__.py                            2      0   100%
+app\handlers\callbacks\payment\payment_callback.py                   52     43    17%   51-156, 182-201
+app\handlers\callbacks\payment\payment_handlers.py                   55     44    20%   45-137, 173-230
+app\handlers\callbacks\payment\router.py                             18     13    28%   38-135
+app\handlers\callbacks\restaurant\__init__.py                         2      0   100%
+app\handlers\callbacks\restaurant\details.py                         26     16    38%   40-120
+app\handlers\callbacks\restaurant\menu.py                            28     19    32%   39-94
+app\handlers\callbacks\restaurant\router.py                           9      4    56%   21-37
+app\handlers\callbacks\type_callbacks.py                             19     11    42%   38-103
+app\handlers\captcha_handler.py                                      26     18    31%   33-66, 86-158
+app\handlers\customer_handler\__init__.py                             2      0   100%
+app\handlers\customer_handler\cart_step.py                           57     50    12%   37-100, 123-161, 190-261
+app\handlers\customer_handler\checkout_step.py                       22     17    23%   32-101
+app\handlers\customer_handler\customer_router.py                     19     10    47%   49-83
+app\handlers\customer_handler\payment_step.py                        13      9    31%   29-63
+app\handlers\customer_handler\product_step.py                        24     20    17%   29-100
+app\handlers\customer_handler\restaurant_step.py                     51     37    27%   56-130, 152-169, 184-192, 216-227, 252-277
+app\handlers\message_handler.py                                      88     51    42%   57-62, 87-101, 108-136, 145-189, 195-209, 212, 231-248
+app\handlers\owner_handler\__init__.py                                2      0   100%
+app\handlers\owner_handler\name_step.py                              36     25    31%   49-180
+app\handlers\owner_handler\owner_router.py                           17      6    65%   59-87
+app\handlers\owner_handler\phone_step.py                             19     10    47%   45-103
+app\handlers\owner_handler\restaurant_step.py                        45     30    33%   53-100, 123-137, 158-173, 192-198, 222-263
+app\handlers\owner_handler\wilaya_step.py                            41     31    24%   45-216
+app\handlers\webapp_handler.py                                       28     20    29%   25-121
+app\helpers\navigation.py                                            25     19    24%   78-162
+app\helpers\safe_sanitize.py                                         15      9    40%   44-87
+app\helpers\state_helper.py                                         105     92    12%   40-61, 85-115, 141-190, 214-251, 271-290, 312-354, 378-395, 417-450
+app\helpers\state_machine.py                                          4      2    50%   21-30
+app\helpers\state_transition.py                                      15      9    40%   33-90
+app\helpers\ui_helpers.py                                            39     28    28%   56, 83-106, 133-171, 193-231, 253
+app\helpers\ui_manager.py                                           100     80    20%   58-118, 144-185, 213-246, 270-323, 345-419, 441-475
+app\main.py                                                          60     10    83%   93-126, 304, 326
+app\models\__init__.py                                               26      0   100%
+app\models\admin.py                                                  15      1    93%   116
+app\models\admin_log.py                                              16      1    94%   108
+app\models\admin_session.py                                          15      1    93%   100
+app\models\agent.py                                                  56      4    93%   163, 260, 372, 472
+app\models\base.py                                                   20      2    90%   99, 151
+app\models\branch.py                                                 17      1    94%   136
+app\models\category.py                                               12      1    92%   96
+app\models\complaint.py                                              12      1    92%   103
+app\models\feature_pricing.py                                        43      4    91%   98, 181, 271, 355
+app\models\loyalty_discount.py                                       28      3    89%   89, 138, 222
+app\models\option_group.py                                           14      1    93%   111
+app\models\order.py                                                  54      4    93%   258, 262, 264, 274
+app\models\order_item.py                                             46      4    91%   124, 199, 285, 365
+app\models\owner.py                                                  20      1    95%   153
+app\models\payment.py                                                20      1    95%   153
+app\models\product.py                                                19      1    95%   143
+app\models\product_option.py                                         13      1    92%   104
+app\models\registration_request.py                                   20      1    95%   142
+app\models\restaurant.py                                             30      1    97%   259
+app\models\restaurant_group.py                                       20      2    90%   97, 166
+app\models\restaurant_metric.py                                      13      1    92%   106
+app\models\restaurant_model.py                                        2      2     0%   5-11
+app\models\restaurant_order_counter.py                               10      1    90%   87
+app\models\restaurant_payment_setting.py                             37     18    51%   137, 157-172, 188-199
+app\models\subscription.py                                           76      6    92%   144, 250, 323, 478, 548, 635
+app\models\telegram_update.py                                         0      0   100%
+app\models\user.py                                                   13      1    92%   106
+app\models\user_state.py                                             11     11     0%   5-35
+app\repositories\__init__.py                                          4      0   100%
+app\repositories\admin\__init__.py                                    4      0   100%
+app\repositories\admin\admin_log_repo.py                            142    114    20%   64, 96-126, 152-178, 204-230, 260-294, 320-359, 385-390, 410, 430, 452-479, 501-522, 558-590, 610-648, 687-699, 725-749, 771-778
+app\repositories\admin\admin_repo.py                                178    142    20%   70, 96-119, 141-164, 186-209, 237-267, 293-318, 344-381, 407-412, 427, 442, 476-505, 527-565, 587-595, 618-647, 667-672, 695-700, 725-730, 753-771, 791-816, 851-861, 883-893, 925-935, 967-969, 992-1013
+app\repositories\admin\admin_sessions_repo.py                       161    129    20%   69, 99-125, 145-162, 182-205, 229-259, 281-304, 330-367, 393-398, 413, 428, 460-488, 508-536, 556-584, 604-630, 652-685, 700-717, 752-762, 784-793, 825-834, 863-869, 896-918
+app\repositories\agent\__init__.py                                    5      0   100%
+app\repositories\agent\agent_repo.py                                115     94    18%   70, 100-125, 147-168, 188-205, 231-260, 288-331, 357-362, 384-411, 435-470, 492-524, 544-575
+app\repositories\agent\channel_repo.py                              129    107    17%   70, 100-126, 148-169, 193-222, 244-271, 299-342, 368-373, 397-426, 448-484, 508-543, 565-598, 618-649
+app\repositories\agent\conversation_repo.py                         146    123    16%   70, 98-127, 153-178, 198-215, 241-270, 298-340, 366-371, 395-428, 450-489, 515-545, 567-601, 621-656, 676-707
+app\repositories\agent\message_repo.py                              128    105    18%   70, 98-119, 145-170, 196-221, 241-260, 280-299, 327-366, 392-397, 419-442, 462-490, 514-539, 559-589, 611-651
+app\repositories\base.py                                            173     83    52%   105, 163-178, 198-234, 271-279, 332-337, 371-376, 398-417, 470-480, 510, 524-534, 556-585, 609-628
+app\repositories\branch_pricing_repo.py                              92     67    27%   74, 100-118, 138-170, 190-231, 257-265, 288-293, 316-321, 357-373, 395-402, 433-452, 474-483, 512-514, 537-544, 569-573, 595-599
+app\repositories\branches_repo.py                                   105     77    27%   68, 98-120, 146-168, 188, 217-252, 278-286, 309-314, 337-342, 371-376, 398-403, 440-462, 484-491, 525-547, 571-573, 595-599, 631-646, 668-672, 694-698
+app\repositories\categories_repo.py                                  69     48    30%   67, 95-119, 141-162, 188-221, 247-255, 280-288, 315, 346-364, 386-393, 425-444, 463-467
+app\repositories\feature_pricing_repo.py                            101     73    28%   72, 85, 113-141, 161-180, 202-220, 246-254, 277-282, 305-310, 339-344, 377-397, 419-430, 460-470, 498-513, 537-552, 573-575, 597-599, 618-620, 639-643
+app\repositories\feature_usage_counter_repo.py                      118     68    42%   131, 137, 147-158, 184-194, 218-239, 263-284, 367-386, 411-430, 453-467, 527, 554-572, 592, 625-637, 676-686, 707-709, 733-735, 757-759, 787-789
+app\repositories\feature_usage_limits_repo.py                        97     71    27%   73, 86, 112-135, 155-174, 194-213, 235-252, 280-289, 319, 352-372, 394-401, 431-441, 469-484, 506-521, 545-560, 583-585, 608-612
+app\repositories\features_repo.py                                    94     94     0%   14-543
+app\repositories\loyalty_discount_repo.py                            75     52    31%   72, 85, 111-128, 148-173, 197-218, 244-252, 272, 301-319, 341-348, 377-391, 413-415, 436-438, 460-464
+app\repositories\multi_restaurant_discount_repo.py                   75     51    32%   72, 85, 111-128, 148-168, 188-195, 223-232, 255, 284-301, 323-330, 358-371, 393-402, 428-430, 455-457, 480-484
+app\repositories\option_groups_repo.py                              118     88    25%   74, 102-123, 145-166, 186-205, 225-247, 273-306, 332-340, 365-373, 398-406, 431-439, 466, 486, 515-545, 580-600, 622-629, 663-684, 706-713, 750-754, 779-796
+app\repositories\order_item_options_repo.py                         100     70    30%   87, 111-132, 154-175, 195-212, 232-248, 272-302, 335-354, 376-383, 416-436, 458-460, 484-486, 507-511, 533-539, 574-593, 612-616
+app\repositories\order_items_repo.py                                110     69    37%   81, 119-127, 151-172, 201-209, 229-245, 273-282, 309-336, 373-394, 416-423, 458-480, 502-504, 526-528, 551-559, 581-585, 607-611, 650-671, 690-694
+app\repositories\order_payments_repo.py                             129     85    34%   106-127, 147-164, 188-209, 229-246, 268-288, 387-392, 415-420, 447-478, 513-533, 555-562, 597-619, 641-650, 678-682, 704-708, 730-734, 756-760
+app\repositories\order_status_history_repo.py                        90     62    31%   88-90, 110-131, 151-169, 189-210, 230-247, 267-285, 317-329, 361-382, 404-411, 441-443, 465-467, 489-491, 522-534
+app\repositories\orders_repo.py                                     156    107    31%   106-128, 168-176, 202-223, 247-268, 294-317, 343-377, 403-411, 444-461, 490, 515, 537-560, 617-648, 670-677, 721-731, 779-813, 841-875, 896-898, 930-932, 958-962, 1021-1052, 1081-1083, 1111-1113
+app\repositories\owner_repo.py                                      116     81    30%   107, 122-130, 154-175, 199-226, 246-268, 288-304, 330-338, 361-366, 389-405, 438-459, 481-492, 523-530, 561-563, 585-587, 608-615, 640-644, 669-671, 695-723
+app\repositories\payment_repo.py                                    146    109    25%   70, 98-119, 143-164, 184-201, 225-246, 266-282, 304, 332-358, 386-400, 425-436, 460-465, 488-493, 520, 540, 560, 582-603, 642-665, 687-694, 727-736, 768-775, 797-801, 823-827, 856-880, 906-930, 957-959, 979-980
+app\repositories\plan_features_repo.py                               98     98     0%   14-635
+app\repositories\product_option_repo.py                             108     79    27%   70, 100-125, 147-168, 192, 225-261, 287-295, 320-328, 353-361, 386-394, 417-422, 445-450, 479-484, 504, 531-560, 595-615, 637-644, 680-702, 723-730, 755-759
+app\repositories\products_repo.py                                    94     66    30%   107-135, 161-186, 206-229, 253, 280-300, 326-351, 377-382, 404-409, 435, 460, 485, 515-517, 547-549, 578-580
+app\repositories\promotion_repo.py                                  110     81    26%   78, 91, 119-151, 173-190, 216-244, 272-306, 330-335, 358-363, 388-396, 425-430, 467-489, 511-522, 549-558, 590-607, 626-628, 647-649, 670-672, 694-698
+app\repositories\registration_request_repo.py                       107     78    27%   83, 107-125, 149-170, 194-215, 237, 265-286, 310-338, 364-372, 397-410, 433-438, 465, 480, 525-551, 573-580, 617-624, 663-695, 716-723, 745-749, 771-775
+app\repositories\restaurant\__init__.py                               7      0   100%
+app\repositories\restaurant\restaurant_branch_repo.py                80     16    80%   327, 373-390, 410-427, 463
+app\repositories\restaurant\restaurant_group_repo.py                 66     39    41%   97-113, 141-160, 185-192, 270-293, 319-342, 364-372, 403-414, 439-448, 468-481
+app\repositories\restaurant\restaurant_metrics_repo.py              110     71    35%   98-106, 141-145, 185-204, 229-248, 273-292, 317-336, 361-390, 420-424, 444-448, 468-472, 492-496, 523-532, 558-562, 586-593, 620-627, 654-661, 688-695, 722-729
+app\repositories\restaurant\restaurant_order_counters_repo.py        74     30    59%   94-102, 122-129, 164-168, 215, 256-268, 347-351, 376-385, 412-414, 438-440, 464, 489-491
+app\repositories\restaurant\restaurant_payment_settings_repo.py      88     40    55%   98-106, 162-184, 259, 286, 315-342, 369-378, 423-435, 468-470
+app\repositories\restaurant\restaurant_repo.py                      110     65    41%   97-119, 143-164, 200-209, 233-260, 269-293, 313-340, 415, 452-460, 495-503, 530-532, 560-562, 592-594, 620-622, 650-657, 684-686
+app\repositories\state_repo.py                                       43     35    19%   31, 43-94, 107-142, 157-189
+app\repositories\subscription_feature_requests_repo.py               70     49    30%   72, 85, 109-128, 150-173, 199-222, 249-281, 301-319, 343, 374-381, 403-419, 438-440
+app\repositories\subscription_features_repo.py                       91     66    27%   75, 88, 112-131, 151-171, 193-216, 242-265, 292-323, 345-371, 391-409, 433, 464-471, 493-513, 534-536, 563-565
+app\repositories\subscription_plan_repo.py                          115     83    28%   75, 99-116, 138-159, 174, 196-216, 242-250, 275-283, 306-311, 334-339, 364-372, 402-412, 451-473, 495-506, 538-545, 574, 601-628, 652-675, 700-702, 723-730, 757-764, 789-793, 815-819
+app\repositories\subscription_repo.py                               149    113    24%   83, 111-132, 156-177, 197-226, 246-271, 295-316, 336-365, 387-411, 437-445, 472-495, 518-523, 546-551, 578, 593, 634-659, 681-692, 725-734, 767-769, 793, 822-854, 877-885, 907-911, 933-937, 961-981, 1012-1014
+app\repositories\user_repo.py                                       151    121    20%   68, 92-109, 129-146, 170-191, 215-236, 260-286, 310-332, 352-401, 421-455, 481-498, 520-537, 556, 571, 586-600, 615-629, 656-658, 677-681, 703-707, 732-734, 762-785
+app\schemas\__init__.py                                              16      0   100%
+app\schemas\admin.py                                                134     21    84%   160-164, 181-186, 256-262, 279-285
+app\schemas\admin_log.py                                             70     14    80%   115-140, 221-246, 303-331
+app\schemas\admin_session.py                                         70     15    79%   112-114, 131-133, 192-194, 239-241, 258-260
+app\schemas\agent\__init__.py                                         5      0   100%
+app\schemas\agent\agent.py                                           93     28    70%   134-139, 156-161, 178-180, 270-277, 294-301, 318-322
+app\schemas\agent\channel.py                                         57     12    79%   107-112, 129-131, 193-197
+app\schemas\agent\conversation.py                                    61     13    79%   124-129, 146-148, 217-224
+app\schemas\agent\message.py                                         70     16    77%   123-128, 145-150, 167-169, 246-250
+app\schemas\branch.py                                                47      0   100%
+app\schemas\categories.py                                            34      0   100%
+app\schemas\option_group.py                                          58      0   100%
+app\schemas\order.py                                                135      4    97%   284, 315, 451, 669
+app\schemas\order_item.py                                           105      0   100%
+app\schemas\order_payment.py                                          3      0   100%
+app\schemas\owner.py                                                127     34    73%   101, 103, 124, 126, 128, 178, 250-255, 272-279, 296-302, 344-349, 557-563
+app\schemas\payment.py                                               64      0   100%
+app\schemas\product.py                                               52      0   100%
+app\schemas\product_option.py                                        54      0   100%
+app\schemas\registration_request.py                                 100     30    70%   139-144, 162-170, 289-294, 311-321, 367-372
+app\schemas\restaurant\__init__.py                                    6      0   100%
+app\schemas\restaurant\restaurant.py                                 87     17    80%   142, 270-286, 303-310
+app\schemas\restaurant\restaurant_group.py                           80      9    89%   88, 140-144, 432, 436, 441
+app\schemas\restaurant\restaurant_metric.py                          66      0   100%
+app\schemas\restaurant\restaurant_order_counter.py                   46      0   100%
+app\schemas\restaurant\restaurant_payment_setting.py                 54      0   100%
+app\schemas\user.py                                                  52      0   100%
+app\services\__init__.py                                              4      0   100%
+app\services\business\__init__.py                                     4      0   100%
+app\services\business\admin\__init__.py                               4      0   100%
+app\services\business\admin\admin_log_service.py                     77     54    30%   71-72, 99-111, 137-162, 193-210, 241-258, 285-293, 318-331, 359-378, 407-429, 461-495, 519-533, 553-561, 599-601, 634
+app\services\business\admin\admin_service.py                        174    145    17%   73-74, 101-155, 180-202, 227-245, 270-288, 316-337, 368-390, 421-440, 475-530, 555-581, 604-626, 649-668, 691-710, 735-767, 799-832, 852-868, 883-895, 926-949, 971-992, 1014-1024
+app\services\business\admin\admin_session_service.py                115     85    26%   83-85, 112-126, 150-164, 190-210, 239-254, 282-299, 331, 354-370, 402-439, 462-478, 501-517, 539-553, 577-603, 623-638, 658-664, 692-703, 721-723, 745-747
+app\services\business\agent\__init__.py                               5      0   100%
+app\services\business\agent\agent_service.py                        133    110    17%   74-75, 104-124, 149-169, 195-215, 242-258, 284-304, 337-355, 388-430, 456-507, 532-576, 599-620, 642-666, 697-719, 743-778
+app\services\business\agent\channel_service.py                      128    105    18%   74-76, 105-125, 151-179, 208-226, 248-264, 292-310, 343-391, 416-461, 486-519, 542-563, 585-609, 640-675, 702-733
+app\services\business\agent\conversation_service.py                 137    112    18%   76-79, 108-128, 153-175, 199-217, 243-271, 302-323, 356-374, 406-475, 500-539, 564-599, 625-659, 682-705, 727-751, 784-815
+app\services\business\agent\message_service.py                      147    119    19%   75-77, 104-116, 140-169, 200-220, 251-271, 296-308, 328-340, 368-387, 419-474, 504-514, 544-554, 582-592, 617-666, 691-730, 750-766, 792-820, 845-878, 905-944
+app\services\business\branch_service.py                             154    120    22%   102-104, 131-145, 171-193, 220-228, 258-279, 308-325, 349-383, 422-491, 518-571, 596-618, 641-677, 700-736, 758-788, 832-848, 880-895, 920-924, 951-958, 982-984, 1009-1011
+app\services\business\category_service.py                           153    117    24%   100-103, 129, 159-171, 195-214, 241-249, 278-299, 328, 350-382, 418-487, 513-570, 591-635, 664-700, 732-753, 794-806, 828-834, 860-868, 891-895, 920-922, 949-956
+app\services\business\complaints.py                                  45      5    89%   95, 113, 118, 147, 158
+app\services\business\feature_usage_counter_engine.py                50     30    40%   78-82, 115-138, 214-244, 270-291
+app\services\business\feature_usage_limits_engine.py                 26     26     0%   15-159
+app\services\business\option_groups_service.py                      160    124    22%   96-98, 125-139, 163-178, 201-215, 235-244, 271-290, 314, 336, 358-371, 405-470, 497-550, 575-601, 626-652, 677-703, 724-754, 780-808, 831-869, 914-928, 950-956, 982-990, 1013-1017, 1042-1044
+app\services\business\order_item_options_service.py                 150    112    25%   99-100, 127-141, 165-180, 200-205, 227-232, 254-281, 316-395, 416-430, 457-487, 514-557, 586-638, 676-689, 711-717, 743-751, 773-775, 799-801, 825-829, 854-856, 881-888
+app\services\business\order_items_service.py                         92     50    46%   134-148, 210-224, 244-249, 271-276, 298-325, 341-344, 366-368, 416-418, 435-438, 459-495
+app\services\business\order_payments_service.py                     240    157    35%   133, 152-185, 209-225, 256, 261, 275, 309-323, 347-362, 382-394, 414-419, 441, 463-490, 525-588, 615-656, 689, 703, 737-768, 793-824, 857, 874, 905-929, 969-982, 1004-1006, 1028-1030, 1055-1059, 1085-1089, 1115-1119, 1145-1149, 1175-1179, 1204-1210, 1232-1238
+app\services\business\order_service.py                               82     31    62%   126-136, 165, 193-205, 239-262, 302, 338-350, 557, 580-599
+app\services\business\orders\__init__.py                             13      0   100%
+app\services\business\orders\cancel.py                               65     21    68%   85, 160-164, 170, 229-292, 316
+app\services\business\orders\complete.py                             75     43    43%   73-77, 86, 90, 104, 170-215, 251-314, 336-353, 377
+app\services\business\orders\constants.py                            48     10    79%   219, 232, 271, 284, 337, 350-354
+app\services\business\orders\create.py                              107     24    78%   90, 172, 177, 186, 358, 367, 372, 393, 399, 406, 475-485, 512-517, 522-526
+app\services\business\orders\customer.py                             80      6    92%   238-241, 244-249, 254
+app\services\business\orders\delete.py                               78     49    37%   59-63, 69, 79, 98, 149-153, 184-252, 285-357, 380
+app\services\business\orders\helpers.py                              51     31    39%   46-48, 72-77, 100-103, 124-134, 157-160, 182-185, 204-217, 246, 261
+app\services\business\orders\items.py                               112     50    55%   102-106, 123, 139, 163-183, 224-272, 304-328, 350-358, 380-388, 410-418, 478-488, 497, 500
+app\services\business\orders\paid.py                                 64     33    48%   17, 27, 33, 39-40, 44-54, 62-71, 76-85, 89, 93
+app\services\business\orders\placement.py                            44     30    32%   17-40, 50-65
+app\services\business\orders\pricing.py                              28      3    89%   26, 33, 36
+app\services\business\orders\read.py                                 91     48    47%   71, 101-111, 135-167, 194-205, 245, 322-339, 380, 410-420, 444-483, 505-531, 554, 579
+app\services\business\orders\status_history.py                       79     36    54%   61-85, 173, 200-216, 288-329, 356-388, 410, 440, 463
+app\services\business\orders\totals.py                              101     40    60%   43-44, 49, 87-91, 208-212, 220-249, 277-301, 326-360, 385-417, 439, 461
+app\services\business\orders\transaction.py                          38      0   100%
+app\services\business\orders\update.py                               98     37    62%   118-122, 137, 178-180, 213-215, 261-265, 284, 286, 288-289, 293-299, 309-313, 361-399, 432, 458
+app\services\business\owner_service.py                              218    162    26%   123-137, 157-169, 193-215, 242-268, 292-309, 333-346, 361-368, 422, 428, 458-477, 506-562, 590-630, 655-678, 703-726, 751-774, 801-830, 854-862, 888-932, 959-994, 1030-1065, 1087-1089, 1108-1110, 1129-1131, 1150-1152, 1171-1173, 1195-1201, 1223-1230, 1256-1264, 1290-1298
+app\services\business\payment_service.py                            191    154    19%   98-100, 127-147, 181-195, 215-227, 251-266, 293-317, 339-379, 414-489, 515-556, 580-611, 635-665, 689-719, 743-776, 797-821, 866-881, 903-909, 931-940, 963-967, 993-997, 1023-1027, 1053-1057, 1082-1084, 1106-1108
+app\services\business\pricing_service.py                             98     71    28%   86-96, 120-139, 168-192, 216-223, 247-256, 278-287, 309-324, 349-356, 378-386, 428-495
+app\services\business\product_option_service.py                     203    162    20%   99-101, 128-142, 168-190, 219-238, 272-295, 326, 349, 371-400, 435-513, 540-607, 632-658, 684-720, 745-771, 794-813, 836-855, 875-893, 919-947, 970-1018, 1064-1078, 1100-1106, 1134-1143, 1169-1173, 1198-1202, 1229-1231, 1258-1269, 1300-1307
+app\services\business\product_service.py                            187    143    24%   107-109, 135-141, 168-180, 206-228, 259-281, 312-333, 358-363, 391, 416, 439-475, 513-608, 634-708, 733-759, 782-789, 815-822, 846-890, 922-943, 993-1009, 1031-1037, 1061-1068, 1101-1116, 1141-1145, 1170-1174, 1200-1204, 1231-1233
+app\services\business\registration_request_service.py               211    172    18%   117-121, 148-162, 182-194, 218-233, 260-284, 306-319, 341-354, 378-395, 419-428, 443, 472-550, 576-641, 667-721, 747-851, 875-910, 931-961, 995-1015, 1042-1044, 1066-1072, 1096-1103, 1125-1131
+app\services\business\restaurant\__init__.py                         20      0   100%
+app\services\business\restaurant\branches\__init__.py                 3      0   100%
+app\services\business\restaurant\branches\compat.py                  30     19    37%   39-48, 63-69, 86-94, 111-119, 134-138
+app\services\business\restaurant\branches\service.py                 58      1    98%   130
+app\services\business\restaurant\groups\__init__.py                   5      0   100%
+app\services\business\restaurant\groups\branch_handlers.py           19      2    89%   142-147
+app\services\business\restaurant\groups\compat.py                    41     26    37%   64-73, 95-101, 127-133, 154-158, 182-184, 208-210, 238-247, 268-270
+app\services\business\restaurant\groups\handlers.py                  21      6    71%   111-120, 146-153, 175-183
+app\services\business\restaurant\groups\service.py                  115     61    47%   114, 141-153, 181-199, 226-242, 270-288, 317-334, 362-369, 415, 449-490, 516-528, 550-566, 609, 620, 678, 689, 722-748
+app\services\business\restaurant\metrics\__init__.py                  4      0   100%
+app\services\business\restaurant\metrics\compat.py                   44     29    34%   45-48, 67-70, 89-92, 111-114, 133-136, 157-163, 191-192, 214-220, 239-242
+app\services\business\restaurant\metrics\handlers.py                 49     37    24%   51-52, 79-102, 131-154, 187-210, 239-262, 295-318
+app\services\business\restaurant\metrics\service.py                  74     22    70%   117, 143-155, 196, 245, 302, 319, 396, 404, 412, 420, 449-451, 475-479, 504-508
+app\services\business\restaurant\order_counter\__init__.py            4      0   100%
+app\services\business\restaurant\order_counter\compat.py             41     27    34%   47-51, 76-82, 103-107, 132-139, 161-165, 184-188, 210-214, 238, 263-265
+app\services\business\restaurant\order_counter\handlers.py            8      2    75%   44-45
+app\services\business\restaurant\order_counter\service.py           140     76    46%   129, 159-176, 199-223, 252-291, 337, 347, 393-444, 478, 496, 534-571, 605, 626, 671, 702-706, 731-737, 762-768, 790-796, 818-822, 847-851, 879-881, 904
+app\services\business\restaurant\payment_setting\__init__.py          4      0   100%
+app\services\business\restaurant\payment_setting\compat.py           46     31    33%   52-66, 81-87, 103-112, 136-148, 166-168, 183-187, 205-209, 228-235, 257-264
+app\services\business\restaurant\payment_setting\handlers.py          8      2    75%   44-45
+app\services\business\restaurant\payment_setting\service.py         104     56    46%   124, 148-153, 177-198, 222-259, 308, 355-389, 427, 442, 467, 503-522, 539-560, 577-611
+app\services\business\restaurant\restaurants\__init__.py              5      0   100%
+app\services\business\restaurant\restaurants\compat.py               40     26    35%   58-76, 91-97, 113-120, 137-145, 161-170, 188-192, 211-218
+app\services\business\restaurant\restaurants\handlers.py             68      8    88%   203, 208, 211, 220, 316, 326, 340, 354
+app\services\business\restaurant\restaurants\service.py              89     18    80%   149-163, 189-206, 230-245, 269-284, 293, 395, 474, 483
+app\services\business\restaurant\restaurants\validators.py           21     10    52%   53, 80, 105-121
+app\services\business\subscription_service.py                        98     66    33%   90-94, 118-123, 149-158, 182-187, 213-222, 250-259, 285-295, 335-391, 435-497, 521-550, 570-575, 598-603, 630, 643, 674-682, 728-730, 786
+app\services\business\user_service.py                               201    163    19%   90-91, 118-132, 152-164, 184-198, 222-239, 259-278, 307-322, 346-351, 378-420, 440-457, 480-502, 530-574, 599-646, 671-704, 729-762, 782-803, 839-905, 924-934, 974-983, 1005-1012, 1034-1036, 1058-1062, 1084-1088, 1115-1122, 1149-1156
+app\services\telegram\__init__.py                                     6      0   100%
+app\services\telegram\actions.py                                      6      2    67%   28-41
+app\services\telegram\base.py                                        35     28    20%   31-159
+app\services\telegram\callbacks.py                                    6      2    67%   27-38
+app\services\telegram\client.py                                       7      3    57%   24-30
+app\services\telegram\constants.py                                    4      0   100%
+app\services\telegram\telegram_client.py                             21     12    43%   29-50, 67-90, 105-113
+app\services\telegram\webhook.py                                      6      2    67%   27-38
+app\services\validation\__init__.py                                   3      0   100%
+app\services\validation\phone_validator.py                           29     22    24%   45-60, 76-136
+app\services\validation\sanitizer.py                                 35     21    40%   69-160, 172, 190, 208, 226
+app\services\validation\text_rules.py                                 3      0   100%
+app\states\customer_states.py                                         7      0   100%
+app\states\owner_states.py                                            8      0   100%
+app\states\transitions.py                                             2      0   100%
+app\views\admin_ui.py                                                47     42    11%   35-154, 178-232, 256-312
+app\views\cart_ui.py                                                 33     27    18%   33-134, 157-189, 247-251, 281-285
+app\views\owner_dashboard_ui.py                                       7      4    43%   36-93
+app\views\payment_ui.py                                              28     22    21%   29-122, 149-158, 198-207, 251-259
+app\views\texts.py                                                    6      0   100%
+app\views\ui.py                                                      43     31    28%   23-30, 41-45, 71-78, 103-129, 137-141, 159-163, 192-275, 288-295, 319-323, 390-394
+-----------------------------------------------------------------------------------------------
+TOTAL                                                             21530  12856    40%
+
+
+======================= 178 passed in 518.44s (0:08:38) =======================

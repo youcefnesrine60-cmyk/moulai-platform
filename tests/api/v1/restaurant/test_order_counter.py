@@ -5,6 +5,16 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# TEST MODULE - TESTS / API / V1 / RESTAURANT / TEST ORDER COUNTER
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test order counter.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,15 +22,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.owner import Owner
 from app.models.restaurant import Restaurant
 
-
 # ==============================================
 # 📋 TESTS - ORDER COUNTER
 # ==============================================
+
 
 class TestOrderCounterAPI:
     """
     اختبارات نقاط نهاية عداد الطلبات.
     """
+
+    # ==============================================
+    # SETUP
+    # ==============================================
 
     @pytest.fixture(autouse=True)
     async def setup(
@@ -31,9 +45,9 @@ class TestOrderCounterAPI:
     ) -> None:
         """
         تهيئة بيانات الاختبار.
-        
+
         ✅ التصحيح: استخدام flush() بدلاً من commit()
-        
+
         Args:
             db_session: جلسة قاعدة البيانات
             sample_owner_data: بيانات مالك نموذجية
@@ -64,16 +78,16 @@ class TestOrderCounterAPI:
     ) -> None:
         """
         اختبار تهيئة عداد الطلبات.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
         response = await client.post(
             f"/api/v1/restaurant-order-counters/{self.restaurant_id}/initialize"
         )
-        
+
         assert response.status_code == 201
-        
+
         data = response.json()
         assert data["restaurant_id"] == self.restaurant_id
         assert data["last_number"] == 0
@@ -88,19 +102,21 @@ class TestOrderCounterAPI:
     ) -> None:
         """
         اختبار الحصول على عداد الطلبات.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
         # تهيئة العداد أولاً
-        await client.post(f"/api/v1/restaurant-order-counters/{self.restaurant_id}/initialize")
+        await client.post(
+            f"/api/v1/restaurant-order-counters/{self.restaurant_id}/initialize"
+        )
 
         response = await client.get(
             f"/api/v1/restaurant-order-counters/{self.restaurant_id}"
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["restaurant_id"] == self.restaurant_id
 
@@ -114,19 +130,21 @@ class TestOrderCounterAPI:
     ) -> None:
         """
         اختبار توليد رقم الطلب التالي.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
         # تهيئة العداد أولاً
-        await client.post(f"/api/v1/restaurant-order-counters/{self.restaurant_id}/initialize")
+        await client.post(
+            f"/api/v1/restaurant-order-counters/{self.restaurant_id}/initialize"
+        )
 
         response = await client.post(
             f"/api/v1/restaurant-order-counters/{self.restaurant_id}/next"
         )
-        
+
         assert response.status_code == 201
-        
+
         data = response.json()
         assert data["restaurant_id"] == self.restaurant_id
         assert data["sequence"] == 1
@@ -143,20 +161,22 @@ class TestOrderCounterAPI:
     ) -> None:
         """
         اختبار زيادة عداد الطلبات.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
         # تهيئة العداد أولاً
-        await client.post(f"/api/v1/restaurant-order-counters/{self.restaurant_id}/initialize")
+        await client.post(
+            f"/api/v1/restaurant-order-counters/{self.restaurant_id}/initialize"
+        )
 
         # زيادة العداد
         response = await client.post(
             f"/api/v1/restaurant-order-counters/{self.restaurant_id}/increment"
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["last_number"] == 1
 

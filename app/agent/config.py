@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🤖 AGENT CONFIG
 # إعدادات الوكيل الذكي
 # ==============================================
+
+"""MoulAI operational module for config.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Dict,
@@ -43,9 +48,9 @@ PhraseMap = Dict[LanguageCode, List[str]]
 class AgentConfig(BaseSettings):
     """
     إعدادات الوكيل الذكي.
-    
+
     تدير إعدادات النماذج اللغوية واللغات والقنوات.
-    
+
     Attributes:
         llm_provider: مزود النموذج اللغوي (openai, gemini, local)
         openai_api_key: مفتاح OpenAI API
@@ -131,12 +136,13 @@ class AgentConfig(BaseSettings):
 # 🌍 LANGUAGE CONFIG
 # ==============================================
 
+
 class LanguageConfig:
     """
     إعدادات اللغات المدعومة.
-    
+
     تحتوي على قواميس للغات المدعومة وأنماط الكشف والعبارات الشائعة.
-    
+
     Attributes:
         LANGUAGE_NAMES: أسماء اللغات
         LANGUAGE_CODES: رموز اللغات
@@ -167,19 +173,65 @@ class LanguageConfig:
     # أنماط كشف اللغة
     DETECTION_PATTERNS: PatternMap = {
         "ar": [
-            "مرحبا", "السلام", "اهلا", "شكرا", "من فضلك", "لو سمحت",
-            "ممكن", "كيف", "ايش", "شنو", "وش", "ليش", "علاش",
-            "ابي", "ابغى", "بدي", "نبي", "نبغى", "ندي",
+            "مرحبا",
+            "السلام",
+            "اهلا",
+            "شكرا",
+            "من فضلك",
+            "لو سمحت",
+            "ممكن",
+            "كيف",
+            "ايش",
+            "شنو",
+            "وش",
+            "ليش",
+            "علاش",
+            "ابي",
+            "ابغى",
+            "بدي",
+            "نبي",
+            "نبغى",
+            "ندي",
         ],
         "en": [
-            "hello", "hi", "thanks", "please", "can", "could", "how",
-            "what", "why", "when", "where", "who", "which",
-            "want", "need", "get", "order", "buy",
+            "hello",
+            "hi",
+            "thanks",
+            "please",
+            "can",
+            "could",
+            "how",
+            "what",
+            "why",
+            "when",
+            "where",
+            "who",
+            "which",
+            "want",
+            "need",
+            "get",
+            "order",
+            "buy",
         ],
         "fr": [
-            "bonjour", "salut", "merci", "s'il vous plaît", "peux", "peut",
-            "comment", "quoi", "pourquoi", "quand", "où", "qui", "lequel",
-            "veux", "besoin", "obtenir", "commander", "acheter",
+            "bonjour",
+            "salut",
+            "merci",
+            "s'il vous plaît",
+            "peux",
+            "peut",
+            "comment",
+            "quoi",
+            "pourquoi",
+            "quand",
+            "où",
+            "qui",
+            "lequel",
+            "veux",
+            "besoin",
+            "obtenir",
+            "commander",
+            "acheter",
         ],
     }
 
@@ -252,16 +304,17 @@ language_config: LanguageConfig = LanguageConfig()
 # GET LANGUAGE NAME
 # ==============================================
 
+
 def get_language_name(
     *,
     lang_code: LanguageCode,
 ) -> LanguageName:
     """
     الحصول على اسم اللغة من رمزها.
-    
+
     Args:
         lang_code: رمز اللغة (ar, en, fr)
-        
+
     Returns:
         اسم اللغة
     """
@@ -277,16 +330,17 @@ def get_language_name(
 # IS LANGUAGE SUPPORTED
 # ==============================================
 
+
 def is_language_supported(
     *,
     lang_code: LanguageCode,
 ) -> bool:
     """
     التحقق من أن اللغة مدعومة.
-    
+
     Args:
         lang_code: رمز اللغة
-        
+
     Returns:
         True إذا كانت مدعومة
     """
@@ -302,10 +356,11 @@ def is_language_supported(
 # GET SUPPORTED LANGUAGES
 # ==============================================
 
+
 def get_supported_languages() -> List[LanguageCode]:
     """
     الحصول على قائمة اللغات المدعومة.
-    
+
     Returns:
         قائمة رموز اللغات المدعومة
     """
@@ -323,10 +378,11 @@ def get_supported_languages() -> List[LanguageCode]:
 # GET DEFAULT LANGUAGE
 # ==============================================
 
+
 def get_default_language() -> LanguageCode:
     """
     الحصول على اللغة الافتراضية.
-    
+
     Returns:
         اللغة الافتراضية
     """
@@ -343,21 +399,17 @@ def get_default_language() -> LanguageCode:
 # ==============================================
 
 __all__ = [
-
     # Classes
     "AgentConfig",
     "LanguageConfig",
-
     # Instances
     "default_config",
     "language_config",
-
     # Helper Functions
     "get_language_name",
     "is_language_supported",
     "get_supported_languages",
     "get_default_language",
-    
     # Types
     "LanguageCode",
     "LanguageName",

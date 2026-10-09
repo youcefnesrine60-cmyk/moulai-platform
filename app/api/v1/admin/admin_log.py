@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 📋 ADMIN LOG API
 # واجهات API لسجل أنشطة المديرين
 # ==============================================
+
+"""MoulAI operational module for admin log.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from datetime import datetime
 from typing import (
@@ -39,7 +44,6 @@ from app.schemas.admin_log import (
 )
 from app.services.business.admin.admin_log_service import AdminLogService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -54,15 +58,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_admin_log_service(
     session: AsyncSession = Depends(get_db),
 ) -> AdminLogService:
     """
     الحصول على خدمة سجل أنشطة المديرين.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         AdminLogService: مثيل من AdminLogService
     """
@@ -76,6 +81,7 @@ async def get_admin_log_service(
 # ==============================================
 # CREATE ADMIN LOG
 # ==============================================
+
 
 @router.post(
     "/",
@@ -91,10 +97,10 @@ async def create_admin_log(
 ) -> AdminLogResponse:
     """
     إنشاء سجل نشاط جديد.
-    
+
     Args:
         data: بيانات سجل النشاط
-        
+
     Returns:
         AdminLogResponse: سجل النشاط المنشأ
     """
@@ -128,6 +134,7 @@ async def create_admin_log(
 # GET ADMIN LOG BY ID
 # ==============================================
 
+
 @router.get(
     "/{log_id}",
     response_model=AdminLogResponse,
@@ -141,13 +148,13 @@ async def get_admin_log_by_id(
 ) -> AdminLogResponse:
     """
     الحصول على سجل نشاط بالمعرف.
-    
+
     Args:
         log_id: معرف سجل النشاط
-        
+
     Returns:
         AdminLogResponse: سجل النشاط المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على السجل
     """
@@ -190,6 +197,7 @@ async def get_admin_log_by_id(
 # GET ADMIN LOGS BY ADMIN
 # ==============================================
 
+
 @router.get(
     "/admin/{admin_id}",
     response_model=AdminLogListResponse,
@@ -207,14 +215,14 @@ async def get_admin_logs_by_admin(
 ) -> AdminLogListResponse:
     """
     الحصول على سجل أنشطة مدير معين.
-    
+
     Args:
         admin_id: معرف المدير
         action: تصفية حسب نوع الإجراء
         resource: تصفية حسب نوع المورد
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         AdminLogListResponse: قائمة سجل الأنشطة
     """
@@ -257,6 +265,7 @@ async def get_admin_logs_by_admin(
 # SEARCH ADMIN LOGS
 # ==============================================
 
+
 @router.get(
     "/search",
     response_model=AdminLogListResponse,
@@ -273,13 +282,13 @@ async def search_admin_logs(
 ) -> AdminLogListResponse:
     """
     البحث في سجل الأنشطة.
-    
+
     Args:
         query: نص البحث
         admin_id: معرف المدير (اختياري)
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         AdminLogListResponse: قائمة سجل الأنشطة المطابقة
     """
@@ -317,6 +326,7 @@ async def search_admin_logs(
 # GET ACTIONS SUMMARY
 # ==============================================
 
+
 @router.get(
     "/summary/actions",
     response_model=ActionsSummaryResponse,
@@ -331,11 +341,11 @@ async def get_actions_summary(
 ) -> ActionsSummaryResponse:
     """
     الحصول على ملخص الإجراءات حسب النوع.
-    
+
     Args:
         admin_id: معرف المدير (اختياري)
         limit: الحد الأقصى للنتائج
-        
+
     Returns:
         ActionsSummaryResponse: ملخص الإجراءات
     """
@@ -355,7 +365,10 @@ async def get_actions_summary(
         total = len(summary)
 
         return ActionsSummaryResponse(
-            items=[ActionSummary(action=item["action"], count=item["count"]) for item in summary],
+            items=[
+                ActionSummary(action=item["action"], count=item["count"])
+                for item in summary
+            ],
             total=total,
         )
 
@@ -374,6 +387,7 @@ async def get_actions_summary(
 # GET RECENT ACTIVITY
 # ==============================================
 
+
 @router.get(
     "/recent",
     response_model=List[AdminLogResponse],
@@ -388,11 +402,11 @@ async def get_recent_activity(
 ) -> List[AdminLogResponse]:
     """
     الحصول على أحدث الأنشطة.
-    
+
     Args:
         admin_id: معرف المدير (اختياري)
         limit: عدد النتائج
-        
+
     Returns:
         List[AdminLogResponse]: قائمة أحدث الأنشطة
     """
@@ -425,6 +439,7 @@ async def get_recent_activity(
 # GET LOGS BY DATE RANGE
 # ==============================================
 
+
 @router.get(
     "/date-range",
     response_model=AdminLogListResponse,
@@ -442,14 +457,14 @@ async def get_logs_by_date_range(
 ) -> AdminLogListResponse:
     """
     الحصول على سجل الأنشطة في نطاق زمني محدد.
-    
+
     Args:
         start_date: تاريخ البداية
         end_date: تاريخ النهاية
         admin_id: معرف المدير (اختياري)
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         AdminLogListResponse: قائمة سجل الأنشطة
     """
@@ -488,6 +503,7 @@ async def get_logs_by_date_range(
 # GET LOGS BY ACTION
 # ==============================================
 
+
 @router.get(
     "/action/{action}",
     response_model=AdminLogListResponse,
@@ -504,13 +520,13 @@ async def get_logs_by_action(
 ) -> AdminLogListResponse:
     """
     الحصول على سجل الأنشطة حسب نوع الإجراء.
-    
+
     Args:
         action: نوع الإجراء
         admin_id: معرف المدير (اختياري)
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         AdminLogListResponse: قائمة سجل الأنشطة
     """

@@ -10,6 +10,11 @@
 # نموذج إعدادات الدفع للمطعم
 # ==============================================
 
+"""MoulAI operational module for restaurant payment setting.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import List
 
 from sqlalchemy import (
@@ -33,12 +38,13 @@ AllowedMethodsList = List[str]
 # 🏦 RESTAURANT PAYMENT SETTING
 # ==============================================
 
+
 class RestaurantPaymentSetting(BaseModel):
     """
     نموذج إعدادات الدفع للمطعم.
-    
+
     يدير طرق الدفع المسموح بها لكل مطعم.
-    
+
     Attributes:
         restaurant_id: معرف المطعم (ForeignKey, Unique)
         allow_cash: السماح بالدفع نقداً
@@ -106,8 +112,8 @@ class RestaurantPaymentSetting(BaseModel):
 
     __table_args__ = (
         UniqueConstraint(
-            'restaurant_id',
-            name='uq_restaurant_payment_settings',
+            "restaurant_id",
+            name="uq_restaurant_payment_settings",
             comment="تأكد من وجود إعدادات دفع واحدة فقط لكل مطعم",
         ),
     )
@@ -120,7 +126,7 @@ class RestaurantPaymentSetting(BaseModel):
         "Restaurant",
         back_populates="payment_settings",
         lazy="selectin",
-        #comment="المطعم المرتبط",
+        # comment="المطعم المرتبط",
     )
 
     # ==========================================
@@ -130,7 +136,7 @@ class RestaurantPaymentSetting(BaseModel):
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج.
-        
+
         Returns:
             سلسلة نصية تحتوي على معرف المطعم وحالتَي النقد والبطاقة
         """
@@ -150,7 +156,7 @@ class RestaurantPaymentSetting(BaseModel):
     def get_allowed_methods(self) -> AllowedMethodsList:
         """
         الحصول على قائمة طرق الدفع المسموح بها.
-        
+
         Returns:
             قائمة طرق الدفع المسموح بها
         """
@@ -178,10 +184,10 @@ class RestaurantPaymentSetting(BaseModel):
     def is_method_allowed(self, method: str) -> bool:
         """
         التحقق من أن طريقة دفع معينة مسموح بها.
-        
+
         Args:
             method: طريقة الدفع (cash, card, ccp, baridimob, stripe, paypal)
-            
+
         Returns:
             True إذا كانت مسموحة، False إذا لم تكن
         """

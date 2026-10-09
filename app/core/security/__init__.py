@@ -1,9 +1,19 @@
 # ==============================================
-# 🔐 SECURITY MODULE
-# وحدة الأمان - تجميع دوال الأمان الأساسية
-# تصديرها للمشروع للاستخدام في الخدمات
-# تنظيم الاستيرادات
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# PACKAGE INITIALIZER - APP / CORE / SECURITY /   INIT
+# Package initialization and public exports component.
+# ==============================================
+
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -26,8 +36,13 @@ from app.core.config import settings
 # إعداد سياق تشفير كلمات المرور
 pwd_context = CryptContext(
     schemes=["bcrypt"],  # استخدام خوارزمية bcrypt
-    deprecated="auto",   # تمييز الخوارزميات القديمة تلقائياً
+    deprecated="auto",  # تمييز الخوارزميات القديمة تلقائياً
 )
+
+
+# ==============================================
+# HASH PASSWORD
+# ==============================================
 
 
 def hash_password(
@@ -35,14 +50,19 @@ def hash_password(
 ) -> str:
     """
     تشفير كلمة المرور باستخدام bcrypt.
-    
+
     Args:
         password: كلمة المرور النصية
-        
+
     Returns:
         النص المشفر
     """
     return pwd_context.hash(password)
+
+
+# ==============================================
+# VERIFY PASSWORD
+# ==============================================
 
 
 def verify_password(
@@ -51,15 +71,20 @@ def verify_password(
 ) -> bool:
     """
     التحقق من صحة كلمة المرور.
-    
+
     Args:
         plain_password: كلمة المرور النصية
         hashed_password: النص المشفر المخزن
-        
+
     Returns:
         True إذا كانت صحيحة، False وإلا
     """
     return pwd_context.verify(plain_password, hashed_password)
+
+
+# ==============================================
+# GET PASSWORD HASH
+# ==============================================
 
 
 def get_password_hash(
@@ -67,10 +92,10 @@ def get_password_hash(
 ) -> str:
     """
     الحصول على هاش كلمة المرور (مرادف لـ hash_password).
-    
+
     Args:
         password: كلمة المرور النصية
-        
+
     Returns:
         النص المشفر
     """
@@ -81,19 +106,25 @@ def get_password_hash(
 # 🎫 TOKEN GENERATION
 # ==============================================
 
+
 def generate_session_token(
     length: int = 64,
 ) -> str:
     """
     توليد رمز جلسة عشوائي وآمن.
-    
+
     Args:
         length: طول الرمز (الافتراضي: 64)
-        
+
     Returns:
         رمز الجلسة
     """
     return secrets.token_urlsafe(length)
+
+
+# ==============================================
+# GENERATE VERIFICATION TOKEN
+# ==============================================
 
 
 def generate_verification_token(
@@ -101,14 +132,19 @@ def generate_verification_token(
 ) -> str:
     """
     توليد رمز تحقق عشوائي.
-    
+
     Args:
         length: طول الرمز (الافتراضي: 32)
-        
+
     Returns:
         رمز التحقق
     """
     return secrets.token_hex(length)
+
+
+# ==============================================
+# GENERATE API KEY
+# ==============================================
 
 
 def generate_api_key(
@@ -117,11 +153,11 @@ def generate_api_key(
 ) -> str:
     """
     توليد مفتاح API.
-    
+
     Args:
         prefix: بادئة المفتاح
         length: طول المفتاح
-        
+
     Returns:
         مفتاح API
     """
@@ -133,6 +169,7 @@ def generate_api_key(
 # 🔐 JWT TOKENS
 # ==============================================
 
+
 def create_jwt_token(
     data: Dict[str, Any],
     expires_delta: Optional[timedelta] = None,
@@ -140,12 +177,12 @@ def create_jwt_token(
 ) -> str:
     """
     إنشاء رمز JWT.
-    
+
     Args:
         data: البيانات المراد تضمينها
         expires_delta: مدة الصلاحية
         secret_key: المفتاح السري (اختياري)
-        
+
     Returns:
         رمز JWT
     """
@@ -167,20 +204,25 @@ def create_jwt_token(
     )
 
 
+# ==============================================
+# DECODE JWT TOKEN
+# ==============================================
+
+
 def decode_jwt_token(
     token: str,
     secret_key: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     فك تشفير رمز JWT.
-    
+
     Args:
         token: رمز JWT
         secret_key: المفتاح السري (اختياري)
-        
+
     Returns:
         البيانات المستخرجة
-        
+
     Raises:
         jwt.InvalidTokenError: إذا كان الرمز غير صالح
     """
@@ -193,17 +235,22 @@ def decode_jwt_token(
     )
 
 
+# ==============================================
+# VERIFY JWT TOKEN
+# ==============================================
+
+
 def verify_jwt_token(
     token: str,
     secret_key: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """
     التحقق من صحة رمز JWT.
-    
+
     Args:
         token: رمز JWT
         secret_key: المفتاح السري (اختياري)
-        
+
     Returns:
         البيانات المستخرجة أو None إذا كان الرمز غير صالح
     """
@@ -217,17 +264,18 @@ def verify_jwt_token(
 # 🔑 ENCRYPTION / DECRYPTION
 # ==============================================
 
+
 def encrypt_data(
     data: str,
     key: Optional[str] = None,
 ) -> str:
     """
     تشفير البيانات (للاستخدام المستقبلي).
-    
+
     Args:
         data: البيانات النصية
         key: مفتاح التشفير (اختياري)
-        
+
     Returns:
         البيانات المشفرة
     """
@@ -236,17 +284,22 @@ def encrypt_data(
     return base64.b64encode(data.encode()).decode()
 
 
+# ==============================================
+# DECRYPT DATA
+# ==============================================
+
+
 def decrypt_data(
     encrypted_data: str,
     key: Optional[str] = None,
 ) -> str:
     """
     فك تشفير البيانات (للاستخدام المستقبلي).
-    
+
     Args:
         encrypted_data: البيانات المشفرة
         key: مفتاح التشفير (اختياري)
-        
+
     Returns:
         البيانات النصية
     """
@@ -258,15 +311,16 @@ def decrypt_data(
 # 🛡️ SECURITY HELPERS
 # ==============================================
 
+
 def sanitize_input(
     text: str,
 ) -> str:
     """
     تنظيف المدخلات من الأحرف الخطرة.
-    
+
     Args:
         text: النص المراد تنظيفه
-        
+
     Returns:
         النص المنظف
     """
@@ -279,15 +333,20 @@ def sanitize_input(
     return text.strip()
 
 
+# ==============================================
+# VALIDATE PASSWORD STRENGTH
+# ==============================================
+
+
 def validate_password_strength(
     password: str,
 ) -> Dict[str, Union[bool, str, int]]:
     """
     التحقق من قوة كلمة المرور.
-    
+
     Args:
         password: كلمة المرور
-        
+
     Returns:
         قاموس يحتوي على النتيجة والرسالة والدرجة
     """

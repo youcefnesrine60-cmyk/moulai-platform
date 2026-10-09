@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for subscription feature requests repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -58,6 +63,10 @@ class SubscriptionFeatureRequestRepository(
         model: نموذج SubscriptionFeatureRequest
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -354,6 +363,7 @@ class SubscriptionFeatureRequestRepository(
 # CREATE FEATURE REQUEST (COMPATIBILITY)
 # ==============================================
 
+
 async def create_feature_request(
     *,
     subscription_id: int,
@@ -385,6 +395,7 @@ async def create_feature_request(
 # GET SUBSCRIPTION FEATURE REQUESTS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_subscription_feature_requests(
     *,
     subscription_id: int,
@@ -409,12 +420,14 @@ async def get_subscription_feature_requests(
     result = []
 
     for request in requests:
-        result.append({
-            "id": request.id,
-            "subscription_id": request.subscription_id,
-            "feature_id": request.feature_id,
-            "created_at": request.created_at,
-        })
+        result.append(
+            {
+                "id": request.id,
+                "subscription_id": request.subscription_id,
+                "feature_id": request.feature_id,
+                "created_at": request.created_at,
+            }
+        )
 
     return result
 
@@ -422,6 +435,7 @@ async def get_subscription_feature_requests(
 # ==============================================
 # DELETE SUBSCRIPTION FEATURE REQUESTS (COMPATIBILITY)
 # ==============================================
+
 
 async def delete_subscription_feature_requests(
     *,

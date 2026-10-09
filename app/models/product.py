@@ -11,6 +11,11 @@
 # يدير منتجات المطاعم وأسعارها وخياراتها
 # ==============================================
 
+"""MoulAI operational module for product.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -27,17 +32,18 @@ from .base import BaseModel
 # 📦 PRODUCT
 # ==============================================
 
+
 class Product(BaseModel):
     """
     نموذج المنتج
-    
+
     يدير:
         - البيانات الأساسية للمنتج (الاسم، الوصف، السعر)
         - صورة المنتج
         - حالة التوفر
         - ترتيب العرض
         - العلاقات مع المطعم والتصنيف ومجموعات الخيارات وبنود الطلب
-    
+
     Attributes:
         restaurant_id: معرف المطعم (ForeignKey)
         category_id: معرف التصنيف (ForeignKey)
@@ -52,12 +58,13 @@ class Product(BaseModel):
         option_groups: قائمة مجموعات الخيارات
         order_items: قائمة بنود الطلب
     """
+
     __tablename__ = "products"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     restaurant_id = Column(
         Integer,
         ForeignKey("restaurants.id", ondelete="CASCADE"),
@@ -98,11 +105,11 @@ class Product(BaseModel):
         default=0,
         comment="ترتيب العرض",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     restaurant = relationship(
         "Restaurant",
         back_populates="products",
@@ -128,15 +135,15 @@ class Product(BaseModel):
         lazy="selectin",
         # comment="قائمة بنود الطلب",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والاسم والسعر
         """

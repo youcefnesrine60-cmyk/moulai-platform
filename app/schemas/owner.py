@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها للمالكين
 # ==============================================
 
+"""MoulAI operational module for owner.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -26,7 +31,6 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -40,18 +44,20 @@ OwnerListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class OwnerBase(BaseModel):
     """
     المخطط الأساسي للمالك.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات المالك.
-    
+
     Attributes:
         chat_id: معرف المستخدم في تيليجرام
         full_name: الاسم الكامل
         phone: رقم الهاتف
         email: البريد الإلكتروني
     """
+
     chat_id: int = Field(
         ...,
         description="معرف المستخدم في تيليجرام",
@@ -86,13 +92,13 @@ class OwnerBase(BaseModel):
     def validate_email(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة البريد الإلكتروني.
-        
+
         Args:
             value: البريد الإلكتروني
-            
+
         Returns:
             Optional[str]: البريد الإلكتروني المدقق
-            
+
         Raises:
             ValueError: إذا كان البريد الإلكتروني غير صالح
         """
@@ -103,18 +109,22 @@ class OwnerBase(BaseModel):
                 raise ValueError("البريد الإلكتروني غير صالح")
         return value
 
+    # ==============================================
+    # VALIDATE PHONE
+    # ==============================================
+
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة رقم الهاتف.
-        
+
         Args:
             value: رقم الهاتف
-            
+
         Returns:
             Optional[str]: رقم الهاتف المدقق
-            
+
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
         """
@@ -132,16 +142,18 @@ class OwnerBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class OwnerCreate(OwnerBase):
     """
     مخطط إنشاء مالك جديد.
-    
+
     يرث جميع حقول OwnerBase مع إضافة حقل الحالة.
-    
+
     Attributes:
         registration_status: حالة التسجيل (اختياري)
         trial_used: هل استخدم الفترة التجريبية (اختياري)
     """
+
     registration_status: Optional[str] = Field(
         "pending",
         max_length=50,
@@ -163,13 +175,13 @@ class OwnerCreate(OwnerBase):
     def validate_registration_status(cls, value: str) -> str:
         """
         التحقق من صحة حالة التسجيل.
-        
+
         Args:
             value: حالة التسجيل
-            
+
         Returns:
             str: حالة التسجيل المدققة
-            
+
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
@@ -185,12 +197,13 @@ class OwnerCreate(OwnerBase):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class OwnerUpdate(BaseModel):
     """
     مخطط تحديث المالك.
-    
+
     جميع الحقول اختيارية لتحديث جزئي.
-    
+
     Attributes:
         full_name: الاسم الكامل
         phone: رقم الهاتف
@@ -198,6 +211,7 @@ class OwnerUpdate(BaseModel):
         registration_status: حالة التسجيل
         trial_used: هل استخدم الفترة التجريبية
     """
+
     full_name: Optional[str] = Field(
         None,
         max_length=255,
@@ -237,13 +251,13 @@ class OwnerUpdate(BaseModel):
     def validate_email(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة البريد الإلكتروني.
-        
+
         Args:
             value: البريد الإلكتروني
-            
+
         Returns:
             Optional[str]: البريد الإلكتروني المدقق
-            
+
         Raises:
             ValueError: إذا كان البريد الإلكتروني غير صالح
         """
@@ -254,18 +268,22 @@ class OwnerUpdate(BaseModel):
                 raise ValueError("البريد الإلكتروني غير صالح")
         return value
 
+    # ==============================================
+    # VALIDATE PHONE
+    # ==============================================
+
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة رقم الهاتف.
-        
+
         Args:
             value: رقم الهاتف
-            
+
         Returns:
             Optional[str]: رقم الهاتف المدقق
-            
+
         Raises:
             ValueError: إذا كان رقم الهاتف غير صالح
         """
@@ -278,18 +296,22 @@ class OwnerUpdate(BaseModel):
             return cleaned
         return value
 
+    # ==============================================
+    # VALIDATE REGISTRATION STATUS
+    # ==============================================
+
     @field_validator("registration_status")
     @classmethod
     def validate_registration_status(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة حالة التسجيل.
-        
+
         Args:
             value: حالة التسجيل
-            
+
         Returns:
             Optional[str]: حالة التسجيل المدققة
-            
+
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
@@ -306,15 +328,17 @@ class OwnerUpdate(BaseModel):
 # 📤 STATUS UPDATE SCHEMA
 # ==============================================
 
+
 class OwnerStatusUpdate(BaseModel):
     """
     مخطط تحديث حالة المالك.
-    
+
     يستخدم لتحديث حالة التسجيل فقط.
-    
+
     Attributes:
         registration_status: حالة التسجيل الجديدة
     """
+
     registration_status: str = Field(
         ...,
         max_length=50,
@@ -331,13 +355,13 @@ class OwnerStatusUpdate(BaseModel):
     def validate_registration_status(cls, value: str) -> str:
         """
         التحقق من صحة حالة التسجيل.
-        
+
         Args:
             value: حالة التسجيل
-            
+
         Returns:
             str: حالة التسجيل المدققة
-            
+
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
@@ -353,12 +377,13 @@ class OwnerStatusUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class OwnerResponse(OwnerBase):
     """
     مخطط استجابة المالك.
-    
+
     يحتوي على جميع حقول المالك مع الحقول الإضافية للاستجابة.
-    
+
     Attributes:
         id: معرف المالك
         registration_status: حالة التسجيل
@@ -366,6 +391,7 @@ class OwnerResponse(OwnerBase):
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -398,18 +424,20 @@ class OwnerResponse(OwnerBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class OwnerListResponse(BaseModel):
     """
     مخطط استجابة قائمة المالكين.
-    
+
     يحتوي على قائمة المالكين مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة المالكين
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[OwnerResponse] = Field(
@@ -440,12 +468,13 @@ class OwnerListResponse(BaseModel):
 # 📊 OWNER STATISTICS
 # ==============================================
 
+
 class OwnerStatistics(BaseModel):
     """
     مخطط إحصائيات المالكين.
-    
+
     يحتوي على إحصائيات موجزة عن المالكين.
-    
+
     Attributes:
         total: إجمالي عدد المالكين
         pending: عدد المالكين المعلقين
@@ -454,6 +483,7 @@ class OwnerStatistics(BaseModel):
         trial_used: عدد المالكين الذين استخدموا الفترة التجريبية
         trial_available: عدد المالكين الذين لم يستخدموا الفترة التجريبية
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total: int = Field(
@@ -498,16 +528,18 @@ class OwnerStatistics(BaseModel):
 # 🔍 SEARCH
 # ==============================================
 
+
 class OwnerSearch(BaseModel):
     """
     مخطط البحث عن المالكين.
-    
+
     Attributes:
         query: نص البحث
         status: تصفية حسب حالة التسجيل
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     query: str = Field(
         ...,
         min_length=1,
@@ -544,13 +576,13 @@ class OwnerSearch(BaseModel):
     def validate_status(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة حالة التسجيل.
-        
+
         Args:
             value: حالة التسجيل
-            
+
         Returns:
             Optional[str]: حالة التسجيل المدققة
-            
+
         Raises:
             ValueError: إذا كانت الحالة غير صالحة
         """
@@ -567,13 +599,15 @@ class OwnerSearch(BaseModel):
 # 🎁 TRIAL
 # ==============================================
 
+
 class TrialActivation(BaseModel):
     """
     مخطط تفعيل الفترة التجريبية.
-    
+
     Attributes:
         owner_id: معرف المالك
     """
+
     owner_id: int = Field(
         ...,
         description="معرف المالك",
@@ -585,13 +619,14 @@ class TrialActivation(BaseModel):
 class TrialActivationResponse(BaseModel):
     """
     مخطط استجابة تفعيل الفترة التجريبية.
-    
+
     Attributes:
         owner_id: معرف المالك
         trial_used: حالة استخدام الفترة التجريبية
         activated_at: تاريخ التفعيل
         message: رسالة تأكيد
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     owner_id: int = Field(

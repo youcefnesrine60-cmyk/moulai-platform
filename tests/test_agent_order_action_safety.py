@@ -1,3 +1,20 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# TEST MODULE - TESTS / TEST AGENT ORDER ACTION SAFETY
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test agent order action safety.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
@@ -13,6 +30,10 @@ from app.agent.executor.actions import (
     ModifyOrderAction,
     TrackOrderAction,
 )
+
+# ==============================================
+# TEST ORDER ACTIONS REQUIRE AN EXPLICIT ORDER REFERENCE
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -36,6 +57,11 @@ async def test_order_actions_require_an_explicit_order_reference(
     assert result.error == "missing_order_id"
 
 
+# ==============================================
+# TEST OWNED ORDER LOOKUP NEVER DEFAULTS TO LATEST ORDER
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_owned_order_lookup_never_defaults_to_latest_order():
     session = SimpleNamespace(execute=AsyncMock())
@@ -48,6 +74,11 @@ async def test_owned_order_lookup_never_defaults_to_latest_order():
 
     assert result is None
     session.execute.assert_not_awaited()
+
+
+# ==============================================
+# TEST OWNED ORDER LOOKUP SCOPES BY CUSTOMER CHAT ID
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -71,14 +102,28 @@ async def test_owned_order_lookup_scopes_by_customer_chat_id():
     assert "orders.order_number" in sql
 
 
+# ==============================================
+# TEST CUSTOMER CANCELLATION UPDATES STATUS AND HISTORY IN ONE TRANSACTION
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_customer_cancellation_updates_status_and_history_in_one_transaction(
     monkeypatch,
 ):
     order = SimpleNamespace(id=17, order_number="RST1-000017", status="pending")
+
     class Session:
+        # ==============================================
+        #   AENTER
+        # ==============================================
+
         async def __aenter__(self):
             return self
+
+        # ==============================================
+        #   AEXIT
+        # ==============================================
 
         async def __aexit__(self, exc_type, exc, traceback):
             return False
@@ -101,14 +146,29 @@ async def test_customer_cancellation_updates_status_and_history_in_one_transacti
     actions.cancel_customer_order.assert_awaited_once()
 
 
+# ==============================================
+# TEST MODIFY ORDER REQUIRES CONFIRMATION AND CALLS BUSINESS SERVICE
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_modify_order_requires_confirmation_and_calls_business_service(monkeypatch):
+async def test_modify_order_requires_confirmation_and_calls_business_service(
+    monkeypatch,
+):
     order = SimpleNamespace(id=17, order_number="RST1-000017", total_amount=300.0)
     item = SimpleNamespace(product_name="Pizza", quantity=3)
 
     class Session:
+        # ==============================================
+        #   AENTER
+        # ==============================================
+
         async def __aenter__(self):
             return self
+
+        # ==============================================
+        #   AEXIT
+        # ==============================================
 
         async def __aexit__(self, exc_type, exc, traceback):
             return False
@@ -133,6 +193,11 @@ async def test_modify_order_requires_confirmation_and_calls_business_service(mon
     service.assert_awaited_once()
 
 
+# ==============================================
+# TEST TRACK ORDER RETURNS ONLY CUSTOMER SCOPED ORDER
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_track_order_returns_only_customer_scoped_order(monkeypatch):
     order = SimpleNamespace(
@@ -143,8 +208,16 @@ async def test_track_order_returns_only_customer_scoped_order(monkeypatch):
     )
 
     class Session:
+        # ==============================================
+        #   AENTER
+        # ==============================================
+
         async def __aenter__(self):
             return self
+
+        # ==============================================
+        #   AEXIT
+        # ==============================================
 
         async def __aexit__(self, exc_type, exc, traceback):
             return False
@@ -163,6 +236,11 @@ async def test_track_order_returns_only_customer_scoped_order(monkeypatch):
     lookup.assert_awaited_once()
     assert lookup.await_args.kwargs["chat_id"] == 425
     assert lookup.await_args.kwargs["order_reference"] == "RST1-000017"
+
+
+# ==============================================
+# TEST EXECUTOR STAGES MUTATION UNTIL USER CONFIRMATION
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -195,11 +273,24 @@ async def test_executor_stages_mutation_until_user_confirmation():
     assert result["data"]["params"]["order_id"] == "RST1-000017"
 
 
+# ==============================================
+# TEST EXECUTOR DOES NOT RETURN RAW EXCEPTION DETAILS
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_executor_does_not_return_raw_exception_details():
     class FailingAction(BaseAction):
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self):
             super().__init__(name="view_menu")
+
+        # ==============================================
+        # EXECUTE
+        # ==============================================
 
         async def execute(self, *, params, context=None):
             raise RuntimeError("database password and private query")

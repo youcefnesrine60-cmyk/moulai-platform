@@ -10,6 +10,11 @@
 # حزمة خدمات الطلبات
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 # ==============================================
 # 🚀 CREATE
 # ==============================================
@@ -141,17 +146,14 @@ from app.services.business.orders.constants import (
     STATUS_DESCRIPTIONS,
 )
 
-
 # ==============================================
 # 📤 EXPORTS
 # ==============================================
 
 __all__ = [
-    
     # Create
     "create_restaurant_order",
     "create_order_with_items",
-    
     # Read
     "get_restaurant_order",
     "get_order_by_number",
@@ -159,16 +161,13 @@ __all__ = [
     "get_orders_by_status",
     "get_order_with_details",
     "count_orders_by_restaurant",
-    
     # Update
     "change_order_status",
     "update_order_totals",
     "recalculate_order_totals",
     "update_order",
-    
     # Delete
     "remove_order",
-    
     # Items
     "add_item_to_order",
     "remove_item_from_order",
@@ -176,13 +175,11 @@ __all__ = [
     "get_order_item_by_id",
     "count_order_items",
     "get_order_items_subtotal",
-    
     # Totals
     "calculate_order_totals",
     "update_totals",
     "get_order_totals",
     "recalculate",
-    
     # Status History
     "get_status_history",
     "get_order_timeline",
@@ -190,26 +187,21 @@ __all__ = [
     "get_status_history_count",
     "get_orders_reached_status",
     "get_status_distribution",
-    
     # Complete
     "complete_order",
     "complete_order_with_delivery_confirmation",
-    
     # Cancel
     "cancel_order",
     "cancel_order_with_refund",
-    
     # Paid
     "mark_order_paid",
     "is_order_paid",
     "get_order_payment_status",
-    
     # Helpers
     "check_order_editable",
     "check_order_editable_from_dict",
     "check_order_editable_by_status",
     "is_order_editable",
-    
     # Constants
     "ORDERS_FEATURE_ID",
     "LOCKED_STATUSES",

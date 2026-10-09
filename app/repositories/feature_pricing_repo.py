@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for feature pricing repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -58,6 +63,10 @@ class FeaturePricingRepository(
         model: نموذج FeaturePricing
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -111,12 +120,9 @@ class FeaturePricingRepository(
             كائن FeaturePricing أو None
         """
         try:
-            query = (
-                self._build_base_query()
-                .where(
-                    self.model.feature_id == feature_id,
-                    self.model.billing_cycle == billing_cycle,
-                )
+            query = self._build_base_query().where(
+                self.model.feature_id == feature_id,
+                self.model.billing_cycle == billing_cycle,
             )
 
             if only_active:
@@ -353,6 +359,7 @@ class FeaturePricingRepository(
 # CREATE FEATURE PRICING (COMPATIBILITY)
 # ==============================================
 
+
 async def create_feature_pricing(
     *,
     feature_id: int,
@@ -401,6 +408,7 @@ async def create_feature_pricing(
 # GET FEATURE PRICING BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_feature_pricing_by_id(
     *,
     pricing_id: int,
@@ -439,6 +447,7 @@ async def get_feature_pricing_by_id(
 # ==============================================
 # GET FEATURE PRICING (COMPATIBILITY)
 # ==============================================
+
 
 async def get_feature_pricing(
     *,
@@ -480,6 +489,7 @@ async def get_feature_pricing(
 # GET FEATURE PRICING LIST (COMPATIBILITY)
 # ==============================================
 
+
 async def get_feature_pricing_list(
     *,
     feature_id: int,
@@ -502,13 +512,15 @@ async def get_feature_pricing_list(
     result = []
 
     for pricing in pricings:
-        result.append({
-            "id": pricing.id,
-            "feature_id": pricing.feature_id,
-            "billing_cycle": pricing.billing_cycle,
-            "price": float(pricing.price),
-            "active": pricing.active,
-        })
+        result.append(
+            {
+                "id": pricing.id,
+                "feature_id": pricing.feature_id,
+                "billing_cycle": pricing.billing_cycle,
+                "price": float(pricing.price),
+                "active": pricing.active,
+            }
+        )
 
     return result
 
@@ -516,6 +528,7 @@ async def get_feature_pricing_list(
 # ==============================================
 # GET ALL FEATURE PRICING (COMPATIBILITY)
 # ==============================================
+
 
 async def get_all_feature_pricing(
     session: AsyncSession,
@@ -541,13 +554,15 @@ async def get_all_feature_pricing(
     result = []
 
     for pricing in pricings:
-        result.append({
-            "id": pricing.id,
-            "feature_id": pricing.feature_id,
-            "billing_cycle": pricing.billing_cycle,
-            "price": float(pricing.price),
-            "active": pricing.active,
-        })
+        result.append(
+            {
+                "id": pricing.id,
+                "feature_id": pricing.feature_id,
+                "billing_cycle": pricing.billing_cycle,
+                "price": float(pricing.price),
+                "active": pricing.active,
+            }
+        )
 
     return result
 
@@ -555,6 +570,7 @@ async def get_all_feature_pricing(
 # ==============================================
 # UPDATE FEATURE PRICE (COMPATIBILITY)
 # ==============================================
+
 
 async def update_feature_price(
     *,
@@ -582,6 +598,7 @@ async def update_feature_price(
 # ACTIVATE FEATURE PRICING (COMPATIBILITY)
 # ==============================================
 
+
 async def activate_feature_pricing(
     *,
     pricing_id: int,
@@ -603,6 +620,7 @@ async def activate_feature_pricing(
 # DEACTIVATE FEATURE PRICING (COMPATIBILITY)
 # ==============================================
 
+
 async def deactivate_feature_pricing(
     *,
     pricing_id: int,
@@ -623,6 +641,7 @@ async def deactivate_feature_pricing(
 # ==============================================
 # DELETE FEATURE PRICING (COMPATIBILITY)
 # ==============================================
+
 
 async def delete_feature_pricing(
     *,

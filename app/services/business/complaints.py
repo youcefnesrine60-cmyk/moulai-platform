@@ -11,6 +11,11 @@
 # يتضمن: إنشاء شكوى جديدة مع التحقق من البيانات
 # ==============================================
 
+"""MoulAI operational module for complaints.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import Any, Optional
 
 from sqlalchemy import select
@@ -43,6 +48,12 @@ OrderReference = Any
 # استعلام أساسي لجلب المستخدم بواسطة chat_id
 # ==============================================
 
+
+# ==============================================
+#  BASE USER SELECT
+# ==============================================
+
+
 def _base_user_select() -> Select:
     """
     بناء استعلام أساسي لجلب المستخدم بواسطة معرف المحادثة.
@@ -57,6 +68,12 @@ def _base_user_select() -> Select:
 # 📣 CREATE CUSTOMER COMPLAINT
 # إنشاء شكوى جديدة لعميل
 # ==============================================
+
+
+# ==============================================
+# CREATE CUSTOMER COMPLAINT
+# ==============================================
+
 
 async def create_customer_complaint(
     *,

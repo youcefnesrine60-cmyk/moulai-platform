@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها لمقاييس المطعم
 # ==============================================
 
+"""MoulAI operational module for restaurant metric.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -24,7 +29,6 @@ from pydantic import (
     ConfigDict,
     Field,
 )
-
 
 # ==============================================
 # 🧩 TYPES
@@ -40,12 +44,13 @@ MetricsTrendList = List["MetricsTrendPoint"]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class RestaurantMetricBase(BaseModel):
     """
     المخطط الأساسي لمقاييس المطعم.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات مقاييس المطعم.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         products_count: عدد المنتجات
@@ -53,6 +58,7 @@ class RestaurantMetricBase(BaseModel):
         monthly_orders: عدد الطلبات الشهرية
         average_order_value: متوسط قيمة الطلب
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -89,10 +95,11 @@ class RestaurantMetricBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class RestaurantMetricCreate(BaseModel):
     """
     مخطط إنشاء مقاييس مطعم جديدة.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         products_count: عدد المنتجات (اختياري)
@@ -100,6 +107,7 @@ class RestaurantMetricCreate(BaseModel):
         monthly_orders: عدد الطلبات الشهرية (اختياري)
         average_order_value: متوسط قيمة الطلب (اختياري)
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -136,16 +144,18 @@ class RestaurantMetricCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class RestaurantMetricUpdate(BaseModel):
     """
     مخطط تحديث مقاييس المطعم - جميع الحقول اختيارية.
-    
+
     Attributes:
         products_count: عدد المنتجات
         categories_count: عدد التصنيفات
         monthly_orders: عدد الطلبات الشهرية
         average_order_value: متوسط قيمة الطلب
     """
+
     products_count: Optional[int] = Field(
         None,
         ge=0,
@@ -176,14 +186,16 @@ class RestaurantMetricUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class RestaurantMetricResponse(RestaurantMetricBase):
     """
     مخطط استجابة مقاييس المطعم - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     created_at: datetime = Field(
@@ -200,18 +212,20 @@ class RestaurantMetricResponse(RestaurantMetricBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class RestaurantMetricListResponse(BaseModel):
     """
     مخطط استجابة قائمة مقاييس المطعم.
-    
+
     يحتوي على قائمة مقاييس المطعم مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة مقاييس المطعم
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[RestaurantMetricResponse] = Field(
@@ -242,10 +256,11 @@ class RestaurantMetricListResponse(BaseModel):
 # 📊 METRICS SUMMARY
 # ==============================================
 
+
 class RestaurantMetricSummary(BaseModel):
     """
     مخطط ملخص مقاييس المطعم.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         total_products: إجمالي عدد المنتجات
@@ -255,6 +270,7 @@ class RestaurantMetricSummary(BaseModel):
         monthly_growth: معدل النمو الشهري (بالنسبة المئوية)
         products_per_category: متوسط عدد المنتجات لكل تصنيف
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     restaurant_id: int = Field(
@@ -303,16 +319,18 @@ class RestaurantMetricSummary(BaseModel):
 # 📈 METRICS TREND
 # ==============================================
 
+
 class MetricsTrendPoint(BaseModel):
     """
     مخطط نقطة اتجاه المقاييس.
-    
+
     Attributes:
         period: الفترة (شهر/أسبوع/يوم)
         orders_count: عدد الطلبات
         revenue: الإيرادات
         avg_order_value: متوسط قيمة الطلب
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     period: str = Field(
@@ -343,7 +361,7 @@ class MetricsTrendPoint(BaseModel):
 class MetricsTrend(BaseModel):
     """
     مخطط اتجاه المقاييس.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         trend: قائمة نقاط الاتجاه
@@ -351,6 +369,7 @@ class MetricsTrend(BaseModel):
         total_revenue: إجمالي الإيرادات
         overall_avg: المتوسط العام
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     restaurant_id: int = Field(
@@ -386,10 +405,11 @@ class MetricsTrend(BaseModel):
 # 📊 PRODUCT METRICS
 # ==============================================
 
+
 class ProductMetrics(BaseModel):
     """
     مخطط مقاييس المنتجات.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         total_products: إجمالي عدد المنتجات
@@ -399,6 +419,7 @@ class ProductMetrics(BaseModel):
         least_expensive: أقل سعر منتج
         avg_price: متوسط السعر
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     restaurant_id: int = Field(
@@ -449,7 +470,6 @@ class ProductMetrics(BaseModel):
 # ==============================================
 
 __all__ = [
-
     # Restaurant Metric
     "RestaurantMetricBase",
     "RestaurantMetricCreate",
@@ -457,14 +477,11 @@ __all__ = [
     "RestaurantMetricResponse",
     "RestaurantMetricListResponse",
     "RestaurantMetricSummary",
-
     # Metrics Trend
     "MetricsTrendPoint",
     "MetricsTrend",
-
     # Product Metrics
     "ProductMetrics",
-
     # Types
     "RestaurantMetricData",
     "RestaurantMetricUpdateData",

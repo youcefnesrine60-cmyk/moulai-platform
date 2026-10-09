@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها لتفاصيل الطلب
 # ==============================================
 
+"""MoulAI operational module for order item.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -24,7 +29,6 @@ from pydantic import (
     ConfigDict,
     Field,
 )
-
 
 # ==============================================
 # 🧩 TYPES
@@ -43,10 +47,11 @@ OrderItemListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class OrderItemBase(BaseModel):
     """
     المخطط الأساسي لتفاصيل الطلب.
-    
+
     Attributes:
         order_id: معرف الطلب
         product_id: معرف المنتج
@@ -55,6 +60,7 @@ class OrderItemBase(BaseModel):
         quantity: الكمية
         total_price: السعر الإجمالي
     """
+
     order_id: int = Field(
         ...,
         description="معرف الطلب",
@@ -95,10 +101,11 @@ class OrderItemBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class OrderItemCreate(BaseModel):
     """
     مخطط إنشاء تفاصيل طلب جديدة.
-    
+
     Attributes:
         order_id: معرف الطلب
         product_id: معرف المنتج
@@ -108,6 +115,7 @@ class OrderItemCreate(BaseModel):
         total_price: السعر الإجمالي
         options: خيارات المنتج (اختياري)
     """
+
     order_id: int = Field(
         ...,
         description="معرف الطلب",
@@ -161,14 +169,16 @@ class OrderItemCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class OrderItemUpdate(BaseModel):
     """
     مخطط تحديث تفاصيل الطلب.
-    
+
     Attributes:
         quantity: الكمية الجديدة
         total_price: السعر الإجمالي الجديد
     """
+
     quantity: Optional[int] = Field(
         None,
         ge=1,
@@ -187,14 +197,16 @@ class OrderItemUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class OrderItemResponse(OrderItemBase):
     """
     مخطط استجابة تفاصيل الطلب.
-    
+
     Attributes:
         id: معرف تفاصيل الطلب
         created_at: تاريخ الإنشاء
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -212,13 +224,15 @@ class OrderItemResponse(OrderItemBase):
 # 🎯 ORDER ITEM WITH OPTIONS RESPONSE
 # ==============================================
 
+
 class OrderItemWithOptionsResponse(OrderItemResponse):
     """
     مخطط استجابة تفاصيل الطلب مع الخيارات.
-    
+
     Attributes:
         options: قائمة خيارات المنتج
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     options: List["OrderItemOptionResponse"] = Field(
@@ -231,16 +245,18 @@ class OrderItemWithOptionsResponse(OrderItemResponse):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class OrderItemListResponse(BaseModel):
     """
     مخطط استجابة قائمة تفاصيل الطلب.
-    
+
     Attributes:
         items: قائمة تفاصيل الطلب
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[OrderItemResponse] = Field(
@@ -271,10 +287,11 @@ class OrderItemListResponse(BaseModel):
 # 📊 SUMMARY
 # ==============================================
 
+
 class OrderItemSummary(BaseModel):
     """
     مخطط ملخص تفاصيل الطلب.
-    
+
     Attributes:
         total_items: إجمالي عدد العناصر
         total_quantity: إجمالي الكمية
@@ -282,6 +299,7 @@ class OrderItemSummary(BaseModel):
         total_options_price: إجمالي سعر الخيارات
         total_price: السعر الإجمالي
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_items: int = Field(
@@ -324,16 +342,18 @@ class OrderItemSummary(BaseModel):
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class OrderItemOptionBase(BaseModel):
     """
     المخطط الأساسي لخيارات تفاصيل الطلب.
-    
+
     Attributes:
         order_item_id: معرف تفاصيل الطلب
         option_group_name: اسم مجموعة الخيارات
         option_name: اسم الخيار
         additional_price: السعر الإضافي
     """
+
     order_item_id: int = Field(
         ...,
         description="معرف تفاصيل الطلب",
@@ -363,16 +383,18 @@ class OrderItemOptionBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class OrderItemOptionCreate(BaseModel):
     """
     مخطط إنشاء خيار جديد لتفاصيل الطلب.
-    
+
     Attributes:
         order_item_id: معرف تفاصيل الطلب
         option_group_name: اسم مجموعة الخيارات
         option_name: اسم الخيار
         additional_price: السعر الإضافي
     """
+
     order_item_id: int = Field(
         ...,
         description="معرف تفاصيل الطلب",
@@ -402,15 +424,17 @@ class OrderItemOptionCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class OrderItemOptionUpdate(BaseModel):
     """
     مخطط تحديث خيار تفاصيل الطلب.
-    
+
     Attributes:
         option_group_name: اسم مجموعة الخيارات الجديد
         option_name: اسم الخيار الجديد
         additional_price: السعر الإضافي الجديد
     """
+
     option_group_name: Optional[str] = Field(
         None,
         max_length=255,
@@ -435,14 +459,16 @@ class OrderItemOptionUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class OrderItemOptionResponse(OrderItemOptionBase):
     """
     مخطط استجابة خيارات تفاصيل الطلب.
-    
+
     Attributes:
         id: معرف الخيار
         created_at: تاريخ الإنشاء
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -460,15 +486,17 @@ class OrderItemOptionResponse(OrderItemOptionBase):
 # 📊 SUMMARY
 # ==============================================
 
+
 class OrderItemOptionSummary(BaseModel):
     """
     مخطط ملخص خيارات تفاصيل الطلب.
-    
+
     Attributes:
         total_options: إجمالي عدد الخيارات
         total_additional_price: إجمالي السعر الإضافي
         groups: توزيع الخيارات حسب المجموعة
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_options: int = Field(
@@ -486,7 +514,9 @@ class OrderItemOptionSummary(BaseModel):
     groups: Dict[str, List[str]] = Field(
         default_factory=dict,
         description="توزيع الخيارات حسب المجموعة",
-        json_schema_extra={"example": {"حجم": ["كبير", "وسط"], "إضافات": ["جبن إضافي"]}},
+        json_schema_extra={
+            "example": {"حجم": ["كبير", "وسط"], "إضافات": ["جبن إضافي"]}
+        },
     )
 
 
@@ -498,10 +528,11 @@ class OrderItemOptionSummary(BaseModel):
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class OrderPaymentBase(BaseModel):
     """
     المخطط الأساسي لمدفوعات الطلب.
-    
+
     Attributes:
         order_id: معرف الطلب
         payment_method: طريقة الدفع
@@ -510,6 +541,7 @@ class OrderPaymentBase(BaseModel):
         transaction_reference: مرجع المعاملة
         paid_at: تاريخ الدفع
     """
+
     order_id: int = Field(
         ...,
         description="معرف الطلب",
@@ -549,16 +581,18 @@ class OrderPaymentBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class OrderPaymentCreate(BaseModel):
     """
     مخطط إنشاء دفعة جديدة للطلب.
-    
+
     Attributes:
         order_id: معرف الطلب
         payment_method: طريقة الدفع
         amount: المبلغ
         transaction_reference: مرجع المعاملة (اختياري)
     """
+
     order_id: int = Field(
         ...,
         description="معرف الطلب",
@@ -588,15 +622,17 @@ class OrderPaymentCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class OrderPaymentUpdate(BaseModel):
     """
     مخطط تحديث دفعة الطلب.
-    
+
     Attributes:
         payment_status: حالة الدفع الجديدة
         transaction_reference: مرجع المعاملة الجديد
         paid_at: تاريخ الدفع الجديد
     """
+
     payment_status: Optional[str] = Field(
         None,
         max_length=50,
@@ -619,15 +655,17 @@ class OrderPaymentUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class OrderPaymentResponse(OrderPaymentBase):
     """
     مخطط استجابة مدفوعات الطلب.
-    
+
     Attributes:
         id: معرف الدفعة
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -649,13 +687,15 @@ class OrderPaymentResponse(OrderPaymentBase):
 # 📊 PAYMENT STATUS UPDATE
 # ==============================================
 
+
 class OrderPaymentStatusUpdate(BaseModel):
     """
     مخطط تحديث حالة الدفع.
-    
+
     Attributes:
         payment_status: حالة الدفع الجديدة
     """
+
     payment_status: str = Field(
         ...,
         max_length=50,
@@ -672,16 +712,18 @@ class OrderPaymentStatusUpdate(BaseModel):
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class OrderStatusHistoryBase(BaseModel):
     """
     المخطط الأساسي لتاريخ حالة الطلب.
-    
+
     Attributes:
         order_id: معرف الطلب
         status: الحالة الجديدة
         employee_id: معرف الموظف
         note: ملاحظة
     """
+
     order_id: int = Field(
         ...,
         description="معرف الطلب",
@@ -710,16 +752,18 @@ class OrderStatusHistoryBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class OrderStatusHistoryCreate(BaseModel):
     """
     مخطط إنشاء سجل تاريخ حالة الطلب.
-    
+
     Attributes:
         order_id: معرف الطلب
         status: الحالة الجديدة
         employee_id: معرف الموظف (اختياري)
         note: ملاحظة (اختياري)
     """
+
     order_id: int = Field(
         ...,
         description="معرف الطلب",
@@ -748,14 +792,16 @@ class OrderStatusHistoryCreate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class OrderStatusHistoryResponse(OrderStatusHistoryBase):
     """
     مخطط استجابة تاريخ حالة الطلب.
-    
+
     Attributes:
         id: معرف السجل
         created_at: تاريخ الإنشاء
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -785,21 +831,18 @@ __all__ = [
     "OrderItemData",
     "OrderItemUpdateData",
     "OrderItemListData",
-
     # Order Item Option
     "OrderItemOptionBase",
     "OrderItemOptionCreate",
     "OrderItemOptionUpdate",
     "OrderItemOptionResponse",
     "OrderItemOptionSummary",
-
     # Order Payment
     "OrderPaymentBase",
     "OrderPaymentCreate",
     "OrderPaymentUpdate",
     "OrderPaymentResponse",
     "OrderPaymentStatusUpdate",
-
     # Order Status History
     "OrderStatusHistoryBase",
     "OrderStatusHistoryCreate",

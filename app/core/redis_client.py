@@ -1,6 +1,19 @@
 # ==============================================
-# 🔴 REDIS CLIENT
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / CORE / REDIS CLIENT
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for redis client.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import os
 import redis
@@ -36,27 +49,18 @@ if REDIS_URL:
 
     try:
 
-        redis_client = redis.from_url(
-            REDIS_URL,
-            decode_responses=True
-        )
+        redis_client = redis.from_url(REDIS_URL, decode_responses=True)
 
         redis_client.ping()
 
-        logger.info(
-            "Redis connected successfully."
-        )
+        logger.info("Redis connected successfully.")
 
     except Exception as e:
 
-        logger.warning(
-            f"Redis unavailable: {e}"
-        )
+        logger.warning(f"Redis unavailable: {e}")
 
         redis_client = None
 
 else:
 
-    logger.warning(
-        "REDIS_URL not found. Using memory storage."
-    )
+    logger.warning("REDIS_URL not found. Using memory storage.")

@@ -10,6 +10,11 @@
 # مخططات Pydantic لمجموعات المطاعم
 # ==============================================
 
+"""MoulAI operational module for restaurant group.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -24,7 +29,6 @@ from pydantic import (
     Field,
     field_validator,
 )
-
 
 # ==============================================
 # 🧩 TYPES
@@ -43,14 +47,16 @@ RestaurantBranchListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA - RESTAURANT GROUP
 # ==============================================
 
+
 class RestaurantGroupBase(BaseModel):
     """
     المخطط الأساسي لمجموعة المطاعم.
-    
+
     Attributes:
         owner_id: معرف المالك
         name: اسم المجموعة
     """
+
     owner_id: int = Field(
         ...,
         description="معرف المالك",
@@ -74,13 +80,13 @@ class RestaurantGroupBase(BaseModel):
     def validate_name(cls, value: str) -> str:
         """
         التحقق من صحة اسم المجموعة.
-        
+
         Args:
             value: اسم المجموعة
-            
+
         Returns:
             str: اسم المجموعة المدقق
-            
+
         Raises:
             ValueError: إذا كان الاسم غير صالح
         """
@@ -93,10 +99,12 @@ class RestaurantGroupBase(BaseModel):
 # 📥 CREATE SCHEMA - RESTAURANT GROUP
 # ==============================================
 
+
 class RestaurantGroupCreate(RestaurantGroupBase):
     """
     مخطط إنشاء مجموعة مطاعم جديدة.
     """
+
     pass
 
 
@@ -104,20 +112,22 @@ class RestaurantGroupCreate(RestaurantGroupBase):
 # 📤 UPDATE SCHEMA - RESTAURANT GROUP
 # ==============================================
 
+
 class RestaurantGroupUpdate(BaseModel):
     """
     مخطط تحديث مجموعة المطاعم.
-    
+
     Attributes:
-        name: اسم المجموعة   
+        name: اسم المجموعة
     """
+
     name: Optional[str] = Field(
         None,
         max_length=255,
         description="اسم المجموعة",
         json_schema_extra={"example": "مطاعم البحر الأبيض المتوسط"},
     )
-    
+
     # ==========================================
     # 🔍 VALIDATORS
     # ==========================================
@@ -127,13 +137,13 @@ class RestaurantGroupUpdate(BaseModel):
     def validate_name(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة اسم المجموعة.
-        
+
         Args:
             value: اسم المجموعة
-            
+
         Returns:
             Optional[str]: اسم المجموعة المدقق
-            
+
         Raises:
             ValueError: إذا كان الاسم غير صالح
         """
@@ -148,15 +158,17 @@ class RestaurantGroupUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA - RESTAURANT GROUP
 # ==============================================
 
+
 class RestaurantGroupResponse(RestaurantGroupBase):
     """
     مخطط استجابة مجموعة المطاعم.
-    
+
     Attributes:
         id: معرف المجموعة
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -179,16 +191,18 @@ class RestaurantGroupResponse(RestaurantGroupBase):
 # 📋 LIST RESPONSE - RESTAURANT GROUP
 # ==============================================
 
+
 class RestaurantGroupListResponse(BaseModel):
     """
     مخطط استجابة قائمة مجموعات المطاعم.
-    
+
     Attributes:
         items: قائمة المجموعات
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[RestaurantGroupResponse] = Field(
@@ -219,15 +233,17 @@ class RestaurantGroupListResponse(BaseModel):
 # 📊 STATISTICS SCHEMA - RESTAURANT GROUP
 # ==============================================
 
+
 class RestaurantGroupStatistics(BaseModel):
     """
     مخطط إحصائيات مجموعات المطاعم.
-    
+
     Attributes:
         total_groups: إجمالي عدد المجموعات
         active_groups: عدد المجموعات النشطة
         inactive_groups: عدد المجموعات غير النشطة
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_groups: int = Field(
@@ -254,14 +270,16 @@ class RestaurantGroupStatistics(BaseModel):
 # 📦 BASE SCHEMA - RESTAURANT BRANCH
 # ==============================================
 
+
 class RestaurantBranchBase(BaseModel):
     """
     المخطط الأساسي لفرع المطعم.
-    
+
     Attributes:
         group_id: معرف المجموعة
         restaurant_id: معرف المطعم
     """
+
     group_id: int = Field(
         ...,
         description="معرف المجموعة",
@@ -280,10 +298,12 @@ class RestaurantBranchBase(BaseModel):
 # 📥 CREATE SCHEMA - RESTAURANT BRANCH
 # ==============================================
 
+
 class RestaurantBranchCreate(RestaurantBranchBase):
     """
     مخطط إنشاء فرع مطعم جديد.
     """
+
     pass
 
 
@@ -291,14 +311,16 @@ class RestaurantBranchCreate(RestaurantBranchBase):
 # 📤 UPDATE SCHEMA - RESTAURANT BRANCH
 # ==============================================
 
+
 class RestaurantBranchUpdate(BaseModel):
     """
     مخطط تحديث فرع المطعم.
-    
+
     Attributes:
         group_id: معرف المجموعة
         restaurant_id: معرف المطعم
     """
+
     group_id: Optional[int] = Field(
         None,
         description="معرف المجموعة",
@@ -317,15 +339,17 @@ class RestaurantBranchUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA - RESTAURANT BRANCH
 # ==============================================
 
+
 class RestaurantBranchResponse(RestaurantBranchBase):
     """
     مخطط استجابة فرع المطعم.
-    
+
     Attributes:
         id: معرف الفرع
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -348,16 +372,18 @@ class RestaurantBranchResponse(RestaurantBranchBase):
 # 📋 LIST RESPONSE - RESTAURANT BRANCH
 # ==============================================
 
+
 class RestaurantBranchListResponse(BaseModel):
     """
     مخطط استجابة قائمة فروع المطاعم.
-    
+
     Attributes:
         items: قائمة الفروع
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[RestaurantBranchResponse] = Field(
@@ -388,14 +414,16 @@ class RestaurantBranchListResponse(BaseModel):
 # 📦 BULK CREATE SCHEMA - RESTAURANT BRANCH
 # ==============================================
 
+
 class RestaurantBranchBulkCreate(BaseModel):
     """
     مخطط إنشاء فروع مطاعم متعددة دفعة واحدة.
-    
+
     Attributes:
         group_id: معرف المجموعة
         restaurant_ids: قائمة معرفات المطاعم
     """
+
     group_id: int = Field(
         ...,
         description="معرف المجموعة",
@@ -418,13 +446,13 @@ class RestaurantBranchBulkCreate(BaseModel):
     def validate_restaurant_ids(cls, value: List[int]) -> List[int]:
         """
         التحقق من صحة قائمة معرفات المطاعم.
-        
+
         Args:
             value: قائمة معرفات المطاعم
-            
+
         Returns:
             List[int]: قائمة معرفات المطاعم المدققة
-            
+
         Raises:
             ValueError: إذا كانت القائمة فارغة أو تحتوي على قيم مكررة
         """
@@ -448,7 +476,6 @@ class RestaurantBranchBulkCreate(BaseModel):
 # ==============================================
 
 __all__ = [
-
     # Types
     "RestaurantGroupData",
     "RestaurantGroupUpdateData",
@@ -456,7 +483,6 @@ __all__ = [
     "RestaurantBranchData",
     "RestaurantBranchUpdateData",
     "RestaurantBranchListData",
-
     # Restaurant Group
     "RestaurantGroupBase",
     "RestaurantGroupCreate",
@@ -464,7 +490,6 @@ __all__ = [
     "RestaurantGroupResponse",
     "RestaurantGroupListResponse",
     "RestaurantGroupStatistics",
-
     # Restaurant Branch
     "RestaurantBranchBase",
     "RestaurantBranchCreate",

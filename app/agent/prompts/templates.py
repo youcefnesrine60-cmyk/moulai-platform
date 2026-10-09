@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,10 +10,13 @@
 # قوالب الـ Prompts للوكيل الذكي (متعددة اللغات)
 # ==============================================
 
+"""MoulAI operational module for templates.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
-    Any,
     Dict,
-    Optional,
 )
 
 from app.core.logger import logger
@@ -563,15 +566,16 @@ SUCCESS_PROMPTS: MultiLangPromptMap = {
 # GET SYSTEM PROMPT
 # ==============================================
 
+
 def get_system_prompt(
     language: LanguageCode = "ar",
 ) -> str:
     """
     الحصول على System Prompt باللغة المطلوبة.
-    
+
     Args:
         language: رمز اللغة (ar, en, fr)
-        
+
     Returns:
         System Prompt
     """
@@ -587,15 +591,16 @@ def get_system_prompt(
 # GET INTENT CLASSIFICATION PROMPT
 # ==============================================
 
+
 def get_intent_classification_prompt(
     language: LanguageCode = "ar",
 ) -> str:
     """
     الحصول على Intent Classification Prompt باللغة المطلوبة.
-    
+
     Args:
         language: رمز اللغة (ar, en, fr)
-        
+
     Returns:
         Intent Classification Prompt
     """
@@ -614,15 +619,16 @@ def get_intent_classification_prompt(
 # GET RESPONSE GENERATION PROMPT
 # ==============================================
 
+
 def get_response_generation_prompt(
     language: LanguageCode = "ar",
 ) -> str:
     """
     الحصول على Response Generation Prompt باللغة المطلوبة.
-    
+
     Args:
         language: رمز اللغة (ar, en, fr)
-        
+
     Returns:
         Response Generation Prompt
     """
@@ -641,15 +647,16 @@ def get_response_generation_prompt(
 # GET ENTITY EXTRACTION PROMPT
 # ==============================================
 
+
 def get_entity_extraction_prompt(
     language: LanguageCode = "ar",
 ) -> str:
     """
     الحصول على Entity Extraction Prompt باللغة المطلوبة.
-    
+
     Args:
         language: رمز اللغة (ar, en, fr)
-        
+
     Returns:
         Entity Extraction Prompt
     """
@@ -668,15 +675,16 @@ def get_entity_extraction_prompt(
 # GET CONFIRMATION PROMPT
 # ==============================================
 
+
 def get_confirmation_prompt(
     language: LanguageCode = "ar",
 ) -> str:
     """
     الحصول على Confirmation Prompt باللغة المطلوبة.
-    
+
     Args:
         language: رمز اللغة (ar, en, fr)
-        
+
     Returns:
         Confirmation Prompt
     """
@@ -695,6 +703,7 @@ def get_confirmation_prompt(
 # GET ERROR PROMPT
 # ==============================================
 
+
 def get_error_prompt(
     error_type: str,
     language: LanguageCode = "ar",
@@ -702,12 +711,12 @@ def get_error_prompt(
 ) -> str:
     """
     الحصول على Error Prompt باللغة المطلوبة.
-    
+
     Args:
         error_type: نوع الخطأ
         language: رمز اللغة (ar, en, fr)
         **kwargs: المعاملات للتنسيق
-        
+
     Returns:
         رسالة الخطأ المنسقة
     """
@@ -732,6 +741,7 @@ def get_error_prompt(
 # GET SUCCESS PROMPT
 # ==============================================
 
+
 def get_success_prompt(
     success_type: str,
     language: LanguageCode = "ar",
@@ -739,12 +749,12 @@ def get_success_prompt(
 ) -> str:
     """
     الحصول على Success Prompt باللغة المطلوبة.
-    
+
     Args:
         success_type: نوع النجاح
         language: رمز اللغة (ar, en, fr)
         **kwargs: المعاملات للتنسيق
-        
+
     Returns:
         رسالة النجاح المنسقة
     """
@@ -774,35 +784,27 @@ def get_success_prompt(
 # ==============================================
 
 __all__ = [
-
     # Languages
     "SUPPORTED_LANGUAGES",
     "DEFAULT_LANGUAGE",
-
     # System
     "SYSTEM_PROMPTS",
     "get_system_prompt",
-
     # Classification
     "INTENT_CLASSIFICATION_PROMPTS",
     "get_intent_classification_prompt",
-
     # Response
     "RESPONSE_GENERATION_PROMPTS",
     "get_response_generation_prompt",
-
     # Entity Extraction
     "ENTITY_EXTRACTION_PROMPTS",
     "get_entity_extraction_prompt",
-
     # Confirmation
     "CONFIRMATION_PROMPTS",
     "get_confirmation_prompt",
-
     # Error
     "ERROR_PROMPTS",
     "get_error_prompt",
-
     # Success
     "SUCCESS_PROMPTS",
     "get_success_prompt",

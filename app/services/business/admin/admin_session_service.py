@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,8 +10,13 @@
 # منطق الأعمال لجلسات المديرين
 # ==============================================
 
+"""MoulAI operational module for admin session service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import (
-    datetime, 
+    datetime,
     timedelta,
 )
 from typing import (
@@ -40,7 +45,6 @@ from app.schemas.admin_session import (
     AdminSessionExtend,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -52,10 +56,11 @@ AdminSessionList = List[AdminSession]
 # 🔐 ADMIN SESSION SERVICE
 # ==============================================
 
+
 class AdminSessionService:
     """
     خدمة جلسات المديرين - تدير منطق الأعمال لجلسات المديرين.
-    
+
     مسؤول عن:
         - إنشاء جلسات المديرين
         - التحقق من صحة الجلسات
@@ -63,12 +68,16 @@ class AdminSessionService:
         - إلغاء تنشيط الجلسات
         - تمديد صلاحية الجلسات
         - تنظيف الجلسات المنتهية
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع جلسات المديرين
         admin_repo: مستودع المديرين
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -76,7 +85,7 @@ class AdminSessionService:
     ) -> None:
         """
         تهيئة خدمة جلسات المديرين.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -99,13 +108,13 @@ class AdminSessionService:
     ) -> AdminSessionResponse:
         """
         الحصول على جلسة بواسطة رمز الجلسة.
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             AdminSessionResponse: بيانات الجلسة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
         """
@@ -136,13 +145,13 @@ class AdminSessionService:
     ) -> AdminSessionResponse:
         """
         الحصول على جلسة نشطة بواسطة رمز الجلسة.
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             AdminSessionResponse: بيانات الجلسة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
             UnauthorizedError: إذا كانت الجلسة غير نشطة أو منتهية
@@ -177,13 +186,13 @@ class AdminSessionService:
     ) -> AdminSessionListResponse:
         """
         الحصول على جلسات مدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             only_active: جلب الجلسات النشطة فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AdminSessionListResponse: قائمة جلسات المدير
         """
@@ -227,12 +236,12 @@ class AdminSessionService:
     ) -> AdminSessionListResponse:
         """
         الحصول على الجلسات النشطة لمدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AdminSessionListResponse: قائمة الجلسات النشطة
         """
@@ -269,13 +278,13 @@ class AdminSessionService:
     ) -> Dict[str, Any]:
         """
         الحصول على حالة الجلسة.
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             Dict[str, Any]: حالة الجلسة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
         """
@@ -300,7 +309,11 @@ class AdminSessionService:
             "is_active": is_active,
             "is_expired": session_obj.expires_at <= now,
             "expires_at": session_obj.expires_at.isoformat(),
-            "last_activity": session_obj.last_activity.isoformat() if session_obj.last_activity else None,
+            "last_activity": (
+                session_obj.last_activity.isoformat()
+                if session_obj.last_activity
+                else None
+            ),
             "admin_id": session_obj.admin_id,
         }
 
@@ -320,11 +333,11 @@ class AdminSessionService:
     ) -> int:
         """
         حساب عدد جلسات مدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             only_active: حساب الجلسات النشطة فقط
-            
+
         Returns:
             int: عدد الجلسات
         """
@@ -344,10 +357,10 @@ class AdminSessionService:
     ) -> Dict[str, Any]:
         """
         الحصول على إحصائيات الجلسات.
-        
+
         Args:
             admin_id: معرف المدير (اختياري)
-            
+
         Returns:
             Dict[str, Any]: إحصائيات الجلسات
         """
@@ -389,13 +402,13 @@ class AdminSessionService:
     ) -> AdminSessionResponse:
         """
         إنشاء جلسة جديدة للمدير.
-        
+
         Args:
             session_data: بيانات الجلسة
-            
+
         Returns:
             AdminSessionResponse: بيانات الجلسة المنشأة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المدير
         """
@@ -449,13 +462,13 @@ class AdminSessionService:
     ) -> AdminSessionResponse:
         """
         تحديث آخر نشاط للجلسة.
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             AdminSessionResponse: بيانات الجلسة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
         """
@@ -488,13 +501,13 @@ class AdminSessionService:
     ) -> AdminSessionResponse:
         """
         إلغاء تنشيط الجلسة (تسجيل الخروج).
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             AdminSessionResponse: بيانات الجلسة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
         """
@@ -528,11 +541,11 @@ class AdminSessionService:
     ) -> int:
         """
         إلغاء تنشيط جميع جلسات مدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             except_session_token: استثناء جلسة معينة (اختياري)
-            
+
         Returns:
             int: عدد الجلسات التي تم إلغاء تنشيطها
         """
@@ -563,13 +576,13 @@ class AdminSessionService:
     ) -> AdminSessionResponse:
         """
         تمديد صلاحية الجلسة.
-        
+
         Args:
             extend_data: بيانات تمديد الجلسة
-            
+
         Returns:
             AdminSessionResponse: بيانات الجلسة المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
             ValidationError: إذا كان تاريخ الانتهاء غير صحيح
@@ -613,10 +626,10 @@ class AdminSessionService:
     ) -> int:
         """
         تنظيف الجلسات المنتهية.
-        
+
         Args:
             days: عدد الأيام للاحتفاظ بالجلسات المنتهية (افتراضي: 30)
-            
+
         Returns:
             int: عدد الجلسات التي تم تنظيفها
         """
@@ -648,15 +661,15 @@ class AdminSessionService:
     ) -> bool:
         """
         التحقق من صحة الجلسة.
-        
+
         Args:
             session_token: رمز الجلسة
-            
+
         Returns:
             bool: صحة الجلسة
         """
         try:
-            session_obj = await self.get_active_session(
+            await self.get_active_session(
                 session_token=session_token,
             )
             return True
@@ -668,6 +681,7 @@ class AdminSessionService:
 # 🏢 BUSINESS LOGIC HELPERS
 # ==============================================
 
+
 async def create_admin_session(
     *,
     session: AsyncSession,
@@ -678,29 +692,34 @@ async def create_admin_session(
 ) -> AdminSessionResponse:
     """
     دالة مساعدة لإنشاء جلسة مدير جديدة.
-    
+
     Args:
         session: جلسة قاعدة البيانات
         admin_id: معرف المدير
         expires_in_hours: عدد ساعات صلاحية الجلسة (افتراضي: 24)
         ip_address: عنوان IP (اختياري)
         user_agent: متصفح المستخدم (اختياري)
-        
+
     Returns:
         AdminSessionResponse: بيانات الجلسة المنشأة
     """
     service = AdminSessionService(session)
-    
+
     expires_at = datetime.utcnow() + timedelta(hours=expires_in_hours)
-    
+
     session_data = AdminSessionCreate(
         admin_id=admin_id,
         expires_at=expires_at,
         ip_address=ip_address,
         user_agent=user_agent,
     )
-    
+
     return await service.create_session(session_data=session_data)
+
+
+# ==============================================
+# LOGOUT ADMIN
+# ==============================================
 
 
 async def logout_admin(
@@ -710,19 +729,24 @@ async def logout_admin(
 ) -> AdminSessionResponse:
     """
     دالة مساعدة لتسجيل خروج المدير.
-    
+
     Args:
         session: جلسة قاعدة البيانات
         session_token: رمز الجلسة
-        
+
     Returns:
         AdminSessionResponse: بيانات الجلسة المحدثة
     """
     service = AdminSessionService(session)
-    
+
     return await service.deactivate_session(
         session_token=session_token,
     )
+
+
+# ==============================================
+# LOGOUT ALL DEVICES
+# ==============================================
 
 
 async def logout_all_devices(
@@ -733,17 +757,17 @@ async def logout_all_devices(
 ) -> int:
     """
     دالة مساعدة لتسجيل الخروج من جميع الأجهزة.
-    
+
     Args:
         session: جلسة قاعدة البيانات
         admin_id: معرف المدير
         except_session_token: استثناء جلسة معينة (اختياري)
-        
+
     Returns:
         int: عدد الجلسات التي تم إلغاء تنشيطها
     """
     service = AdminSessionService(session)
-    
+
     return await service.deactivate_all_sessions(
         admin_id=admin_id,
         except_session_token=except_session_token,

@@ -1,4 +1,22 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDER ITEM OPTIONS SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order item options service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.services.business.orders.transaction import transactional_order
+
 # ==============================================
 # 🎛 ORDER ITEM OPTIONS SERVICE
 # Business Logic Layer
@@ -26,7 +44,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import (
     ConflictError,
     NotFoundError,
-    UnauthorizedError,
     ValidationError,
 )
 
@@ -41,14 +58,10 @@ from app.repositories.order_item_options_repo import OrderItemOptionsRepository
 
 # ✅ استيراد المخططات
 from app.schemas.order_item import (
-    OrderItemOptionBase,
     OrderItemOptionCreate,
     OrderItemOptionResponse,
-    OrderItemOptionUpdate,
-    OrderItemWithOptionsResponse,
     OrderItemOptionSummary,
 )
-
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -74,17 +87,21 @@ OrderItemOptionList = List[OrderItemOption]
 class OrderItemOptionsService:
     """
     خدمة خيارات عناصر الطلبات - تدير منطق الأعمال لخيارات عناصر الطلبات.
-    
+
     مسؤولة عن:
         - إضافة خيارات إلى عناصر الطلب
         - تحديث سعر الخيارات
         - حذف خيارات من عناصر الطلب
         - حساب السعر الإضافي الإجمالي
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع خيارات عناصر الطلبات
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -92,7 +109,7 @@ class OrderItemOptionsService:
     ) -> None:
         """
         تهيئة خدمة خيارات عناصر الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -114,13 +131,13 @@ class OrderItemOptionsService:
     ) -> OrderItemOptionResponse:
         """
         الحصول على خيار بالمعرف.
-        
+
         Args:
             option_id: معرف الخيار
-            
+
         Returns:
             OrderItemOptionResponse: بيانات الخيار
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
         """
@@ -153,12 +170,12 @@ class OrderItemOptionsService:
     ) -> List[OrderItemOptionResponse]:
         """
         الحصول على خيارات عنصر طلب معين.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[OrderItemOptionResponse]: قائمة خيارات عنصر الطلب
         """
@@ -190,10 +207,10 @@ class OrderItemOptionsService:
     ) -> int:
         """
         حساب عدد خيارات عنصر طلب معين.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Returns:
             int: عدد الخيارات
         """
@@ -217,10 +234,10 @@ class OrderItemOptionsService:
     ) -> float:
         """
         حساب السعر الإضافي الإجمالي لخيارات عنصر طلب معين.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Returns:
             float: السعر الإضافي الإجمالي
         """
@@ -244,10 +261,10 @@ class OrderItemOptionsService:
     ) -> OrderItemOptionSummary:
         """
         الحصول على ملخص خيارات عنصر الطلب.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Returns:
             OrderItemOptionSummary: ملخص الخيارات
         """
@@ -300,13 +317,13 @@ class OrderItemOptionsService:
     ) -> OrderItemOptionResponse:
         """
         إضافة خيار جديد إلى عنصر الطلب.
-        
+
         Args:
             option_data: بيانات الخيار
-            
+
         Returns:
             OrderItemOptionResponse: بيانات الخيار المنشأ
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على عنصر الطلب
             ConflictError: إذا كان الخيار مكرراً
@@ -406,10 +423,10 @@ class OrderItemOptionsService:
     ) -> None:
         """
         حذف خيار من عنصر الطلب.
-        
+
         Args:
             option_id: معرف الخيار
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
         """
@@ -444,13 +461,13 @@ class OrderItemOptionsService:
     ) -> int:
         """
         حذف جميع خيارات عنصر الطلب.
-        
+
         Args:
             order_item_id: معرف عنصر الطلب
-            
+
         Returns:
             int: عدد الخيارات المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على عنصر الطلب
         """
@@ -499,14 +516,14 @@ class OrderItemOptionsService:
     ) -> OrderItemOptionResponse:
         """
         تحديث السعر الإضافي للخيار.
-        
+
         Args:
             option_id: معرف الخيار
             additional_price: السعر الإضافي الجديد
-            
+
         Returns:
             OrderItemOptionResponse: بيانات الخيار المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
             ValidationError: إذا كان السعر غير صالح
@@ -569,14 +586,14 @@ class OrderItemOptionsService:
     ) -> OrderItemOptionResponse:
         """
         تحديث اسم الخيار.
-        
+
         Args:
             option_id: معرف الخيار
             option_name: اسم الخيار الجديد
-            
+
         Returns:
             OrderItemOptionResponse: بيانات الخيار المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الخيار
             ConflictError: إذا كان الاسم مكرراً
@@ -647,6 +664,7 @@ class OrderItemOptionsService:
 # ADD ORDER ITEM OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def add_order_item_option(
     *,
     order_item_id: int,
@@ -657,17 +675,17 @@ async def add_order_item_option(
 ) -> int:
     """
     إضافة خيار جديد إلى عنصر الطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         option_group_name: اسم مجموعة الخيارات
         option_name: اسم الخيار
         additional_price: السعر الإضافي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف الخيار
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على عنصر الطلب
         ConflictError: إذا كان الخيار مكرراً
@@ -693,6 +711,7 @@ async def add_order_item_option(
 # GET OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def get_option(
     *,
     option_id: int,
@@ -700,11 +719,11 @@ async def get_option(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على خيار بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات الخيار أو None
     """
@@ -721,6 +740,7 @@ async def get_option(
 # LIST ITEM OPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def list_item_options(
     *,
     order_item_id: int,
@@ -730,13 +750,13 @@ async def list_item_options(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على خيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         List[Dict[str, Any]]: قائمة الخيارات
     """
@@ -755,6 +775,7 @@ async def list_item_options(
 # GET OPTIONS TOTAL (COMPATIBILITY)
 # ==============================================
 
+
 async def get_options_total(
     *,
     order_item_id: int,
@@ -762,11 +783,11 @@ async def get_options_total(
 ) -> float:
     """
     حساب السعر الإضافي الإجمالي لخيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         float: السعر الإضافي الإجمالي
     """
@@ -781,6 +802,7 @@ async def get_options_total(
 # GET OPTIONS COUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_options_count(
     *,
     order_item_id: int,
@@ -788,11 +810,11 @@ async def get_options_count(
 ) -> int:
     """
     حساب عدد خيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: عدد الخيارات
     """
@@ -807,6 +829,7 @@ async def get_options_count(
 # REMOVE OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def remove_option(
     *,
     option_id: int,
@@ -814,11 +837,11 @@ async def remove_option(
 ) -> None:
     """
     حذف خيار من عنصر الطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الخيار
     """
@@ -836,6 +859,7 @@ async def remove_option(
 # REMOVE ALL ITEM OPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def remove_all_item_options(
     *,
     order_item_id: int,
@@ -843,11 +867,11 @@ async def remove_all_item_options(
 ) -> int:
     """
     حذف جميع خيارات عنصر الطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: عدد الخيارات المحذوفة
     """
@@ -860,6 +884,7 @@ async def remove_all_item_options(
 # UPDATE OPTION PRICE (COMPATIBILITY)
 # ==============================================
 
+
 async def update_option_price(
     *,
     option_id: int,
@@ -868,12 +893,12 @@ async def update_option_price(
 ) -> None:
     """
     تحديث السعر الإضافي للخيار (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         additional_price: السعر الإضافي الجديد
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الخيار
         ValidationError: إذا كان السعر غير صالح

@@ -1,14 +1,19 @@
 # ==============================================
-# 🎛 OPTION GROUPS SERVICE
-# منطق الأعمال لمجموعات الخيارات
-#
-# إنشاء مجموعة خيارات
-# قراءة مجموعة خيارات
-# قراءة مجموعات خيارات المنتج
-# قراءة مجموعات الخيارات الإجبارية
-# تحديث مجموعة خيارات
-# حذف مجموعة خيارات
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / OPTION GROUPS SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for option groups service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -45,7 +50,6 @@ from app.schemas.option_group import (
     OptionGroupSummary,
 )
 
-
 # ==============================================
 # 🧩 CONSTANTS
 # ==============================================
@@ -70,18 +74,22 @@ OptionGroupList = List[OptionGroup]
 class OptionGroupsService:
     """
     خدمة مجموعات الخيارات - تدير منطق الأعمال لمجموعات الخيارات.
-    
+
     مسؤولة عن:
         - إنشاء مجموعات الخيارات
         - قراءة مجموعات الخيارات
         - تحديث مجموعات الخيارات
         - حذف مجموعات الخيارات
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع مجموعات الخيارات
         product_repo: مستودع المنتجات
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -89,7 +97,7 @@ class OptionGroupsService:
     ) -> None:
         """
         تهيئة خدمة مجموعات الخيارات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -112,13 +120,13 @@ class OptionGroupsService:
     ) -> OptionGroupResponse:
         """
         الحصول على مجموعة خيارات بالمعرف.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
-            
+
         Returns:
             OptionGroupResponse: بيانات مجموعة الخيارات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -151,12 +159,12 @@ class OptionGroupsService:
     ) -> List[OptionGroupResponse]:
         """
         الحصول على مجموعات خيارات منتج معين.
-        
+
         Args:
             product_id: معرف المنتج
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[OptionGroupResponse]: قائمة مجموعات الخيارات
         """
@@ -188,13 +196,13 @@ class OptionGroupsService:
     ) -> OptionGroupWithOptionsResponse:
         """
         الحصول على مجموعة خيارات مع خياراتها.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
-            
+
         Returns:
             OptionGroupWithOptionsResponse: مجموعة الخيارات مع الخيارات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -225,10 +233,10 @@ class OptionGroupsService:
     ) -> List[OptionGroupResponse]:
         """
         الحصول على مجموعات الخيارات الإجبارية لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             List[OptionGroupResponse]: قائمة مجموعات الخيارات الإجبارية
         """
@@ -257,13 +265,13 @@ class OptionGroupsService:
     ) -> List[OptionGroupResponse]:
         """
         البحث عن مجموعات خيارات.
-        
+
         Args:
             query: نص البحث
             product_id: معرف المنتج (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             List[OptionGroupResponse]: قائمة مجموعات الخيارات
         """
@@ -304,10 +312,10 @@ class OptionGroupsService:
     ) -> int:
         """
         حساب عدد مجموعات الخيارات لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             int: عدد مجموعات الخيارات
         """
@@ -326,10 +334,10 @@ class OptionGroupsService:
     ) -> int:
         """
         حساب عدد مجموعات الخيارات الإجبارية لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             int: عدد مجموعات الخيارات الإجبارية
         """
@@ -348,10 +356,10 @@ class OptionGroupsService:
     ) -> OptionGroupSummary:
         """
         الحصول على ملخص مجموعات الخيارات لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             OptionGroupSummary: ملخص مجموعات الخيارات
         """
@@ -389,13 +397,13 @@ class OptionGroupsService:
     ) -> OptionGroupResponse:
         """
         إنشاء مجموعة خيارات جديدة.
-        
+
         Args:
             group_data: بيانات مجموعة الخيارات
-            
+
         Returns:
             OptionGroupResponse: بيانات مجموعة الخيارات المنشأة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المنتج
             ConflictError: إذا كان الاسم موجوداً مسبقاً
@@ -481,14 +489,14 @@ class OptionGroupsService:
     ) -> OptionGroupResponse:
         """
         تحديث مجموعة خيارات.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             update_data: بيانات التحديث
-            
+
         Returns:
             OptionGroupResponse: بيانات مجموعة الخيارات المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
             ConflictError: إذا كان الاسم موجوداً مسبقاً
@@ -561,14 +569,14 @@ class OptionGroupsService:
     ) -> OptionGroupResponse:
         """
         تحديث ترتيب مجموعة الخيارات.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             sort_order: الترتيب الجديد
-            
+
         Returns:
             OptionGroupResponse: بيانات مجموعة الخيارات المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -612,14 +620,14 @@ class OptionGroupsService:
     ) -> OptionGroupResponse:
         """
         تحديث حالة الإجبار لمجموعة الخيارات.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             required: حالة الإجبار الجديدة
-            
+
         Returns:
             OptionGroupResponse: بيانات مجموعة الخيارات المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -663,14 +671,14 @@ class OptionGroupsService:
     ) -> OptionGroupResponse:
         """
         تحديث حالة الاختيار المتعدد لمجموعة الخيارات.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             multiple_choice: حالة الاختيار المتعدد الجديدة
-            
+
         Returns:
             OptionGroupResponse: بيانات مجموعة الخيارات المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -713,10 +721,10 @@ class OptionGroupsService:
     ) -> None:
         """
         حذف مجموعة خيارات.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
             ValidationError: إذا كانت المجموعة تحتوي على خيارات
@@ -767,13 +775,13 @@ class OptionGroupsService:
     ) -> int:
         """
         حذف جميع مجموعات الخيارات لمنتج معين.
-        
+
         Args:
             product_id: معرف المنتج
-            
+
         Returns:
             int: عدد المجموعات المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المنتج
         """
@@ -819,11 +827,11 @@ class OptionGroupsService:
     ) -> None:
         """
         إعادة ترتيب مجموعات الخيارات.
-        
+
         Args:
             product_id: معرف المنتج
             group_order: قائمة معرفات المجموعات بالترتيب الجديد
-            
+
         Raises:
             NotFoundError: إذا كان أحد المجموعات غير موجود
             ValidationError: إذا كانت القائمة فارغة أو تحتوي على معرفات مكررة
@@ -884,6 +892,7 @@ class OptionGroupsService:
 # CREATE OPTION GROUP (COMPATIBILITY)
 # ==============================================
 
+
 async def create_option_group(
     *,
     product_id: int,
@@ -895,7 +904,7 @@ async def create_option_group(
 ) -> int:
     """
     إنشاء مجموعة خيارات جديدة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         name: اسم مجموعة الخيارات
@@ -903,10 +912,10 @@ async def create_option_group(
         multiple_choice: هل يسمح باختيار متعدد
         sort_order: ترتيب العرض
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف مجموعة الخيارات
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المنتج
         ConflictError: إذا كان الاسم موجوداً مسبقاً
@@ -932,6 +941,7 @@ async def create_option_group(
 # GET OPTION GROUP (COMPATIBILITY)
 # ==============================================
 
+
 async def get_option_group(
     *,
     group_id: int,
@@ -939,11 +949,11 @@ async def get_option_group(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على مجموعة خيارات بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Dict[str, Any]]: قاموس بيانات المجموعة أو None
     """
@@ -960,6 +970,7 @@ async def get_option_group(
 # GET OPTION GROUPS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_option_groups(
     *,
     product_id: int,
@@ -969,13 +980,13 @@ async def get_option_groups(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على مجموعات خيارات منتج معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         List[Dict[str, Any]]: قائمة مجموعات الخيارات
     """
@@ -994,6 +1005,7 @@ async def get_option_groups(
 # DELETE OPTION GROUP (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_option_group(
     *,
     group_id: int,
@@ -1001,11 +1013,11 @@ async def delete_option_group(
 ) -> None:
     """
     حذف مجموعة خيارات (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على المجموعة
         ValidationError: إذا كانت المجموعة تحتوي على خيارات
@@ -1024,6 +1036,7 @@ async def delete_option_group(
 # GET OPTION GROUPS COUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_option_groups_count(
     *,
     product_id: int,
@@ -1031,11 +1044,11 @@ async def get_option_groups_count(
 ) -> int:
     """
     حساب عدد مجموعات الخيارات لمنتج معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         product_id: معرف المنتج
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: عدد مجموعات الخيارات
     """

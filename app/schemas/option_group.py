@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها لمجموعات الخيارات
 # ==============================================
 
+"""MoulAI operational module for option group.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     Field,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,10 +43,11 @@ OptionGroupListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class OptionGroupBase(BaseModel):
     """
     المخطط الأساسي لمجموعة الخيارات.
-    
+
     Attributes:
         product_id: معرف المنتج
         name: اسم مجموعة الخيارات
@@ -50,6 +55,7 @@ class OptionGroupBase(BaseModel):
         multiple_choice: هل يسمح باختيار متعدد
         sort_order: ترتيب العرض
     """
+
     product_id: int = Field(
         ...,
         description="معرف المنتج",
@@ -82,10 +88,11 @@ class OptionGroupBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class OptionGroupCreate(BaseModel):
     """
     مخطط إنشاء مجموعة خيارات جديدة.
-    
+
     Attributes:
         product_id: معرف المنتج
         name: اسم مجموعة الخيارات
@@ -93,6 +100,7 @@ class OptionGroupCreate(BaseModel):
         multiple_choice: هل يسمح باختيار متعدد
         sort_order: ترتيب العرض
     """
+
     product_id: int = Field(
         ...,
         description="معرف المنتج",
@@ -125,16 +133,18 @@ class OptionGroupCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class OptionGroupUpdate(BaseModel):
     """
     مخطط تحديث مجموعة خيارات.
-    
+
     Attributes:
         name: اسم مجموعة الخيارات الجديد
         required: هل المجموعة إجبارية
         multiple_choice: هل يسمح باختيار متعدد
         sort_order: ترتيب العرض الجديد
     """
+
     name: Optional[str] = Field(
         None,
         max_length=255,
@@ -162,15 +172,17 @@ class OptionGroupUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class OptionGroupResponse(OptionGroupBase):
     """
     مخطط استجابة مجموعة الخيارات.
-    
+
     Attributes:
         id: معرف مجموعة الخيارات
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -192,10 +204,11 @@ class OptionGroupResponse(OptionGroupBase):
 # 🎯 OPTION GROUP WITH OPTIONS
 # ==============================================
 
+
 class ProductOptionResponse(BaseModel):
     """
     مخطط استجابة خيار المنتج.
-    
+
     Attributes:
         id: معرف الخيار
         name: اسم الخيار
@@ -203,6 +216,7 @@ class ProductOptionResponse(BaseModel):
         is_available: حالة التوفر
         sort_order: ترتيب العرض
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -235,10 +249,11 @@ class ProductOptionResponse(BaseModel):
 class OptionGroupWithOptionsResponse(OptionGroupResponse):
     """
     مخطط استجابة مجموعة الخيارات مع خياراتها.
-    
+
     Attributes:
         options: قائمة خيارات المنتج
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     options: List[ProductOptionResponse] = Field(
@@ -251,16 +266,18 @@ class OptionGroupWithOptionsResponse(OptionGroupResponse):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class OptionGroupListResponse(BaseModel):
     """
     مخطط استجابة قائمة مجموعات الخيارات.
-    
+
     Attributes:
         items: قائمة مجموعات الخيارات
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[OptionGroupResponse] = Field(
@@ -291,10 +308,11 @@ class OptionGroupListResponse(BaseModel):
 # 📊 SUMMARY
 # ==============================================
 
+
 class OptionGroupSummary(BaseModel):
     """
     مخطط ملخص مجموعات الخيارات.
-    
+
     Attributes:
         product_id: معرف المنتج
         total_groups: إجمالي عدد المجموعات
@@ -302,6 +320,7 @@ class OptionGroupSummary(BaseModel):
         optional_groups: عدد المجموعات الاختيارية
         total_options: إجمالي عدد الخيارات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     product_id: int = Field(
@@ -339,16 +358,18 @@ class OptionGroupSummary(BaseModel):
 # ✅ VALIDATION
 # ==============================================
 
+
 class OptionGroupValidation(BaseModel):
     """
     مخطط التحقق من صحة مجموعة الخيارات.
-    
+
     Attributes:
         product_id: معرف المنتج
         name: اسم مجموعة الخيارات
         required: هل المجموعة إجبارية
         multiple_choice: هل يسمح باختيار متعدد
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     product_id: int = Field(

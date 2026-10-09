@@ -1,4 +1,22 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDER SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.services.business.orders.transaction import transactional_order
+
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -36,55 +54,50 @@ from app.schemas.order import (
 
 # ✅ استيراد دوال الخدمة من مجلد orders
 from app.services.business.orders import (
-
     # Create
     create_restaurant_order,
     create_order_with_items,
-
     # Read
     get_restaurant_order,
     get_orders,
     get_orders_by_status,
     get_order_with_details,
     count_orders_by_restaurant,
-
     # Update
     change_order_status,
     recalculate_order_totals,
     update_order,
-
     # Delete
     remove_order,
-
     # Complete
     complete_order,
-
     # Cancel
     cancel_order,
-
     # Paid
     mark_order_paid,
-
     # Constants
     ALLOWED_TRANSITIONS,
-
 )
-
 
 # ==============================================
 # 📦 ORDER SERVICE CLASS
 # ==============================================
 
+
 class OrderService:
     """
     خدمة الطلبات - واجهة موحدة لجميع عمليات الطلبات.
-    
+
     توفر هذه الخدمة واجهة مبسطة للتعامل مع الطلبات，
     حيث تقوم بتجميع جميع دوال الخدمة من مجلد orders/.
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -92,7 +105,7 @@ class OrderService:
     ) -> None:
         """
         تهيئة خدمة الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -113,13 +126,13 @@ class OrderService:
     ) -> OrderResponse:
         """
         الحصول على طلب بالمعرف.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             OrderResponse: بيانات الطلب
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
         """
@@ -146,13 +159,13 @@ class OrderService:
     ) -> Order:
         """
         الحصول على طلب مع جميع علاقاته.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             Order: كائن الطلب مع العلاقات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
         """
@@ -181,12 +194,12 @@ class OrderService:
     ) -> OrderListResponse:
         """
         الحصول على طلبات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             OrderListResponse: قائمة الطلبات مع الإحصائيات
         """
@@ -223,16 +236,16 @@ class OrderService:
     ) -> OrderListResponse:
         """
         الحصول على طلبات مطعم حسب الحالة.
-        
+
         Args:
             restaurant_id: معرف المطعم
             status: حالة الطلب
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             OrderListResponse: قائمة الطلبات مع الإحصائيات
-            
+
         Raises:
             ValidationError: إذا كانت الحالة غير صالحة
         """
@@ -282,25 +295,28 @@ class OrderService:
     ) -> OrderResponse:
         """
         إنشاء طلب جديد.
-        
+
         Args:
             order_data: بيانات الطلب
-            
+
         Returns:
             OrderResponse: الطلب المنشأ
-            
+
         Raises:
             ValidationError: إذا كانت البيانات غير صالحة
         """
         values = order_data.model_dump(exclude={"items"})
         if order_data.items:
             order_id = await create_order_with_items(
-                **values, items=[item.model_dump() for item in order_data.items],
+                **values,
+                items=[item.model_dump() for item in order_data.items],
                 session=self.session,
             )
         else:
             order_id = await create_restaurant_order(
-                **values, order_number="", session=self.session,
+                **values,
+                order_number="",
+                session=self.session,
             )
 
         order = await get_restaurant_order(
@@ -323,14 +339,14 @@ class OrderService:
     ) -> OrderResponse:
         """
         تحديث طلب موجود.
-        
+
         Args:
             order_id: معرف الطلب
             update_data: بيانات التحديث
-            
+
         Returns:
             OrderResponse: الطلب المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كان الطلب مقفلاً
@@ -362,14 +378,14 @@ class OrderService:
     ) -> OrderResponse:
         """
         تحديث حالة الطلب.
-        
+
         Args:
             order_id: معرف الطلب
             status_data: بيانات تحديث الحالة
-            
+
         Returns:
             OrderResponse: الطلب المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كان الانتقال غير مسموح
@@ -398,15 +414,15 @@ class OrderService:
     ) -> OrderResponse:
         """
         إكمال الطلب.
-        
+
         Args:
             order_id: معرف الطلب
             employee_id: معرف الموظف (اختياري)
             note: ملاحظة (اختياري)
-            
+
         Returns:
             OrderResponse: الطلب المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كانت الحالة لا تسمح بالإكمال
@@ -439,15 +455,15 @@ class OrderService:
     ) -> OrderResponse:
         """
         إلغاء الطلب.
-        
+
         Args:
             order_id: معرف الطلب
             employee_id: معرف الموظف (اختياري)
             reason: سبب الإلغاء (اختياري)
-            
+
         Returns:
             OrderResponse: الطلب المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كانت الحالة لا تسمح بالإلغاء
@@ -475,24 +491,26 @@ class OrderService:
         self,
         *,
         order_id: int,
+        restaurant_id: int,
         payment_id: int,
     ) -> OrderResponse:
         """
         تحديد الطلب كمدفوع.
-        
+
         Args:
             order_id: معرف الطلب
             payment_id: معرف الدفعة
-            
+
         Returns:
             OrderResponse: الطلب المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب أو الدفعة
             ValidationError: إذا كانت الدفعة لا تخص الطلب
         """
         await mark_order_paid(
             order_id=order_id,
+            restaurant_id=restaurant_id,
             payment_id=payment_id,
             session=self.session,
         )
@@ -517,11 +535,11 @@ class OrderService:
     ) -> None:
         """
         حذف طلب.
-        
+
         Args:
             order_id: معرف الطلب
             permanent: حذف نهائي
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
             ValidationError: إذا كان الطلب مقفلاً أو مدفوعاً
@@ -544,13 +562,13 @@ class OrderService:
     ) -> Tuple[float, float, float, float, float]:
         """
         إعادة حساب إجمالي الطلب.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             Tuple[float, float, float, float, float]: (subtotal, discount, tax, delivery, total)
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الطلب
         """
@@ -570,10 +588,10 @@ class OrderService:
     ) -> OrderSummary:
         """
         الحصول على ملخص الطلبات لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             OrderSummary: ملخص الطلبات
         """

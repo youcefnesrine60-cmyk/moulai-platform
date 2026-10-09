@@ -9,6 +9,11 @@
 # 🧼 SANITIZER SERVICE
 # ==============================================
 
+"""MoulAI operational module for sanitizer.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import re
 
 from app.core.logger import logger
@@ -29,29 +34,20 @@ OptionalText = str | None
 # 🧩 REGEX PATTERNS
 # ==============================================
 
-RESTAURANT_PATTERN = re.compile(
-    r"[^a-zA-Z0-9\u0600-\u06FF\s\-&']"
-)
+RESTAURANT_PATTERN = re.compile(r"[^a-zA-Z0-9\u0600-\u06FF\s\-&']")
 
-OWNER_PATTERN = re.compile(
-    r"[^a-zA-Z\u0600-\u06FF\s\-']"
-)
+OWNER_PATTERN = re.compile(r"[^a-zA-Z\u0600-\u06FF\s\-']")
 
-WILAYA_PATTERN = re.compile(
-    r"[^a-zA-Z\u0600-\u06FF\s\-]"
-)
+WILAYA_PATTERN = re.compile(r"[^a-zA-Z\u0600-\u06FF\s\-]")
 
-DESCRIPTION_PATTERN = re.compile(
-    r"[^a-zA-Z0-9\u0600-\u06FF\s\-\.,!?&':]"
-)
+DESCRIPTION_PATTERN = re.compile(r"[^a-zA-Z0-9\u0600-\u06FF\s\-\.,!?&':]")
 
-MULTIPLE_SPACES_PATTERN = re.compile(
-    r"\s+"
-)
+MULTIPLE_SPACES_PATTERN = re.compile(r"\s+")
 
 # ==============================================
 # 🧼 BASE SANITIZER
 # ==============================================
+
 
 def _sanitize(
     *,
@@ -159,9 +155,11 @@ def _sanitize(
 
     return text
 
+
 # ==============================================
 # 🍽️ RESTAURANT SANITIZER
 # ==============================================
+
 
 def sanitize_restaurant(
     *,
@@ -177,9 +175,11 @@ def sanitize_restaurant(
         chat_id=chat_id,
     )
 
+
 # ==============================================
 # 👤 OWNER SANITIZER
 # ==============================================
+
 
 def sanitize_owner(
     *,
@@ -195,9 +195,11 @@ def sanitize_owner(
         chat_id=chat_id,
     )
 
+
 # ==============================================
 # 🗺️ WILAYA SANITIZER
 # ==============================================
+
 
 def sanitize_wilaya(
     *,
@@ -213,9 +215,11 @@ def sanitize_wilaya(
         chat_id=chat_id,
     )
 
+
 # ==============================================
 # 📝 DESCRIPTION SANITIZER
 # ==============================================
+
 
 def sanitize_description(
     *,

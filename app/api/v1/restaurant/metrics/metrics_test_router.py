@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 📊 RESTAURANT METRICS ROUTER - TEST
 # نقاط نهاية الاختبار والمحاكاة
 # ==============================================
+
+"""MoulAI operational module for metrics test router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -28,7 +33,6 @@ from app.core.exceptions import (
 from app.core.logger import logger
 from app.services.business.restaurant.metrics.service import RestaurantMetricsService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -42,6 +46,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_metrics_service(
     session: AsyncSession = Depends(get_db),
@@ -57,6 +62,7 @@ async def get_metrics_service(
 # ==============================================
 # SIMULATE ORDER (FOR TESTING)
 # ==============================================
+
 
 @router.post(
     "/{restaurant_id}/simulate-order",

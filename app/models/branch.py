@@ -11,6 +11,11 @@
 # يدير فروع المطاعم ومواقعها وبياناتها
 # ==============================================
 
+"""MoulAI operational module for branch.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -33,16 +38,17 @@ from .base import BaseModel
 # 🏢 BRANCH
 # ==============================================
 
+
 class Branch(BaseModel):
     """
     نموذج فرع المطعم
-    
+
     يدير:
         - البيانات الأساسية للفرع (الاسم، الهاتف)
         - الموقع الجغرافي (wilaya, lat, lng)
         - حالة النشاط
         - العلاقات مع المطعم والطلبات
-    
+
     Attributes:
         restaurant_id: معرف المطعم (ForeignKey)
         name: اسم الفرع
@@ -54,12 +60,13 @@ class Branch(BaseModel):
         restaurant: علاقة مع نموذج Restaurant
         orders: قائمة الطلبات التابعة للفرع
     """
+
     __tablename__ = "branches"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     restaurant_id = Column(
         Integer,
         ForeignKey("restaurants.id", ondelete="CASCADE"),
@@ -92,23 +99,23 @@ class Branch(BaseModel):
         default=True,
         comment="حالة النشاط",
     )
-    
+
     # ==========================================
     # 🔒 CONSTRAINTS
     # ==========================================
-    
+
     __table_args__ = (
         Index(
-            'idx_branches_restaurant',
-            'restaurant_id',
-            #comment="مؤشر لتحسين أداء البحث عن فروع مطعم معين",
+            "idx_branches_restaurant",
+            "restaurant_id",
+            # comment="مؤشر لتحسين أداء البحث عن فروع مطعم معين",
         ),
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     restaurant = relationship(
         "Restaurant",
         back_populates="branches",
@@ -121,15 +128,15 @@ class Branch(BaseModel):
         lazy="selectin",
         # comment="قائمة الطلبات التابعة للفرع",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والاسم ومعرف المطعم
         """

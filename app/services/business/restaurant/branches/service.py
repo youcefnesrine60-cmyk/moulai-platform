@@ -10,6 +10,11 @@
 # منطق الأعمال لفروع المطاعم
 # ==============================================
 
+"""MoulAI operational module for service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -17,7 +22,9 @@ from app.core.exceptions import (
     NotFoundError,
 )
 from app.core.logger import logger
-from app.repositories.restaurant.restaurant_branch_repo import RestaurantBranchRepository
+from app.repositories.restaurant.restaurant_branch_repo import (
+    RestaurantBranchRepository,
+)
 from app.repositories.restaurant.restaurant_group_repo import RestaurantGroupRepository
 from app.repositories.restaurant.restaurant_repo import RestaurantRepository
 from app.schemas.restaurant.restaurant_group import (
@@ -26,17 +33,17 @@ from app.schemas.restaurant.restaurant_group import (
     RestaurantBranchListResponse,
 )
 
-
 # ==============================================
 # 🔗 RESTAURANT BRANCH SERVICE
 # ==============================================
 
+
 class RestaurantBranchService:
     """
     خدمة فروع المطاعم.
-    
+
     تدير منطق الأعمال لفروع المطاعم.
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع فروع المطاعم
@@ -44,13 +51,17 @@ class RestaurantBranchService:
         restaurant_repo: مستودع المطاعم
     """
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         session: AsyncSession,
     ) -> None:
         """
         تهيئة خدمة فروع المطاعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -74,13 +85,13 @@ class RestaurantBranchService:
     ) -> RestaurantBranchResponse:
         """
         الحصول على فرع مطعم بالمعرف.
-        
+
         Args:
             branch_id: معرف الفرع
-            
+
         Returns:
             RestaurantBranchResponse: بيانات الفرع
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """
@@ -109,13 +120,13 @@ class RestaurantBranchService:
     ) -> RestaurantBranchResponse:
         """
         الحصول على فرع مطعم بالمعرف مع تفاصيله.
-        
+
         Args:
             branch_id: معرف الفرع
-            
+
         Returns:
             RestaurantBranchResponse: بيانات الفرع مع التفاصيل
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """
@@ -146,12 +157,12 @@ class RestaurantBranchService:
     ) -> RestaurantBranchListResponse:
         """
         الحصول على فروع المطاعم لمجموعة معينة.
-        
+
         Args:
             group_id: معرف المجموعة
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             RestaurantBranchListResponse: قائمة الفروع مع الإحصائيات
         """
@@ -192,12 +203,12 @@ class RestaurantBranchService:
     ) -> RestaurantBranchListResponse:
         """
         الحصول على فروع المطاعم لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             RestaurantBranchListResponse: قائمة الفروع مع الإحصائيات
         """
@@ -240,16 +251,16 @@ class RestaurantBranchService:
     ) -> RestaurantBranchResponse:
         """
         إنشاء فرع مطعم جديد.
-        
+
         ✅ التصحيح: التحقق من وجود المطعم قبل الإنشاء
         ✅ التحقق من وجود المجموعة قبل الإنشاء
-        
+
         Args:
             branch_data: بيانات الفرع
-            
+
         Returns:
             RestaurantBranchResponse: بيانات الفرع المنشأ
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة أو المطعم
             ConflictError: إذا كان الفرع موجوداً مسبقاً
@@ -321,10 +332,10 @@ class RestaurantBranchService:
     ) -> None:
         """
         حذف فرع مطعم.
-        
+
         Args:
             branch_id: معرف الفرع
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """

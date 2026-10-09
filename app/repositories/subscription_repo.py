@@ -5,6 +5,15 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / SUBSCRIPTION REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for subscription repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 # ==============================================
 # 💳 SUBSCRIPTION REPOSITORY
@@ -58,17 +67,21 @@ class SubscriptionRepository(
 ):
     """
     مستودع الاشتراكات - يوفر عمليات خاصة بالاشتراكات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للاشتراكات
         - البحث والتصفية حسب المالك والمطعم
         - إدارة حالة الاشتراكات (active, expired, cancelled)
         - التحقق من الاشتراكات النشطة
-    
+
     Attributes:
         model: نموذج Subscription
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -76,7 +89,7 @@ class SubscriptionRepository(
     ) -> None:
         """
         تهيئة مستودع الاشتراكات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -99,12 +112,12 @@ class SubscriptionRepository(
     ) -> SubscriptionList:
         """
         الحصول على اشتراكات مالك معين.
-        
+
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الاشتراكات
         """
@@ -144,12 +157,12 @@ class SubscriptionRepository(
     ) -> SubscriptionList:
         """
         الحصول على اشتراكات مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الاشتراكات
         """
@@ -187,10 +200,10 @@ class SubscriptionRepository(
     ) -> Optional[Subscription]:
         """
         الحصول على الاشتراك النشط لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             كائن Subscription أو None
         """
@@ -236,10 +249,10 @@ class SubscriptionRepository(
     ) -> bool:
         """
         التحقق من وجود اشتراك نشط لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             True إذا كان هناك اشتراك نشط، False إذا لم يكن
         """
@@ -283,12 +296,12 @@ class SubscriptionRepository(
     ) -> SubscriptionList:
         """
         الحصول على اشتراكات حسب الحالة.
-        
+
         Args:
             status: حالة الاشتراك (pending, trial, active, expired, cancelled)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الاشتراكات
         """
@@ -326,10 +339,10 @@ class SubscriptionRepository(
     ) -> SubscriptionList:
         """
         الحصول على الاشتراكات التي ستنتهي خلال عدد محدد من الأيام.
-        
+
         Args:
             days: عدد الأيام القادمة (افتراضي: 7)
-            
+
         Returns:
             قائمة الاشتراكات المنتهية قريباً
         """
@@ -376,11 +389,11 @@ class SubscriptionRepository(
     ) -> SubscriptionList:
         """
         الحصول على الاشتراكات المنتهية.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الاشتراكات المنتهية
         """
@@ -426,11 +439,11 @@ class SubscriptionRepository(
     ) -> Optional[Subscription]:
         """
         تحديث حالة الاشتراك.
-        
+
         Args:
             subscription_id: معرف الاشتراك
             status: الحالة الجديدة (pending, trial, active, expired, cancelled)
-            
+
         Returns:
             كائن Subscription المحدث أو None
         """
@@ -460,12 +473,12 @@ class SubscriptionRepository(
     ) -> Optional[Subscription]:
         """
         تفعيل الاشتراك.
-        
+
         Args:
             subscription_id: معرف الاشتراك
             starts_at: تاريخ البدء (افتراضي: الآن)
             expires_at: تاريخ الانتهاء (افتراضي: بعد 30 يوم)
-            
+
         Returns:
             كائن Subscription المحدث أو None
         """
@@ -508,10 +521,10 @@ class SubscriptionRepository(
     ) -> Optional[Subscription]:
         """
         إلغاء الاشتراك.
-        
+
         Args:
             subscription_id: معرف الاشتراك
-            
+
         Returns:
             كائن Subscription المحدث أو None
         """
@@ -536,10 +549,10 @@ class SubscriptionRepository(
     ) -> Optional[Subscription]:
         """
         تعيين الاشتراك كمنتهي.
-        
+
         Args:
             subscription_id: معرف الاشتراك
-            
+
         Returns:
             كائن Subscription المحدث أو None
         """
@@ -568,10 +581,10 @@ class SubscriptionRepository(
     ) -> int:
         """
         حساب عدد الاشتراكات حسب الحالة.
-        
+
         Args:
             status: حالة الاشتراك
-            
+
         Returns:
             عدد الاشتراكات
         """
@@ -586,7 +599,7 @@ class SubscriptionRepository(
     ) -> int:
         """
         حساب عدد الاشتراكات النشطة.
-        
+
         Returns:
             عدد الاشتراكات النشطة
         """
@@ -602,6 +615,7 @@ class SubscriptionRepository(
 # CREATE SUBSCRIPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def create_subscription(
     *,
     owner_id: int,
@@ -616,7 +630,7 @@ async def create_subscription(
 ) -> int:
     """
     إنشاء اشتراك جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         restaurant_id: معرف المطعم
@@ -627,7 +641,7 @@ async def create_subscription(
         expires_at: تاريخ الانتهاء
         status: الحالة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الاشتراك
     """
@@ -663,6 +677,7 @@ async def create_subscription(
 # GET SUBSCRIPTION BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_subscription_by_id(
     *,
     subscription_id: int,
@@ -670,11 +685,11 @@ async def get_subscription_by_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على اشتراك بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         subscription_id: معرف الاشتراك
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الاشتراك أو None
     """
@@ -707,6 +722,7 @@ async def get_subscription_by_id(
 # GET RESTAURANT SUBSCRIPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurant_subscription(
     *,
     restaurant_id: int,
@@ -714,11 +730,11 @@ async def get_restaurant_subscription(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على اشتراك مطعم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الاشتراك أو None
     """
@@ -749,6 +765,7 @@ async def get_restaurant_subscription(
 # HAS ACTIVE SUBSCRIPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def has_active_subscription(
     *,
     restaurant_id: int,
@@ -756,11 +773,11 @@ async def has_active_subscription(
 ) -> bool:
     """
     التحقق من وجود اشتراك نشط (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         True إذا كان هناك اشتراك نشط
     """
@@ -775,6 +792,7 @@ async def has_active_subscription(
 # GET ACTIVE SUBSCRIPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def get_active_subscription(
     *,
     restaurant_id: int,
@@ -782,11 +800,11 @@ async def get_active_subscription(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على الاشتراك النشط (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الاشتراك أو None
     """
@@ -800,6 +818,7 @@ async def get_active_subscription(
 # GET OWNER SUBSCRIPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_owner_subscriptions(
     *,
     owner_id: int,
@@ -809,13 +828,13 @@ async def get_owner_subscriptions(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على اشتراكات مالك معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة الاشتراكات
     """
@@ -830,18 +849,20 @@ async def get_owner_subscriptions(
     result = []
 
     for sub in subscriptions:
-        result.append({
-            "id": sub.id,
-            "owner_id": sub.owner_id,
-            "restaurant_id": sub.restaurant_id,
-            "plan_id": sub.plan_id,
-            "billing_cycle": sub.billing_cycle,
-            "amount": sub.amount,
-            "starts_at": sub.starts_at,
-            "expires_at": sub.expires_at,
-            "status": sub.status,
-            "created_at": sub.created_at,
-        })
+        result.append(
+            {
+                "id": sub.id,
+                "owner_id": sub.owner_id,
+                "restaurant_id": sub.restaurant_id,
+                "plan_id": sub.plan_id,
+                "billing_cycle": sub.billing_cycle,
+                "amount": sub.amount,
+                "starts_at": sub.starts_at,
+                "expires_at": sub.expires_at,
+                "status": sub.status,
+                "created_at": sub.created_at,
+            }
+        )
 
     logger.info(
         "owner_subscriptions_fetched",
@@ -858,6 +879,7 @@ async def get_owner_subscriptions(
 # ACTIVATE SUBSCRIPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def activate_subscription(
     *,
     subscription_id: int,
@@ -867,7 +889,7 @@ async def activate_subscription(
 ) -> None:
     """
     تفعيل اشتراك (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         subscription_id: معرف الاشتراك
         starts_at: تاريخ البدء
@@ -892,6 +914,7 @@ async def activate_subscription(
 # CANCEL SUBSCRIPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def cancel_subscription(
     *,
     subscription_id: int,
@@ -899,7 +922,7 @@ async def cancel_subscription(
 ) -> None:
     """
     إلغاء اشتراك (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         subscription_id: معرف الاشتراك
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -918,6 +941,7 @@ async def cancel_subscription(
 # EXPIRE SUBSCRIPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def expire_subscription(
     *,
     subscription_id: int,
@@ -925,7 +949,7 @@ async def expire_subscription(
 ) -> None:
     """
     تعيين اشتراك كمنتهي (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         subscription_id: معرف الاشتراك
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -944,17 +968,18 @@ async def expire_subscription(
 # GET EXPIRING SUBSCRIPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_expiring_subscriptions(
     session: AsyncSession,
     days: int = 7,
 ) -> List[Dict[str, Any]]:
     """
     الحصول على الاشتراكات المنتهية قريباً (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
         days: عدد الأيام القادمة
-        
+
     Returns:
         قائمة الاشتراكات المنتهية قريباً
     """
@@ -965,30 +990,33 @@ async def get_expiring_subscriptions(
     result = []
 
     for sub in subscriptions:
-        result.append({
-            "id": sub.id,
-            "owner_id": sub.owner_id,
-            "restaurant_id": sub.restaurant_id,
-            "plan_id": sub.plan_id,
-            "billing_cycle": sub.billing_cycle,
-            "amount": sub.amount,
-            "starts_at": sub.starts_at,
-            "expires_at": sub.expires_at,
-            "status": sub.status,
-            "created_at": sub.created_at,
-        })
+        result.append(
+            {
+                "id": sub.id,
+                "owner_id": sub.owner_id,
+                "restaurant_id": sub.restaurant_id,
+                "plan_id": sub.plan_id,
+                "billing_cycle": sub.billing_cycle,
+                "amount": sub.amount,
+                "starts_at": sub.starts_at,
+                "expires_at": sub.expires_at,
+                "status": sub.status,
+                "created_at": sub.created_at,
+            }
+        )
 
     return result
 
 
 # ==============================================
-# 🔄 TRANSACTION FUNCTIONS 
+# 🔄 TRANSACTION FUNCTIONS
 # (للتوافق مع الكود القديم)
 # ==============================================
 
 # ==============================================
 # ACTIVATE SUBSCRIPTION TRANSACTIONS (COMPATIBILITY)
 # ==============================================
+
 
 async def activate_subscription_tx(
     *,
@@ -999,13 +1027,13 @@ async def activate_subscription_tx(
 ) -> int:
     """
     تفعيل اشتراك (معاملة) - دالة متوافقة مع الإصدار القديم.
-    
+
     Args:
         conn: جلسة قاعدة البيانات (AsyncSession)
         subscription_id: معرف الاشتراك
         starts_at: تاريخ البدء
         expires_at: تاريخ الانتهاء
-        
+
     Returns:
         int: عدد الصفوف المتأثرة (1 إذا نجح، 0 إذا فشل)
     """

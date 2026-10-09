@@ -11,6 +11,11 @@
 # يدير مجموعات المطاعم التابعة للمالكين وعلاقاتها بالفروع
 # ==============================================
 
+"""MoulAI operational module for restaurant group.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Column,
     ForeignKey,
@@ -25,15 +30,16 @@ from .base import BaseModel
 # 🏢 RESTAURANT GROUP
 # ==============================================
 
+
 class RestaurantGroup(BaseModel):
     """
     نموذج مجموعة المطاعم
-    
+
     يدير:
         - مجموعات المطاعم التابعة للمالكين
         - اسم المجموعة
         - العلاقات مع المالك والمطاعم والفروع
-    
+
     Attributes:
         owner_id: معرف المالك (ForeignKey)
         name: اسم المجموعة
@@ -41,12 +47,13 @@ class RestaurantGroup(BaseModel):
         restaurants: قائمة المطاعم التابعة للمجموعة
         branch_links: قائمة روابط الفروع
     """
+
     __tablename__ = "restaurant_groups"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     owner_id = Column(
         Integer,
         ForeignKey("owners.id", ondelete="CASCADE"),
@@ -58,11 +65,11 @@ class RestaurantGroup(BaseModel):
         nullable=False,
         comment="اسم المجموعة",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     owner = relationship(
         "Owner",
         back_populates="restaurant_groups",
@@ -82,15 +89,15 @@ class RestaurantGroup(BaseModel):
         lazy="selectin",
         # comment="قائمة روابط الفروع",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والاسم ومعرف المالك
         """
@@ -105,24 +112,26 @@ class RestaurantGroup(BaseModel):
 # رابط فرع المطعم
 # ==============================================
 
+
 class RestaurantBranch(BaseModel):
     """
     نموذج رابط فرع المطعم
-    
+
     يربط المطاعم بمجموعات المطاعم.
-    
+
     Attributes:
         group_id: معرف المجموعة (ForeignKey)
         restaurant_id: معرف المطعم (ForeignKey)
         group: علاقة مع نموذج RestaurantGroup
         restaurant: علاقة مع نموذج Restaurant
     """
+
     __tablename__ = "restaurant_branches"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     group_id = Column(
         Integer,
         ForeignKey("restaurant_groups.id", ondelete="CASCADE"),
@@ -135,11 +144,11 @@ class RestaurantBranch(BaseModel):
         nullable=False,
         comment="معرف المطعم",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     group = relationship(
         "RestaurantGroup",
         back_populates="branch_links",
@@ -151,15 +160,15 @@ class RestaurantBranch(BaseModel):
         lazy="selectin",
         # comment="المطعم",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على معرف المجموعة ومعرف المطعم
         """

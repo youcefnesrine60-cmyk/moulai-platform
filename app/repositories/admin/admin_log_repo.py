@@ -1,7 +1,19 @@
 # ==============================================
-# 📋 ADMIN LOG REPOSITORY
-# عمليات قاعدة البيانات لسجل أنشطة المدير باستخدام SQLAlchemy
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / ADMIN / ADMIN LOG REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for admin log repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from datetime import datetime, timedelta
 from typing import (
@@ -40,16 +52,20 @@ ActionsSummary = List[Dict[str, Any]]
 class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateData]):
     """
     مستودع سجل أنشطة المدير - يوفر عمليات خاصة بسجل أنشطة المدير.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لسجل الأنشطة
         - البحث والتصفية حسب المدير والإجراء والمورد
         - إحصائيات الأنشطة
-    
+
     Attributes:
         model: نموذج AdminLog
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -57,7 +73,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> None:
         """
         تهيئة مستودع سجل أنشطة المدير.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -82,14 +98,14 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> AdminLogList:
         """
         الحصول على سجل أنشطة مدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             action: نوع الإجراء (اختياري)
             resource: نوع المورد (اختياري)
-            
+
         Returns:
             قائمة سجل الأنشطة
         """
@@ -104,10 +120,14 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
             if resource is not None:
                 query = query.where(self.model.resource == resource)
 
-            query = query.order_by(
-                self.model.timestamp.desc(),
-                self.model.id.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.timestamp.desc(),
+                    self.model.id.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -139,13 +159,13 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> AdminLogList:
         """
         الحصول على سجل الأنشطة حسب نوع الإجراء.
-        
+
         Args:
             action: نوع الإجراء
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             admin_id: معرف المدير (اختياري)
-            
+
         Returns:
             قائمة سجل الأنشطة
         """
@@ -157,10 +177,14 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
             if admin_id is not None:
                 query = query.where(self.model.admin_id == admin_id)
 
-            query = query.order_by(
-                self.model.timestamp.desc(),
-                self.model.id.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.timestamp.desc(),
+                    self.model.id.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -191,13 +215,13 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> AdminLogList:
         """
         الحصول على سجل الأنشطة حسب نوع المورد.
-        
+
         Args:
             resource: نوع المورد
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             resource_id: معرف المورد (اختياري)
-            
+
         Returns:
             قائمة سجل الأنشطة
         """
@@ -209,10 +233,14 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
             if resource_id is not None:
                 query = query.where(self.model.resource_id == resource_id)
 
-            query = query.order_by(
-                self.model.timestamp.desc(),
-                self.model.id.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.timestamp.desc(),
+                    self.model.id.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -245,7 +273,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> AdminLogList:
         """
         الحصول على سجل الأنشطة في نطاق زمني معين.
-        
+
         Args:
             start_date: تاريخ البداية
             end_date: تاريخ النهاية
@@ -253,7 +281,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
             action: نوع الإجراء (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة سجل الأنشطة
         """
@@ -271,10 +299,14 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
             if action is not None:
                 query = query.where(self.model.action == action)
 
-            query = query.order_by(
-                self.model.timestamp.desc(),
-                self.model.id.desc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.timestamp.desc(),
+                    self.model.id.desc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -307,13 +339,13 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> AdminLogList:
         """
         البحث في سجل الأنشطة.
-        
+
         Args:
             query: نص البحث
             admin_id: معرف المدير (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة سجل الأنشطة
         """
@@ -374,11 +406,11 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> int:
         """
         حساب عدد سجلات الأنشطة لمدير معين.
-        
+
         Args:
             admin_id: معرف المدير
             action: نوع الإجراء (اختياري)
-            
+
         Returns:
             عدد السجلات
         """
@@ -400,10 +432,10 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> int:
         """
         حساب عدد سجلات الأنشطة حسب نوع الإجراء.
-        
+
         Args:
             action: نوع الإجراء
-            
+
         Returns:
             عدد السجلات
         """
@@ -420,10 +452,10 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> int:
         """
         حساب عدد سجلات الأنشطة حسب نوع المورد.
-        
+
         Args:
             resource: نوع المورد
-            
+
         Returns:
             عدد السجلات
         """
@@ -441,11 +473,11 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> ActionsSummary:
         """
         الحصول على ملخص الأنشطة حسب نوع الإجراء.
-        
+
         Args:
             admin_id: معرف المدير (اختياري)
             limit: الحد الأقصى للنتائج
-            
+
         Returns:
             قائمة ملخص الأنشطة
         """
@@ -463,10 +495,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
             result = await self.session.execute(query)
             rows = result.all()
 
-            return [
-                {"action": row.action, "count": row.count}
-                for row in rows
-            ]
+            return [{"action": row.action, "count": row.count} for row in rows]
 
         except Exception as e:
             logger.exception(
@@ -490,19 +519,23 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> AdminLogList:
         """
         الحصول على أحدث الأنشطة.
-        
+
         Args:
             admin_id: معرف المدير (اختياري)
             limit: عدد النتائج
-            
+
         Returns:
             قائمة أحدث الأنشطة
         """
         try:
-            query = select(self.model).order_by(
-                self.model.timestamp.desc(),
-                self.model.id.desc(),
-            ).limit(limit)
+            query = (
+                select(self.model)
+                .order_by(
+                    self.model.timestamp.desc(),
+                    self.model.id.desc(),
+                )
+                .limit(limit)
+            )
 
             if admin_id is not None:
                 query = query.where(self.model.admin_id == admin_id)
@@ -542,7 +575,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> AdminLog:
         """
         إنشاء سجل نشاط جديد.
-        
+
         Args:
             admin_id: معرف المدير
             action: نوع الإجراء
@@ -551,7 +584,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
             details: تفاصيل إضافية (اختياري)
             ip_address: عنوان IP (اختياري)
             user_agent: متصفح المدير (اختياري)
-            
+
         Returns:
             كائن AdminLog المنشأ
         """
@@ -600,10 +633,10 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     ) -> int:
         """
         حذف سجلات الأنشطة الأقدم من عدد محدد من الأيام.
-        
+
         Args:
             days: عدد الأيام (افتراضي: 30)
-            
+
         Returns:
             عدد السجلات المحذوفة
         """
@@ -657,6 +690,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
 # CREATE ADMIN LOG (COMPATIBILITY)
 # ==============================================
 
+
 async def create_admin_log(
     *,
     admin_id: int,
@@ -670,7 +704,7 @@ async def create_admin_log(
 ) -> int:
     """
     إنشاء سجل نشاط جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         admin_id: معرف المدير
         action: نوع الإجراء
@@ -680,7 +714,7 @@ async def create_admin_log(
         ip_address: عنوان IP (اختياري)
         user_agent: متصفح المدير (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف سجل النشاط
     """
@@ -703,6 +737,7 @@ async def create_admin_log(
 # GET ADMIN LOGS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_admin_logs(
     *,
     admin_id: int,
@@ -712,13 +747,13 @@ async def get_admin_logs(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على سجل أنشطة مدير معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         admin_id: معرف المدير
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة سجل الأنشطة
     """
@@ -733,18 +768,20 @@ async def get_admin_logs(
     result = []
 
     for log in logs:
-        result.append({
-            "id": log.id,
-            "admin_id": log.admin_id,
-            "action": log.action,
-            "resource": log.resource,
-            "resource_id": log.resource_id,
-            "details": log.details,
-            "ip_address": log.ip_address,
-            "user_agent": log.user_agent,
-            "timestamp": log.timestamp,
-            "created_at": log.created_at,
-        })
+        result.append(
+            {
+                "id": log.id,
+                "admin_id": log.admin_id,
+                "action": log.action,
+                "resource": log.resource,
+                "resource_id": log.resource_id,
+                "details": log.details,
+                "ip_address": log.ip_address,
+                "user_agent": log.user_agent,
+                "timestamp": log.timestamp,
+                "created_at": log.created_at,
+            }
+        )
 
     return result
 
@@ -753,6 +790,7 @@ async def get_admin_logs(
 # GET ADMIN LOG BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_admin_log_by_id(
     *,
     log_id: int,
@@ -760,11 +798,11 @@ async def get_admin_log_by_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على سجل نشاط بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         log_id: معرف سجل النشاط
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات سجل النشاط أو None
     """

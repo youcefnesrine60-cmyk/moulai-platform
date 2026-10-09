@@ -5,6 +5,16 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# TEST MODULE - TESTS / API / V1 / RESTAURANT / TEST GROUPS
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test groups.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,15 +22,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.owner import Owner
 from app.models.restaurant import Restaurant
 
-
 # ==============================================
 # 📋 TESTS - RESTAURANT GROUPS
 # ==============================================
+
 
 class TestRestaurantGroupsAPI:
     """
     اختبارات نقاط نهاية مجموعات المطاعم.
     """
+
+    # ==============================================
+    # SETUP
+    # ==============================================
 
     @pytest.fixture(autouse=True)
     async def setup(
@@ -31,9 +45,9 @@ class TestRestaurantGroupsAPI:
     ) -> None:
         """
         تهيئة بيانات الاختبار.
-        
+
         ✅ التصحيح: استخدام flush() بدلاً من commit()
-        
+
         Args:
             db_session: جلسة قاعدة البيانات
             sample_owner_data: بيانات مالك نموذجية
@@ -62,7 +76,6 @@ class TestRestaurantGroupsAPI:
 
         await db_session.flush()  # ✅ flush بدلاً من commit
 
-
         # تعمل طلبات API بجلسة مستقلة، لذا يجب تثبيت بيانات الإعداد
         # قبل أن تحاول تلك الجلسة قراءتها.
         await db_session.commit()
@@ -81,15 +94,12 @@ class TestRestaurantGroupsAPI:
     ) -> None:
         """
         اختبار إنشاء مجموعة مطاعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_group_data: بيانات مجموعة نموذجية
         """
-        data = {
-            "owner_id": self.owner_id,
-            **sample_group_data
-        }
+        data = {"owner_id": self.owner_id, **sample_group_data}
         response = await client.post("/api/v1/restaurant-groups/", json=data)
 
         assert response.status_code == 201, f"Failed: {response.text}"
@@ -109,7 +119,7 @@ class TestRestaurantGroupsAPI:
     ) -> None:
         """
         اختبار الحصول على مجموعة مطاعم بالمعرف.
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_group_data: بيانات مجموعة نموذجية
@@ -142,7 +152,7 @@ class TestRestaurantGroupsAPI:
     ) -> None:
         """
         اختبار إضافة فروع إلى مجموعة.
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_group_data: بيانات مجموعة نموذجية
@@ -156,13 +166,9 @@ class TestRestaurantGroupsAPI:
 
         group_id = create_response.json()["id"]
 
-        data = {
-            "group_id": group_id,
-            "restaurant_ids": self.restaurant_ids
-        }
+        data = {"group_id": group_id, "restaurant_ids": self.restaurant_ids}
         response = await client.post(
-            f"/api/v1/restaurant-groups/{group_id}/branches",
-            json=data
+            f"/api/v1/restaurant-groups/{group_id}/branches", json=data
         )
 
         assert response.status_code == 201
@@ -181,7 +187,7 @@ class TestRestaurantGroupsAPI:
     ) -> None:
         """
         اختبار إزالة فرع من مجموعة.
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_group_data: بيانات مجموعة نموذجية

@@ -10,6 +10,11 @@
 # نقاط نهاية تبديل حالة مجموعات المطاعم
 # ==============================================
 
+"""MoulAI operational module for router status.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -31,7 +36,6 @@ from app.services.business.restaurant import (
     RestaurantGroupEventHandlers,
 )
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -45,6 +49,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_group_handlers(
     session: AsyncSession = Depends(get_db),
@@ -60,6 +65,7 @@ async def get_group_handlers(
 # ==============================================
 # TOGGLE GROUP STATUS
 # ==============================================
+
 
 @router.patch(
     "/{group_id}/toggle-status",
@@ -104,6 +110,7 @@ async def toggle_restaurant_group_status(
 # ==============================================
 # DELETE GROUP
 # ==============================================
+
 
 @router.delete(
     "/{group_id}",

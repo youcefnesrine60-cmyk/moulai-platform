@@ -1,7 +1,19 @@
 # ==============================================
-# 🛡️ ADMIN HANDLERS
-# معالجات المسؤول (محدثة)
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / ADMIN / ADMIN HANDLERS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for admin handlers.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -35,10 +47,10 @@ from app.views.admin_ui import (
     admin_request_details_ui,
 )
 
-
 # ==============================================
 # 🛡️ ADMIN DASHBOARD
 # ==============================================
+
 
 @rate_limit(
     limit=10,
@@ -126,6 +138,12 @@ async def admin_dashboard_callback(
 # عرض طلبات التسجيل المعلقة
 # ==============================================
 
+
+# ==============================================
+# ADMIN REQUESTS CALLBACK
+# ==============================================
+
+
 @rate_limit(
     limit=10,
     window=30,
@@ -176,6 +194,12 @@ async def admin_requests_callback(
 # 📋 ADMIN REQUEST DETAILS
 # عرض تفاصيل طلب تسجيل معين
 # ==============================================
+
+
+# ==============================================
+# ADMIN REQUEST DETAILS CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=10,
@@ -253,6 +277,12 @@ async def admin_request_details_callback(
 # ✅ ADMIN APPROVE REQUEST
 # الموافقة على طلب تسجيل
 # ==============================================
+
+
+# ==============================================
+# ADMIN APPROVE CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=5,
@@ -349,6 +379,12 @@ async def admin_approve_callback(
 # ❌ ADMIN REJECT REQUEST
 # رفض طلب تسجيل
 # ==============================================
+
+
+# ==============================================
+# ADMIN REJECT CALLBACK
+# ==============================================
+
 
 @rate_limit(
     limit=5,

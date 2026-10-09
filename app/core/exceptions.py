@@ -1,7 +1,19 @@
 # ==============================================
-# 🚨 CORE EXCEPTIONS
-# استثناءات أساسية للمشروع
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / CORE / EXCEPTIONS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for exceptions.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -17,13 +29,17 @@ from typing import (
 class AppException(Exception):
     """
     الاستثناء الأساسي لجميع استثناءات التطبيق.
-    
+
     Attributes:
         message: رسالة الخطأ
         status_code: رمز حالة HTTP
         details: تفاصيل إضافية عن الخطأ
         error_code: رمز الخطأ المخصص
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -43,8 +59,13 @@ class AppException(Exception):
 # 🔍 NOT FOUND EXCEPTIONS
 # ==============================================
 
+
 class NotFoundError(AppException):
     """استثناء عند عدم العثور على المورد."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,12 +84,19 @@ class NotFoundError(AppException):
 class RestaurantNotFoundError(NotFoundError):
     """استثناء عند عدم العثور على مطعم."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         restaurant_id: Optional[int] = None,
         message: Optional[str] = None,
     ) -> None:
-        msg = message or f"المطعم {f'بـ ID {restaurant_id}' if restaurant_id else ''} غير موجود"
+        msg = (
+            message
+            or f"المطعم {f'بـ ID {restaurant_id}' if restaurant_id else ''} غير موجود"
+        )
         super().__init__(
             message=msg,
             details={"restaurant_id": restaurant_id} if restaurant_id else None,
@@ -78,6 +106,10 @@ class RestaurantNotFoundError(NotFoundError):
 
 class AdminNotFoundError(NotFoundError):
     """استثناء عند عدم العثور على مدير."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -95,6 +127,10 @@ class AdminNotFoundError(NotFoundError):
 class BranchNotFoundError(NotFoundError):
     """استثناء عند عدم العثور على فرع."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         branch_id: Optional[int] = None,
@@ -111,12 +147,18 @@ class BranchNotFoundError(NotFoundError):
 class ProductNotFoundError(NotFoundError):
     """استثناء عند عدم العثور على منتج."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         product_id: Optional[int] = None,
         message: Optional[str] = None,
     ) -> None:
-        msg = message or f"المنتج {f'بـ ID {product_id}' if product_id else ''} غير موجود"
+        msg = (
+            message or f"المنتج {f'بـ ID {product_id}' if product_id else ''} غير موجود"
+        )
         super().__init__(
             message=msg,
             details={"product_id": product_id} if product_id else None,
@@ -126,6 +168,10 @@ class ProductNotFoundError(NotFoundError):
 
 class OrderNotFoundError(NotFoundError):
     """استثناء عند عدم العثور على طلب."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -142,6 +188,10 @@ class OrderNotFoundError(NotFoundError):
 
 class UserNotFoundError(NotFoundError):
     """استثناء عند عدم العثور على مستخدم."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -160,8 +210,13 @@ class UserNotFoundError(NotFoundError):
 # ⚔️ CONFLICT EXCEPTIONS
 # ==============================================
 
+
 class ConflictError(AppException):
     """استثناء عند وجود تعارض في البيانات."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -180,6 +235,10 @@ class ConflictError(AppException):
 class DuplicateUsernameError(ConflictError):
     """استثناء عند وجود اسم مستخدم مكرر."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         username: Optional[str] = None,
@@ -196,6 +255,10 @@ class DuplicateUsernameError(ConflictError):
 class DuplicateEmailError(ConflictError):
     """استثناء عند وجود بريد إلكتروني مكرر."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         email: Optional[str] = None,
@@ -211,6 +274,10 @@ class DuplicateEmailError(ConflictError):
 
 class DuplicateChatIdError(ConflictError):
     """استثناء عند وجود chat_id مكرر."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -229,8 +296,13 @@ class DuplicateChatIdError(ConflictError):
 # 🔐 UNAUTHORIZED EXCEPTIONS
 # ==============================================
 
+
 class UnauthorizedError(AppException):
     """استثناء عند عدم وجود صلاحية."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -249,6 +321,10 @@ class UnauthorizedError(AppException):
 class InvalidCredentialsError(UnauthorizedError):
     """استثناء عند عدم صحة بيانات الدخول."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         message: str = "بيانات الدخول غير صحيحة",
@@ -263,6 +339,10 @@ class InvalidCredentialsError(UnauthorizedError):
 
 class InvalidSessionError(UnauthorizedError):
     """استثناء عند انتهاء صلاحية الجلسة."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -279,12 +359,19 @@ class InvalidSessionError(UnauthorizedError):
 class InsufficientPermissionError(UnauthorizedError):
     """استثناء عند عدم وجود صلاحية كافية."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         required_role: Optional[str] = None,
         message: Optional[str] = None,
     ) -> None:
-        msg = message or f"ليس لديك صلاحية كافية{f' (مطلوب: {required_role})' if required_role else ''}"
+        msg = (
+            message
+            or f"ليس لديك صلاحية كافية{f' (مطلوب: {required_role})' if required_role else ''}"
+        )
         super().__init__(
             message=msg,
             details={"required_role": required_role} if required_role else None,
@@ -294,6 +381,10 @@ class InsufficientPermissionError(UnauthorizedError):
 
 class AccountInactiveError(UnauthorizedError):
     """استثناء عند محاولة دخول حساب غير نشط."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -311,8 +402,13 @@ class AccountInactiveError(UnauthorizedError):
 # ✅ VALIDATION EXCEPTIONS
 # ==============================================
 
+
 class ValidationError(AppException):
     """استثناء عند فشل التحقق من صحة البيانات."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -331,6 +427,10 @@ class ValidationError(AppException):
 class InvalidInputError(ValidationError):
     """استثناء عند إدخال بيانات غير صحيحة."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         field: Optional[str] = None,
@@ -347,6 +447,10 @@ class InvalidInputError(ValidationError):
 
 class MissingRequiredFieldError(ValidationError):
     """استثناء عند فقدان حقل مطلوب."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -365,8 +469,13 @@ class MissingRequiredFieldError(ValidationError):
 # 🚫 FORBIDDEN EXCEPTIONS
 # ==============================================
 
+
 class ForbiddenError(AppException):
     """استثناء عند محاولة الوصول إلى مورد محظور."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -385,6 +494,10 @@ class ForbiddenError(AppException):
 class RestaurantAccessDeniedError(ForbiddenError):
     """استثناء عند محاولة الوصول إلى مطعم غير مسموح به."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         restaurant_id: Optional[int] = None,
@@ -402,8 +515,13 @@ class RestaurantAccessDeniedError(ForbiddenError):
 # 💳 PAYMENT EXCEPTIONS
 # ==============================================
 
+
 class PaymentError(AppException):
     """استثناء عند فشل عملية الدفع."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -422,6 +540,10 @@ class PaymentError(AppException):
 class InsufficientBalanceError(PaymentError):
     """استثناء عند عدم كفاية الرصيد."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         message: str = "الرصيد غير كافٍ لإتمام العملية",
@@ -438,8 +560,13 @@ class InsufficientBalanceError(PaymentError):
 # 🗄️ DATABASE EXCEPTIONS
 # ==============================================
 
+
 class DatabaseError(AppException):
     """استثناء عند حدوث خطأ في قاعدة البيانات."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -457,6 +584,10 @@ class DatabaseError(AppException):
 
 class DuplicateEntryError(DatabaseError):
     """استثناء عند وجود إدخال مكرر في قاعدة البيانات."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -476,13 +607,18 @@ class DuplicateEntryError(DatabaseError):
 # 🤖 TELEGRAM EXCEPTIONS
 # ==============================================
 
+
 class TelegramAPIError(Exception):
     """
     استثناء عند حدوث خطأ في Telegram API.
-    
+
     ملاحظة: هذا الاستثناء موجود مسبقاً ولا يورث من AppException
     للحفاظ على التوافق مع الكود القديم.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -497,12 +633,19 @@ class TelegramAPIError(Exception):
 class TelegramSendMessageError(TelegramAPIError):
     """استثناء عند فشل إرسال رسالة عبر Telegram."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         chat_id: Optional[int] = None,
         message: Optional[str] = None,
     ) -> None:
-        msg = message or f"فشل إرسال الرسالة{f' إلى المستخدم {chat_id}' if chat_id else ''}"
+        msg = (
+            message
+            or f"فشل إرسال الرسالة{f' إلى المستخدم {chat_id}' if chat_id else ''}"
+        )
         super().__init__(
             message=msg,
             details={"chat_id": chat_id} if chat_id else None,
@@ -513,8 +656,13 @@ class TelegramSendMessageError(TelegramAPIError):
 # 🔄 RATE LIMIT EXCEPTIONS
 # ==============================================
 
+
 class RateLimitError(AppException):
     """استثناء عند تجاوز حد الطلبات."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -534,8 +682,13 @@ class RateLimitError(AppException):
 # 📦 SUBSCRIPTION EXCEPTIONS
 # ==============================================
 
+
 class SubscriptionError(AppException):
     """استثناء عند حدوث خطأ في الاشتراك."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -554,12 +707,19 @@ class SubscriptionError(AppException):
 class SubscriptionExpiredError(SubscriptionError):
     """استثناء عند انتهاء صلاحية الاشتراك."""
 
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(
         self,
         restaurant_id: Optional[int] = None,
         message: Optional[str] = None,
     ) -> None:
-        msg = message or f"الاشتراك منتهي الصلاحية{f' للمطعم {restaurant_id}' if restaurant_id else ''}"
+        msg = (
+            message
+            or f"الاشتراك منتهي الصلاحية{f' للمطعم {restaurant_id}' if restaurant_id else ''}"
+        )
         super().__init__(
             message=msg,
             details={"restaurant_id": restaurant_id} if restaurant_id else None,
@@ -571,8 +731,13 @@ class SubscriptionExpiredError(SubscriptionError):
 # 🏢 BRANCH EXCEPTIONS
 # ==============================================
 
+
 class BranchLimitExceededError(AppException):
     """استثناء عند تجاوز الحد الأقصى للفروع."""
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -580,13 +745,20 @@ class BranchLimitExceededError(AppException):
         max_branches: Optional[int] = None,
         message: Optional[str] = None,
     ) -> None:
-        msg = message or f"تجاوزت الحد الأقصى للفروع{f' ({max_branches})' if max_branches else ''}"
+        msg = (
+            message
+            or f"تجاوزت الحد الأقصى للفروع{f' ({max_branches})' if max_branches else ''}"
+        )
         super().__init__(
             message=msg,
             status_code=400,
-            details={
-                "restaurant_id": restaurant_id,
-                "max_branches": max_branches,
-            } if restaurant_id else None,
+            details=(
+                {
+                    "restaurant_id": restaurant_id,
+                    "max_branches": max_branches,
+                }
+                if restaurant_id
+                else None
+            ),
             error_code="BRANCH_LIMIT_EXCEEDED",
         )

@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🤖 AGENT SERVICE
 # منطق الأعمال للوكيل الذكي
 # ==============================================
+
+"""MoulAI operational module for agent service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -33,7 +38,6 @@ from app.schemas.agent.agent import (
     AgentConfigUpdate,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -46,20 +50,25 @@ AgentStats = Dict[str, Any]
 # 🤖 AGENT SERVICE
 # ==============================================
 
+
 class AgentService:
     """
     خدمة الوكيل الذكي - تدير منطق الأعمال للوكيل.
-    
+
     مسؤول عن:
         - إنشاء وتحديث وحذف الوكلاء
         - إدارة إعدادات الوكيل
         - إدارة حالة الوكيل
         - التحقق من صلاحيات الوكيل
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع الوكيل
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -67,7 +76,7 @@ class AgentService:
     ) -> None:
         """
         تهيئة خدمة الوكيل.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -90,14 +99,14 @@ class AgentService:
     ) -> AgentResponse:
         """
         الحصول على وكيل بالمعرف.
-        
+
         Args:
             agent_id: معرف الوكيل
             include_inactive: تضمين الوكلاء غير النشطين
-            
+
         Returns:
             AgentResponse: بيانات الوكيل
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
         """
@@ -135,14 +144,14 @@ class AgentService:
     ) -> AgentResponse:
         """
         الحصول على وكيل مع قنواته.
-        
+
         Args:
             agent_id: معرف الوكيل
             include_inactive: تضمين الوكلاء غير النشطين
-            
+
         Returns:
             AgentResponse: بيانات الوكيل مع القنوات
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
         """
@@ -182,13 +191,13 @@ class AgentService:
     ) -> AgentListResponse:
         """
         الحصول على وكلاء مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             only_active: جلب الوكلاء النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AgentListResponse: قائمة الوكلاء مع الإحصائيات
         """
@@ -231,11 +240,11 @@ class AgentService:
     ) -> Optional[AgentResponse]:
         """
         الحصول على وكيل بواسطة اسمه.
-        
+
         Args:
             restaurant_id: معرف المطعم
             name: اسم الوكيل
-            
+
         Returns:
             Optional[AgentResponse]: بيانات الوكيل أو None
         """
@@ -271,13 +280,13 @@ class AgentService:
     ) -> AgentListResponse:
         """
         الحصول على وكلاء حسب الحالة.
-        
+
         Args:
             restaurant_id: معرف المطعم (اختياري)
             is_active: حالة الوكيل
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AgentListResponse: قائمة الوكلاء مع الإحصائيات
         """
@@ -323,14 +332,14 @@ class AgentService:
     ) -> AgentListResponse:
         """
         البحث عن الوكلاء.
-        
+
         Args:
             query: نص البحث
             restaurant_id: معرف المطعم (اختياري)
             only_active: جلب الوكلاء النشطين فقط
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             AgentListResponse: قائمة الوكلاء مع الإحصائيات
         """
@@ -374,13 +383,13 @@ class AgentService:
     ) -> AgentResponse:
         """
         إنشاء وكيل جديد.
-        
+
         Args:
             agent_data: بيانات الوكيل
-            
+
         Returns:
             AgentResponse: بيانات الوكيل المنشأ
-            
+
         Raises:
             ConflictError: إذا كان الاسم موجوداً مسبقاً للمطعم
             ValidationError: إذا كانت البيانات غير صالحة
@@ -411,7 +420,9 @@ class AgentService:
             "description": agent_data.description,
             "language": agent_data.language or "ar",
             "tone": agent_data.tone or "professional",
-            "is_active": agent_data.is_active if agent_data.is_active is not None else True,
+            "is_active": (
+                agent_data.is_active if agent_data.is_active is not None else True
+            ),
             "config": agent_data.config or {},
             "ai_config": agent_data.ai_config or {},
         }
@@ -441,14 +452,14 @@ class AgentService:
     ) -> AgentResponse:
         """
         تحديث وكيل.
-        
+
         Args:
             agent_id: معرف الوكيل
             update_data: بيانات التحديث
-            
+
         Returns:
             AgentResponse: بيانات الوكيل المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
             ConflictError: إذا كان الاسم موجوداً مسبقاً
@@ -518,14 +529,14 @@ class AgentService:
     ) -> AgentResponse:
         """
         تحديث إعدادات الوكيل.
-        
+
         Args:
             agent_id: معرف الوكيل
             config_data: بيانات إعدادات الوكيل
-            
+
         Returns:
             AgentResponse: بيانات الوكيل المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
         """
@@ -586,13 +597,13 @@ class AgentService:
     ) -> AgentResponse:
         """
         تبديل حالة الوكيل (نشط/غير نشط).
-        
+
         Args:
             agent_id: معرف الوكيل
-            
+
         Returns:
             AgentResponse: بيانات الوكيل المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
         """
@@ -631,11 +642,11 @@ class AgentService:
     ) -> None:
         """
         حذف وكيل.
-        
+
         Args:
             agent_id: معرف الوكيل
             permanent: حذف نهائي
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الوكيل
         """
@@ -683,14 +694,14 @@ class AgentService:
     ) -> int:
         """
         تبديل حالة مجموعة من الوكلاء.
-        
+
         Args:
             agent_ids: قائمة معرفات الوكلاء
             is_active: الحالة الجديدة
-            
+
         Returns:
             int: عدد الوكلاء المحدثين
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على بعض الوكلاء
         """
@@ -733,10 +744,10 @@ class AgentService:
     ) -> AgentStats:
         """
         الحصول على إحصائيات الوكلاء لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             AgentStats: إحصائيات الوكلاء
         """

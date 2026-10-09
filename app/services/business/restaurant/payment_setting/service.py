@@ -10,6 +10,11 @@
 # منطق الأعمال لإعدادات الدفع للمطعم
 # ==============================================
 
+"""MoulAI operational module for service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -35,7 +40,6 @@ from app.schemas.restaurant.restaurant_payment_setting import (
     PaymentSettingsSummary,
 )
 
-
 # ==============================================
 # 🧩 CONSTANTS
 # ==============================================
@@ -57,21 +61,26 @@ SettingsSummary = Dict[str, Any]
 # 🏦 RESTAURANT PAYMENT SETTINGS SERVICE
 # ==============================================
 
+
 class RestaurantPaymentSettingsService:
     """
     خدمة إعدادات الدفع للمطعم - تدير منطق الأعمال لإعدادات الدفع.
-    
+
     مسؤولة عن:
         - إنشاء إعدادات الدفع
         - قراءة إعدادات الدفع
         - تحديث إعدادات الدفع
         - حذف إعدادات الدفع
         - جلب طرق الدفع المسموح بها
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع إعدادات الدفع
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -79,7 +88,7 @@ class RestaurantPaymentSettingsService:
     ) -> None:
         """
         تهيئة خدمة إعدادات الدفع للمطعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -101,13 +110,13 @@ class RestaurantPaymentSettingsService:
     ) -> RestaurantPaymentSettingResponse:
         """
         الحصول على إعدادات الدفع لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             RestaurantPaymentSettingResponse: بيانات إعدادات الدفع
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الإعدادات
         """
@@ -138,10 +147,10 @@ class RestaurantPaymentSettingsService:
     ) -> PaymentMethodsList:
         """
         الحصول على قائمة طرق الدفع المسموح بها لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             PaymentMethodsList: قائمة طرق الدفع المسموح بها
         """
@@ -166,11 +175,11 @@ class RestaurantPaymentSettingsService:
     ) -> bool:
         """
         التحقق من أن طريقة دفع معينة مسموح بها لمطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
             method: طريقة الدفع (cash, card, ccp, baridimob, stripe, paypal)
-            
+
         Returns:
             bool: True إذا كانت مسموحة، False إذا لم تكن
         """
@@ -212,10 +221,10 @@ class RestaurantPaymentSettingsService:
     ) -> PaymentSettingsSummary:
         """
         الحصول على ملخص إعدادات الدفع لمطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             PaymentSettingsSummary: ملخص إعدادات الدفع
         """
@@ -281,13 +290,13 @@ class RestaurantPaymentSettingsService:
     ) -> RestaurantPaymentSettingResponse:
         """
         إنشاء إعدادات دفع جديدة لمطعم.
-        
+
         Args:
             settings_data: بيانات إعدادات الدفع
-            
+
         Returns:
             RestaurantPaymentSettingResponse: بيانات إعدادات الدفع المنشأة
-            
+
         Raises:
             ConflictError: إذا كانت الإعدادات موجودة مسبقاً
         """
@@ -313,10 +322,26 @@ class RestaurantPaymentSettingsService:
             restaurant_id=settings_data.restaurant_id,
             allow_cash=settings_data.allow_cash,
             allow_card=settings_data.allow_card,
-            allow_ccp=settings_data.allow_ccp if settings_data.allow_ccp is not None else False,
-            allow_baridimob=settings_data.allow_baridimob if settings_data.allow_baridimob is not None else False,
-            allow_stripe=settings_data.allow_stripe if settings_data.allow_stripe is not None else False,
-            allow_paypal=settings_data.allow_paypal if settings_data.allow_paypal is not None else False,
+            allow_ccp=(
+                settings_data.allow_ccp
+                if settings_data.allow_ccp is not None
+                else False
+            ),
+            allow_baridimob=(
+                settings_data.allow_baridimob
+                if settings_data.allow_baridimob is not None
+                else False
+            ),
+            allow_stripe=(
+                settings_data.allow_stripe
+                if settings_data.allow_stripe is not None
+                else False
+            ),
+            allow_paypal=(
+                settings_data.allow_paypal
+                if settings_data.allow_paypal is not None
+                else False
+            ),
         )
 
         logger.info(
@@ -341,14 +366,14 @@ class RestaurantPaymentSettingsService:
     ) -> RestaurantPaymentSettingResponse:
         """
         تحديث إعدادات الدفع لمطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
             update_data: بيانات التحديث
-            
+
         Returns:
             RestaurantPaymentSettingResponse: بيانات إعدادات الدفع المحدثة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الإعدادات
         """

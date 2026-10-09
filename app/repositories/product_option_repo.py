@@ -10,6 +10,11 @@
 # عمليات قاعدة البيانات لخيارات المنتج باستخدام SQLAlchemy
 # ==============================================
 
+"""MoulAI operational module for product option repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -46,16 +51,20 @@ class ProductOptionRepository(
 ):
     """
     مستودع خيارات المنتج - يوفر عمليات خاصة بخيارات المنتج.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لخيارات المنتج
         - البحث والتصفية حسب مجموعة الخيارات
         - تحديث التوفر والسعر والترتيب
-    
+
     Attributes:
         model: نموذج ProductOption
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,7 +72,7 @@ class ProductOptionRepository(
     ) -> None:
         """
         تهيئة مستودع خيارات المنتج.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -87,13 +96,13 @@ class ProductOptionRepository(
     ) -> ProductOptionList:
         """
         الحصول على خيارات مجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_available: جلب الخيارات المتاحة فقط
-            
+
         Returns:
             قائمة خيارات المنتج
         """
@@ -105,10 +114,14 @@ class ProductOptionRepository(
             if only_available:
                 query = query.where(self.model.is_available == True)
 
-            query = query.order_by(
-                self.model.sort_order.asc(),
-                self.model.id.asc(),
-            ).offset(skip).limit(limit)
+            query = (
+                query.order_by(
+                    self.model.sort_order.asc(),
+                    self.model.id.asc(),
+                )
+                .offset(skip)
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
 
@@ -136,11 +149,11 @@ class ProductOptionRepository(
     ) -> Optional[ProductOption]:
         """
         الحصول على خيار بواسطة اسمه.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             name: اسم الخيار
-            
+
         Returns:
             كائن ProductOption أو None
         """
@@ -180,12 +193,12 @@ class ProductOptionRepository(
     ) -> ProductOptionList:
         """
         الحصول على الخيارات المتاحة لمجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة الخيارات المتاحة
         """
@@ -211,14 +224,14 @@ class ProductOptionRepository(
     ) -> ProductOptionList:
         """
         البحث عن خيارات المنتج.
-        
+
         Args:
             query: نص البحث
             group_id: معرف مجموعة الخيارات (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_available: جلب الخيارات المتاحة فقط
-            
+
         Returns:
             قائمة خيارات المنتج
         """
@@ -276,11 +289,11 @@ class ProductOptionRepository(
     ) -> Optional[ProductOption]:
         """
         تحديث ترتيب الخيار.
-        
+
         Args:
             option_id: معرف الخيار
             sort_order: الترتيب الجديد
-            
+
         Returns:
             كائن ProductOption المحدث أو None
         """
@@ -309,11 +322,11 @@ class ProductOptionRepository(
     ) -> Optional[ProductOption]:
         """
         تحديث حالة توفر الخيار.
-        
+
         Args:
             option_id: معرف الخيار
             is_available: حالة التوفر الجديدة
-            
+
         Returns:
             كائن ProductOption المحدث أو None
         """
@@ -342,11 +355,11 @@ class ProductOptionRepository(
     ) -> Optional[ProductOption]:
         """
         تحديث السعر الإضافي للخيار.
-        
+
         Args:
             option_id: معرف الخيار
             extra_price: السعر الإضافي الجديد
-            
+
         Returns:
             كائن ProductOption المحدث أو None
         """
@@ -375,11 +388,11 @@ class ProductOptionRepository(
     ) -> Optional[ProductOption]:
         """
         تحديث اسم الخيار.
-        
+
         Args:
             option_id: معرف الخيار
             name: الاسم الجديد
-            
+
         Returns:
             كائن ProductOption المحدث أو None
         """
@@ -407,10 +420,10 @@ class ProductOptionRepository(
     ) -> Optional[ProductOption]:
         """
         تفعيل الخيار.
-        
+
         Args:
             option_id: معرف الخيار
-            
+
         Returns:
             كائن ProductOption المحدث أو None
         """
@@ -435,10 +448,10 @@ class ProductOptionRepository(
     ) -> Optional[ProductOption]:
         """
         إلغاء تفعيل الخيار.
-        
+
         Args:
             option_id: معرف الخيار
-            
+
         Returns:
             كائن ProductOption المحدث أو None
         """
@@ -468,11 +481,11 @@ class ProductOptionRepository(
     ) -> int:
         """
         حساب عدد خيارات مجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
             only_available: حساب الخيارات المتاحة فقط
-            
+
         Returns:
             عدد الخيارات
         """
@@ -494,10 +507,10 @@ class ProductOptionRepository(
     ) -> int:
         """
         حساب عدد الخيارات المتاحة لمجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
-            
+
         Returns:
             عدد الخيارات المتاحة
         """
@@ -521,10 +534,10 @@ class ProductOptionRepository(
     ) -> int:
         """
         حذف جميع خيارات مجموعة معينة.
-        
+
         Args:
             group_id: معرف مجموعة الخيارات
-            
+
         Returns:
             عدد الخيارات المحذوفة
         """
@@ -569,6 +582,7 @@ class ProductOptionRepository(
 # CREATE PRODUCT OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def create_product_option(
     *,
     group_id: int,
@@ -580,7 +594,7 @@ async def create_product_option(
 ) -> int:
     """
     إنشاء خيار منتج جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         name: اسم الخيار
@@ -588,7 +602,7 @@ async def create_product_option(
         is_available: حالة التوفر
         sort_order: ترتيب العرض
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الخيار
     """
@@ -619,6 +633,7 @@ async def create_product_option(
 # GET PRODUCT OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def get_product_option(
     *,
     option_id: int,
@@ -626,11 +641,11 @@ async def get_product_option(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على خيار منتج بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الخيار أو None
     """
@@ -656,6 +671,7 @@ async def get_product_option(
 # GET GROUP OPTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_group_options(
     *,
     group_id: int,
@@ -666,14 +682,14 @@ async def get_group_options(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على خيارات مجموعة معينة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         group_id: معرف مجموعة الخيارات
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         only_available: جلب الخيارات المتاحة فقط
-        
+
     Returns:
         قائمة خيارات المنتج
     """
@@ -689,15 +705,17 @@ async def get_group_options(
     result = []
 
     for option in options:
-        result.append({
-            "id": option.id,
-            "group_id": option.group_id,
-            "name": option.name,
-            "extra_price": option.extra_price,
-            "is_available": option.is_available,
-            "sort_order": option.sort_order,
-            "created_at": option.created_at,
-        })
+        result.append(
+            {
+                "id": option.id,
+                "group_id": option.group_id,
+                "name": option.name,
+                "extra_price": option.extra_price,
+                "is_available": option.is_available,
+                "sort_order": option.sort_order,
+                "created_at": option.created_at,
+            }
+        )
 
     return result
 
@@ -705,6 +723,7 @@ async def get_group_options(
 # ==============================================
 # UPDATE OPTION AVAILABILITY (COMPATIBILITY)
 # ==============================================
+
 
 async def update_option_availability(
     *,
@@ -714,7 +733,7 @@ async def update_option_availability(
 ) -> None:
     """
     تحديث حالة توفر الخيار (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         is_available: حالة التوفر الجديدة
@@ -740,6 +759,7 @@ async def update_option_availability(
 # DELETE PRODUCT OPTION (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_product_option(
     *,
     option_id: int,
@@ -747,7 +767,7 @@ async def delete_product_option(
 ) -> None:
     """
     حذف خيار منتج (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         option_id: معرف الخيار
         session: جلسة قاعدة البيانات غير المتزامنة

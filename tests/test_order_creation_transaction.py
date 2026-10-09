@@ -1,3 +1,20 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# TEST MODULE - TESTS / TEST ORDER CREATION TRANSACTION
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test order creation transaction.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from types import SimpleNamespace
 
 import pytest
@@ -7,12 +24,24 @@ from app.services.business.orders import create as order_creation
 
 
 class FakeTransaction:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self):
         self.committed = False
         self.rolled_back = False
 
+    # ==============================================
+    #   AENTER
+    # ==============================================
+
     async def __aenter__(self):
         return self
+
+    # ==============================================
+    #   AEXIT
+    # ==============================================
 
     async def __aexit__(self, exc_type, exc, traceback):
         self.committed = exc_type is None
@@ -21,29 +50,62 @@ class FakeTransaction:
 
 
 class FakeSession:
+    # ==============================================
+    #   INIT
+    # ==============================================
+
     def __init__(self, *, active_transaction=False):
         self.info = {}
         self.active_transaction = active_transaction
         self.transaction = FakeTransaction()
         self.outer_commits = 0
 
+    # ==============================================
+    # GET TRANSACTION
+    # ==============================================
+
     def get_transaction(self):
         return SimpleNamespace(sync_transaction=SimpleNamespace(origin=None))
+
+    # ==============================================
+    # FLUSH
+    # ==============================================
 
     async def flush(self):
         pass
 
+    # ==============================================
+    # IN TRANSACTION
+    # ==============================================
+
     def in_transaction(self):
         return self.active_transaction
+
+    # ==============================================
+    # BEGIN
+    # ==============================================
 
     def begin(self):
         return self.transaction
 
+    # ==============================================
+    # BEGIN NESTED
+    # ==============================================
+
     def begin_nested(self):
         return self.transaction
 
+    # ==============================================
+    # COMMIT
+    # ==============================================
+
     async def commit(self):
         self.outer_commits += 1
+
+
+# ==============================================
+# ORDER ARGUMENTS
+# ==============================================
 
 
 def order_arguments(session):
@@ -68,6 +130,11 @@ def order_arguments(session):
     }
 
 
+# ==============================================
+# TEST ORDER CREATION USES ONE TRANSACTION AND RESTORES SESSION MODE
+# ==============================================
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("active_transaction", [False, True])
 async def test_order_creation_uses_one_transaction_and_restores_session_mode(
@@ -75,6 +142,10 @@ async def test_order_creation_uses_one_transaction_and_restores_session_mode(
     active_transaction,
 ):
     session = FakeSession(active_transaction=active_transaction)
+
+    # ==============================================
+    # CREATE ORDER
+    # ==============================================
 
     async def create_order(**kwargs):
         assert kwargs["session"].info["defer_repository_commit"] is True
@@ -97,10 +168,21 @@ async def test_order_creation_uses_one_transaction_and_restores_session_mode(
     assert session.info == {}
 
 
+# ==============================================
+# TEST ORDER CREATION ROLLS BACK AND RESTORES EXISTING SESSION MODE
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_order_creation_rolls_back_and_restores_existing_session_mode(monkeypatch):
+async def test_order_creation_rolls_back_and_restores_existing_session_mode(
+    monkeypatch,
+):
     session = FakeSession(active_transaction=True)
     session.info["defer_repository_commit"] = False
+
+    # ==============================================
+    # FAIL ORDER CREATION
+    # ==============================================
 
     async def fail_order_creation(**kwargs):
         raise RuntimeError("write failed")
@@ -121,6 +203,11 @@ async def test_order_creation_rolls_back_and_restores_existing_session_mode(monk
     assert session.info["defer_repository_commit"] is False
 
 
+# ==============================================
+# TEST RESTAURANT ORDER CREATION GENERATES NUMBER AND IS TRANSACTIONAL
+# ==============================================
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("active_transaction", [False, True])
 async def test_restaurant_order_creation_generates_number_and_is_transactional(
@@ -130,8 +217,16 @@ async def test_restaurant_order_creation_generates_number_and_is_transactional(
     session = FakeSession(active_transaction=active_transaction)
 
     class Result:
+        # ==============================================
+        # SCALAR ONE OR NONE
+        # ==============================================
+
         def scalar_one_or_none(self):
             return object()
+
+    # ==============================================
+    # EXECUTE
+    # ==============================================
 
     async def execute(statement):
         return Result()
@@ -139,25 +234,49 @@ async def test_restaurant_order_creation_generates_number_and_is_transactional(
     session.execute = execute
 
     class CounterRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             self.session = session
+
+        # ==============================================
+        # GET BY RESTAURANT ID
+        # ==============================================
 
         async def get_by_restaurant_id(self, *, restaurant_id):
             return None
 
+        # ==============================================
+        # CREATE COUNTER
+        # ==============================================
+
         async def create_counter(self, *, restaurant_id):
             return None
 
+        # ==============================================
+        # GENERATE NEXT ORDER NUMBER
+        # ==============================================
+
         async def generate_next_order_number(self, *, restaurant_id):
             return f"RST{restaurant_id}-000001"
+
+    # ==============================================
+    # CREATE ORDER
+    # ==============================================
 
     async def create_order(**kwargs):
         assert kwargs["order_number"] == "RST3-000001"
         assert kwargs["session"].info["defer_repository_commit"] is True
         return 72
 
-    monkeypatch.setattr(order_creation, "RestaurantOrderCountersRepository", CounterRepository)
-    monkeypatch.setattr(order_creation, "_create_restaurant_order_in_transaction", create_order)
+    monkeypatch.setattr(
+        order_creation, "RestaurantOrderCountersRepository", CounterRepository
+    )
+    monkeypatch.setattr(
+        order_creation, "_create_restaurant_order_in_transaction", create_order
+    )
 
     order_id = await order_creation.create_restaurant_order(
         restaurant_id=3,
@@ -179,70 +298,148 @@ async def test_restaurant_order_creation_generates_number_and_is_transactional(
     assert session.info == {}
 
 
+# ==============================================
+# TEST CREATE ORDER WITH ITEMS WRITES ORDER ITEM HISTORY AND METRICS ATOMICALLY
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_create_order_with_items_writes_order_item_history_and_metrics_atomically(monkeypatch):
+async def test_create_order_with_items_writes_order_item_history_and_metrics_atomically(
+    monkeypatch,
+):
     session = FakeSession()
     session.statements = []
+
+    # ==============================================
+    # EXECUTE
+    # ==============================================
 
     async def execute(statement):
         session.statements.append(statement)
         return await _restaurant_result()
 
     session.execute = execute
-    writes = {"orders": [], "items": [], "options": [], "history": [], "metrics": [], "usage": []}
+    writes = {
+        "orders": [],
+        "items": [],
+        "options": [],
+        "history": [],
+        "metrics": [],
+        "usage": [],
+    }
 
     class OrdersRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # CREATE
+        # ==============================================
 
         async def create(self, *, data):
             writes["orders"].append(data.copy())
             return SimpleNamespace(id=91, order_number=data["order_number"])
 
     class ItemsRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # CREATE
+        # ==============================================
 
         async def create(self, *, data):
             writes["items"].append(data.copy())
             return SimpleNamespace(id=101)
 
     class OptionsRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # CREATE
+        # ==============================================
 
         async def create(self, *, data):
             writes["options"].append(data.copy())
             return data
 
     class HistoryRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # CREATE
+        # ==============================================
 
         async def create(self, *, data):
             writes["history"].append(data.copy())
             return data
 
     class CounterRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
 
+        # ==============================================
+        # GET BY RESTAURANT ID
+        # ==============================================
+
         async def get_by_restaurant_id(self, *, restaurant_id):
             return SimpleNamespace(last_number=0)
+
+        # ==============================================
+        # GENERATE NEXT ORDER NUMBER
+        # ==============================================
 
         async def generate_next_order_number(self, *, restaurant_id):
             return "RST3-000001"
 
     class MetricsRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # GET BY RESTAURANT ID
+        # ==============================================
 
         async def get_by_restaurant_id(self, *, restaurant_id):
             return None
 
+        # ==============================================
+        # CREATE
+        # ==============================================
+
         async def create(self, *, data):
             writes["metrics"].append(data.copy())
             return data
+
+    # ==============================================
+    # INCREASE USAGE
+    # ==============================================
 
     async def increase_usage(**kwargs):
         writes["usage"].append(kwargs)
@@ -250,9 +447,15 @@ async def test_create_order_with_items_writes_order_item_history_and_metrics_ato
     monkeypatch.setattr(order_creation, "OrdersRepository", OrdersRepository)
     monkeypatch.setattr(order_creation, "OrderItemsRepository", ItemsRepository)
     monkeypatch.setattr(order_creation, "OrderItemOptionsRepository", OptionsRepository)
-    monkeypatch.setattr(order_creation, "OrderStatusHistoryRepository", HistoryRepository)
-    monkeypatch.setattr(order_creation, "RestaurantOrderCountersRepository", CounterRepository)
-    monkeypatch.setattr(order_creation, "RestaurantMetricsRepository", MetricsRepository)
+    monkeypatch.setattr(
+        order_creation, "OrderStatusHistoryRepository", HistoryRepository
+    )
+    monkeypatch.setattr(
+        order_creation, "RestaurantOrderCountersRepository", CounterRepository
+    )
+    monkeypatch.setattr(
+        order_creation, "RestaurantMetricsRepository", MetricsRepository
+    )
     monkeypatch.setattr(order_creation, "increase_usage", increase_usage)
 
     order_id = await order_creation.create_order_with_items(
@@ -271,18 +474,22 @@ async def test_create_order_with_items_writes_order_item_history_and_metrics_ato
         tax_amount=0.0,
         delivery_amount=0.0,
         total_amount=25.0,
-        items=[{
-            "product_id": 7,
-            "product_name": "Pizza",
-            "unit_price": 25.0,
-            "quantity": 1,
-            "total_price": 25.0,
-            "options": [{
-                "option_group_name": "Crust",
-                "option_name": "Thin",
-                "additional_price": 0.0,
-            }],
-        }],
+        items=[
+            {
+                "product_id": 7,
+                "product_name": "Pizza",
+                "unit_price": 25.0,
+                "quantity": 1,
+                "total_price": 25.0,
+                "options": [
+                    {
+                        "option_group_name": "Crust",
+                        "option_name": "Thin",
+                        "additional_price": 0.0,
+                    }
+                ],
+            }
+        ],
         session=session,
     )
 
@@ -301,32 +508,61 @@ async def test_create_order_with_items_writes_order_item_history_and_metrics_ato
     assert 3 in restaurant_query.compile().params.values()
 
 
+# ==============================================
+# TEST CREATE ORDER WITH ITEMS ROLLS BACK PARTIAL ORDER WHEN ITEM IS INVALID
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_create_order_with_items_rolls_back_partial_order_when_item_is_invalid(monkeypatch):
+async def test_create_order_with_items_rolls_back_partial_order_when_item_is_invalid(
+    monkeypatch,
+):
     session = FakeSession()
     session.execute = lambda statement: _restaurant_result()
     created_orders = []
 
     class OrdersRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
+
+        # ==============================================
+        # CREATE
+        # ==============================================
 
         async def create(self, *, data):
             created_orders.append(data)
             return SimpleNamespace(id=91)
 
     class CounterRepository:
+        # ==============================================
+        #   INIT
+        # ==============================================
+
         def __init__(self, *, session):
             pass
 
+        # ==============================================
+        # GET BY RESTAURANT ID
+        # ==============================================
+
         async def get_by_restaurant_id(self, *, restaurant_id):
             return SimpleNamespace(last_number=0)
+
+        # ==============================================
+        # GENERATE NEXT ORDER NUMBER
+        # ==============================================
 
         async def generate_next_order_number(self, *, restaurant_id):
             return "RST3-000001"
 
     monkeypatch.setattr(order_creation, "OrdersRepository", OrdersRepository)
-    monkeypatch.setattr(order_creation, "RestaurantOrderCountersRepository", CounterRepository)
+    monkeypatch.setattr(
+        order_creation, "RestaurantOrderCountersRepository", CounterRepository
+    )
 
     with pytest.raises(ValidationError, match="معرف المنتج مطلوب"):
         await order_creation.create_order_with_items(
@@ -353,32 +589,65 @@ async def test_create_order_with_items_rolls_back_partial_order_when_item_is_inv
     assert session.info == {}
 
 
+# ==============================================
+#  RESTAURANT RESULT
+# ==============================================
+
+
 async def _restaurant_result():
     class Result:
+        # ==============================================
+        # SCALAR ONE OR NONE
+        # ==============================================
+
         def scalar_one_or_none(self):
             return SimpleNamespace(id=3)
 
     return Result()
 
 
+# ==============================================
+# CATALOG FOR AGGREGATE UNIT TESTS
+# ==============================================
+
+
 @pytest.fixture(autouse=True)
 def catalog_for_aggregate_unit_tests(monkeypatch):
+    # ==============================================
+    # CATALOG ITEM
+    # ==============================================
+
     async def catalog_item(*, payload, **kwargs):
         if not payload.get("product_id"):
-            raise ValidationError(message="\u0645\u0639\u0631\u0641 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u0637\u0644\u0648\u0628")
+            raise ValidationError(
+                message="\u0645\u0639\u0631\u0641 \u0627\u0644\u0645\u0646\u062a\u062c \u0645\u0637\u0644\u0648\u0628"
+            )
         return payload.copy()
+
     monkeypatch.setattr(order_creation, "catalog_item", catalog_item)
+
+
+# ==============================================
+# ITEM WORKFLOW FOR AGGREGATE UNIT TESTS
+# ==============================================
 
 
 @pytest.fixture(autouse=True)
 def item_workflow_for_aggregate_unit_tests(monkeypatch):
+    # ==============================================
+    # ADD ITEM
+    # ==============================================
+
     async def add_item(*, order_id, session, **payload):
         values = dict(payload)
         options = values.pop("options", [])
         item = await order_creation.OrderItemsRepository(session=session).create(
-            data=dict(values, order_id=order_id))
+            data=dict(values, order_id=order_id)
+        )
         for option in options:
             await order_creation.OrderItemOptionsRepository(session=session).create(
-                data=dict(option, order_item_id=item.id))
+                data=dict(option, order_item_id=item.id)
+            )
         return item
+
     monkeypatch.setattr(order_creation, "add_item_to_order", add_item)

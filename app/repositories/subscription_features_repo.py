@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for subscription features repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -61,6 +66,10 @@ class SubscriptionFeatureRepository(
         model: نموذج SubscriptionFeature
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -444,6 +453,7 @@ class SubscriptionFeatureRepository(
 # CREATE SUBSCRIPTION FEATURE (COMPATIBILITY)
 # ==============================================
 
+
 async def create_subscription_feature(
     *,
     subscription_id: int,
@@ -475,6 +485,7 @@ async def create_subscription_feature(
 # GET SUBSCRIPTION FEATURES (COMPATIBILITY)
 # ==============================================
 
+
 async def get_subscription_features(
     *,
     subscription_id: int,
@@ -501,14 +512,16 @@ async def get_subscription_features(
     for sf in subscription_features:
         feature = sf.feature
 
-        result.append({
-            "id": sf.id,
-            "subscription_id": sf.subscription_id,
-            "feature_id": sf.feature_id,
-            "feature_code": feature.code if feature else None,
-            "feature_name": feature.name if feature else None,
-            "feature_description": feature.description if feature else None,
-        })
+        result.append(
+            {
+                "id": sf.id,
+                "subscription_id": sf.subscription_id,
+                "feature_id": sf.feature_id,
+                "feature_code": feature.code if feature else None,
+                "feature_name": feature.name if feature else None,
+                "feature_description": feature.description if feature else None,
+            }
+        )
 
     return result
 
@@ -516,6 +529,7 @@ async def get_subscription_features(
 # ==============================================
 # DELETE SUBSCRIPTION FEATURE (COMPATIBILITY)
 # ==============================================
+
 
 async def delete_subscription_feature(
     *,
@@ -542,6 +556,7 @@ async def delete_subscription_feature(
 # ==============================================
 # SUBSCRIPTION HAS FEATURE (COMPATIBILITY)
 # ==============================================
+
 
 async def subscription_has_feature(
     *,

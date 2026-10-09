@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 👑 ADMIN SERVICES
 # خدمات المديرين
 # ==============================================
+
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 # Admin Service - CRUD الأساسي
 from app.services.business.admin.admin_service import (
@@ -33,7 +38,6 @@ from app.services.business.admin.admin_session_service import (
     logout_all_devices,
 )
 
-
 # ==============================================
 # 📤 EXPORTS
 # ==============================================
@@ -44,12 +48,10 @@ __all__ = [
     "is_admin",
     "count_admins",
     "get_admin_by_chat_id",
-    
     # Admin Log Service
     "AdminLogService",
     "log_admin_action",
     "audit_resource_access",
-    
     # Admin Session Service
     "AdminSessionService",
     "create_admin_session",

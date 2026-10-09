@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها للفروع
 # ==============================================
 
+"""MoulAI operational module for branch.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     Field,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -38,12 +42,13 @@ BranchUpdateData = Dict[str, Any]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class BranchBase(BaseModel):
     """
     المخطط الأساسي للفرع.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات الفرع.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         name: اسم الفرع
@@ -53,6 +58,7 @@ class BranchBase(BaseModel):
         lng: خط الطول
         is_active: حالة النشاط
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -97,10 +103,11 @@ class BranchBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class BranchCreate(BaseModel):
     """
     مخطط إنشاء فرع جديد.
-    
+
     Attributes:
         name: اسم الفرع
         phone: رقم الهاتف (اختياري)
@@ -108,6 +115,7 @@ class BranchCreate(BaseModel):
         lat: خط العرض (اختياري)
         lng: خط الطول (اختياري)
     """
+
     name: str = Field(
         ...,
         max_length=255,
@@ -142,10 +150,11 @@ class BranchCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class BranchUpdate(BaseModel):
     """
     مخطط تحديث الفرع - جميع الحقول اختيارية.
-    
+
     Attributes:
         name: اسم الفرع
         phone: رقم الهاتف
@@ -154,6 +163,7 @@ class BranchUpdate(BaseModel):
         lng: خط الطول
         is_active: حالة النشاط
     """
+
     name: Optional[str] = Field(
         None,
         max_length=255,
@@ -193,13 +203,15 @@ class BranchUpdate(BaseModel):
 # 📤 STATUS UPDATE SCHEMA
 # ==============================================
 
+
 class BranchStatusUpdate(BaseModel):
     """
     مخطط تحديث حالة الفرع.
-    
+
     Attributes:
         is_active: حالة النشاط الجديدة
     """
+
     is_active: bool = Field(
         ...,
         description="حالة النشاط الجديدة",
@@ -211,15 +223,17 @@ class BranchStatusUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class BranchResponse(BranchBase):
     """
     مخطط استجابة الفرع - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف الفرع
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -241,18 +255,20 @@ class BranchResponse(BranchBase):
 # 📋 BRANCH LIST RESPONSE
 # ==============================================
 
+
 class BranchListResponse(BaseModel):
     """
     مخطط استجابة قائمة الفروع.
-    
+
     يحتوي على قائمة الفروع مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة الفروع
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[BranchResponse] = Field(
@@ -280,12 +296,13 @@ class BranchListResponse(BaseModel):
 # 📊 BRANCH SUMMARY
 # ==============================================
 
+
 class BranchSummary(BaseModel):
     """
     مخطط ملخص الفروع.
-    
+
     يحتوي على إحصائيات موجزة عن الفروع.
-    
+
     Attributes:
         total_branches: إجمالي عدد الفروع
         active_branches: عدد الفروع النشطة
@@ -293,6 +310,7 @@ class BranchSummary(BaseModel):
         total_cost: التكلفة الإجمالية للفروع
         branches_per_wilaya: توزيع الفروع حسب الولاية
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_branches: int = Field(

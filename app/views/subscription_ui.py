@@ -1,7 +1,19 @@
 # ==============================================
-# 💳 SUBSCRIPTION UI
-# عرض الباقات والأسعار
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / VIEWS / SUBSCRIPTION UI
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for subscription ui.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.views.ui import button
@@ -11,6 +23,12 @@ from app.views.ui import button
 # عرض جميع الباقات المتاحة
 # ==============================================
 
+
+# ==============================================
+# SUBSCRIPTION UI
+# ==============================================
+
+
 async def subscription_ui(
     *,
     plans: list[dict],
@@ -18,11 +36,11 @@ async def subscription_ui(
 ) -> dict:
     """
     بناء واجهة عرض الباقات والأسعار
-    
+
     Args:
         plans: قائمة الباقات المتاحة
         current_plan_id: معرف الباقة الحالية (إن وجدت)
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -38,10 +56,7 @@ async def subscription_ui(
     # 📝 بناء الرسالة
     # ==========================================
 
-    text = (
-        "💳 **باقات الاشتراك**\n\n"
-        "اختر الباقة المناسبة لمطعمك:\n\n"
-    )
+    text = "💳 **باقات الاشتراك**\n\n" "اختر الباقة المناسبة لمطعمك:\n\n"
 
     # ==========================================
     # 🔘 الأزرار
@@ -52,13 +67,12 @@ async def subscription_ui(
     for plan in plans:
         plan_id = plan.get("id")
         plan_name = plan.get("name", "باقة")
-        plan_code = plan.get("code", "")
         base_price = plan.get("base_price", 0)
         discount = plan.get("plan_discount_percent", 0)
         description = plan.get("description", "")
 
         # تحديد ما إذا كانت الباقة هي الحالية
-        is_current = (plan_id == current_plan_id)
+        is_current = plan_id == current_plan_id
 
         # علامة الباقة الحالية
         current_mark = " ✅ (حالية)" if is_current else ""
@@ -120,6 +134,12 @@ async def subscription_ui(
 # عرض تفاصيل باقة معينة
 # ==============================================
 
+
+# ==============================================
+# SUBSCRIPTION PLAN DETAILS UI
+# ==============================================
+
+
 async def subscription_plan_details_ui(
     *,
     plan: dict,
@@ -127,11 +147,11 @@ async def subscription_plan_details_ui(
 ) -> dict:
     """
     بناء واجهة عرض تفاصيل باقة معينة
-    
+
     Args:
         plan: بيانات الباقة
         features: قائمة الميزات المتضمنة
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -148,10 +168,11 @@ async def subscription_plan_details_ui(
     description = plan.get("description", "")
 
     # بناء قائمة الميزات
-    features_text = "\n".join(
-        f"✅ {f.get('feature_name', 'ميزة')}"
-        for f in features
-    ) if features else "⚠️ لا توجد ميزات محددة."
+    features_text = (
+        "\n".join(f"✅ {f.get('feature_name', 'ميزة')}" for f in features)
+        if features
+        else "⚠️ لا توجد ميزات محددة."
+    )
 
     text = (
         f"💳 **{plan_name}**\n\n"

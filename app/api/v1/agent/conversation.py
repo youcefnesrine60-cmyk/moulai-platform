@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,6 +10,11 @@
 # نقاط نهاية API للمحادثات (CRUD)
 # تدير عمليات إنشاء واستعراض وتحديث وحذف المحادثات
 # ==============================================
+
+"""MoulAI operational module for conversation.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional, Any, Dict
 
@@ -26,7 +31,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.logger import logger
 from app.core.exceptions import (
-    ConflictError,
     NotFoundError,
     ValidationError,
 )
@@ -38,7 +42,6 @@ from app.schemas.agent import (
     ConversationStatistics,
 )
 from app.services.business.agent.conversation_service import ConversationService
-
 
 # ==============================================
 # 🏗️ ROUTER
@@ -54,15 +57,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_conversation_service(
     session: AsyncSession = Depends(get_db),
 ) -> ConversationService:
     """
     الحصول على خدمة المحادثات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         ConversationService: مثيل من ConversationService
     """
@@ -76,6 +80,7 @@ async def get_conversation_service(
 # ==============================================
 # CREATE CONVERSATION
 # ==============================================
+
 
 @router.post(
     "/",
@@ -91,13 +96,13 @@ async def create_conversation(
 ) -> ConversationResponse:
     """
     إنشاء محادثة جديدة.
-    
+
     Args:
         data: بيانات المحادثة
-        
+
     Returns:
         ConversationResponse: المحادثة المنشأة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الوكيل أو القناة
     """
@@ -158,6 +163,7 @@ async def create_conversation(
 # GET CONVERSATION BY ID
 # ==============================================
 
+
 @router.get(
     "/{conversation_id}",
     response_model=ConversationResponse,
@@ -172,14 +178,14 @@ async def get_conversation_by_id(
 ) -> ConversationResponse:
     """
     الحصول على محادثة بالمعرف.
-    
+
     Args:
         conversation_id: معرف المحادثة
         include_inactive: تضمين المحادثات غير النشطة
-        
+
     Returns:
         ConversationResponse: المحادثة المطلوبة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -228,6 +234,7 @@ async def get_conversation_by_id(
 # GET CONVERSATION WITH MESSAGES
 # ==============================================
 
+
 @router.get(
     "/{conversation_id}/with-messages",
     response_model=ConversationResponse,
@@ -242,14 +249,14 @@ async def get_conversation_with_messages(
 ) -> ConversationResponse:
     """
     الحصول على محادثة مع رسائلها.
-    
+
     Args:
         conversation_id: معرف المحادثة
         include_inactive: تضمين المحادثات غير النشطة
-        
+
     Returns:
         ConversationResponse: المحادثة المطلوبة مع الرسائل
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -298,6 +305,7 @@ async def get_conversation_with_messages(
 # GET CONVERSATION BY USER
 # ==============================================
 
+
 @router.get(
     "/user",
     response_model=Optional[ConversationResponse],
@@ -313,12 +321,12 @@ async def get_conversation_by_user(
 ) -> Optional[ConversationResponse]:
     """
     الحصول على محادثة حسب معرف المستخدم.
-    
+
     Args:
         agent_id: معرف الوكيل
         user_id: معرف المستخدم
         only_active: جلب المحادثة النشطة فقط
-        
+
     Returns:
         Optional[ConversationResponse]: المحادثة المطلوبة أو None
     """
@@ -357,6 +365,7 @@ async def get_conversation_by_user(
 # LIST CONVERSATIONS BY AGENT
 # ==============================================
 
+
 @router.get(
     "/agent/{agent_id}",
     response_model=ConversationListResponse,
@@ -373,13 +382,13 @@ async def list_conversations_by_agent(
 ) -> ConversationListResponse:
     """
     الحصول على قائمة محادثات وكيل معين.
-    
+
     Args:
         agent_id: معرف الوكيل
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         only_active: جلب المحادثات النشطة فقط
-        
+
     Returns:
         ConversationListResponse: قائمة المحادثات مع الإحصائيات
     """
@@ -431,6 +440,7 @@ async def list_conversations_by_agent(
 # LIST CONVERSATIONS BY STATUS
 # ==============================================
 
+
 @router.get(
     "/status/{status}",
     response_model=ConversationListResponse,
@@ -447,13 +457,13 @@ async def list_conversations_by_status(
 ) -> ConversationListResponse:
     """
     الحصول على قائمة المحادثات حسب الحالة.
-    
+
     Args:
         agent_id: معرف الوكيل
         status: حالة المحادثة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         ConversationListResponse: قائمة المحادثات مع الإحصائيات
     """
@@ -507,6 +517,7 @@ async def list_conversations_by_status(
 # SEARCH CONVERSATIONS
 # ==============================================
 
+
 @router.get(
     "/search",
     response_model=ConversationListResponse,
@@ -524,14 +535,14 @@ async def search_conversations(
 ) -> ConversationListResponse:
     """
     البحث عن المحادثات.
-    
+
     Args:
         query: نص البحث
         agent_id: معرف الوكيل (اختياري)
         only_active: جلب المحادثات النشطة فقط
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         ConversationListResponse: قائمة المحادثات مع الإحصائيات
     """
@@ -572,6 +583,7 @@ async def search_conversations(
 # UPDATE CONVERSATION
 # ==============================================
 
+
 @router.patch(
     "/{conversation_id}",
     response_model=ConversationResponse,
@@ -586,14 +598,14 @@ async def update_conversation(
 ) -> ConversationResponse:
     """
     تحديث محادثة موجودة.
-    
+
     Args:
         conversation_id: معرف المحادثة
         data: بيانات التحديث
-        
+
     Returns:
         ConversationResponse: المحادثة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -654,6 +666,7 @@ async def update_conversation(
 # UPDATE CONVERSATION CONTEXT
 # ==============================================
 
+
 @router.patch(
     "/{conversation_id}/context",
     response_model=ConversationResponse,
@@ -668,14 +681,14 @@ async def update_conversation_context(
 ) -> ConversationResponse:
     """
     تحديث سياق المحادثة.
-    
+
     Args:
         conversation_id: معرف المحادثة
         context: السياق الجديد
-        
+
     Returns:
         ConversationResponse: المحادثة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -723,6 +736,7 @@ async def update_conversation_context(
 # UPDATE CONVERSATION STATUS
 # ==============================================
 
+
 @router.patch(
     "/{conversation_id}/status",
     response_model=ConversationResponse,
@@ -737,14 +751,14 @@ async def update_conversation_status(
 ) -> ConversationResponse:
     """
     تحديث حالة المحادثة.
-    
+
     Args:
         conversation_id: معرف المحادثة
         status: الحالة الجديدة
-        
+
     Returns:
         ConversationResponse: المحادثة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -807,6 +821,7 @@ async def update_conversation_status(
 # TOGGLE CONVERSATION STATUS
 # ==============================================
 
+
 @router.patch(
     "/{conversation_id}/toggle-status",
     response_model=ConversationResponse,
@@ -820,13 +835,13 @@ async def toggle_conversation_status(
 ) -> ConversationResponse:
     """
     تبديل حالة المحادثة (نشط/غير نشط).
-    
+
     Args:
         conversation_id: معرف المحادثة
-        
+
     Returns:
         ConversationResponse: المحادثة المحدثة
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -871,6 +886,7 @@ async def toggle_conversation_status(
 # DELETE CONVERSATION
 # ==============================================
 
+
 @router.delete(
     "/{conversation_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -885,11 +901,11 @@ async def delete_conversation(
 ) -> None:
     """
     حذف محادثة.
-    
+
     Args:
         conversation_id: معرف المحادثة
         permanent: حذف نهائي
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المحادثة
     """
@@ -957,6 +973,7 @@ async def delete_conversation(
 # GET CONVERSATION STATISTICS
 # ==============================================
 
+
 @router.get(
     "/statistics/{agent_id}",
     response_model=ConversationStatistics,
@@ -970,10 +987,10 @@ async def get_conversation_statistics(
 ) -> ConversationStatistics:
     """
     الحصول على إحصائيات المحادثات لوكيل معين.
-    
+
     Args:
         agent_id: معرف الوكيل
-        
+
     Returns:
         ConversationStatistics: إحصائيات المحادثات
     """

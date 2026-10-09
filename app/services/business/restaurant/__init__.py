@@ -9,13 +9,20 @@
 # 🍽️ RESTAURANT SERVICES - PACKAGE INIT
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 # ==============================================
 # 📦 IMPORT SERVICES
 # ==============================================
 
 # ---------- Restaurants ----------
 from app.services.business.restaurant.restaurants.service import RestaurantService
-from app.services.business.restaurant.restaurants.handlers import RestaurantEventHandlers
+from app.services.business.restaurant.restaurants.handlers import (
+    RestaurantEventHandlers,
+)
 from app.services.business.restaurant.restaurants.validators import (
     MAX_RESTAURANTS_PER_OWNER,
     VALID_RESTAURANT_TYPES,
@@ -51,8 +58,12 @@ from app.services.business.restaurant.metrics.compat import (
 )
 
 # ---------- Order Counter ----------
-from app.services.business.restaurant.order_counter.service import RestaurantOrderCounterService
-from app.services.business.restaurant.order_counter.handlers import OrderCounterEventHandlers
+from app.services.business.restaurant.order_counter.service import (
+    RestaurantOrderCounterService,
+)
+from app.services.business.restaurant.order_counter.handlers import (
+    OrderCounterEventHandlers,
+)
 from app.services.business.restaurant.order_counter.compat import (
     initialize_order_counter,
     get_order_counter,
@@ -71,7 +82,9 @@ from app.services.business.restaurant.payment_setting.service import (
     ALL_PAYMENT_METHODS,
     DEFAULT_PAYMENT_METHODS,
 )
-from app.services.business.restaurant.payment_setting.handlers import PaymentSettingsEventHandlers
+from app.services.business.restaurant.payment_setting.handlers import (
+    PaymentSettingsEventHandlers,
+)
 from app.services.business.restaurant.payment_setting.compat import (
     create_payment_settings,
     get_payment_settings,
@@ -86,8 +99,12 @@ from app.services.business.restaurant.payment_setting.compat import (
 
 # ---------- Groups ----------
 from app.services.business.restaurant.groups.service import RestaurantGroupService
-from app.services.business.restaurant.groups.handlers import RestaurantGroupEventHandlers
-from app.services.business.restaurant.groups.branch_handlers import RestaurantBranchEventHandlers
+from app.services.business.restaurant.groups.handlers import (
+    RestaurantGroupEventHandlers,
+)
+from app.services.business.restaurant.groups.branch_handlers import (
+    RestaurantBranchEventHandlers,
+)
 from app.services.business.restaurant.groups.compat import (
     create_group,
     get_group,
@@ -109,7 +126,6 @@ from app.services.business.restaurant.branches.compat import (
     delete_branch,
 )
 
-
 # ==============================================
 # 📋 EXPORTS
 # ==============================================
@@ -129,7 +145,6 @@ __all__ = [
     "update_restaurant",
     "delete_restaurant",
     "toggle_restaurant_status",
-
     # ---------- Metrics ----------
     "RestaurantMetricsService",
     "MetricsDict",
@@ -143,7 +158,6 @@ __all__ = [
     "get_metrics",
     "get_metrics_summary",
     "reset_metrics",
-
     # ---------- Order Counter ----------
     "RestaurantOrderCounterService",
     "OrderCounterEventHandlers",
@@ -156,7 +170,6 @@ __all__ = [
     "increment_order_counter",
     "build_order_number",
     "get_current_order_number",
-
     # ---------- Payment Settings ----------
     "RestaurantPaymentSettingsService",
     "ALL_PAYMENT_METHODS",
@@ -171,7 +184,6 @@ __all__ = [
     "reset_payment_settings",
     "enable_payment_method",
     "disable_payment_method",
-
     # ---------- Groups ----------
     "RestaurantGroupService",
     "RestaurantGroupEventHandlers",
@@ -184,7 +196,6 @@ __all__ = [
     "toggle_group_active",
     "add_branches_to_group",
     "remove_branch_from_group",
-
     # ---------- Branches ----------
     "RestaurantBranchService",
     "create_branch",

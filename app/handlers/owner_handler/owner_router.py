@@ -1,8 +1,19 @@
 # ==============================================
-# 🧠 OWNER STATE ROUTER
-# استقبال حالة المستخدم الحالية 
-# وتوجيه الرسالة إلى المعالج المناسب
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / OWNER_HANDLER / OWNER ROUTER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for owner router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Any, Awaitable, Callable
 
@@ -43,6 +54,7 @@ STATE_HANDLERS: dict[
 # ==============================================
 # 🚀 HANDLE OWNER STATE
 # ==============================================
+
 
 async def handle_owner_state(
     *,

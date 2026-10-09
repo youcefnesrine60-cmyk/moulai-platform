@@ -10,15 +10,15 @@
 # Production Ready
 # ==============================================
 
+"""MoulAI operational module for db.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import os
 import asyncio
 from contextlib import asynccontextmanager
-from typing import (
-    Any, 
-    Dict, 
-    List, 
-    Optional
-)
+from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from psycopg.rows import dict_row
@@ -56,6 +56,7 @@ db_pool: Optional[DatabasePool] = None
 # 🚀 INITIALIZE DATABASE POOL
 # ==============================================
 
+
 async def init_db() -> None:
     """
     تهيئة تجمع اتصالات قاعدة البيانات
@@ -92,14 +93,16 @@ async def init_db() -> None:
         )
         raise
 
+
 # ==============================================
 # 📥 GET POOL
 # ==============================================
 
+
 async def get_pool() -> DatabasePool:
     """
     الحصول على تجمع الاتصالات
-    
+
     Returns:
         DatabasePool: تجمع الاتصالات
     """
@@ -110,9 +113,11 @@ async def get_pool() -> DatabasePool:
 
     return db_pool
 
+
 # ==============================================
 # 📥 FETCH ONE
 # ==============================================
+
 
 async def fetchrow(
     query: str,
@@ -121,12 +126,12 @@ async def fetchrow(
 ) -> Optional[RowType]:
     """
     تنفيذ استعلام وإعادة صف واحد مع إعادة المحاولة
-    
+
     Args:
         query: استعلام SQL
         *args: معاملات الاستعلام
         retries: عدد محاولات إعادة المحاولة
-        
+
     Returns:
         الصف المسترجع أو None
     """
@@ -166,9 +171,11 @@ async def fetchrow(
     )
     raise last_error  # type: ignore
 
+
 # ==============================================
 # 📥 FETCH MANY
 # ==============================================
+
 
 async def fetch(
     query: str,
@@ -177,12 +184,12 @@ async def fetch(
 ) -> RowsType:
     """
     تنفيذ استعلام وإعادة عدة صفوف مع إعادة المحاولة
-    
+
     Args:
         query: استعلام SQL
         *args: معاملات الاستعلام
         retries: عدد محاولات إعادة المحاولة
-        
+
     Returns:
         قائمة الصفوف المسترجعة
     """
@@ -222,9 +229,11 @@ async def fetch(
     )
     raise last_error  # type: ignore
 
+
 # ==============================================
 # ✏️ EXECUTE
 # ==============================================
+
 
 async def execute(
     query: str,
@@ -233,12 +242,12 @@ async def execute(
 ) -> Optional[str]:
     """
     تنفيذ استعلام SQL مع إعادة المحاولة
-    
+
     Args:
         query: استعلام SQL
         *args: معاملات الاستعلام
         retries: عدد محاولات إعادة المحاولة
-        
+
     Returns:
         رسالة حالة التنفيذ
     """
@@ -278,9 +287,11 @@ async def execute(
     )
     raise last_error  # type: ignore
 
+
 # ==============================================
 # ➕ INSERT RETURNING ID
 # ==============================================
+
 
 async def insert_returning_id(
     query: str,
@@ -289,12 +300,12 @@ async def insert_returning_id(
 ) -> int:
     """
     إدراج صف وإرجاع المعرف مع إعادة المحاولة
-    
+
     Args:
         query: استعلام SQL (يجب أن يحتوي على RETURNING id)
         *args: معاملات الاستعلام
         retries: عدد محاولات إعادة المحاولة
-        
+
     Returns:
         المعرف المُدرج
     """
@@ -335,15 +346,17 @@ async def insert_returning_id(
     )
     raise last_error  # type: ignore
 
+
 # ==============================================
 # 🔄 TRANSACTION CONTEXT
 # ==============================================
+
 
 @asynccontextmanager
 async def transaction():
     """
     سياق تنفيذ المعاملات (Transaction)
-    
+
     Yields:
         AsyncConnection: اتصال قاعدة البيانات
     """
@@ -353,9 +366,11 @@ async def transaction():
         async with conn.transaction():
             yield conn
 
+
 # ==============================================
 # 🔒 CLOSE DATABASE POOL
 # ==============================================
+
 
 async def close_db() -> None:
     """

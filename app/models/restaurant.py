@@ -11,6 +11,11 @@
 # يدير بيانات المطعم وموقعه وصلاحياته وعلاقاته
 # ==============================================
 
+"""MoulAI operational module for restaurant.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -24,22 +29,22 @@ from sqlalchemy.orm import relationship
 
 from .base import BaseModel
 
-
 # ==============================================
 # 🏪 RESTAURANT
 # ==============================================
 
+
 class Restaurant(BaseModel):
     """
     نموذج المطعم الرئيسي
-    
+
     يدير:
         - البيانات الأساسية للمطعم (الاسم، النوع، الهاتف)
         - الموقع الجغرافي (wilaya, lat, lng)
         - حالة النشاط (is_active)
         - العلاقات مع المالك والمجموعات والفروع
         - العلاقات مع المنتجات والطلبات والاشتراكات
-    
+
     Attributes:
         owner_id: معرف المالك (ForeignKey)
         group_id: معرف مجموعة المطاعم (ForeignKey)
@@ -64,13 +69,13 @@ class Restaurant(BaseModel):
         payment_settings: إعدادات الدفع
         promotions: قائمة العروض الترويجية
     """
-    
+
     __tablename__ = "restaurants"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     owner_id = Column(
         Integer,
         ForeignKey("owners.id", ondelete="CASCADE"),
@@ -118,41 +123,41 @@ class Restaurant(BaseModel):
         default=True,
         comment="حالة النشاط",
     )
-    
+
     # ==========================================
     # 🔒 CONSTRAINTS
     # ==========================================
-    
+
     __table_args__ = (
         UniqueConstraint(
-            'owner_id',
-            'name',
-            'phone',
-            'wilaya',
-            'lat',
-            'lng',
-            name='uq_restaurant_location',
+            "owner_id",
+            "name",
+            "phone",
+            "wilaya",
+            "lat",
+            "lng",
+            name="uq_restaurant_location",
         ),
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     # 👤 المالك
     owner = relationship(
         "Owner",
         back_populates="restaurants",
         lazy="selectin",
     )
-    
+
     # 🏢 مجموعة المطاعم
     group = relationship(
         "RestaurantGroup",
         back_populates="restaurants",
         lazy="selectin",
     )
-    
+
     # 📍 الفروع
     branches = relationship(
         "Branch",
@@ -160,7 +165,7 @@ class Restaurant(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # 📂 التصنيفات
     categories = relationship(
         "Category",
@@ -168,7 +173,7 @@ class Restaurant(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # 🍽️ المنتجات
     products = relationship(
         "Product",
@@ -176,7 +181,7 @@ class Restaurant(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # 📋 الطلبات
     orders = relationship(
         "Order",
@@ -184,7 +189,7 @@ class Restaurant(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # 💳 الاشتراكات
     subscriptions = relationship(
         "Subscription",
@@ -192,7 +197,7 @@ class Restaurant(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # 📊 مقاييس المطعم
     metrics = relationship(
         "RestaurantMetric",
@@ -201,7 +206,7 @@ class Restaurant(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # 🔢 عداد الطلبات
     order_counter = relationship(
         "RestaurantOrderCounter",
@@ -210,7 +215,7 @@ class Restaurant(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # 📈 عدادات استخدام الميزات
     feature_usage_counters = relationship(
         "FeatureUsageCounter",
@@ -227,7 +232,7 @@ class Restaurant(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # 🤖 وكلاء المطعم الذكية
     agents = relationship(
         "Agent",
@@ -235,7 +240,7 @@ class Restaurant(BaseModel):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
+
     # 🎉 العروض الترويجية
     promotions = relationship(
         "Promotion",
@@ -244,15 +249,15 @@ class Restaurant(BaseModel):
         lazy="selectin",
         # comment="قائمة العروض الترويجية",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والاسم والنوع
         """

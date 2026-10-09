@@ -10,6 +10,11 @@
 # معالجات أحداث فروع المطاعم
 # ==============================================
 
+"""MoulAI operational module for branch handlers.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import List
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,21 +26,25 @@ from app.schemas.restaurant.restaurant_group import (
 )
 from app.services.business.restaurant.groups.service import RestaurantGroupService
 
-
 # ==============================================
 # 🔗 RESTAURANT BRANCH EVENT HANDLERS
 # ==============================================
 
+
 class RestaurantBranchEventHandlers:
     """
     معالجات أحداث فروع المطاعم.
-    
+
     تتعامل مع عمليات إضافة وإزالة فروع المطاعم من المجموعات.
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         service: خدمة مجموعات المطاعم
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -43,7 +52,7 @@ class RestaurantBranchEventHandlers:
     ) -> None:
         """
         تهيئة معالجات الأحداث.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -65,13 +74,13 @@ class RestaurantBranchEventHandlers:
     ) -> List[RestaurantBranchResponse]:
         """
         إضافة فروع مطاعم إلى مجموعة.
-        
+
         Args:
             data: بيانات الفروع
-            
+
         Returns:
             List[RestaurantBranchResponse]: قائمة الفروع المنشأة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """
@@ -97,11 +106,11 @@ class RestaurantBranchEventHandlers:
     ) -> None:
         """
         إزالة فرع مطعم من مجموعة.
-        
+
         Args:
             group_id: معرف المجموعة
             restaurant_id: معرف المطعم
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """
@@ -129,13 +138,13 @@ class RestaurantBranchEventHandlers:
     ) -> int:
         """
         إزالة جميع فروع المطاعم من مجموعة.
-        
+
         Args:
             group_id: معرف المجموعة
-            
+
         Returns:
             int: عدد الفروع المحذوفة
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
         """

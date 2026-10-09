@@ -10,6 +10,11 @@
 # نقاط نهاية المقاييس الأساسية
 # ==============================================
 
+"""MoulAI operational module for metrics router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -32,7 +37,6 @@ from app.schemas.restaurant.restaurant_metric import (
 from app.services.business.restaurant.metrics.service import RestaurantMetricsService
 from app.services.business.restaurant.restaurants.service import RestaurantService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -47,11 +51,17 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_metrics_service(
     session: AsyncSession = Depends(get_db),
 ) -> RestaurantMetricsService:
     """الحصول على خدمة مقاييس المطعم."""
     return RestaurantMetricsService(session)
+
+
+# ==============================================
+# GET RESTAURANT SERVICE
+# ==============================================
 
 
 async def get_restaurant_service(
@@ -68,6 +78,7 @@ async def get_restaurant_service(
 # ==============================================
 # GET RESTAURANT METRICS
 # ==============================================
+
 
 @router.get(
     "/{restaurant_id}",
@@ -112,6 +123,7 @@ async def get_restaurant_metrics(
 # ==============================================
 # UPDATE RESTAURANT METRICS
 # ==============================================
+
 
 @router.patch(
     "/{restaurant_id}",
@@ -172,6 +184,7 @@ async def update_restaurant_metrics(
 # ==============================================
 # INITIALIZE RESTAURANT METRICS
 # ==============================================
+
 
 @router.post(
     "/{restaurant_id}/initialize",
@@ -234,6 +247,7 @@ async def initialize_restaurant_metrics(
 # ==============================================
 # RESET RESTAURANT METRICS
 # ==============================================
+
 
 @router.post(
     "/{restaurant_id}/reset",

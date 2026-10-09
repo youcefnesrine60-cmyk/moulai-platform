@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # ⚙️ APPLICATION CONFIGURATION
 # إدارة إعدادات التطبيق من ملف .env
 # ==============================================
+
+"""MoulAI operational module for config.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     List,
@@ -38,9 +43,9 @@ load_dotenv()
 class Settings(BaseSettings):
     """
     إعدادات التطبيق
-    
+
     يتم قراءة القيم من ملف .env
-    
+
     Attributes:
         APP_ENV: بيئة التشغيل (development, staging, production)
         DEBUG: وضع التصحيح
@@ -109,7 +114,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str = Field(
         default="",
         description="رابط قاعدة البيانات (مع +asyncpg)",
-        json_schema_extra={"example": "postgresql+asyncpg://user:pass@localhost:5432/db"},
+        json_schema_extra={
+            "example": "postgresql+asyncpg://user:pass@localhost:5432/db"
+        },
     )
     DATABASE_SYNC_URL: Optional[str] = Field(
         default=None,
@@ -298,49 +305,65 @@ class Settings(BaseSettings):
     def IS_DEVELOPMENT(self) -> bool:
         """
         التحقق مما إذا كانت البيئة هي Development.
-        
+
         Returns:
             True إذا كانت البيئة Development
         """
         return self.APP_ENV == "development"
 
+    # ==============================================
+    # IS PRODUCTION
+    # ==============================================
+
     @property
     def IS_PRODUCTION(self) -> bool:
         """
         التحقق مما إذا كانت البيئة هي Production.
-        
+
         Returns:
             True إذا كانت البيئة Production
         """
         return self.APP_ENV == "production"
 
+    # ==============================================
+    # IS TESTING
+    # ==============================================
+
     @property
     def IS_TESTING(self) -> bool:
         """
         التحقق مما إذا كانت البيئة هي Testing.
-        
+
         Returns:
             True إذا كانت البيئة Testing
         """
         return self.APP_ENV == "testing"
 
+    # ==============================================
+    # DB ECHO ENABLED
+    # ==============================================
+
     @property
     def DB_ECHO_ENABLED(self) -> bool:
         """
         تحديد ما إذا كان سيتم طباعة استعلامات SQL.
-        
+
         يتم تفعيلها تلقائياً في بيئة التطوير.
-        
+
         Returns:
             True إذا كان يجب تفعيل تسجيل SQL
         """
         return self.IS_DEVELOPMENT and self.DEBUG
 
+    # ==============================================
+    # ALLOWED ORIGINS LIST
+    # ==============================================
+
     @property
     def ALLOWED_ORIGINS_LIST(self) -> List[str]:
         """
         تحويل ALLOWED_ORIGINS إلى قائمة.
-        
+
         Returns:
             قائمة النطاقات المسموحة
         """

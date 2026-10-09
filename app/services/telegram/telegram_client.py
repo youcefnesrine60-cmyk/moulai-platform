@@ -1,6 +1,19 @@
-# ============================================
-# 🤖 TELEGRAM CLIENT
-# ============================================
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / TELEGRAM / TELEGRAM CLIENT
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for telegram client.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 
@@ -18,6 +31,7 @@ TelegramPayload = dict[str, object]
 # ============================================
 # 💬 SEND MESSAGE
 # ============================================
+
 
 async def send_message(
     *,
@@ -52,9 +66,11 @@ async def send_message(
         data=data,
     )
 
+
 # ============================================
 # ✏️ EDIT MESSAGE
 # ============================================
+
 
 async def edit_message(
     *,
@@ -92,9 +108,11 @@ async def edit_message(
         data=data,
     )
 
+
 # ============================================
 # 🗑️ DELETE MESSAGE
 # ============================================
+
 
 async def delete_message(
     *,

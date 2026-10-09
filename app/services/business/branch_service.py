@@ -1,15 +1,19 @@
 # ==============================================
-# 🏢 BRANCH SERVICE
-# Business Logic Layer
-# منطق الأعمال للفروع
-#
-# إنشاء فرع
-# تحديث فرع
-# إلغاء تفعيل فرع
-# قائمة الفروع
-# حساب عدد الفروع
-# حساب تكلفة الفروع
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / BRANCH SERVICE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for branch service.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -51,7 +55,6 @@ from app.schemas.branch import (
     BranchSummary,
 )
 
-
 # ==============================================
 # 🧩 CONSTANTS
 # ==============================================
@@ -76,18 +79,22 @@ BranchList = List[Branch]
 class BranchService:
     """
     خدمة الفروع - تدير منطق الأعمال للفروع.
-    
+
     مسؤولة عن:
         - إنشاء وإدارة الفروع
         - تحديث حالة النشاط
         - حساب تكلفة الفروع
         - إدارة عداد استخدام الميزات
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         repo: مستودع الفروع
         pricing_repo: مستودع تسعير الفروع
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -95,7 +102,7 @@ class BranchService:
     ) -> None:
         """
         تهيئة خدمة الفروع.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -118,13 +125,13 @@ class BranchService:
     ) -> BranchResponse:
         """
         الحصول على فرع بالمعرف.
-        
+
         Args:
             branch_id: معرف الفرع
-            
+
         Returns:
             BranchResponse: بيانات الفرع
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """
@@ -158,13 +165,13 @@ class BranchService:
     ) -> BranchListResponse:
         """
         الحصول على فروع مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             only_active: جلب الفروع النشطة فقط
-            
+
         Returns:
             BranchListResponse: قائمة الفروع مع الإحصائيات
         """
@@ -209,11 +216,11 @@ class BranchService:
     ) -> int:
         """
         حساب عدد فروع مطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
             only_active: حساب الفروع النشطة فقط
-            
+
         Returns:
             int: عدد الفروع
         """
@@ -244,13 +251,13 @@ class BranchService:
     ) -> BranchListResponse:
         """
         البحث عن فروع.
-        
+
         Args:
             query: نص البحث
             restaurant_id: معرف المطعم (اختياري)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             BranchListResponse: قائمة الفروع مع الإحصائيات
         """
@@ -298,10 +305,10 @@ class BranchService:
     ) -> float:
         """
         حساب تكلفة الفروع لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             float: التكلفة الإجمالية للفروع
         """
@@ -339,10 +346,10 @@ class BranchService:
     ) -> BranchSummary:
         """
         الحصول على ملخص الفروع لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             BranchSummary: ملخص الفروع
         """
@@ -405,15 +412,15 @@ class BranchService:
     ) -> BranchResponse:
         """
         إنشاء فرع جديد.
-        
+
         Args:
             restaurant_id: معرف المطعم
             branch_data: بيانات الفرع
             skip_feature_check: تخطي التحقق من الميزة (للاستخدام الداخلي)
-            
+
         Returns:
             BranchResponse: بيانات الفرع المنشأ
-            
+
         Raises:
             BranchLimitExceededError: إذا تجاوز المطعم الحد الأقصى للفروع
             ValidationError: إذا كانت البيانات غير صحيحة
@@ -502,14 +509,14 @@ class BranchService:
     ) -> BranchResponse:
         """
         تحديث فرع.
-        
+
         Args:
             branch_id: معرف الفرع
             update_data: بيانات التحديث
-            
+
         Returns:
             BranchResponse: بيانات الفرع المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
             ConflictError: إذا كان الاسم موجوداً مسبقاً
@@ -582,14 +589,14 @@ class BranchService:
     ) -> BranchResponse:
         """
         تحديث حالة الفرع (نشط/غير نشط).
-        
+
         Args:
             branch_id: معرف الفرع
             status_data: بيانات الحالة
-            
+
         Returns:
             BranchResponse: بيانات الفرع المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """
@@ -628,13 +635,13 @@ class BranchService:
     ) -> Branch:
         """
         إلغاء تفعيل فرع.
-        
+
         Args:
             branch_id: معرف الفرع
-            
+
         Returns:
             Branch: كائن الفرع المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """
@@ -687,13 +694,13 @@ class BranchService:
     ) -> Branch:
         """
         تفعيل فرع.
-        
+
         Args:
             branch_id: معرف الفرع
-            
+
         Returns:
             Branch: كائن الفرع المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """
@@ -747,11 +754,11 @@ class BranchService:
     ) -> None:
         """
         حذف فرع.
-        
+
         Args:
             branch_id: معرف الفرع
             permanent: حذف فعلي (بدلاً من الحذف المنطقي)
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على الفرع
         """
@@ -804,6 +811,7 @@ class BranchService:
 # CREATE RESTAURANT BRANCH (COMPATIBILITY)
 # ==============================================
 
+
 async def create_restaurant_branch(
     *,
     restaurant_id: int,
@@ -816,7 +824,7 @@ async def create_restaurant_branch(
 ) -> int:
     """
     إنشاء فرع جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         name: اسم الفرع
@@ -825,7 +833,7 @@ async def create_restaurant_branch(
         lat: خط العرض
         lng: خط الطول
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         int: معرف الفرع
     """
@@ -852,6 +860,7 @@ async def create_restaurant_branch(
 # UPDATE RESTAURANT BRANCH (COMPATIBILITY)
 # ==============================================
 
+
 async def update_restaurant_branch(
     *,
     branch_id: int,
@@ -864,7 +873,7 @@ async def update_restaurant_branch(
 ) -> None:
     """
     تحديث فرع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         branch_id: معرف الفرع
         name: اسم الفرع
@@ -873,7 +882,7 @@ async def update_restaurant_branch(
         lat: خط العرض
         lng: خط الطول
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الفرع
     """
@@ -902,6 +911,7 @@ async def update_restaurant_branch(
 # REMOVE RESTAURANT BRANCH (COMPATIBILITY)
 # ==============================================
 
+
 async def remove_restaurant_branch(
     *,
     branch_id: int,
@@ -909,11 +919,11 @@ async def remove_restaurant_branch(
 ) -> None:
     """
     إلغاء تفعيل فرع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         branch_id: معرف الفرع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الفرع
     """
@@ -931,6 +941,7 @@ async def remove_restaurant_branch(
 # LIST RESTAURANT BRANCHES (COMPATIBILITY)
 # ==============================================
 
+
 async def list_restaurant_branches(
     *,
     restaurant_id: int,
@@ -939,12 +950,12 @@ async def list_restaurant_branches(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على فروع مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         only_active: جلب الفروع النشطة فقط
-        
+
     Returns:
         List[Dict[str, Any]]: قائمة الفروع
     """
@@ -962,6 +973,7 @@ async def list_restaurant_branches(
 # GET BRANCHES COUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_branches_count(
     *,
     restaurant_id: int,
@@ -970,12 +982,12 @@ async def get_branches_count(
 ) -> int:
     """
     حساب عدد فروع مطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
         only_active: حساب الفروع النشطة فقط
-        
+
     Returns:
         int: عدد الفروع
     """
@@ -991,6 +1003,7 @@ async def get_branches_count(
 # GET BRANCH COST (COMPATIBILITY)
 # ==============================================
 
+
 async def get_branch_cost(
     *,
     restaurant_id: int,
@@ -998,11 +1011,11 @@ async def get_branch_cost(
 ) -> float:
     """
     حساب تكلفة الفروع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         float: التكلفة الإجمالية للفروع
     """

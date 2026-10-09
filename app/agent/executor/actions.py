@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # ⚡ ACTIONS
 # تعريف الإجراءات التي يمكن للوكيل تنفيذها
 # ==============================================
+
+"""MoulAI operational module for actions.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -26,17 +31,22 @@ from app.core.exceptions import NotFoundError, ValidationError
 from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
 from app.models.loyalty_discount import Promotion
-from app.models.order import Order
 from app.models.restaurant import Restaurant
 from app.repositories.products_repo import ProductRepository
-from app.repositories.user_repo import UserRepository
-from app.services.business.orders.placement import quote_customer_order, place_customer_order
+from app.services.business.orders.placement import (
+    quote_customer_order,
+    place_customer_order,
+)
 from app.services.business.orders.customer import (
     cancel_customer_order,
     change_customer_order_item_quantity,
     get_customer_order,
 )
 from app.services.business.complaints import create_customer_complaint
+
+# ==============================================
+#  REQUEST CONTEXT
+# ==============================================
 
 
 def _request_context(context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -45,17 +55,28 @@ def _request_context(context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
     return context.get("request_context", {})
 
 
+# ==============================================
+#  RESTAURANT ID
+# ==============================================
+
+
 def _restaurant_id(
     *,
     params: Dict[str, Any],
     context: Optional[Dict[str, Any]],
 ) -> Optional[int]:
-    value = params.get("restaurant_id") or _request_context(context).get("restaurant_id")
+    value = params.get("restaurant_id") or _request_context(context).get(
+        "restaurant_id"
+    )
     try:
         return int(value) if value is not None else None
     except (TypeError, ValueError):
         return None
 
+
+# ==============================================
+#  ORDER RESTAURANT SCOPE
+# ==============================================
 
 
 def _order_restaurant_scope(params, context):
@@ -74,6 +95,11 @@ def _order_restaurant_scope(params, context):
         return 0
 
 
+# ==============================================
+#  CHAT ID
+# ==============================================
+
+
 def _chat_id(context: Optional[Dict[str, Any]]) -> Optional[int]:
     if not context:
         return None
@@ -82,6 +108,11 @@ def _chat_id(context: Optional[Dict[str, Any]]) -> Optional[int]:
         return int(value) if value is not None else None
     except (TypeError, ValueError):
         return None
+
+
+# ==============================================
+#  FIND PRODUCTS
+# ==============================================
 
 
 async def _find_products(
@@ -99,7 +130,8 @@ async def _find_products(
             limit=20,
         )
         return [
-            product for product in products
+            product
+            for product in products
             if product.restaurant and product.restaurant.is_active
         ]
 
@@ -121,13 +153,14 @@ ActionMap = Dict[str, ActionHandler]
 class ActionResponse:
     """
     نتيجة تنفيذ الإجراء.
-    
+
     Attributes:
         success: هل نجح الإجراء؟
         message: رسالة للمستخدم
         data: بيانات إضافية
         error: رسالة خطأ (في حالة الفشل)
     """
+
     success: bool
     message: str
     data: Optional[Dict[str, Any]] = None
@@ -138,16 +171,21 @@ class ActionResponse:
 # ⚡ BASE ACTION
 # ==============================================
 
+
 class BaseAction:
     """
     الفئة الأساسية لجميع الإجراءات.
-    
+
     Attributes:
         name: اسم الإجراء
         description: وصف الإجراء
         requires_confirmation: هل يتطلب تأكيداً؟
         priority: أولوية الإجراء
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -159,7 +197,7 @@ class BaseAction:
     ) -> None:
         """
         تهيئة الإجراء.
-        
+
         Args:
             name: اسم الإجراء
             description: وصف الإجراء
@@ -171,6 +209,10 @@ class BaseAction:
         self.requires_confirmation: bool = requires_confirmation
         self.priority: int = priority
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -179,14 +221,14 @@ class BaseAction:
     ) -> ActionResponse:
         """
         تنفيذ الإجراء.
-        
+
         Args:
             params: معاملات الإجراء
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
-            
+
         Raises:
             NotImplementedError: يجب تنفيذ هذه الدالة في الفئة الفرعية
         """
@@ -199,10 +241,15 @@ class BaseAction:
 # 🍔 ORDER FOOD ACTION
 # ==============================================
 
+
 class OrderFoodAction(BaseAction):
     """
     إجراء طلب طعام.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -212,42 +259,69 @@ class OrderFoodAction(BaseAction):
             priority=10,
         )
 
+    # ==============================================
+    #  ORDER ARGUMENTS
+    # ==============================================
+
     def _order_arguments(self, params, context):
-        return dict(chat_id=_chat_id(context), product_name=params.get("product_name"),
-                    product_id=params.get("product_id"), quantity=params.get("quantity", 1),
-                    restaurant_id=_order_restaurant_scope(params, context))
+        return dict(
+            chat_id=_chat_id(context),
+            product_name=params.get("product_name"),
+            product_id=params.get("product_id"),
+            quantity=params.get("quantity", 1),
+            restaurant_id=_order_restaurant_scope(params, context),
+        )
+
+    # ==============================================
+    # PREPARE
+    # ==============================================
 
     async def prepare(self, *, params, context=None):
         try:
             async with AsyncSessionLocal() as session:
                 quote = await quote_customer_order(
-                    **self._order_arguments(params, context), session=session)
+                    **self._order_arguments(params, context), session=session
+                )
         except (NotFoundError, ValidationError) as error:
             return ActionResponse(False, error.message, error=error.error_code)
-        return ActionResponse(True,
+        return ActionResponse(
+            True,
             f"{quote['quantity']} x {quote['product_name']} : {quote['quoted_total']:.2f} DZD",
-            data=quote)
+            data=quote,
+        )
+
+    # ==============================================
+    # EXECUTE
+    # ==============================================
 
     async def execute(self, *, params, context=None):
         try:
             async with AsyncSessionLocal() as session:
                 result = await place_customer_order(
-                    **self._order_arguments(params, context), session=session,
+                    **self._order_arguments(params, context),
+                    session=session,
                     quoted_unit_price=params.get("quoted_unit_price"),
                     order_type=params.get("order_type", "takeaway"),
                     delivery_address=params.get("delivery_address"),
-                    customer_note=params.get("customer_note"))
+                    customer_note=params.get("customer_note"),
+                )
         except (NotFoundError, ValidationError) as error:
             return ActionResponse(False, error.message, error=error.error_code)
-        return ActionResponse(True,
+        return ActionResponse(
+            True,
             f"Order {result['order_number']}: {result['quantity']} x {result['product_name']}, {result['total_price']:.2f} DZD",
-            data=result)
+            data=result,
+        )
 
 
 class ViewMenuAction(BaseAction):
     """
     إجراء عرض القائمة.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -257,6 +331,10 @@ class ViewMenuAction(BaseAction):
             priority=5,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -265,11 +343,11 @@ class ViewMenuAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ عرض القائمة.
-        
+
         Args:
             params: معاملات العرض (category, search, etc.)
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -285,16 +363,29 @@ class ViewMenuAction(BaseAction):
         async with AsyncSessionLocal() as session:
             if not restaurant_id:
                 result = await session.execute(
-                    select(Restaurant).where(Restaurant.is_active == True).order_by(Restaurant.name),
+                    select(Restaurant)
+                    .where(Restaurant.is_active == True)
+                    .order_by(Restaurant.name),
                 )
                 restaurants = result.scalars().all()
                 if not restaurants:
-                    return ActionResponse(False, "لا توجد مطاعم متاحة حالياً.", error="restaurants_not_found")
-                lines = [f"{restaurant.id}. {restaurant.name} - {restaurant.wilaya}" for restaurant in restaurants]
+                    return ActionResponse(
+                        False,
+                        "لا توجد مطاعم متاحة حالياً.",
+                        error="restaurants_not_found",
+                    )
+                lines = [
+                    f"{restaurant.id}. {restaurant.name} - {restaurant.wilaya}"
+                    for restaurant in restaurants
+                ]
                 return ActionResponse(
                     True,
                     "اختر مطعماً لعرض قائمته:\n" + "\n".join(lines),
-                    data={"restaurants": [{"id": r.id, "name": r.name} for r in restaurants]},
+                    data={
+                        "restaurants": [
+                            {"id": r.id, "name": r.name} for r in restaurants
+                        ]
+                    },
                 )
             repository = ProductRepository(session=session)
             products = await repository.get_by_restaurant_id(
@@ -305,11 +396,16 @@ class ViewMenuAction(BaseAction):
             )
             if params.get("search"):
                 products = [
-                    product for product in products
+                    product
+                    for product in products
                     if str(params["search"]).casefold() in str(product.name).casefold()
                 ]
             if not products:
-                return ActionResponse(False, "لا توجد منتجات متاحة في هذا المطعم حالياً.", error="menu_empty")
+                return ActionResponse(
+                    False,
+                    "لا توجد منتجات متاحة في هذا المطعم حالياً.",
+                    error="menu_empty",
+                )
             items = [{"id": p.id, "name": p.name, "price": p.price} for p in products]
             message = "📋 القائمة الفعلية:\n" + "\n".join(
                 f"{item['id']}. {item['name']} - {item['price']:.2f} دج"
@@ -322,10 +418,15 @@ class ViewMenuAction(BaseAction):
 # 🏪 VIEW RESTAURANTS ACTION
 # ==============================================
 
+
 class ViewRestaurantsAction(BaseAction):
     """
     إجراء عرض المطاعم.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -335,6 +436,10 @@ class ViewRestaurantsAction(BaseAction):
             priority=5,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -343,11 +448,11 @@ class ViewRestaurantsAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ عرض المطاعم.
-        
+
         Args:
             params: معاملات العرض (location, type, etc.)
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -362,19 +467,30 @@ class ViewRestaurantsAction(BaseAction):
         async with AsyncSessionLocal() as session:
             statement = select(Restaurant).where(Restaurant.is_active == True)
             if params.get("location"):
-                statement = statement.where(Restaurant.wilaya.ilike(f"%{params['location']}%"))
-            restaurants = (await session.execute(statement.order_by(Restaurant.name))).scalars().all()
+                statement = statement.where(
+                    Restaurant.wilaya.ilike(f"%{params['location']}%")
+                )
+            restaurants = (
+                (await session.execute(statement.order_by(Restaurant.name)))
+                .scalars()
+                .all()
+            )
         data = [
-            {"id": restaurant.id, "name": restaurant.name, "location": restaurant.wilaya}
+            {
+                "id": restaurant.id,
+                "name": restaurant.name,
+                "location": restaurant.wilaya,
+            }
             for restaurant in restaurants
         ]
         if not data:
-            return ActionResponse(False, "لا توجد مطاعم متاحة حالياً.", error="restaurants_not_found")
+            return ActionResponse(
+                False, "لا توجد مطاعم متاحة حالياً.", error="restaurants_not_found"
+            )
         return ActionResponse(
             True,
-            "🏪 المطاعم المتاحة:\n" + "\n".join(
-                f"{r['id']}. {r['name']} - {r['location']}" for r in data
-            ),
+            "🏪 المطاعم المتاحة:\n"
+            + "\n".join(f"{r['id']}. {r['name']} - {r['location']}" for r in data),
             data={"restaurants": data},
         )
 
@@ -383,10 +499,15 @@ class ViewRestaurantsAction(BaseAction):
 # ✏️ MODIFY ORDER ACTION
 # ==============================================
 
+
 class ModifyOrderAction(BaseAction):
     """
     إجراء تعديل طلب.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -396,6 +517,10 @@ class ModifyOrderAction(BaseAction):
             priority=8,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -404,11 +529,11 @@ class ModifyOrderAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ تعديل الطلب.
-        
+
         Args:
             params: معاملات التعديل (order_id, changes, etc.)
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -422,16 +547,22 @@ class ModifyOrderAction(BaseAction):
 
         chat_id = _chat_id(context)
         if not chat_id:
-            return ActionResponse(False, "تعذر التحقق من ملكية الطلب.", error="user_not_found")
+            return ActionResponse(
+                False, "تعذر التحقق من ملكية الطلب.", error="user_not_found"
+            )
         order_reference = params.get("order_id")
         if order_reference is None or not str(order_reference).strip():
-            return ActionResponse(False, "أرسل رقم الطلب الذي تريد تعديله.", error="missing_order_id")
+            return ActionResponse(
+                False, "أرسل رقم الطلب الذي تريد تعديله.", error="missing_order_id"
+            )
         try:
             quantity = int(params.get("quantity"))
         except (TypeError, ValueError):
             quantity = 0
         if quantity <= 0:
-            return ActionResponse(False, "أرسل الكمية الجديدة المطلوبة.", error="invalid_order_quantity")
+            return ActionResponse(
+                False, "أرسل الكمية الجديدة المطلوبة.", error="invalid_order_quantity"
+            )
 
         async with AsyncSessionLocal() as session:
             try:
@@ -476,10 +607,15 @@ class ModifyOrderAction(BaseAction):
 # ❌ CANCEL ORDER ACTION
 # ==============================================
 
+
 class CancelOrderAction(BaseAction):
     """
     إجراء إلغاء طلب.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -489,6 +625,10 @@ class CancelOrderAction(BaseAction):
             priority=8,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -497,11 +637,11 @@ class CancelOrderAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ إلغاء الطلب.
-        
+
         Args:
             params: معاملات الإلغاء (order_id, reason, etc.)
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -515,7 +655,9 @@ class CancelOrderAction(BaseAction):
 
         chat_id = _chat_id(context)
         if not chat_id:
-            return ActionResponse(False, "تعذر التحقق من ملكية الطلب.", error="user_not_found")
+            return ActionResponse(
+                False, "تعذر التحقق من ملكية الطلب.", error="user_not_found"
+            )
         order_number = params.get("order_id")
         if order_number is None or not str(order_number).strip():
             return ActionResponse(
@@ -547,7 +689,11 @@ class CancelOrderAction(BaseAction):
         return ActionResponse(
             True,
             f"تم إلغاء الطلب رقم {order.order_number}.",
-            data={"order_id": order.id, "order_number": order.order_number, "previous_status": previous_status},
+            data={
+                "order_id": order.id,
+                "order_number": order.order_number,
+                "previous_status": previous_status,
+            },
         )
 
 
@@ -555,10 +701,15 @@ class CancelOrderAction(BaseAction):
 # 🔍 TRACK ORDER ACTION
 # ==============================================
 
+
 class TrackOrderAction(BaseAction):
     """
     إجراء تتبع طلب.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -568,6 +719,10 @@ class TrackOrderAction(BaseAction):
             priority=7,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -576,11 +731,11 @@ class TrackOrderAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ تتبع الطلب.
-        
+
         Args:
             params: معاملات التتبع (order_id, etc.)
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -591,7 +746,9 @@ class TrackOrderAction(BaseAction):
 
         chat_id = _chat_id(context)
         if not chat_id:
-            return ActionResponse(False, "تعذر التحقق من طلبات هذا الحساب.", error="user_not_found")
+            return ActionResponse(
+                False, "تعذر التحقق من طلبات هذا الحساب.", error="user_not_found"
+            )
         order_number = params.get("order_id")
         if order_number is None or not str(order_number).strip():
             return ActionResponse(
@@ -607,7 +764,9 @@ class TrackOrderAction(BaseAction):
                 session=session,
             )
         if not order:
-            return ActionResponse(False, "لم أجد طلباً مطابقاً ضمن طلبات حسابك.", error="order_not_found")
+            return ActionResponse(
+                False, "لم أجد طلباً مطابقاً ضمن طلبات حسابك.", error="order_not_found"
+            )
         return ActionResponse(
             True,
             f"📦 الطلب رقم {order.order_number}\nالحالة الفعلية: {order.status}\nالإجمالي: {order.total_amount:.2f} دج",
@@ -624,10 +783,15 @@ class TrackOrderAction(BaseAction):
 # 💰 ASK PRICE ACTION
 # ==============================================
 
+
 class AskPriceAction(BaseAction):
     """
     إجراء الاستفسار عن السعر.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -637,6 +801,10 @@ class AskPriceAction(BaseAction):
             priority=6,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -645,11 +813,11 @@ class AskPriceAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ الاستفسار عن السعر.
-        
+
         Args:
             params: معاملات الاستفسار (product_name, etc.)
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -664,7 +832,11 @@ class AskPriceAction(BaseAction):
             restaurant_id=restaurant_id,
         )
         if not products:
-            return ActionResponse(False, "لم أجد هذا المنتج في القائمة المتاحة.", error="product_not_found")
+            return ActionResponse(
+                False,
+                "لم أجد هذا المنتج في القائمة المتاحة.",
+                error="product_not_found",
+            )
         if len(products) > 1:
             return ActionResponse(
                 False,
@@ -675,7 +847,11 @@ class AskPriceAction(BaseAction):
         return ActionResponse(
             True,
             f"سعر {product.name} هو {product.price:.2f} دج.",
-            data={"product_id": product.id, "product_name": product.name, "price": product.price},
+            data={
+                "product_id": product.id,
+                "product_name": product.name,
+                "price": product.price,
+            },
         )
 
 
@@ -683,10 +859,15 @@ class AskPriceAction(BaseAction):
 # 🎁 ASK OFFER ACTION
 # ==============================================
 
+
 class AskOfferAction(BaseAction):
     """
     إجراء الاستفسار عن العروض.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -696,6 +877,10 @@ class AskOfferAction(BaseAction):
             priority=6,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -704,11 +889,11 @@ class AskOfferAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ الاستفسار عن العروض.
-        
+
         Args:
             params: معاملات الاستفسار
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -719,24 +904,35 @@ class AskOfferAction(BaseAction):
         statement = select(Promotion).where(Promotion.active == True)
         if restaurant_id:
             statement = statement.where(
-                or_(Promotion.restaurant_id == restaurant_id, Promotion.restaurant_id.is_(None)),
+                or_(
+                    Promotion.restaurant_id == restaurant_id,
+                    Promotion.restaurant_id.is_(None),
+                ),
             )
         async with AsyncSessionLocal() as session:
-            promotions = (await session.execute(statement.order_by(Promotion.name))).scalars().all()
+            promotions = (
+                (await session.execute(statement.order_by(Promotion.name)))
+                .scalars()
+                .all()
+            )
         promotions = [
-            promotion for promotion in promotions
+            promotion
+            for promotion in promotions
             if (promotion.starts_at is None or promotion.starts_at <= now)
             and (promotion.expires_at is None or promotion.expires_at >= now)
         ]
         if not promotions:
-            return ActionResponse(False, "لا توجد عروض سارية حالياً.", error="offers_not_found")
+            return ActionResponse(
+                False, "لا توجد عروض سارية حالياً.", error="offers_not_found"
+            )
         offers = [
             {"id": p.id, "name": p.name, "discount_percent": p.discount_percent}
             for p in promotions
         ]
         return ActionResponse(
             True,
-            "🎁 العروض السارية:\n" + "\n".join(
+            "🎁 العروض السارية:\n"
+            + "\n".join(
                 f"- {offer['name']}: خصم {offer['discount_percent']:.2f}%"
                 for offer in offers
             ),
@@ -748,10 +944,15 @@ class AskOfferAction(BaseAction):
 # 💬 HELP ACTION
 # ==============================================
 
+
 class HelpAction(BaseAction):
     """
     إجراء المساعدة.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -761,6 +962,10 @@ class HelpAction(BaseAction):
             priority=1,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -769,11 +974,11 @@ class HelpAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ عرض المساعدة.
-        
+
         Args:
             params: معاملات المساعدة
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -803,10 +1008,15 @@ class HelpAction(BaseAction):
 # 👋 GREETING ACTION
 # ==============================================
 
+
 class GreetingAction(BaseAction):
     """
     إجراء التحية.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -816,6 +1026,10 @@ class GreetingAction(BaseAction):
             priority=2,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -824,11 +1038,11 @@ class GreetingAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ التحية.
-        
+
         Args:
             params: معاملات التحية
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -845,10 +1059,15 @@ class GreetingAction(BaseAction):
 # 👋 GOODBYE ACTION
 # ==============================================
 
+
 class GoodbyeAction(BaseAction):
     """
     إجراء الوداع.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -858,6 +1077,10 @@ class GoodbyeAction(BaseAction):
             priority=2,
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -866,11 +1089,11 @@ class GoodbyeAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ الوداع.
-        
+
         Args:
             params: معاملات الوداع
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -887,10 +1110,15 @@ class GoodbyeAction(BaseAction):
 # 😤 COMPLAINT ACTION
 # ==============================================
 
+
 class ComplaintAction(BaseAction):
     """
     إجراء التعامل مع الشكوى.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         super().__init__(
@@ -899,6 +1127,10 @@ class ComplaintAction(BaseAction):
             requires_confirmation=True,
             priority=9,
         )
+
+    # ==============================================
+    # PREPARE
+    # ==============================================
 
     async def prepare(
         self,
@@ -948,6 +1180,10 @@ class ComplaintAction(BaseAction):
             data={"description": description},
         )
 
+    # ==============================================
+    # EXECUTE
+    # ==============================================
+
     async def execute(
         self,
         *,
@@ -956,11 +1192,11 @@ class ComplaintAction(BaseAction):
     ) -> ActionResponse:
         """
         تنفيذ معالجة الشكوى.
-        
+
         Args:
             params: معاملات الشكوى (order_id, issue, etc.)
             context: سياق التنفيذ
-            
+
         Returns:
             ActionResponse: نتيجة التنفيذ
         """
@@ -973,7 +1209,9 @@ class ComplaintAction(BaseAction):
         )
         chat_id = _chat_id(context)
         if not chat_id:
-            return ActionResponse(False, "تعذر التحقق من حسابك.", error="user_not_found")
+            return ActionResponse(
+                False, "تعذر التحقق من حسابك.", error="user_not_found"
+            )
 
         description = (
             params.get("description")
@@ -1001,9 +1239,11 @@ class ComplaintAction(BaseAction):
                 error_code = (
                     "order_not_found"
                     if error.error_code == "ORDER_NOT_FOUND"
-                    else "user_not_found"
-                    if error.error_code == "USER_NOT_FOUND"
-                    else "complaint_restaurant_not_found"
+                    else (
+                        "user_not_found"
+                        if error.error_code == "USER_NOT_FOUND"
+                        else "complaint_restaurant_not_found"
+                    )
                 )
                 return ActionResponse(False, error.message, error=error_code)
             except ValidationError as error:
@@ -1036,10 +1276,15 @@ class ComplaintAction(BaseAction):
 # 📋 ACTION REGISTRY
 # ==============================================
 
+
 class ActionRegistry:
     """
     سجل الإجراءات - يدير جميع الإجراءات المتاحة.
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(self) -> None:
         """
@@ -1047,6 +1292,10 @@ class ActionRegistry:
         """
         self._actions: Dict[str, BaseAction] = {}
         self._register_default_actions()
+
+    # ==============================================
+    #  REGISTER DEFAULT ACTIONS
+    # ==============================================
 
     def _register_default_actions(self) -> None:
         """
@@ -1075,10 +1324,14 @@ class ActionRegistry:
             extra={"action_count": len(self._actions)},
         )
 
+    # ==============================================
+    # REGISTER
+    # ==============================================
+
     def register(self, action: BaseAction) -> None:
         """
         تسجيل إجراء.
-        
+
         Args:
             action: الإجراء المراد تسجيله
         """
@@ -1091,22 +1344,30 @@ class ActionRegistry:
             },
         )
 
+    # ==============================================
+    # GET
+    # ==============================================
+
     def get(self, name: str) -> Optional[BaseAction]:
         """
         الحصول على إجراء بالاسم.
-        
+
         Args:
             name: اسم الإجراء
-            
+
         Returns:
             الإجراء أو None
         """
         return self._actions.get(name)
 
+    # ==============================================
+    # GET ALL
+    # ==============================================
+
     def get_all(self) -> List[BaseAction]:
         """
         الحصول على جميع الإجراءات.
-        
+
         Returns:
             قائمة الإجراءات
         """
@@ -1115,22 +1376,30 @@ class ActionRegistry:
             key=lambda a: -a.priority,  # ترتيب تنازلي حسب الأولوية
         )
 
+    # ==============================================
+    # GET NAMES
+    # ==============================================
+
     def get_names(self) -> List[str]:
         """
         الحصول على أسماء جميع الإجراءات.
-        
+
         Returns:
             قائمة الأسماء
         """
         return list(self._actions.keys())
 
+    # ==============================================
+    # GET BY INTENT
+    # ==============================================
+
     def get_by_intent(self, intent: str) -> Optional[BaseAction]:
         """
         الحصول على الإجراء المناسب لنية معينة.
-        
+
         Args:
             intent: اسم النية
-            
+
         Returns:
             الإجراء المناسب أو None
         """
@@ -1173,13 +1442,14 @@ action_registry = ActionRegistry()
 # GET ACTION
 # ==============================================
 
+
 def get_action(name: str) -> Optional[BaseAction]:
     """
     الحصول على إجراء بالاسم (دالة مساعدة).
-    
+
     Args:
         name: اسم الإجراء
-        
+
     Returns:
         الإجراء أو None
     """
@@ -1195,13 +1465,14 @@ def get_action(name: str) -> Optional[BaseAction]:
 # GET ACTION BY INTENT
 # ==============================================
 
+
 def get_action_by_intent(intent: str) -> Optional[BaseAction]:
     """
     الحصول على إجراء حسب النية (دالة مساعدة).
-    
+
     Args:
         intent: اسم النية
-        
+
     Returns:
         الإجراء أو None
     """
@@ -1218,14 +1489,12 @@ def get_action_by_intent(intent: str) -> Optional[BaseAction]:
 # ==============================================
 
 __all__ = [
-
     # Base
     "BaseAction",
     "ActionResponse",
     "ActionResult",
     "ActionHandler",
     "ActionMap",
-
     # Actions
     "OrderFoodAction",
     "ViewMenuAction",
@@ -1239,11 +1508,9 @@ __all__ = [
     "HelpAction",
     "GreetingAction",
     "GoodbyeAction",
-
     # Registry
     "ActionRegistry",
     "action_registry",
-
     # Utilities
     "get_action",
     "get_action_by_intent",

@@ -9,9 +9,18 @@
 # 🏢 RESTAURANT GROUPS SERVICES - PACKAGE INIT
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.services.business.restaurant.groups.service import RestaurantGroupService
-from app.services.business.restaurant.groups.handlers import RestaurantGroupEventHandlers
-from app.services.business.restaurant.groups.branch_handlers import RestaurantBranchEventHandlers
+from app.services.business.restaurant.groups.handlers import (
+    RestaurantGroupEventHandlers,
+)
+from app.services.business.restaurant.groups.branch_handlers import (
+    RestaurantBranchEventHandlers,
+)
 from app.services.business.restaurant.groups.compat import (
     create_group,
     get_group,
@@ -22,7 +31,6 @@ from app.services.business.restaurant.groups.compat import (
     add_branches_to_group,
     remove_branch_from_group,
 )
-
 
 # ==============================================
 # 📋 EXPORTS

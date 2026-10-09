@@ -1,12 +1,26 @@
 # ==============================================
-# 🧠 STATE MACHINE
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HELPERS / STATE MACHINE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for state machine.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.states.transitions import ALLOWED_TRANSITIONS
 
 # ==============================================
 # ✅ CHECK STATE TRANSITION
 # ==============================================
+
 
 async def can_transition(
     *,

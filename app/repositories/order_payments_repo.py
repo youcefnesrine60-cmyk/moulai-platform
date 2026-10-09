@@ -1,4 +1,22 @@
-from sqlalchemy.orm import raiseload, selectinload
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / ORDER PAYMENTS REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for order payments repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+from sqlalchemy.orm import raiseload
+
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
@@ -52,16 +70,20 @@ class OrderPaymentsRepository(
 ):
     """
     مستودع مدفوعات الطلبات - يوفر عمليات خاصة بمدفوعات الطلبات.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لمدفوعات الطلبات
         - تحديث حالة الدفع
         - إحصائيات المدفوعات
-    
+
     Attributes:
         model: نموذج OrderPayment
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -69,7 +91,7 @@ class OrderPaymentsRepository(
     ) -> None:
         """
         تهيئة مستودع مدفوعات الطلبات.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -94,12 +116,12 @@ class OrderPaymentsRepository(
     ) -> OrderPaymentList:
         """
         الحصول على مدفوعات طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة مدفوعات الطلب
         """
@@ -137,10 +159,10 @@ class OrderPaymentsRepository(
     ) -> Optional[OrderPayment]:
         """
         الحصول على دفع بواسطة مرجع المعاملة.
-        
+
         Args:
             transaction_reference: مرجع المعاملة
-            
+
         Returns:
             كائن OrderPayment أو None
         """
@@ -176,12 +198,12 @@ class OrderPaymentsRepository(
     ) -> OrderPaymentList:
         """
         الحصول على مدفوعات حسب الحالة.
-        
+
         Args:
             payment_status: حالة الدفع (pending, paid, failed, cancelled)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المدفوعات
         """
@@ -219,10 +241,10 @@ class OrderPaymentsRepository(
     ) -> int:
         """
         حساب عدد مدفوعات طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             عدد المدفوعات
         """
@@ -257,11 +279,11 @@ class OrderPaymentsRepository(
     ) -> float:
         """
         حساب إجمالي مبلغ مدفوعات طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
             payment_status: حالة الدفع (اختياري)
-            
+
         Returns:
             إجمالي المبلغ
         """
@@ -304,12 +326,12 @@ class OrderPaymentsRepository(
     ) -> Optional[OrderPayment]:
         """
         تحديث حالة الدفع.
-        
+
         Args:
             payment_id: معرف الدفع
             payment_status: الحالة الجديدة (pending, paid, failed, cancelled)
             paid_at: تاريخ الدفع (اختياري)
-            
+
         Returns:
             كائن OrderPayment المحدث أو None
         """
@@ -344,11 +366,11 @@ class OrderPaymentsRepository(
     ) -> Optional[OrderPayment]:
         """
         تعيين الدفع كمدفوع.
-        
+
         Args:
             payment_id: معرف الدفع
             paid_at: تاريخ الدفع (افتراضي: الآن)
-            
+
         Returns:
             كائن OrderPayment المحدث أو None
         """
@@ -377,10 +399,10 @@ class OrderPaymentsRepository(
     ) -> Optional[OrderPayment]:
         """
         تعيين الدفع كفاشل.
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Returns:
             كائن OrderPayment المحدث أو None
         """
@@ -405,10 +427,10 @@ class OrderPaymentsRepository(
     ) -> Optional[OrderPayment]:
         """
         إلغاء الدفع.
-        
+
         Args:
             payment_id: معرف الدفع
-            
+
         Returns:
             كائن OrderPayment المحدث أو None
         """
@@ -437,10 +459,10 @@ class OrderPaymentsRepository(
     ) -> OrderPaymentSummary:
         """
         الحصول على ملخص مدفوعات طلب معين.
-        
+
         Args:
             order_id: معرف الطلب
-            
+
         Returns:
             قاموس ملخص المدفوعات
         """
@@ -451,10 +473,14 @@ class OrderPaymentsRepository(
             total_paid = sum(1 for p in payments if p.payment_status == "paid")
             total_pending = sum(1 for p in payments if p.payment_status == "pending")
             total_failed = sum(1 for p in payments if p.payment_status == "failed")
-            total_cancelled = sum(1 for p in payments if p.payment_status == "cancelled")
+            total_cancelled = sum(
+                1 for p in payments if p.payment_status == "cancelled"
+            )
 
             total_amount = sum(p.amount for p in payments)
-            total_paid_amount = sum(p.amount for p in payments if p.payment_status == "paid")
+            total_paid_amount = sum(
+                p.amount for p in payments if p.payment_status == "paid"
+            )
 
             return {
                 "order_id": order_id,
@@ -487,6 +513,7 @@ class OrderPaymentsRepository(
 # CREATE ORDER PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def create_order_payment(
     *,
     order_id: int,
@@ -498,7 +525,7 @@ async def create_order_payment(
 ) -> int:
     """
     إنشاء دفع جديد للطلب (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         payment_method: طريقة الدفع
@@ -506,7 +533,7 @@ async def create_order_payment(
         amount: المبلغ
         transaction_reference: مرجع المعاملة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الدفع
     """
@@ -537,6 +564,7 @@ async def create_order_payment(
 # GET ORDER PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_payment(
     *,
     payment_id: int,
@@ -544,11 +572,11 @@ async def get_order_payment(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على دفع بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الدفع أو None
     """
@@ -575,6 +603,7 @@ async def get_order_payment(
 # GET ORDER PAYMENTS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_order_payments(
     *,
     order_id: int,
@@ -584,13 +613,13 @@ async def get_order_payments(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على مدفوعات طلب معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة مدفوعات الطلب
     """
@@ -605,16 +634,18 @@ async def get_order_payments(
     result = []
 
     for payment in payments:
-        result.append({
-            "id": payment.id,
-            "order_id": payment.order_id,
-            "payment_method": payment.payment_method,
-            "payment_status": payment.payment_status,
-            "amount": payment.amount,
-            "transaction_reference": payment.transaction_reference,
-            "paid_at": payment.paid_at,
-            "created_at": payment.created_at,
-        })
+        result.append(
+            {
+                "id": payment.id,
+                "order_id": payment.order_id,
+                "payment_method": payment.payment_method,
+                "payment_status": payment.payment_status,
+                "amount": payment.amount,
+                "transaction_reference": payment.transaction_reference,
+                "paid_at": payment.paid_at,
+                "created_at": payment.created_at,
+            }
+        )
 
     return result
 
@@ -623,6 +654,7 @@ async def get_order_payments(
 # GET PAYMENT BY REFERENCE (COMPATIBILITY)
 # ==============================================
 
+
 async def get_payment_by_reference(
     *,
     transaction_reference: str,
@@ -630,11 +662,11 @@ async def get_payment_by_reference(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على دفع بواسطة مرجع المعاملة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         transaction_reference: مرجع المعاملة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الدفع أو None
     """
@@ -663,6 +695,7 @@ async def get_payment_by_reference(
 # MARK PAYMENT PAID (COMPATIBILITY)
 # ==============================================
 
+
 async def mark_payment_paid(
     *,
     payment_id: int,
@@ -670,7 +703,7 @@ async def mark_payment_paid(
 ) -> None:
     """
     تعيين الدفع كمدفوع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -689,6 +722,7 @@ async def mark_payment_paid(
 # MARK PAYMENT FAILED (COMPATIBILITY)
 # ==============================================
 
+
 async def mark_payment_failed(
     *,
     payment_id: int,
@@ -696,7 +730,7 @@ async def mark_payment_failed(
 ) -> None:
     """
     تعيين الدفع كفاشل (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -715,6 +749,7 @@ async def mark_payment_failed(
 # MARK PAYMENT CANCELLED (COMPATIBILITY)
 # ==============================================
 
+
 async def mark_payment_cancelled(
     *,
     payment_id: int,
@@ -722,7 +757,7 @@ async def mark_payment_cancelled(
 ) -> None:
     """
     إلغاء الدفع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -741,6 +776,7 @@ async def mark_payment_cancelled(
 # DELETE ORDER PAYMENT (COMPATIBILITY)
 # ==============================================
 
+
 async def delete_order_payment(
     *,
     payment_id: int,
@@ -748,7 +784,7 @@ async def delete_order_payment(
 ) -> None:
     """
     حذف دفع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         payment_id: معرف الدفع
         session: جلسة قاعدة البيانات غير المتزامنة

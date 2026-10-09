@@ -10,6 +10,11 @@
 # سجل أنشطة المدير
 # ==============================================
 
+"""MoulAI operational module for admin log.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Column,
     DateTime,
@@ -26,10 +31,11 @@ from .base import BaseModel
 # 📋 ADMIN LOG
 # ==============================================
 
+
 class AdminLog(BaseModel):
     """
     سجل أنشطة المدير - تتبع جميع إجراءات المدير.
-    
+
     Attributes:
         admin_id: معرف المدير
         action: نوع الإجراء (login, logout, create, update, delete, etc.)
@@ -40,13 +46,13 @@ class AdminLog(BaseModel):
         user_agent: متصفح المدير
         timestamp: وقت الإجراء
     """
-    
+
     __tablename__ = "admin_logs"
 
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     admin_id = Column(
         Integer,
         ForeignKey("admins.id", ondelete="CASCADE"),
@@ -88,11 +94,11 @@ class AdminLog(BaseModel):
         nullable=False,
         comment="وقت الإجراء",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     # العلاقة مع نموذج المدير
     admin = relationship(
         "Admin",
@@ -103,6 +109,8 @@ class AdminLog(BaseModel):
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
-        return f"<AdminLog(id={self.id}, admin_id={self.admin_id}, action={self.action})>"
+        return (
+            f"<AdminLog(id={self.id}, admin_id={self.admin_id}, action={self.action})>"
+        )

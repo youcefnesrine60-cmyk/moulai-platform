@@ -1,7 +1,19 @@
 # ==============================================
-# 💳 PAYMENT CALLBACK ROUTES
-# تسجيل جميع مسارات الدفع في النظام
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / PAYMENT / ROUTER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.core.router_instance import router
@@ -22,15 +34,15 @@ from app.handlers.callbacks.payment.payment_handlers import (
     handle_payment_failure as handle_telegram_failure,
 )
 
-
 # ==============================================
 # 🚀 REGISTER PAYMENT ROUTES
 # ==============================================
 
+
 async def register_payment_routes() -> None:
     """
     تسجيل جميع مسارات الدفع في الـ Router
-    
+
     المسارات تنقسم إلى نوعين:
     1. مسارات خارجية (Webhook) - من بوابات الدفع
     2. مسارات داخلية (Telegram) - من تفاعلات المستخدم

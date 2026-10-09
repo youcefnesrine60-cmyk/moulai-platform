@@ -10,6 +10,11 @@
 # نقاط نهاية فروع المطاعم الأساسية (CRUD)
 # ==============================================
 
+"""MoulAI operational module for router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -32,7 +37,6 @@ from app.schemas.restaurant.restaurant_group import (
 )
 from app.services.business.restaurant.branches.service import RestaurantBranchService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -46,6 +50,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_restaurant_branch_service(
     session: AsyncSession = Depends(get_db),
@@ -61,6 +66,7 @@ async def get_restaurant_branch_service(
 # ==============================================
 # CREATE BRANCH
 # ==============================================
+
 
 @router.post(
     "/",
@@ -144,6 +150,7 @@ async def create_restaurant_branch(
 # GET BRANCH BY ID
 # ==============================================
 
+
 @router.get(
     "/{branch_id}",
     response_model=RestaurantBranchResponse,
@@ -187,6 +194,7 @@ async def get_restaurant_branch_by_id(
 # ==============================================
 # GET BRANCH WITH DETAILS
 # ==============================================
+
 
 @router.get(
     "/{branch_id}/details",

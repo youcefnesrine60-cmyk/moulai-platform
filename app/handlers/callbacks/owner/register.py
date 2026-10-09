@@ -1,7 +1,19 @@
 # ==============================================
-# 🏪 OWNER CALLBACKS - VERSION PRO
-# Owner Registration & Consent Flow
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / OWNER / REGISTER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for register.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -16,10 +28,10 @@ from app.services.telegram import delete_message
 from app.views.texts import OWNER_NAME
 from app.views.ui import back_ui, consent_text, consent_ui
 
-
 # ==============================================
 # 👤 OWNER CALLBACK
 # ==============================================
+
 
 async def owner_callback(
     *,
@@ -120,6 +132,7 @@ async def owner_callback(
         new_message_id = response.get("result", {}).get("message_id")
         if new_message_id:
             from app.helpers.state_helper import update_state_field
+
             await update_state_field(
                 chat_id=chat_id,
                 key="bot_message_id",
@@ -137,6 +150,7 @@ async def owner_callback(
 # ==============================================
 # ✅ CONSENT CALLBACK
 # ==============================================
+
 
 async def consent_callback(
     *,
@@ -187,6 +201,7 @@ async def consent_callback(
             new_message_id = response.get("result", {}).get("message_id")
             if new_message_id:
                 from app.helpers.state_helper import update_state_field
+
                 await update_state_field(
                     chat_id=chat_id,
                     key="bot_message_id",
@@ -194,7 +209,7 @@ async def consent_callback(
                 )
 
         return
-    
+
     # ==========================================
     # 👤 CUSTOMER CONSENT
     # ==========================================

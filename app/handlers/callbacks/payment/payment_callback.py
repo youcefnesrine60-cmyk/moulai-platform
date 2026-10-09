@@ -1,10 +1,19 @@
 # ==============================================
-# 💳 PAYMENT CALLBACK
-# Payment Gateway Callback Handler
-# معالجة ردود بوابات الدفع الخارجية (Webhook)
-# Stripe, PayPal, CCP, BaridiMob
-# Production Ready (Atomic Transaction)
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / PAYMENT / PAYMENT CALLBACK
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for payment callback.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from datetime import datetime, timedelta, timezone
 
@@ -30,10 +39,10 @@ from app.repositories.subscription_feature_requests_repo import (
     SubscriptionFeatureRequestRepository,
 )
 
-
 # ==============================================
 # ✅ PAYMENT SUCCESS CALLBACK
 # ==============================================
+
 
 async def handle_payment_success(
     *,
@@ -41,10 +50,10 @@ async def handle_payment_success(
 ) -> None:
     """
     معالجة رد نجاح الدفع من بوابة خارجية
-    
+
     Args:
         external_reference: مرجع الدفع الخارجي
-        
+
     Raises:
         ValueError: إذا لم يتم العثور على الدفع أو الاشتراك
     """
@@ -166,16 +175,17 @@ async def handle_payment_success(
 # ❌ PAYMENT FAILED CALLBACK
 # ==============================================
 
+
 async def handle_payment_failure(
     *,
     external_reference: str,
 ) -> None:
     """
     معالجة رد فشل الدفع من بوابة خارجية
-    
+
     Args:
         external_reference: مرجع الدفع الخارجي
-        
+
     Raises:
         ValueError: إذا لم يتم العثور على الدفع
     """

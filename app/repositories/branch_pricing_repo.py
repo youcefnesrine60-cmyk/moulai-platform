@@ -10,6 +10,11 @@
 # عمليات قاعدة البيانات لتسعير الفروع باستخدام SQLAlchemy
 # ==============================================
 
+"""MoulAI operational module for branch pricing repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -50,16 +55,20 @@ class BranchPricingRepository(
 ):
     """
     مستودع تسعير الفروع - يوفر عمليات خاصة بتسعير الفروع.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لتسعير الفروع
         - البحث عن قواعد التسعير النشطة
         - حساب تكلفة الفروع بناءً على عددها
-    
+
     Attributes:
         model: نموذج BranchPricing
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -67,7 +76,7 @@ class BranchPricingRepository(
     ) -> None:
         """
         تهيئة مستودع تسعير الفروع.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -89,11 +98,11 @@ class BranchPricingRepository(
     ) -> BranchPricingList:
         """
         الحصول على قواعد تسعير الفروع النشطة.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة قواعد تسعير الفروع النشطة
         """
@@ -128,10 +137,10 @@ class BranchPricingRepository(
     ) -> Optional[BranchPricing]:
         """
         الحصول على قاعدة تسعير تناسب عدد فروع معين.
-        
+
         Args:
             branches_count: عدد الفروع
-            
+
         Returns:
             كائن BranchPricing أو None
         """
@@ -180,10 +189,10 @@ class BranchPricingRepository(
     ) -> float:
         """
         حساب تكلفة الفروع بناءً على عددها.
-        
+
         Args:
             branches_count: عدد الفروع
-            
+
         Returns:
             التكلفة الإجمالية
         """
@@ -246,11 +255,11 @@ class BranchPricingRepository(
     ) -> Optional[BranchPricing]:
         """
         تحديث سعر الفرع الإضافي.
-        
+
         Args:
             pricing_id: معرف قاعدة التسعير
             price_per_branch: السعر الجديد لكل فرع إضافي
-            
+
         Returns:
             كائن BranchPricing المحدث أو None
         """
@@ -278,10 +287,10 @@ class BranchPricingRepository(
     ) -> Optional[BranchPricing]:
         """
         تفعيل قاعدة تسعير.
-        
+
         Args:
             pricing_id: معرف قاعدة التسعير
-            
+
         Returns:
             كائن BranchPricing المحدث أو None
         """
@@ -306,10 +315,10 @@ class BranchPricingRepository(
     ) -> Optional[BranchPricing]:
         """
         إلغاء تفعيل قاعدة تسعير.
-        
+
         Args:
             pricing_id: معرف قاعدة التسعير
-            
+
         Returns:
             كائن BranchPricing المحدث أو None
         """
@@ -333,6 +342,7 @@ class BranchPricingRepository(
 # CREATE BRANCH PRICING (COMPATIBILITY)
 # ==============================================
 
+
 async def create_branch_pricing(
     *,
     min_branches: int,
@@ -343,14 +353,14 @@ async def create_branch_pricing(
 ) -> int:
     """
     إنشاء قاعدة تسعير فروع جديدة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         min_branches: الحد الأدنى لعدد الفروع
         max_branches: الحد الأقصى لعدد الفروع
         price_per_branch: سعر الفرع الإضافي
         active: حالة النشاط
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف قاعدة التسعير
     """
@@ -377,6 +387,7 @@ async def create_branch_pricing(
 # GET BRANCH PRICING BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_branch_pricing_by_id(
     *,
     pricing_id: int,
@@ -384,11 +395,11 @@ async def get_branch_pricing_by_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على قاعدة تسعير بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         pricing_id: معرف قاعدة التسعير
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات قاعدة التسعير أو None
     """
@@ -413,6 +424,7 @@ async def get_branch_pricing_by_id(
 # GET ACTIVE BRANCH PRICING (COMPATIBILITY)
 # ==============================================
 
+
 async def get_active_branch_pricing(
     session: AsyncSession,
     *,
@@ -421,12 +433,12 @@ async def get_active_branch_pricing(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على قواعد تسعير الفروع النشطة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة قواعد تسعير الفروع النشطة
     """
@@ -440,14 +452,16 @@ async def get_active_branch_pricing(
     result = []
 
     for pricing in pricings:
-        result.append({
-            "id": pricing.id,
-            "min_branches": pricing.min_branches,
-            "max_branches": pricing.max_branches,
-            "price_per_branch": float(pricing.price_per_branch),
-            "active": pricing.active,
-            "created_at": pricing.created_at,
-        })
+        result.append(
+            {
+                "id": pricing.id,
+                "min_branches": pricing.min_branches,
+                "max_branches": pricing.max_branches,
+                "price_per_branch": float(pricing.price_per_branch),
+                "active": pricing.active,
+                "created_at": pricing.created_at,
+            }
+        )
 
     return result
 
@@ -456,6 +470,7 @@ async def get_active_branch_pricing(
 # GET BRANCH PRICING RULE (COMPATIBILITY)
 # ==============================================
 
+
 async def get_branch_pricing_rule(
     *,
     branches_count: int,
@@ -463,11 +478,11 @@ async def get_branch_pricing_rule(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على قاعدة تسعير تناسب عدد فروع معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         branches_count: عدد الفروع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات قاعدة التسعير أو None
     """
@@ -494,6 +509,7 @@ async def get_branch_pricing_rule(
 # CALCULATE BRANCH COST (COMPATIBILITY)
 # ==============================================
 
+
 async def calculate_branch_cost(
     *,
     branches_count: int,
@@ -501,11 +517,11 @@ async def calculate_branch_cost(
 ) -> float:
     """
     حساب تكلفة الفروع (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         branches_count: عدد الفروع
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         التكلفة الإجمالية
     """
@@ -520,6 +536,7 @@ async def calculate_branch_cost(
 # UPDATE BRANCH PRICING PRICE (COMPATIBILITY)
 # ==============================================
 
+
 async def update_branch_pricing_price(
     *,
     pricing_id: int,
@@ -528,7 +545,7 @@ async def update_branch_pricing_price(
 ) -> None:
     """
     تحديث سعر الفرع الإضافي (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         pricing_id: معرف قاعدة التسعير
         price_per_branch: السعر الجديد لكل فرع إضافي
@@ -554,6 +571,7 @@ async def update_branch_pricing_price(
 # ACTIVATE BRANCH PRICING (COMPATIBILITY)
 # ==============================================
 
+
 async def activate_branch_pricing(
     *,
     pricing_id: int,
@@ -561,7 +579,7 @@ async def activate_branch_pricing(
 ) -> None:
     """
     تفعيل قاعدة تسعير (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         pricing_id: معرف قاعدة التسعير
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -580,6 +598,7 @@ async def activate_branch_pricing(
 # DEACTIVATE BRANCH PRICING (COMPATIBILITY)
 # ==============================================
 
+
 async def deactivate_branch_pricing(
     *,
     pricing_id: int,
@@ -587,7 +606,7 @@ async def deactivate_branch_pricing(
 ) -> None:
     """
     إلغاء تفعيل قاعدة تسعير (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         pricing_id: معرف قاعدة التسعير
         session: جلسة قاعدة البيانات غير المتزامنة

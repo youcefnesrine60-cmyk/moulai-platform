@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,6 +10,11 @@
 # نقاط نهاية API للمديرين (CRUD)
 # تدير عمليات إنشاء واستعراض وتحديث وحذف المديرين
 # ==============================================
+
+"""MoulAI operational module for admin.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Optional
 
@@ -39,7 +44,6 @@ from app.schemas.admin import (
 )
 from app.services.business.admin.admin_service import AdminService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -54,15 +58,16 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_admin_service(
     session: AsyncSession = Depends(get_db),
 ) -> AdminService:
     """
     الحصول على خدمة المديرين.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         AdminService: مثيل من AdminService
     """
@@ -76,6 +81,7 @@ async def get_admin_service(
 # ==============================================
 # CREATE ADMIN
 # ==============================================
+
 
 @router.post(
     "/",
@@ -91,13 +97,13 @@ async def create_admin(
 ) -> AdminResponse:
     """
     إنشاء مدير جديد.
-    
+
     Args:
         data: بيانات المدير
-        
+
     Returns:
         AdminResponse: المدير المنشأ
-        
+
     Raises:
         HTTPException: إذا كان اسم المستخدم أو chat_id موجوداً مسبقاً
     """
@@ -155,6 +161,7 @@ async def create_admin(
 # GET ADMIN BY ID
 # ==============================================
 
+
 @router.get(
     "/{admin_id}",
     response_model=AdminResponse,
@@ -169,14 +176,14 @@ async def get_admin_by_id(
 ) -> AdminResponse:
     """
     الحصول على مدير بالمعرف.
-    
+
     Args:
         admin_id: معرف المدير
         include_inactive: تضمين المديرين غير النشطين
-        
+
     Returns:
         AdminResponse: المدير المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المدير
     """
@@ -225,6 +232,7 @@ async def get_admin_by_id(
 # GET ADMIN BY USERNAME
 # ==============================================
 
+
 @router.get(
     "/username/{username}",
     response_model=AdminResponse,
@@ -239,14 +247,14 @@ async def get_admin_by_username(
 ) -> AdminResponse:
     """
     الحصول على مدير بواسطة اسم المستخدم.
-    
+
     Args:
         username: اسم المستخدم
         include_inactive: تضمين المديرين غير النشطين
-        
+
     Returns:
         AdminResponse: المدير المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المدير
     """
@@ -295,6 +303,7 @@ async def get_admin_by_username(
 # GET ADMIN BY CHAT ID
 # ==============================================
 
+
 @router.get(
     "/chat/{chat_id}",
     response_model=AdminResponse,
@@ -309,14 +318,14 @@ async def get_admin_by_chat_id(
 ) -> AdminResponse:
     """
     الحصول على مدير بواسطة معرف الدردشة.
-    
+
     Args:
         chat_id: معرف الدردشة في Telegram
         include_inactive: تضمين المديرين غير النشطين
-        
+
     Returns:
         AdminResponse: المدير المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المدير
     """
@@ -365,6 +374,7 @@ async def get_admin_by_chat_id(
 # LIST ADMINS
 # ==============================================
 
+
 @router.get(
     "/",
     response_model=AdminListResponse,
@@ -377,14 +387,16 @@ async def list_admins(
     limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
     only_active: bool = Query(True, description="جلب المديرين النشطين فقط"),
     role: Optional[str] = Query(None, description="تصفية حسب الدور"),
-    search: Optional[str] = Query(None, min_length=1, max_length=255, description="نص البحث"),
+    search: Optional[str] = Query(
+        None, min_length=1, max_length=255, description="نص البحث"
+    ),
     order_by: Optional[str] = Query("id", description="حقل الترتيب"),
     order_desc: bool = Query(False, description="ترتيب تنازلي"),
     service: AdminService = Depends(get_admin_service),
 ) -> AdminListResponse:
     """
     الحصول على قائمة المديرين.
-    
+
     Args:
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
@@ -393,7 +405,7 @@ async def list_admins(
         search: نص البحث
         order_by: حقل الترتيب
         order_desc: ترتيب تنازلي
-        
+
     Returns:
         AdminListResponse: قائمة المديرين مع الإحصائيات
     """
@@ -447,6 +459,7 @@ async def list_admins(
 # UPDATE ADMIN
 # ==============================================
 
+
 @router.patch(
     "/{admin_id}",
     response_model=AdminResponse,
@@ -461,14 +474,14 @@ async def update_admin(
 ) -> AdminResponse:
     """
     تحديث مدير موجود.
-    
+
     Args:
         admin_id: معرف المدير
         data: بيانات التحديث
-        
+
     Returns:
         AdminResponse: المدير المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المدير أو حدث تعارض
     """
@@ -541,6 +554,7 @@ async def update_admin(
 # UPDATE ADMIN ROLE
 # ==============================================
 
+
 @router.patch(
     "/{admin_id}/role",
     response_model=AdminResponse,
@@ -555,14 +569,14 @@ async def update_admin_role(
 ) -> AdminResponse:
     """
     تحديث دور المدير.
-    
+
     Args:
         admin_id: معرف المدير
         role: الدور الجديد
-        
+
     Returns:
         AdminResponse: المدير المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المدير
     """
@@ -623,6 +637,7 @@ async def update_admin_role(
 # TOGGLE ADMIN STATUS
 # ==============================================
 
+
 @router.patch(
     "/{admin_id}/toggle-status",
     response_model=AdminResponse,
@@ -636,13 +651,13 @@ async def toggle_admin_status(
 ) -> AdminResponse:
     """
     تبديل حالة المدير (نشط/غير نشط).
-    
+
     Args:
         admin_id: معرف المدير
-        
+
     Returns:
         AdminResponse: المدير المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المدير
     """
@@ -685,6 +700,7 @@ async def toggle_admin_status(
 # DELETE ADMIN
 # ==============================================
 
+
 @router.delete(
     "/{admin_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -699,11 +715,11 @@ async def delete_admin(
 ) -> None:
     """
     حذف مدير.
-    
+
     Args:
         admin_id: معرف المدير
         permanent: حذف نهائي
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على المدير
     """
@@ -771,6 +787,7 @@ async def delete_admin(
 # GET ADMIN STATISTICS
 # ==============================================
 
+
 @router.get(
     "/statistics",
     response_model=AdminStatistics,
@@ -783,7 +800,7 @@ async def get_admin_statistics(
 ) -> AdminStatistics:
     """
     الحصول على إحصائيات المديرين.
-    
+
     Returns:
         AdminStatistics: إحصائيات المديرين
     """

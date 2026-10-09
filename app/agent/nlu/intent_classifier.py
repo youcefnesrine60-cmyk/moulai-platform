@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🎯 INTENT CLASSIFIER
 # تصنيف نوايا المستخدم متعدد اللغات
 # ==============================================
+
+"""MoulAI operational module for intent classifier.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import json
 import re
@@ -17,14 +22,11 @@ from typing import (
     Dict,
     List,
     Optional,
-    Tuple,
 )
 
 from app.agent.config import (
-    ConfidenceScore,
     LanguageCode,
     default_config,
-    language_config,
 )
 from app.agent.language.detector import detect_language
 from app.agent.prompts.translations import (
@@ -49,18 +51,22 @@ IntentList = List[str]
 class IntentClassifier:
     """
     مصنف نوايا المستخدم - يدعم اللغات المتعددة مع نظام الأولويات.
-    
+
     مسؤول عن:
         - تصنيف نية المستخدم من النص
         - استخراج الكيانات الأساسية
         - دعم اللغة العربية (بلهجاتها) والإنجليزية والفرنسية
-    
+
     Attributes:
         ai_client: عميل الذكاء الاصطناعي
         confidence_threshold: عتبة الثقة
         supported_intents: قائمة النوايا المدعومة
         priority_order: ترتيب أولويات النوايا
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -70,7 +76,7 @@ class IntentClassifier:
     ) -> None:
         """
         تهيئة مصنف النوايا.
-        
+
         Args:
             ai_client: عميل الذكاء الاصطناعي (اختياري)
             confidence_threshold: عتبة الثقة (اختياري)
@@ -99,26 +105,48 @@ class IntentClassifier:
 
         # ترتيب الأولويات (الأعلى أولاً)
         self.priority_order: List[str] = [
-            "greeting",          # 1️⃣ أعلى أولوية
-            "goodbye",           # 2️⃣
-            "order_food",        # 3️⃣
-            "cancel_order",      # 4️⃣
-            "modify_order",      # 5️⃣
-            "track_order",       # 6️⃣
-            "ask_price",         # 7️⃣
-            "ask_offer",         # 8️⃣
-            "complaint",         # 9️⃣
-            "help",              # 🔟
-            "view_menu",         # 1️⃣1️⃣
+            "greeting",  # 1️⃣ أعلى أولوية
+            "goodbye",  # 2️⃣
+            "order_food",  # 3️⃣
+            "cancel_order",  # 4️⃣
+            "modify_order",  # 5️⃣
+            "track_order",  # 6️⃣
+            "ask_price",  # 7️⃣
+            "ask_offer",  # 8️⃣
+            "complaint",  # 9️⃣
+            "help",  # 🔟
+            "view_menu",  # 1️⃣1️⃣
             "view_restaurants",  # 1️⃣2️⃣
-            "unknown",           # 1️⃣3️⃣ أقل أولوية
+            "unknown",  # 1️⃣3️⃣ أقل أولوية
         ]
 
         # أنماط الكلمات المفتاحية لكل نية (لكل لغة)
         self.intent_patterns: Dict[LanguageCode, Dict[str, List[str]]] = {
             "ar": {
-                "order_food": ["طلب", "اطلب", "اريد", "ابغى", "بدي", "نريد", "طلبات", "وجبة", "اكل", "طعام", "بيتزا", "برجر", "شاورما"],
-                "view_menu": ["قائمة", "منيو", "menu", "الاكل", "الطعام", "الوجبات", "عرض"],
+                "order_food": [
+                    "طلب",
+                    "اطلب",
+                    "اريد",
+                    "ابغى",
+                    "بدي",
+                    "نريد",
+                    "طلبات",
+                    "وجبة",
+                    "اكل",
+                    "طعام",
+                    "بيتزا",
+                    "برجر",
+                    "شاورما",
+                ],
+                "view_menu": [
+                    "قائمة",
+                    "منيو",
+                    "menu",
+                    "الاكل",
+                    "الطعام",
+                    "الوجبات",
+                    "عرض",
+                ],
                 "view_restaurants": ["مطعم", "مطاعم", "محلات", "اكل", "طعام"],
                 "modify_order": ["تعديل", "تغيير", "تعديل الطلب"],
                 "cancel_order": ["الغاء", "إلغاء", "الغ", "الغي", "الغاء الطلب"],
@@ -127,13 +155,56 @@ class IntentClassifier:
                 "ask_offer": ["عرض", "عروض", "خصم", "تخفيض", "صفقة"],
                 "complaint": ["شكوى", "مشكلة", "شكوي", "خطأ", "غلط"],
                 # الاحتفاظ بـ "كيف" لأن الأولوية ستحل المشكلة
-                "help": ["مساعدة", "مساعده", "مساعدتي", "ساعد", "طريقة", "شرح", "طريقه", "ساعدني", "دليل", "ارشاد", "كيف"],
-                "greeting": ["مرحبا", "السلام", "اهلا", "هلا", "صباح", "مساء", "حالك", "حال", "اخبار", "اخبارك", "عليكم"],
+                "help": [
+                    "مساعدة",
+                    "مساعده",
+                    "مساعدتي",
+                    "ساعد",
+                    "طريقة",
+                    "شرح",
+                    "طريقه",
+                    "ساعدني",
+                    "دليل",
+                    "ارشاد",
+                    "كيف",
+                ],
+                "greeting": [
+                    "مرحبا",
+                    "السلام",
+                    "اهلا",
+                    "هلا",
+                    "صباح",
+                    "مساء",
+                    "حالك",
+                    "حال",
+                    "اخبار",
+                    "اخبارك",
+                    "عليكم",
+                ],
                 "goodbye": ["مع السلامة", "وداعا", "باي", "سلام", "الى اللقاء"],
             },
             "en": {
-                "order_food": ["order", "buy", "purchase", "get", "want", "need", "food", "meal", "pizza", "burger"],
-                "view_menu": ["menu", "list", "items", "food", "dishes", "meals", "show"],
+                "order_food": [
+                    "order",
+                    "buy",
+                    "purchase",
+                    "get",
+                    "want",
+                    "need",
+                    "food",
+                    "meal",
+                    "pizza",
+                    "burger",
+                ],
+                "view_menu": [
+                    "menu",
+                    "list",
+                    "items",
+                    "food",
+                    "dishes",
+                    "meals",
+                    "show",
+                ],
                 "view_restaurants": ["restaurant", "restaurants", "places", "eat"],
                 "modify_order": ["modify", "change", "edit", "update", "order"],
                 "cancel_order": ["cancel", "cancel order", "stop"],
@@ -142,22 +213,66 @@ class IntentClassifier:
                 "ask_offer": ["offer", "offers", "discount", "deal", "promotion"],
                 "complaint": ["complaint", "problem", "issue", "wrong", "error"],
                 "help": ["help", "assist", "support", "guide", "how to"],
-                "greeting": ["hello", "hi", "hey", "good morning", "good evening", "how are you"],
+                "greeting": [
+                    "hello",
+                    "hi",
+                    "hey",
+                    "good morning",
+                    "good evening",
+                    "how are you",
+                ],
                 "goodbye": ["goodbye", "bye", "see you", "later", "farewell"],
             },
             "fr": {
-                "order_food": ["commander", "acheter", "obtenir", "vouloir", "besoin", "nourriture", "repas", "pizza", "burger"],
-                "view_menu": ["menu", "liste", "plats", "nourriture", "repas", "afficher"],
+                "order_food": [
+                    "commander",
+                    "acheter",
+                    "obtenir",
+                    "vouloir",
+                    "besoin",
+                    "nourriture",
+                    "repas",
+                    "pizza",
+                    "burger",
+                ],
+                "view_menu": [
+                    "menu",
+                    "liste",
+                    "plats",
+                    "nourriture",
+                    "repas",
+                    "afficher",
+                ],
                 "view_restaurants": ["restaurant", "restaurants", "endroits", "manger"],
-                "modify_order": ["modifier", "changer", "éditer", "mettre à jour", "commande"],
+                "modify_order": [
+                    "modifier",
+                    "changer",
+                    "éditer",
+                    "mettre à jour",
+                    "commande",
+                ],
                 "cancel_order": ["annuler", "annuler la commande", "arrêter"],
                 "track_order": ["suivre", "suivi", "état de commande", "où est"],
                 "ask_price": ["prix", "coût", "combien", "tarif", "frais"],
                 "ask_offer": ["offre", "offres", "remise", "réduction", "promotion"],
                 "complaint": ["réclamation", "problème", "erreur", "plainte"],
                 # الاحتفاظ بـ "comment" لأن الأولوية ستحل المشكلة
-                "help": ["aide", "assistance", "support", "guide", "tutoriel", "comment"],
-                "greeting": ["bonjour", "salut", "bonsoir", "hé", "ça va", "allez-vous"],
+                "help": [
+                    "aide",
+                    "assistance",
+                    "support",
+                    "guide",
+                    "tutoriel",
+                    "comment",
+                ],
+                "greeting": [
+                    "bonjour",
+                    "salut",
+                    "bonsoir",
+                    "hé",
+                    "ça va",
+                    "allez-vous",
+                ],
                 "goodbye": ["au revoir", "salut", "à bientôt", "ciao", "adieu"],
             },
         }
@@ -184,11 +299,11 @@ class IntentClassifier:
     ) -> IntentResult:
         """
         تصنيف نية المستخدم من النص.
-        
+
         Args:
             text: النص المراد تصنيفه
             language: رمز اللغة (اختياري - سيتم كشفها تلقائياً)
-            
+
         Returns:
             IntentResult: {
                 "intent": str,
@@ -230,7 +345,10 @@ class IntentClassifier:
                     text=text,
                     language=language,
                 )
-                if result and result.get("confidence", 0.0) >= self.confidence_threshold:
+                if (
+                    result
+                    and result.get("confidence", 0.0) >= self.confidence_threshold
+                ):
                     logger.info(
                         "classify_intent_ai_success",
                         extra={
@@ -279,11 +397,11 @@ class IntentClassifier:
     ) -> Optional[IntentResult]:
         """
         تصنيف النية باستخدام الذكاء الاصطناعي.
-        
+
         Args:
             text: النص المراد تصنيفه
             language: رمز اللغة
-            
+
         Returns:
             نتيجة التصنيف أو None
         """
@@ -299,7 +417,10 @@ class IntentClassifier:
             # استدعاء الذكاء الاصطناعي
             response = await self.ai_client.chat_completion(
                 messages=[
-                    {"role": "system", "content": "You are an intent classifier. Output only valid JSON."},
+                    {
+                        "role": "system",
+                        "content": "You are an intent classifier. Output only valid JSON.",
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.1,
@@ -358,11 +479,11 @@ class IntentClassifier:
     ) -> IntentResult:
         """
         تصنيف النية باستخدام الأنماط مع نظام الأولويات (Fallback).
-        
+
         Args:
             text: النص المراد تصنيفه
             language: رمز اللغة
-            
+
         Returns:
             نتيجة التصنيف
         """
@@ -395,7 +516,9 @@ class IntentClassifier:
         for intent in self.priority_order:
             if intent in scores and scores[intent] > 0:
                 # إضافة مكافأة للنية ذات الأولوية العالية
-                priority_bonus = (len(self.priority_order) - self.priority_order.index(intent)) * 0.1
+                priority_bonus = (
+                    len(self.priority_order) - self.priority_order.index(intent)
+                ) * 0.1
                 adjusted_score = scores[intent] + priority_bonus
 
                 if best_intent is None or adjusted_score > best_score:
@@ -423,7 +546,11 @@ class IntentClassifier:
                 "intent": best_intent,
                 "confidence": confidence,
                 "score": scores.get(best_intent, 0),
-                "priority_index": self.priority_order.index(best_intent) if best_intent in self.priority_order else -1,
+                "priority_index": (
+                    self.priority_order.index(best_intent)
+                    if best_intent in self.priority_order
+                    else -1
+                ),
             },
         )
 
@@ -445,11 +572,11 @@ class IntentClassifier:
     ) -> EntityDict:
         """
         استخراج الكيانات من النص.
-        
+
         Args:
             text: النص المراد استخراج الكيانات منه
             language: رمز اللغة
-            
+
         Returns:
             الكيانات المستخرجة
         """
@@ -465,10 +592,10 @@ class IntentClassifier:
 
         # 1️⃣ استخراج رقم الطلب
         order_patterns = [
-            r'#?(\d{4,8})',
-            r'رقم\s*الطلب\s*[#:]?\s*(\d+)',
-            r'order\s*[#:]?\s*(\d+)',
-            r'commande\s*[#:]?\s*(\d+)',
+            r"#?(\d{4,8})",
+            r"رقم\s*الطلب\s*[#:]?\s*(\d+)",
+            r"order\s*[#:]?\s*(\d+)",
+            r"commande\s*[#:]?\s*(\d+)",
         ]
 
         for pattern in order_patterns:
@@ -479,12 +606,12 @@ class IntentClassifier:
 
         # 2️⃣ استخراج الكمية (محسّن)
         quantity_patterns = [
-            r'(\d+)\s*(?:كيلو|كغم|غرام|قطعة|حبة|وحدة)',
-            r'(\d+)\s*(?:kg|g|piece|unit)',
-            r'(\d+)\s*(?:kg|g|pièce|unité)',
-            r'(?:أريد|اطلب|اريد|ابغى|بدي|order|commander)\s*(\d+)',
-            r'(\d+)\s*(?:بيتزا|برجر|شاورما|وجبة|pizza|burger|repas)',
-            r'(\d+)\s*$',
+            r"(\d+)\s*(?:كيلو|كغم|غرام|قطعة|حبة|وحدة)",
+            r"(\d+)\s*(?:kg|g|piece|unit)",
+            r"(\d+)\s*(?:kg|g|pièce|unité)",
+            r"(?:أريد|اطلب|اريد|ابغى|بدي|order|commander)\s*(\d+)",
+            r"(\d+)\s*(?:بيتزا|برجر|شاورما|وجبة|pizza|burger|repas)",
+            r"(\d+)\s*$",
         ]
 
         for pattern in quantity_patterns:
@@ -495,13 +622,13 @@ class IntentClassifier:
 
         # 3️⃣ استخراج السعر
         price_patterns = [
-            r'(\d+(?:\.\d{1,2})?)\s*(?:دج|دينار|da|dzd)',
-            r'(\d+(?:\.\d{1,2})?)\s*(?:da|dzd)',
-            r'(\d+(?:\.\d{1,2})?)\s*(?:€|eur|dollar|usd)',
-            r'سعر\s*[هو]?\s*(\d+(?:\.\d{1,2})?)',
-            r'price\s*(?:is)?\s*(\d+(?:\.\d{1,2})?)',
-            r'prix\s*(?:est)?\s*(\d+(?:\.\d{1,2})?)',
-            r'بسعر\s*(\d+(?:\.\d{1,2})?)',
+            r"(\d+(?:\.\d{1,2})?)\s*(?:دج|دينار|da|dzd)",
+            r"(\d+(?:\.\d{1,2})?)\s*(?:da|dzd)",
+            r"(\d+(?:\.\d{1,2})?)\s*(?:€|eur|dollar|usd)",
+            r"سعر\s*[هو]?\s*(\d+(?:\.\d{1,2})?)",
+            r"price\s*(?:is)?\s*(\d+(?:\.\d{1,2})?)",
+            r"prix\s*(?:est)?\s*(\d+(?:\.\d{1,2})?)",
+            r"بسعر\s*(\d+(?:\.\d{1,2})?)",
         ]
 
         for pattern in price_patterns:
@@ -512,9 +639,9 @@ class IntentClassifier:
 
         # 4️⃣ استخراج اسم المنتج
         product_patterns = [
-            r'(?:اطلب|اريد|ابغى|بدي|order|commander)\s*(.+?)(?:\s*$|\.|،)',
-            r'(بيتزا|برجر|شاورما|فطيرة|كوكا|عصير|مشروب)',
-            r'(pizza|burger|shawarma|drink|juice)',
+            r"(?:اطلب|اريد|ابغى|بدي|order|commander)\s*(.+?)(?:\s*$|\.|،)",
+            r"(بيتزا|برجر|شاورما|فطيرة|كوكا|عصير|مشروب)",
+            r"(pizza|burger|shawarma|drink|juice)",
         ]
 
         for pattern in product_patterns:
@@ -535,21 +662,21 @@ class IntentClassifier:
     ) -> Optional[str]:
         """
         استخراج JSON من النص.
-        
+
         Args:
             text: النص المراد استخراج JSON منه
-            
+
         Returns:
             نص JSON أو None
         """
         # البحث عن JSON بين قوسين
-        match = re.search(r'\{[^{}]*\}', text, re.DOTALL)
+        match = re.search(r"\{[^{}]*\}", text, re.DOTALL)
         if match:
             return match.group(0)
 
         # البحث عن JSON في النص
-        start = text.find('{')
-        end = text.rfind('}') + 1
+        start = text.find("{")
+        end = text.rfind("}") + 1
         if start != -1 and end > start:
             return text[start:end]
 
@@ -567,11 +694,11 @@ class IntentClassifier:
     ) -> Dict[str, Any]:
         """
         الحصول على تفاصيل النية.
-        
+
         Args:
             intent: اسم النية
             language: رمز اللغة
-            
+
         Returns:
             تفاصيل النية
         """
@@ -580,7 +707,11 @@ class IntentClassifier:
             "description": "",
             "keywords": [],
             "examples": [],
-            "priority": self.priority_order.index(intent) if intent in self.priority_order else -1,
+            "priority": (
+                self.priority_order.index(intent)
+                if intent in self.priority_order
+                else -1
+            ),
         }
 
         # ترجمات الأسماء
@@ -657,22 +788,42 @@ class IntentClassifier:
             "en": {
                 "order_food": ["I want to order pizza", "I need a meal", "Order food"],
                 "view_menu": ["Show menu", "What do you have", "Menu please"],
-                "view_restaurants": ["Available restaurants", "Where to eat", "Restaurants"],
+                "view_restaurants": [
+                    "Available restaurants",
+                    "Where to eat",
+                    "Restaurants",
+                ],
                 "modify_order": ["Modify my order", "Change order", "Edit order"],
                 "cancel_order": ["Cancel my order", "Stop order", "Cancel"],
                 "track_order": ["Track my order", "Where is my order", "Order status"],
                 "ask_price": ["Price of pizza", "How much", "Cost"],
                 "ask_offer": ["Today's offers", "Deals", "Discounts"],
-                "complaint": ["Complaint about order", "Problem with order", "Wrong order"],
+                "complaint": [
+                    "Complaint about order",
+                    "Problem with order",
+                    "Wrong order",
+                ],
                 "help": ["Help", "How to order", "Guide"],
                 "greeting": ["Hello", "Hi", "Good morning", "How are you"],
                 "goodbye": ["Goodbye", "Bye", "See you"],
             },
             "fr": {
-                "order_food": ["Je veux commander une pizza", "J'ai besoin d'un repas", "Commander"],
+                "order_food": [
+                    "Je veux commander une pizza",
+                    "J'ai besoin d'un repas",
+                    "Commander",
+                ],
                 "view_menu": ["Afficher le menu", "Qu'est-ce que vous avez", "Menu"],
-                "view_restaurants": ["Restaurants disponibles", "Où manger", "Restaurants"],
-                "modify_order": ["Modifier ma commande", "Changer la commande", "Éditer"],
+                "view_restaurants": [
+                    "Restaurants disponibles",
+                    "Où manger",
+                    "Restaurants",
+                ],
+                "modify_order": [
+                    "Modifier ma commande",
+                    "Changer la commande",
+                    "Éditer",
+                ],
                 "cancel_order": ["Annuler ma commande", "Arrêter", "Annuler"],
                 "track_order": ["Suivre ma commande", "Où est ma commande", "État"],
                 "ask_price": ["Prix de la pizza", "Combien", "Coût"],
@@ -697,6 +848,7 @@ class IntentClassifier:
 # CLASSIFY INTENT
 # ==============================================
 
+
 async def classify_intent(
     *,
     text: str,
@@ -705,12 +857,12 @@ async def classify_intent(
 ) -> IntentResult:
     """
     تصنيف نية المستخدم (دالة مساعدة).
-    
+
     Args:
         text: النص المراد تصنيفه
         language: رمز اللغة (اختياري)
         classifier: مصنف النوايا (اختياري)
-        
+
     Returns:
         نتيجة التصنيف
     """

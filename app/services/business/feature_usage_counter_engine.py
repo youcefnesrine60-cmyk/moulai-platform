@@ -6,6 +6,16 @@
 # ==============================================
 
 # ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS
+# / FEATURE USAGE COUNTER ENGINE
+# ==============================================
+
+"""MoulAI operational module for feature usage counter engine.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
+# ==============================================
 # 📊 FEATURE USAGE COUNTER ENGINE
 # Business Logic Layer
 #
@@ -39,6 +49,7 @@ from app.repositories.feature_usage_limits_repo import (
 # 🔍 CURRENT PERIOD
 # ==============================================
 
+
 def _current_period() -> tuple[int, int]:
     """
     إرجاع السنة والشهر الحاليين بتوقيت UTC.
@@ -57,6 +68,7 @@ def _current_period() -> tuple[int, int]:
 # ==============================================
 # 🔍 GET CURRENT USAGE
 # ==============================================
+
 
 async def get_usage(
     *,
@@ -90,6 +102,7 @@ async def get_usage(
 # ==============================================
 # 🔍 CAN USE FEATURE
 # ==============================================
+
 
 async def can_use_feature(
     *,
@@ -142,6 +155,7 @@ async def can_use_feature(
 # ➕ INCREASE USAGE
 # ==============================================
 
+
 async def increase_usage(
     *,
     session: AsyncSession,
@@ -191,6 +205,7 @@ async def increase_usage(
 # ==============================================
 # ➖ DECREASE USAGE
 # ==============================================
+
 
 async def decrease_usage(
     *,
@@ -247,6 +262,7 @@ async def decrease_usage(
 # ==============================================
 # 🔍 GET REMAINING USAGE
 # ==============================================
+
 
 async def get_remaining_usage(
     *,

@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,6 +10,11 @@
 # مسؤول عن التواصل مع نماذج الذكاء الاصطناعي
 # يدعم OpenAI و DeepSeek
 # ==============================================
+
+"""MoulAI operational module for ai client.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import json
 import re
@@ -41,11 +46,11 @@ AIResponse = Dict[str, Any]
 class AIClient:
     """
     عميل موحد للذكاء الاصطناعي
-    
+
     يدعم:
         - OpenAI (GPT-4, GPT-4o-mini, etc.)
         - DeepSeek (deepseek-chat, deepseek-reasoner)
-    
+
     Attributes:
         client: عميل OpenAI
         model: اسم النموذج المستخدم
@@ -53,6 +58,10 @@ class AIClient:
         api_key: مفتاح API
         base_url: رابط API
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,14 +72,16 @@ class AIClient:
     ) -> None:
         """
         تهيئة العميل مع الإعدادات من .env
-        
+
         Args:
             api_key: مفتاح API (اختياري)
             base_url: رابط API (اختياري)
             model: اسم النموذج (اختياري)
         """
         self.api_key: str = api_key or settings.OPENAI_API_KEY or ""
-        self.base_url: str = base_url or settings.OPENAI_BASE_URL or "https://api.openai.com/v1"
+        self.base_url: str = (
+            base_url or settings.OPENAI_BASE_URL or "https://api.openai.com/v1"
+        )
         self.model: str = model or settings.AI_MODEL or "gpt-3.5-turbo"
 
         # تحديد ما إذا كان العميل مفعلاً
@@ -108,13 +119,13 @@ class AIClient:
     ) -> str:
         """
         إرسال رسالة والحصول على رد من الذكاء الاصطناعي
-        
+
         Args:
             message: رسالة المستخدم
             system_prompt: تعليمات النظام (اختياري)
             temperature: درجة الحرارة (0.0 - 1.0)
             max_tokens: الحد الأقصى للرموز
-            
+
         Returns:
             رد الذكاء الاصطناعي
         """
@@ -131,21 +142,27 @@ class AIClient:
 
             # إضافة تعليمات النظام
             if system_prompt:
-                messages.append({
-                    "role": "system",
-                    "content": system_prompt,
-                })
+                messages.append(
+                    {
+                        "role": "system",
+                        "content": system_prompt,
+                    }
+                )
             else:
-                messages.append({
-                    "role": "system",
-                    "content": "أنت مساعد ذكي للمطاعم، تتحدث العربية والفرنسية والإنجليزية.",
-                })
+                messages.append(
+                    {
+                        "role": "system",
+                        "content": "أنت مساعد ذكي للمطاعم، تتحدث العربية والفرنسية والإنجليزية.",
+                    }
+                )
 
             # إضافة رسالة المستخدم
-            messages.append({
-                "role": "user",
-                "content": message,
-            })
+            messages.append(
+                {
+                    "role": "user",
+                    "content": message,
+                }
+            )
 
             # إرسال الطلب
             response = self.client.chat.completions.create(
@@ -192,13 +209,13 @@ class AIClient:
     ) -> str:
         """
         إجراء مكالمة Chat Completion (متوافقة مع intent_classifier).
-        
+
         Args:
             messages: قائمة الرسائل
             temperature: درجة الحرارة
             max_tokens: الحد الأقصى للرموز
             stream: تدفق النتيجة
-            
+
         Returns:
             رد النموذج
         """
@@ -230,10 +247,10 @@ class AIClient:
     ) -> AIResponse:
         """
         تحليل طلب العميل واستخراج المنتجات
-        
+
         Args:
             order_text: نص الطلب
-            
+
         Returns:
             قاموس يحتوي على المنتجات والملاحظات
         """
@@ -254,7 +271,7 @@ class AIClient:
 
         # محاولة تحويل الرد إلى JSON
         try:
-            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            json_match = re.search(r"\{.*\}", response, re.DOTALL)
             if json_match:
                 return json.loads(json_match.group())
         except (json.JSONDecodeError, AttributeError):

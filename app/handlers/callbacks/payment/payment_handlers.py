@@ -1,8 +1,19 @@
 # ==============================================
-# 💳 PAYMENT TELEGRAM HANDLERS
-# معالجة تفاعلات المستخدم داخل Telegram
-# (أزرار الدفع، التأكيد، إعادة المحاولة)
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HANDLERS / CALLBACKS / PAYMENT / PAYMENT HANDLERS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for payment handlers.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 import re
 
@@ -22,10 +33,10 @@ from app.services.business.order_payments_service import (
     fail_payment as fail_order_payment,
 )
 
-
 # ==============================================
 # ✅ PAYMENT SUCCESS (Telegram)
 # ==============================================
+
 
 @rate_limit(
     limit=5,
@@ -154,6 +165,7 @@ async def handle_payment_success(
 # ==============================================
 # ❌ PAYMENT FAILURE (Telegram)
 # ==============================================
+
 
 @rate_limit(
     limit=5,

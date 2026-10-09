@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for loyalty discount repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -58,6 +63,10 @@ class LoyaltyDiscountRepository(
         model: نموذج LoyaltyDiscount
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -281,6 +290,7 @@ class LoyaltyDiscountRepository(
 # CREATE LOYALTY DISCOUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def create_loyalty_discount(
     *,
     years_required: int,
@@ -323,6 +333,7 @@ async def create_loyalty_discount(
 # GET LOYALTY DISCOUNT BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_loyalty_discount_by_id(
     *,
     discount_id: int,
@@ -357,6 +368,7 @@ async def get_loyalty_discount_by_id(
 # GET ALL LOYALTY DISCOUNTS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_all_loyalty_discounts(
     session: AsyncSession,
     *,
@@ -381,12 +393,14 @@ async def get_all_loyalty_discounts(
     result = []
 
     for discount in discounts:
-        result.append({
-            "id": discount.id,
-            "owner_id": discount.owner_id,
-            "years_required": discount.years_required,
-            "discount_percent": float(discount.discount_percent),
-        })
+        result.append(
+            {
+                "id": discount.id,
+                "owner_id": discount.owner_id,
+                "years_required": discount.years_required,
+                "discount_percent": float(discount.discount_percent),
+            }
+        )
 
     return result
 
@@ -394,6 +408,7 @@ async def get_all_loyalty_discounts(
 # ==============================================
 # GET LOYALTY DISCOUNT FOR YEARS (COMPATIBILITY)
 # ==============================================
+
 
 async def get_loyalty_discount_for_years(
     *,
@@ -418,6 +433,7 @@ async def get_loyalty_discount_for_years(
 # ==============================================
 # UPDATE LOYALTY DISCOUNT (COMPATIBILITY)
 # ==============================================
+
 
 async def update_loyalty_discount(
     *,
@@ -444,6 +460,7 @@ async def update_loyalty_discount(
 # ==============================================
 # DELETE LOYALTY DISCOUNT (COMPATIBILITY)
 # ==============================================
+
 
 async def delete_loyalty_discount(
     *,

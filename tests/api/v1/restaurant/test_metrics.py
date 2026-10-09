@@ -5,6 +5,16 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# TEST MODULE - TESTS / API / V1 / RESTAURANT / TEST METRICS
+# Automated test coverage for the MoulAI platform.
+# ==============================================
+
+"""Automated tests for test metrics.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,15 +22,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.owner import Owner
 from app.models.restaurant import Restaurant
 
-
 # ==============================================
 # 📋 TESTS - METRICS
 # ==============================================
+
 
 class TestMetricsAPI:
     """
     اختبارات نقاط نهاية مقاييس المطعم.
     """
+
+    # ==============================================
+    # SETUP
+    # ==============================================
 
     @pytest.fixture(autouse=True)
     async def setup(
@@ -31,9 +45,9 @@ class TestMetricsAPI:
     ) -> None:
         """
         تهيئة بيانات الاختبار.
-        
+
         ✅ التصحيح: استخدام flush() بدلاً من commit()
-        
+
         Args:
             db_session: جلسة قاعدة البيانات
             sample_owner_data: بيانات مالك نموذجية
@@ -64,16 +78,16 @@ class TestMetricsAPI:
     ) -> None:
         """
         اختبار تهيئة مقاييس المطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
         response = await client.post(
             f"/api/v1/restaurant-metrics/{self.restaurant_id}/initialize"
         )
-        
+
         assert response.status_code == 201
-        
+
         data = response.json()
         assert data["restaurant_id"] == self.restaurant_id
         assert data["products_count"] == 0
@@ -91,7 +105,7 @@ class TestMetricsAPI:
     ) -> None:
         """
         اختبار الحصول على مقاييس المطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -99,9 +113,9 @@ class TestMetricsAPI:
         await client.post(f"/api/v1/restaurant-metrics/{self.restaurant_id}/initialize")
 
         response = await client.get(f"/api/v1/restaurant-metrics/{self.restaurant_id}")
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["restaurant_id"] == self.restaurant_id
 
@@ -116,7 +130,7 @@ class TestMetricsAPI:
     ) -> None:
         """
         اختبار تحديث مقاييس المطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن
             sample_metric_data: بيانات مقاييس نموذجية
@@ -125,12 +139,11 @@ class TestMetricsAPI:
         await client.post(f"/api/v1/restaurant-metrics/{self.restaurant_id}/initialize")
 
         response = await client.patch(
-            f"/api/v1/restaurant-metrics/{self.restaurant_id}",
-            json=sample_metric_data
+            f"/api/v1/restaurant-metrics/{self.restaurant_id}", json=sample_metric_data
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["products_count"] == sample_metric_data["products_count"]
         assert data["categories_count"] == sample_metric_data["categories_count"]
@@ -145,7 +158,7 @@ class TestMetricsAPI:
     ) -> None:
         """
         اختبار الحصول على ملخص مقاييس المطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -155,9 +168,9 @@ class TestMetricsAPI:
         response = await client.get(
             f"/api/v1/restaurant-metrics/{self.restaurant_id}/summary"
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["restaurant_id"] == self.restaurant_id
 
@@ -171,7 +184,7 @@ class TestMetricsAPI:
     ) -> None:
         """
         اختبار إعادة تعيين مقاييس المطعم.
-        
+
         Args:
             client: عميل HTTP غير متزامن
         """
@@ -181,9 +194,9 @@ class TestMetricsAPI:
         response = await client.post(
             f"/api/v1/restaurant-metrics/{self.restaurant_id}/reset"
         )
-        
+
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["products_count"] == 0
         assert data["categories_count"] == 0

@@ -1,5 +1,23 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / SERVICES / BUSINESS / ORDERS / DELETE
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for delete.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.repositories.orders_repo import lock_order
 from app.services.business.orders.transaction import transactional_order
+
 # ==============================================
 # 📦 ORDERS SERVICE - DELETE
 # حذف الطلب (remove_order)
@@ -14,15 +32,13 @@ from app.core.exceptions import (
 )
 
 from app.core.logger import logger
-from app.repositories.order_items_repo import OrderItemsRepository
-from app.repositories.order_payments_repo import OrderPaymentsRepository
 from app.repositories.orders_repo import OrdersRepository
-from app.repositories.order_status_history_repo import OrderStatusHistoryRepository
 from app.services.business.orders.constants import is_editable_status
 
 # ==============================================
 # ❌ DELETE ORDER
 # ==============================================
+
 
 @transactional_order
 async def remove_order(
@@ -33,12 +49,12 @@ async def remove_order(
 ) -> None:
     """
     حذف طلب.
-    
+
     Args:
         order_id: معرف الطلب
         permanent: حذف نهائي (بدلاً من الحذف المنطقي)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كان الطلب مقفلاً أو مدفوعاً
@@ -52,7 +68,6 @@ async def remove_order(
     )
 
     # 1️⃣ التحقق من وجود الطلب
-    orders_repo = OrdersRepository(session=session)
     order = await lock_order(order_id=order_id, session=session)
 
     if not order:
@@ -114,6 +129,7 @@ async def remove_order(
 # ❌ DELETE ORDER PERMANENTLY (INTERNAL)
 # ==============================================
 
+
 async def _delete_order_permanently(
     *,
     order_id: int,
@@ -121,7 +137,7 @@ async def _delete_order_permanently(
 ) -> None:
     """
     حذف الطلب نهائياً مع جميع البيانات المرتبطة.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -134,6 +150,7 @@ async def _delete_order_permanently(
 # ❌ DELETE ORDER LOGICALLY (INTERNAL)
 # ==============================================
 
+
 async def _delete_order_logically(
     *,
     order_id: int,
@@ -141,14 +158,16 @@ async def _delete_order_logically(
 ) -> None:
     """
     حذف الطلب منطقياً (تعيين is_active = False).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
     """
     from app.services.business.orders.update import change_order_status
-    await change_order_status(order_id=order_id, new_status="cancelled",
-                              note="Order deleted", session=session)
+
+    await change_order_status(
+        order_id=order_id, new_status="cancelled", note="Order deleted", session=session
+    )
 
     logger.info(
         "order_logically_deleted",
@@ -160,6 +179,7 @@ async def _delete_order_logically(
 # ❌ DELETE ALL ORDERS FOR RESTAURANT
 # ==============================================
 
+
 @transactional_order
 async def delete_restaurant_orders(
     *,
@@ -169,15 +189,15 @@ async def delete_restaurant_orders(
 ) -> dict:
     """
     حذف جميع طلبات مطعم معين.
-    
+
     Args:
         restaurant_id: معرف المطعم
         permanent: حذف نهائي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         dict: نتائج الحذف (deleted_count, failed_count)
-        
+
     Raises:
         ValidationError: إذا كان المطعم يحتوي على طلبات مدفوعة
     """
@@ -259,6 +279,7 @@ async def delete_restaurant_orders(
 # ❌ DELETE ORDERS BY STATUS
 # ==============================================
 
+
 @transactional_order
 async def delete_orders_by_status(
     *,
@@ -269,16 +290,16 @@ async def delete_orders_by_status(
 ) -> dict:
     """
     حذف طلبات حسب الحالة.
-    
+
     Args:
         restaurant_id: معرف المطعم
         status: حالة الطلب
         permanent: حذف نهائي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         dict: نتائج الحذف (deleted_count, failed_count)
-        
+
     Raises:
         ValidationError: إذا كانت الحالة غير صالحة
     """
@@ -364,7 +385,13 @@ async def delete_orders_by_status(
 # 🔄 COMPATIBILITY FUNCTIONS
 # ==============================================
 
+
 # دالة التوافق مع الإصدار القديم
+# ==============================================
+# REMOVE ORDER COMPAT
+# ==============================================
+
+
 async def remove_order_compat(
     *,
     order_id: int,
@@ -372,7 +399,7 @@ async def remove_order_compat(
 ) -> None:
     """
     دالة متوافقة مع الإصدار القديم (مغلفة).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة

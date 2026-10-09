@@ -1,7 +1,19 @@
 # ==============================================
-# 🧠 STATE HELPER - VERSION PRO
-# دوال مساعدة لإدارة الحالة بشكل موحد وآمن
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / HELPERS / STATE HELPER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for state helper.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import Any
 from datetime import datetime, timezone
@@ -23,6 +35,7 @@ StateData = dict[str, Any]
 # ==============================================
 # 📥 GET STATE
 # ==============================================
+
 
 async def get_user_state(
     *,
@@ -64,6 +77,7 @@ async def get_user_state(
 # ==============================================
 # 💾 UPDATE STATE FIELD
 # ==============================================
+
 
 async def update_state_field(
     *,
@@ -118,6 +132,7 @@ async def update_state_field(
 # ==============================================
 # 📥 APPEND TO STATE LIST
 # ==============================================
+
 
 async def append_to_state_list(
     *,
@@ -194,6 +209,7 @@ async def append_to_state_list(
 # 📤 REMOVE FROM STATE LIST
 # ==============================================
 
+
 async def remove_from_state_list(
     *,
     chat_id: int,
@@ -255,6 +271,7 @@ async def remove_from_state_list(
 # 🧹 CLEAR USER STATE
 # ==============================================
 
+
 async def clear_user_state(
     *,
     chat_id: int,
@@ -293,6 +310,7 @@ async def clear_user_state(
 # ==============================================
 # 🔄 INITIALIZE USER STATE
 # ==============================================
+
 
 async def initialize_user_state(
     *,
@@ -358,6 +376,7 @@ async def initialize_user_state(
 # 🔍 GET STATE FIELD
 # ==============================================
 
+
 async def get_state_field(
     *,
     chat_id: int,
@@ -398,6 +417,7 @@ async def get_state_field(
 # ==============================================
 # 📊 UPDATE MULTIPLE STATE FIELDS
 # ==============================================
+
 
 async def update_state_fields(
     *,

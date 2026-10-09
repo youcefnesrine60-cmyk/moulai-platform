@@ -10,10 +10,14 @@
 # سكريبت لتشغيل ترحيلات Alembic بسهولة
 # ==============================================
 
+"""Operational maintenance script for run migrations.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import subprocess
 import sys
 from typing import Optional
-
 
 # ==============================================
 # 📝 LOGGING (مع Fallback)
@@ -21,27 +25,54 @@ from typing import Optional
 
 try:
     from app.core.logger import logger
+
     HAS_LOGGER = True
 except ImportError:
     HAS_LOGGER = False
+
     # دوال احتياطية إذا لم يوجد logger
+    # ==============================================
+    # LOGGER INFO
+    # ==============================================
+
     def logger_info(msg, **kwargs):
         print(f"ℹ️ {msg}")
+
+    # ==============================================
+    # LOGGER SUCCESS
+    # ==============================================
+
     def logger_success(msg, **kwargs):
         print(f"✅ {msg}")
+
+    # ==============================================
+    # LOGGER ERROR
+    # ==============================================
+
     def logger_error(msg, **kwargs):
         print(f"❌ {msg}")
+
+    # ==============================================
+    # LOGGER EXCEPTION
+    # ==============================================
+
     def logger_exception(msg, **kwargs):
         print(f"❌ {msg} - {kwargs.get('extra', {}).get('error', '')}")
-    logger = type('Logger', (), {
-        'info': staticmethod(logger_info),
-        'exception': staticmethod(logger_exception),
-    })()
+
+    logger = type(
+        "Logger",
+        (),
+        {
+            "info": staticmethod(logger_info),
+            "exception": staticmethod(logger_exception),
+        },
+    )()
 
 
 # ==============================================
 # 🚀 FUNCTIONS
 # ==============================================
+
 
 def run_command(command: str, description: str) -> bool:
     """
@@ -76,6 +107,11 @@ def run_command(command: str, description: str) -> bool:
         return False
 
 
+# ==============================================
+# CREATE MIGRATION
+# ==============================================
+
+
 def create_migration(message: str) -> bool:
     """
     إنشاء ترحيلة جديدة
@@ -86,8 +122,13 @@ def create_migration(message: str) -> bool:
     Returns:
         bool: True إذا نجح، False إذا فشل
     """
-    command = f"alembic revision --autogenerate -m \"{message}\""
+    command = f'alembic revision --autogenerate -m "{message}"'
     return run_command(command, "create_migration")
+
+
+# ==============================================
+# UPGRADE MIGRATION
+# ==============================================
 
 
 def upgrade_migration(revision: Optional[str] = "head") -> bool:
@@ -104,6 +145,11 @@ def upgrade_migration(revision: Optional[str] = "head") -> bool:
     return run_command(command, "upgrade_migration")
 
 
+# ==============================================
+# DOWNGRADE MIGRATION
+# ==============================================
+
+
 def downgrade_migration(revision: str = "-1") -> bool:
     """
     التراجع عن الترحيلات
@@ -118,6 +164,11 @@ def downgrade_migration(revision: str = "-1") -> bool:
     return run_command(command, "downgrade_migration")
 
 
+# ==============================================
+# SHOW CURRENT REVISION
+# ==============================================
+
+
 def show_current_revision() -> bool:
     """
     عرض الإصدار الحالي
@@ -127,6 +178,11 @@ def show_current_revision() -> bool:
     """
     command = "alembic current"
     return run_command(command, "show_current_revision")
+
+
+# ==============================================
+# SHOW HISTORY
+# ==============================================
 
 
 def show_history() -> bool:
@@ -143,6 +199,7 @@ def show_history() -> bool:
 # ==============================================
 # 📋 HELP
 # ==============================================
+
 
 def show_help() -> None:
     """عرض المساعدة"""
@@ -172,6 +229,7 @@ def show_help() -> None:
 # ==============================================
 # 📋 MAIN
 # ==============================================
+
 
 def main() -> None:
     """الدالة الرئيسية"""

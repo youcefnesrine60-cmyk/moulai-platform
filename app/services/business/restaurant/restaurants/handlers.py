@@ -10,6 +10,11 @@
 # معالجات أحداث المطاعم
 # ==============================================
 
+"""MoulAI operational module for handlers.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -30,21 +35,25 @@ from app.services.business.restaurant.restaurants.validators import (
     validate_restaurant_type,
 )
 
-
 # ==============================================
 # 🏪 RESTAURANT EVENT HANDLERS
 # ==============================================
 
+
 class RestaurantEventHandlers:
     """
     معالجات أحداث المطاعم.
-    
+
     تتعامل مع عمليات إنشاء وتحديث وحذف المطاعم.
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         service: خدمة المطاعم
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -52,7 +61,7 @@ class RestaurantEventHandlers:
     ) -> None:
         """
         تهيئة معالجات الأحداث.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -74,20 +83,22 @@ class RestaurantEventHandlers:
     ) -> RestaurantResponse:
         """
         إنشاء مطعم جديد.
-        
+
         Args:
             restaurant_data: بيانات المطعم
-            
+
         Returns:
             RestaurantResponse: بيانات المطعم المنشأ
-            
+
         Raises:
             ConflictError: إذا كان الاسم موجوداً مسبقاً لنفس المالك
             ValidationError: إذا كانت البيانات غير صالحة
         """
         # تنظيف البيانات
         name = sanitize_input(restaurant_data.name)
-        wilaya = sanitize_input(restaurant_data.wilaya) if restaurant_data.wilaya else None
+        wilaya = (
+            sanitize_input(restaurant_data.wilaya) if restaurant_data.wilaya else None
+        )
 
         logger.info(
             "restaurant_handler_create",
@@ -128,7 +139,11 @@ class RestaurantEventHandlers:
             "lat": restaurant_data.lat,
             "lng": restaurant_data.lng,
             "group_id": restaurant_data.group_id,
-            "is_active": restaurant_data.is_active if restaurant_data.is_active is not None else True,
+            "is_active": (
+                restaurant_data.is_active
+                if restaurant_data.is_active is not None
+                else True
+            ),
         }
 
         restaurant = await self.service.repo.create(data=data)
@@ -155,14 +170,14 @@ class RestaurantEventHandlers:
     ) -> RestaurantResponse:
         """
         تحديث مطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
             update_data: بيانات التحديث
-            
+
         Returns:
             RestaurantResponse: بيانات المطعم المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المطعم
             ConflictError: إذا كان الاسم موجوداً مسبقاً
@@ -205,7 +220,9 @@ class RestaurantEventHandlers:
                 )
 
         if "wilaya" in updates:
-            updates["wilaya"] = sanitize_input(updates["wilaya"]) if updates["wilaya"] else None
+            updates["wilaya"] = (
+                sanitize_input(updates["wilaya"]) if updates["wilaya"] else None
+            )
 
         if "type" in updates:
             validate_restaurant_type(updates["type"])
@@ -243,14 +260,14 @@ class RestaurantEventHandlers:
     ) -> RestaurantResponse:
         """
         تفعيل/تعطيل مطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
             is_active: الحالة الجديدة
-            
+
         Returns:
             RestaurantResponse: بيانات المطعم المحدث
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المطعم
         """
@@ -294,10 +311,10 @@ class RestaurantEventHandlers:
     ) -> None:
         """
         حذف مطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Raises:
             NotFoundError: إذا لم يتم العثور على المطعم
             ValidationError: إذا كان المطعم يحتوي على فروع أو منتجات

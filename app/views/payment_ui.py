@@ -1,7 +1,19 @@
 # ==============================================
-# 💳 PAYMENT UI
-# واجهة عرض طرق الدفع المتاحة
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / VIEWS / PAYMENT UI
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for payment ui.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 from app.views.ui import button
@@ -11,6 +23,12 @@ from app.views.ui import button
 # عرض طرق الدفع المتاحة حسب إعدادات المطعم
 # ==============================================
 
+
+# ==============================================
+# PAYMENT UI
+# ==============================================
+
+
 async def payment_ui(
     *,
     allowed_methods: set[str],
@@ -18,11 +36,11 @@ async def payment_ui(
 ) -> dict:
     """
     بناء واجهة طرق الدفع المتاحة للزبون
-    
+
     Args:
         allowed_methods: مجموعة طرق الدفع المسموح بها (من إعدادات المطعم)
         order_id: معرف الطلب
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -129,6 +147,12 @@ async def payment_ui(
 # تأكيد عملية الدفع
 # ==============================================
 
+
+# ==============================================
+# PAYMENT CONFIRMATION UI
+# ==============================================
+
+
 async def payment_confirmation_ui(
     *,
     order_id: int,
@@ -137,12 +161,12 @@ async def payment_confirmation_ui(
 ) -> dict:
     """
     بناء واجهة تأكيد الدفع
-    
+
     Args:
         order_id: معرف الطلب
         payment_method: طريقة الدفع المختارة
         amount: المبلغ المطلوب
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -178,6 +202,12 @@ async def payment_confirmation_ui(
 # تم الدفع بنجاح
 # ==============================================
 
+
+# ==============================================
+# PAYMENT SUCCESS UI
+# ==============================================
+
+
 async def payment_success_ui(
     *,
     order_id: int,
@@ -186,12 +216,12 @@ async def payment_success_ui(
 ) -> dict:
     """
     بناء واجهة إتمام الدفع بنجاح
-    
+
     Args:
         order_id: معرف الطلب
         payment_method: طريقة الدفع
         amount: المبلغ المدفوع
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """
@@ -233,6 +263,12 @@ async def payment_success_ui(
 # فشل الدفع
 # ==============================================
 
+
+# ==============================================
+# PAYMENT FAILED UI
+# ==============================================
+
+
 async def payment_failed_ui(
     *,
     order_id: int,
@@ -240,11 +276,11 @@ async def payment_failed_ui(
 ) -> dict:
     """
     بناء واجهة فشل الدفع
-    
+
     Args:
         order_id: معرف الطلب
         reason: سبب الفشل
-        
+
     Returns:
         dict: كائن InlineKeyboardMarkup جاهز للإرسال إلى Telegram
     """

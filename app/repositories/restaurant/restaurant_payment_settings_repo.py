@@ -1,7 +1,19 @@
 # ==============================================
-# 🏦 RESTAURANT PAYMENT SETTINGS REPOSITORY
-# عمليات قاعدة البيانات لإعدادات الدفع باستخدام SQLAlchemy
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / REPOSITORIES / RESTAURANT / RESTAURANT PAYMENT SETTINGS REPO
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for restaurant payment settings repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -39,16 +51,20 @@ class RestaurantPaymentSettingsRepository(
 ):
     """
     مستودع إعدادات الدفع - يوفر عمليات خاصة بإعدادات الدفع للمطاعم.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لإعدادات الدفع
         - إنشاء أو تحديث إعدادات الدفع
         - جلب طرق الدفع المسموح بها
-    
+
     Attributes:
         model: نموذج RestaurantPaymentSetting
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -56,7 +72,7 @@ class RestaurantPaymentSettingsRepository(
     ) -> None:
         """
         تهيئة مستودع إعدادات الدفع.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -79,10 +95,10 @@ class RestaurantPaymentSettingsRepository(
     ) -> Optional[RestaurantPaymentSetting]:
         """
         الحصول على إعدادات الدفع لمطعم معين.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             كائن RestaurantPaymentSetting أو None
         """
@@ -126,7 +142,7 @@ class RestaurantPaymentSettingsRepository(
     ) -> RestaurantPaymentSetting:
         """
         إنشاء أو تحديث إعدادات الدفع لمطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
             allow_cash: السماح بالدفع نقداً
@@ -135,7 +151,7 @@ class RestaurantPaymentSettingsRepository(
             allow_baridimob: السماح بالدفع عبر بريدي موب
             allow_stripe: السماح بالدفع عبر Stripe
             allow_paypal: السماح بالدفع عبر PayPal
-            
+
         Returns:
             كائن RestaurantPaymentSetting المحدث
         """
@@ -223,7 +239,7 @@ class RestaurantPaymentSettingsRepository(
     ) -> Optional[RestaurantPaymentSetting]:
         """
         تحديث طرق الدفع المسموح بها لمطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
             allow_cash: السماح بالدفع نقداً (اختياري)
@@ -232,7 +248,7 @@ class RestaurantPaymentSettingsRepository(
             allow_baridimob: السماح بالدفع عبر بريدي موب (اختياري)
             allow_stripe: السماح بالدفع عبر Stripe (اختياري)
             allow_paypal: السماح بالدفع عبر PayPal (اختياري)
-            
+
         Returns:
             كائن RestaurantPaymentSetting المحدث أو None
         """
@@ -261,7 +277,9 @@ class RestaurantPaymentSettingsRepository(
                 allow_cash=allow_cash if allow_cash is not None else True,
                 allow_card=allow_card if allow_card is not None else True,
                 allow_ccp=allow_ccp if allow_ccp is not None else False,
-                allow_baridimob=allow_baridimob if allow_baridimob is not None else False,
+                allow_baridimob=(
+                    allow_baridimob if allow_baridimob is not None else False
+                ),
                 allow_stripe=allow_stripe if allow_stripe is not None else False,
                 allow_paypal=allow_paypal if allow_paypal is not None else False,
             )
@@ -305,10 +323,10 @@ class RestaurantPaymentSettingsRepository(
     ) -> AllowedMethodsList:
         """
         الحصول على قائمة طرق الدفع المسموح بها لمطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             قائمة طرق الدفع المسموح بها
         """
@@ -351,6 +369,7 @@ class RestaurantPaymentSettingsRepository(
 # GET RESTAURANT PAYMENT SETTINGS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurant_payment_settings(
     *,
     restaurant_id: int,
@@ -358,11 +377,11 @@ async def get_restaurant_payment_settings(
 ) -> Optional[Dict[str, Any]]:
     """
     جلب إعدادات الدفع لمطعم معين (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         إعدادات الدفع أو None
     """
@@ -393,6 +412,7 @@ async def get_restaurant_payment_settings(
 # UPSERT RESTAURANT PAYMENT SETTINGS (COMPATIBILITY)
 # ==============================================
 
+
 async def upsert_restaurant_payment_settings(
     *,
     restaurant_id: int,
@@ -406,7 +426,7 @@ async def upsert_restaurant_payment_settings(
 ) -> Dict[str, Any]:
     """
     إنشاء أو تحديث إعدادات الدفع لمطعم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         allow_cash: السماح بالدفع نقداً
@@ -416,7 +436,7 @@ async def upsert_restaurant_payment_settings(
         allow_stripe: السماح بالدفع عبر Stripe
         allow_paypal: السماح بالدفع عبر PayPal
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         إعدادات الدفع المحدثة
     """
@@ -450,6 +470,7 @@ async def upsert_restaurant_payment_settings(
 # GET ALLOWED PAYMENT METHODS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_allowed_payment_methods(
     *,
     restaurant_id: int,
@@ -457,11 +478,11 @@ async def get_allowed_payment_methods(
 ) -> AllowedMethodsList:
     """
     الحصول على قائمة طرق الدفع المسموح بها لمطعم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قائمة طرق الدفع المسموح بها
     """

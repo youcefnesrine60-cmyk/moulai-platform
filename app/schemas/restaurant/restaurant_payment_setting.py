@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها لإعدادات الدفع
 # ==============================================
 
+"""MoulAI operational module for restaurant payment setting.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -24,7 +29,6 @@ from pydantic import (
     ConfigDict,
     Field,
 )
-
 
 # ==============================================
 # 🧩 TYPES
@@ -40,12 +44,13 @@ AllowedMethodsList = List[str]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class RestaurantPaymentSettingBase(BaseModel):
     """
     المخطط الأساسي لإعدادات الدفع للمطعم.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات إعدادات الدفع.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         allow_cash: السماح بالدفع نقداً
@@ -55,6 +60,7 @@ class RestaurantPaymentSettingBase(BaseModel):
         allow_stripe: السماح بالدفع عبر Stripe
         allow_paypal: السماح بالدفع عبر PayPal
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -97,10 +103,11 @@ class RestaurantPaymentSettingBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class RestaurantPaymentSettingCreate(BaseModel):
     """
     مخطط إنشاء إعدادات الدفع للمطعم.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         allow_cash: السماح بالدفع نقداً (اختياري)
@@ -110,6 +117,7 @@ class RestaurantPaymentSettingCreate(BaseModel):
         allow_stripe: السماح بالدفع عبر Stripe (اختياري)
         allow_paypal: السماح بالدفع عبر PayPal (اختياري)
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -152,10 +160,11 @@ class RestaurantPaymentSettingCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class RestaurantPaymentSettingUpdate(BaseModel):
     """
     مخطط تحديث إعدادات الدفع - جميع الحقول اختيارية.
-    
+
     Attributes:
         allow_cash: السماح بالدفع نقداً
         allow_card: السماح بالدفع ببطاقة POS
@@ -164,6 +173,7 @@ class RestaurantPaymentSettingUpdate(BaseModel):
         allow_stripe: السماح بالدفع عبر Stripe
         allow_paypal: السماح بالدفع عبر PayPal
     """
+
     allow_cash: Optional[bool] = Field(
         None,
         description="السماح بالدفع نقداً",
@@ -200,15 +210,17 @@ class RestaurantPaymentSettingUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class RestaurantPaymentSettingResponse(RestaurantPaymentSettingBase):
     """
     مخطط استجابة إعدادات الدفع - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف الإعداد
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -231,18 +243,20 @@ class RestaurantPaymentSettingResponse(RestaurantPaymentSettingBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class RestaurantPaymentSettingListResponse(BaseModel):
     """
     مخطط استجابة قائمة إعدادات الدفع للمطعم.
-    
+
     يحتوي على قائمة إعدادات الدفع مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة إعدادات الدفع
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[RestaurantPaymentSettingResponse] = Field(
@@ -273,15 +287,17 @@ class RestaurantPaymentSettingListResponse(BaseModel):
 # 📋 PAYMENT METHODS LIST
 # ==============================================
 
+
 class PaymentMethodsList(BaseModel):
     """
     مخطط قائمة طرق الدفع المسموح بها.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         allowed_methods: قائمة طرق الدفع المسموح بها
         all_methods: قائمة جميع طرق الدفع المتاحة
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     restaurant_id: int = Field(
@@ -297,7 +313,9 @@ class PaymentMethodsList(BaseModel):
     all_methods: AllowedMethodsList = Field(
         ...,
         description="قائمة جميع طرق الدفع المتاحة",
-        json_schema_extra={"example": ["cash", "card", "ccp", "baridimob", "stripe", "paypal"]},
+        json_schema_extra={
+            "example": ["cash", "card", "ccp", "baridimob", "stripe", "paypal"]
+        },
     )
 
 
@@ -305,10 +323,11 @@ class PaymentMethodsList(BaseModel):
 # 📊 PAYMENT SETTINGS SUMMARY
 # ==============================================
 
+
 class PaymentSettingsSummary(BaseModel):
     """
     مخطط ملخص إعدادات الدفع.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         total_enabled: عدد طرق الدفع المفعّلة
@@ -316,6 +335,7 @@ class PaymentSettingsSummary(BaseModel):
         enabled_methods: قائمة طرق الدفع المفعّلة
         disabled_methods: قائمة طرق الدفع المعطّلة
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     restaurant_id: int = Field(
@@ -352,20 +372,16 @@ class PaymentSettingsSummary(BaseModel):
 # ==============================================
 
 __all__ = [
-
     # Restaurant Payment Setting
     "RestaurantPaymentSettingBase",
     "RestaurantPaymentSettingCreate",
     "RestaurantPaymentSettingUpdate",
     "RestaurantPaymentSettingResponse",
     "RestaurantPaymentSettingListResponse",
-
     # Payment Methods List
     "PaymentMethodsList",
-
     # Payment Settings Summary
     "PaymentSettingsSummary",
-
     # Types
     "PaymentSettingData",
     "PaymentSettingUpdateData",

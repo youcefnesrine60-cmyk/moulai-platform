@@ -10,6 +10,11 @@
 # إعدادات خاصة باختبارات المطاعم
 # ==============================================
 
+"""Automated tests for conftest.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -17,10 +22,10 @@ from typing import (
 
 import pytest
 
-
 # ==============================================
 # 📦 DATA FACTORIES - ✅ بدون is_active للمجموعة
 # ==============================================
+
 
 @pytest.fixture
 def sample_restaurant_data() -> Dict[str, Any]:
@@ -36,11 +41,16 @@ def sample_restaurant_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE RESTAURANT GROUP DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_restaurant_group_data() -> Dict[str, Any]:
     """
     بيانات مجموعة مطاعم نموذجية للاختبار.
-    
+
     ✅ التصحيح: إزالة is_active لأن RestaurantGroup لا يحتوي عليه
     """
     return {
@@ -48,16 +58,26 @@ def sample_restaurant_group_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE GROUP DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_group_data() -> Dict[str, Any]:
     """
     بيانات مجموعة نموذجية للاختبار.
-    
+
     ✅ التصحيح: إزالة is_active
     """
     return {
         "name": "مجموعة المطاعم الذهبية",
     }
+
+
+# ==============================================
+# SAMPLE RESTAURANT BRANCH DATA
+# ==============================================
 
 
 @pytest.fixture
@@ -69,6 +89,11 @@ def sample_restaurant_branch_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE BULK BRANCHES DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_bulk_branches_data() -> Dict[str, Any]:
     """بيانات فروع متعددة نموذجية للاختبار."""
@@ -76,6 +101,11 @@ def sample_bulk_branches_data() -> Dict[str, Any]:
         "group_id": 1,
         "restaurant_ids": [1, 2, 3],
     }
+
+
+# ==============================================
+# SAMPLE METRIC DATA
+# ==============================================
 
 
 @pytest.fixture
@@ -89,12 +119,22 @@ def sample_metric_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE ORDER COUNTER DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_order_counter_data() -> Dict[str, Any]:
     """بيانات عداد طلبات نموذجية للاختبار."""
     return {
         "last_number": 0,
     }
+
+
+# ==============================================
+# SAMPLE PAYMENT SETTINGS DATA
+# ==============================================
 
 
 @pytest.fixture
@@ -108,6 +148,11 @@ def sample_payment_settings_data() -> Dict[str, Any]:
         "allow_stripe": False,
         "allow_paypal": False,
     }
+
+
+# ==============================================
+# SAMPLE ORDER DATA
+# ==============================================
 
 
 @pytest.fixture
@@ -129,6 +174,11 @@ def sample_order_data() -> Dict[str, Any]:
     }
 
 
+# ==============================================
+# SAMPLE PRODUCT DATA
+# ==============================================
+
+
 @pytest.fixture
 def sample_product_data() -> Dict[str, Any]:
     """بيانات منتج نموذجية للاختبار."""
@@ -141,6 +191,11 @@ def sample_product_data() -> Dict[str, Any]:
         "is_available": True,
         "is_active": True,
     }
+
+
+# ==============================================
+# SAMPLE CATEGORY DATA
+# ==============================================
 
 
 @pytest.fixture

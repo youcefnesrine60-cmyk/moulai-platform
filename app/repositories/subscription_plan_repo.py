@@ -14,6 +14,11 @@
 # قراءة الكود
 # ==============================================
 
+"""MoulAI operational module for subscription plan repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -50,17 +55,21 @@ class SubscriptionPlanRepository(
 ):
     """
     مستودع خطط الاشتراك - يوفر عمليات خاصة بخطط الاشتراك.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية لخطط الاشتراك
         - البحث بالكود
         - إدارة حالة النشاط
         - حساب الأسعار بعد التخفيض
-    
+
     Attributes:
         model: نموذج SubscriptionPlan
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -68,7 +77,7 @@ class SubscriptionPlanRepository(
     ) -> None:
         """
         تهيئة مستودع خطط الاشتراك.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -89,18 +98,16 @@ class SubscriptionPlanRepository(
     ) -> Optional[SubscriptionPlan]:
         """
         الحصول على خطة اشتراك بواسطة الكود.
-        
+
         Args:
             code: كود الخطة (trial, basic, pro, enterprise)
-            
+
         Returns:
             كائن SubscriptionPlan أو None
         """
         try:
             result = await self.session.execute(
-                select(self.model)
-                .where(self.model.code == code)
-                .limit(1),
+                select(self.model).where(self.model.code == code).limit(1),
             )
 
             return result.scalar_one_or_none()
@@ -127,11 +134,11 @@ class SubscriptionPlanRepository(
     ) -> SubscriptionPlanList:
         """
         الحصول على خطط الاشتراك النشطة.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة خطط الاشتراك النشطة
         """
@@ -167,7 +174,7 @@ class SubscriptionPlanRepository(
     ) -> Optional[SubscriptionPlan]:
         """
         الحصول على خطة التجربة المجانية.
-        
+
         Returns:
             كائن SubscriptionPlan أو None
         """
@@ -185,11 +192,11 @@ class SubscriptionPlanRepository(
     ) -> SubscriptionPlanList:
         """
         الحصول على خطط الاشتراك مرتبة حسب ترتيب العرض.
-        
+
         Args:
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة خطط الاشتراك
         """
@@ -231,11 +238,11 @@ class SubscriptionPlanRepository(
     ) -> Optional[SubscriptionPlan]:
         """
         تحديث السعر الأساسي للخطة.
-        
+
         Args:
             plan_id: معرف الخطة
             base_price: السعر الأساسي الجديد
-            
+
         Returns:
             كائن SubscriptionPlan المحدث أو None
         """
@@ -264,11 +271,11 @@ class SubscriptionPlanRepository(
     ) -> Optional[SubscriptionPlan]:
         """
         تحديث نسبة التخفيض للخطة.
-        
+
         Args:
             plan_id: معرف الخطة
             plan_discount_percent: نسبة التخفيض الجديدة
-            
+
         Returns:
             كائن SubscriptionPlan المحدث أو None
         """
@@ -296,10 +303,10 @@ class SubscriptionPlanRepository(
     ) -> Optional[SubscriptionPlan]:
         """
         تفعيل خطة اشتراك.
-        
+
         Args:
             plan_id: معرف الخطة
-            
+
         Returns:
             كائن SubscriptionPlan المحدث أو None
         """
@@ -324,10 +331,10 @@ class SubscriptionPlanRepository(
     ) -> Optional[SubscriptionPlan]:
         """
         إلغاء تفعيل خطة اشتراك.
-        
+
         Args:
             plan_id: معرف الخطة
-            
+
         Returns:
             كائن SubscriptionPlan المحدث أو None
         """
@@ -353,11 +360,11 @@ class SubscriptionPlanRepository(
     ) -> Optional[SubscriptionPlan]:
         """
         تحديث ترتيب عرض الخطة.
-        
+
         Args:
             plan_id: معرف الخطة
             display_order: ترتيب العرض الجديد
-            
+
         Returns:
             كائن SubscriptionPlan المحدث أو None
         """
@@ -389,13 +396,13 @@ class SubscriptionPlanRepository(
     ) -> float:
         """
         حساب السعر النهائي للخطة بعد التخفيض.
-        
+
         Args:
             plan_id: معرف الخطة
-            
+
         Returns:
             السعر النهائي
-            
+
         Raises:
             ValueError: إذا لم يتم العثور على الخطة
         """
@@ -421,6 +428,7 @@ class SubscriptionPlanRepository(
 # CREATE SUBSCRIPTION PLAN (COMPATIBILITY)
 # ==============================================
 
+
 async def create_subscription_plan(
     *,
     code: str,
@@ -434,7 +442,7 @@ async def create_subscription_plan(
 ) -> int:
     """
     إنشاء خطة اشتراك جديدة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         code: كود الخطة
         name: اسم الخطة
@@ -444,7 +452,7 @@ async def create_subscription_plan(
         description: وصف الخطة
         active: حالة النشاط
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         معرف الخطة
     """
@@ -477,6 +485,7 @@ async def create_subscription_plan(
 # GET SUBSCRIPTION PLAN BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_subscription_plan_by_id(
     *,
     plan_id: int,
@@ -484,11 +493,11 @@ async def get_subscription_plan_by_id(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على خطة اشتراك بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         plan_id: معرف الخطة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الخطة أو None
     """
@@ -520,6 +529,7 @@ async def get_subscription_plan_by_id(
 # GET SUBSCRIPTION PLAN BY CODE (COMPATIBILITY)
 # ==============================================
 
+
 async def get_subscription_plan_by_code(
     *,
     code: str,
@@ -527,11 +537,11 @@ async def get_subscription_plan_by_code(
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على خطة اشتراك بواسطة الكود (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         code: كود الخطة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الخطة أو None
     """
@@ -559,15 +569,16 @@ async def get_subscription_plan_by_code(
 # GET TRIAL PLAN (COMPATIBILITY)
 # ==============================================
 
+
 async def get_trial_plan(
     session: AsyncSession,
 ) -> Optional[Dict[str, Any]]:
     """
     الحصول على خطة التجربة المجانية (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         قاموس بيانات الخطة أو None
     """
@@ -581,6 +592,7 @@ async def get_trial_plan(
 # GET ACTIVE SUBSCRIPTION PLANS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_active_subscription_plans(
     session: AsyncSession,
     *,
@@ -589,12 +601,12 @@ async def get_active_subscription_plans(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على خطط الاشتراك النشطة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة خطط الاشتراك النشطة
     """
@@ -608,17 +620,19 @@ async def get_active_subscription_plans(
     result = []
 
     for plan in plans:
-        result.append({
-            "id": plan.id,
-            "code": plan.code,
-            "name": plan.name,
-            "active": plan.active,
-            "created_at": plan.created_at,
-            "plan_discount_percent": float(plan.plan_discount_percent),
-            "display_order": plan.display_order,
-            "description": plan.description,
-            "base_price": float(plan.base_price),
-        })
+        result.append(
+            {
+                "id": plan.id,
+                "code": plan.code,
+                "name": plan.name,
+                "active": plan.active,
+                "created_at": plan.created_at,
+                "plan_discount_percent": float(plan.plan_discount_percent),
+                "display_order": plan.display_order,
+                "description": plan.description,
+                "base_price": float(plan.base_price),
+            }
+        )
 
     logger.info(
         "subscription_plans_fetched",
@@ -632,6 +646,7 @@ async def get_active_subscription_plans(
 # GET ALL SUBSCRIPTION PLANS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_all_subscription_plans(
     session: AsyncSession,
     *,
@@ -640,12 +655,12 @@ async def get_all_subscription_plans(
 ) -> List[Dict[str, Any]]:
     """
     الحصول على جميع خطط الاشتراك (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         قائمة جميع خطط الاشتراك
     """
@@ -660,17 +675,19 @@ async def get_all_subscription_plans(
     result = []
 
     for plan in plans:
-        result.append({
-            "id": plan.id,
-            "code": plan.code,
-            "name": plan.name,
-            "active": plan.active,
-            "created_at": plan.created_at,
-            "plan_discount_percent": float(plan.plan_discount_percent),
-            "display_order": plan.display_order,
-            "description": plan.description,
-            "base_price": float(plan.base_price),
-        })
+        result.append(
+            {
+                "id": plan.id,
+                "code": plan.code,
+                "name": plan.name,
+                "active": plan.active,
+                "created_at": plan.created_at,
+                "plan_discount_percent": float(plan.plan_discount_percent),
+                "display_order": plan.display_order,
+                "description": plan.description,
+                "base_price": float(plan.base_price),
+            }
+        )
 
     return result
 
@@ -679,6 +696,7 @@ async def get_all_subscription_plans(
 # CALCULATE PLAN PRICE (COMPATIBILITY)
 # ==============================================
 
+
 async def calculate_plan_price(
     *,
     plan_id: int,
@@ -686,14 +704,14 @@ async def calculate_plan_price(
 ) -> float:
     """
     حساب السعر النهائي للخطة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         plan_id: معرف الخطة
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         السعر النهائي
-        
+
     Raises:
         ValueError: إذا لم يتم العثور على الخطة
     """
@@ -706,6 +724,7 @@ async def calculate_plan_price(
 # UPDATE SUBSCRIPTION PLAN PRICE (COMPATIBILITY)
 # ==============================================
 
+
 async def update_subscription_plan_price(
     *,
     plan_id: int,
@@ -714,7 +733,7 @@ async def update_subscription_plan_price(
 ) -> None:
     """
     تحديث السعر الأساسي للخطة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         plan_id: معرف الخطة
         base_price: السعر الأساسي الجديد
@@ -740,6 +759,7 @@ async def update_subscription_plan_price(
 # UPDATE SUBSCRIPTION PLAN DISCOUNT (COMPATIBILITY)
 # ==============================================
 
+
 async def update_subscription_plan_discount(
     *,
     plan_id: int,
@@ -748,7 +768,7 @@ async def update_subscription_plan_discount(
 ) -> None:
     """
     تحديث نسبة التخفيض للخطة (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         plan_id: معرف الخطة
         plan_discount_percent: نسبة التخفيض الجديدة
@@ -774,6 +794,7 @@ async def update_subscription_plan_discount(
 # ACTIVATE SUBSCRIPTION PLAN (COMPATIBILITY)
 # ==============================================
 
+
 async def activate_subscription_plan(
     *,
     plan_id: int,
@@ -781,7 +802,7 @@ async def activate_subscription_plan(
 ) -> None:
     """
     تفعيل خطة اشتراك (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         plan_id: معرف الخطة
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -800,6 +821,7 @@ async def activate_subscription_plan(
 # DEACTIVATE SUBSCRIPTION PLAN (COMPATIBILITY)
 # ==============================================
 
+
 async def deactivate_subscription_plan(
     *,
     plan_id: int,
@@ -807,7 +829,7 @@ async def deactivate_subscription_plan(
 ) -> None:
     """
     إلغاء تفعيل خطة اشتراك (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         plan_id: معرف الخطة
         session: جلسة قاعدة البيانات غير المتزامنة

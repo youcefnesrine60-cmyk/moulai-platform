@@ -9,6 +9,11 @@
 # 🔗 RESTAURANT BRANCHES SERVICES - PACKAGE INIT
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from app.services.business.restaurant.branches.service import RestaurantBranchService
 from app.services.business.restaurant.branches.compat import (
     create_branch,
@@ -17,7 +22,6 @@ from app.services.business.restaurant.branches.compat import (
     get_branches_by_restaurant,
     delete_branch,
 )
-
 
 # ==============================================
 # 📋 EXPORTS

@@ -10,6 +10,11 @@
 # مخططات Pydantic للوكيل الذكي
 # ==============================================
 
+"""MoulAI operational module for agent.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,10 +43,11 @@ AgentListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class AgentBase(BaseModel):
     """
     المخطط الأساسي للوكيل.
-    
+
     Attributes:
         restaurant_id: معرف المطعم
         name: اسم الوكيل
@@ -53,6 +58,7 @@ class AgentBase(BaseModel):
         config: إعدادات الوكيل
         ai_config: إعدادات الذكاء الاصطناعي
     """
+
     restaurant_id: int = Field(
         ...,
         description="معرف المطعم",
@@ -121,13 +127,13 @@ class AgentBase(BaseModel):
     def validate_language(cls, value: str) -> str:
         """
         التحقق من صحة اللغة.
-        
+
         Args:
             value: اللغة
-            
+
         Returns:
             str: اللغة المدققة
-            
+
         Raises:
             ValueError: إذا كانت اللغة غير صالحة
         """
@@ -138,40 +144,46 @@ class AgentBase(BaseModel):
             )
         return value.lower()
 
+    # ==============================================
+    # VALIDATE TONE
+    # ==============================================
+
     @field_validator("tone")
     @classmethod
     def validate_tone(cls, value: str) -> str:
         """
         التحقق من صحة النبرة.
-        
+
         Args:
             value: النبرة
-            
+
         Returns:
             str: النبرة المدققة
-            
+
         Raises:
             ValueError: إذا كانت النبرة غير صالحة
         """
         valid_tones = {"professional", "casual", "friendly"}
         if value.lower() not in valid_tones:
-            raise ValueError(
-                f"النبرة يجب أن تكون واحدة من: {', '.join(valid_tones)}"
-            )
+            raise ValueError(f"النبرة يجب أن تكون واحدة من: {', '.join(valid_tones)}")
         return value.lower()
+
+    # ==============================================
+    # VALIDATE NAME
+    # ==============================================
 
     @field_validator("name")
     @classmethod
     def validate_name(cls, value: str) -> str:
         """
         التحقق من صحة اسم الوكيل.
-        
+
         Args:
             value: اسم الوكيل
-            
+
         Returns:
             str: اسم الوكيل المدقق
-            
+
         Raises:
             ValueError: إذا كان الاسم غير صالح
         """
@@ -184,12 +196,14 @@ class AgentBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class AgentCreate(AgentBase):
     """
     مخطط إنشاء وكيل جديد.
-    
+
     يرث جميع حقول AgentBase.
     """
+
     pass
 
 
@@ -197,10 +211,11 @@ class AgentCreate(AgentBase):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class AgentUpdate(BaseModel):
     """
     مخطط تحديث الوكيل.
-    
+
     Attributes:
         name: اسم الوكيل
         description: وصف الوكيل
@@ -210,6 +225,7 @@ class AgentUpdate(BaseModel):
         config: إعدادات الوكيل
         ai_config: إعدادات الذكاء الاصطناعي
     """
+
     name: Optional[str] = Field(
         None,
         max_length=100,
@@ -257,13 +273,13 @@ class AgentUpdate(BaseModel):
     def validate_language(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة اللغة.
-        
+
         Args:
             value: اللغة
-            
+
         Returns:
             Optional[str]: اللغة المدققة
-            
+
         Raises:
             ValueError: إذا كانت اللغة غير صالحة
         """
@@ -276,18 +292,22 @@ class AgentUpdate(BaseModel):
             return value.lower()
         return value
 
+    # ==============================================
+    # VALIDATE TONE
+    # ==============================================
+
     @field_validator("tone")
     @classmethod
     def validate_tone(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة النبرة.
-        
+
         Args:
             value: النبرة
-            
+
         Returns:
             Optional[str]: النبرة المدققة
-            
+
         Raises:
             ValueError: إذا كانت النبرة غير صالحة
         """
@@ -300,18 +320,22 @@ class AgentUpdate(BaseModel):
             return value.lower()
         return value
 
+    # ==============================================
+    # VALIDATE NAME
+    # ==============================================
+
     @field_validator("name")
     @classmethod
     def validate_name(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة اسم الوكيل.
-        
+
         Args:
             value: اسم الوكيل
-            
+
         Returns:
             Optional[str]: اسم الوكيل المدقق
-            
+
         Raises:
             ValueError: إذا كان الاسم غير صالح
         """
@@ -326,14 +350,16 @@ class AgentUpdate(BaseModel):
 # ⚙️ CONFIG UPDATE SCHEMA
 # ==============================================
 
+
 class AgentConfigUpdate(BaseModel):
     """
     مخطط تحديث إعدادات الوكيل.
-    
+
     Attributes:
         config: إعدادات الوكيل
         ai_config: إعدادات الذكاء الاصطناعي
     """
+
     config: Optional[Dict[str, Any]] = Field(
         None,
         description="إعدادات الوكيل",
@@ -348,15 +374,17 @@ class AgentConfigUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class AgentResponse(AgentBase):
     """
     مخطط استجابة الوكيل.
-    
+
     Attributes:
         id: معرف الوكيل
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -379,16 +407,18 @@ class AgentResponse(AgentBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class AgentListResponse(BaseModel):
     """
     مخطط استجابة قائمة الوكلاء.
-    
+
     Attributes:
         items: قائمة الوكلاء
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[AgentResponse] = Field(
@@ -419,10 +449,11 @@ class AgentListResponse(BaseModel):
 # 📊 STATISTICS SCHEMA
 # ==============================================
 
+
 class AgentStatistics(BaseModel):
     """
     مخطط إحصائيات الوكيل.
-    
+
     Attributes:
         total_agents: إجمالي عدد الوكلاء
         active_agents: عدد الوكلاء النشطين
@@ -430,6 +461,7 @@ class AgentStatistics(BaseModel):
         language_distribution: توزيع اللغات
         tone_distribution: توزيع النبرات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_agents: int = Field(

@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for promotion repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -64,6 +69,10 @@ class PromotionRepository(
         model: نموذج Promotion
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -214,19 +223,14 @@ class PromotionRepository(
             قائمة العروض
         """
         try:
-            query = (
-                self._build_base_query()
-                .where(self.model.restaurant_id == restaurant_id)
+            query = self._build_base_query().where(
+                self.model.restaurant_id == restaurant_id
             )
 
             if only_active:
                 query = query.where(self.model.active.is_(True))
 
-            query = (
-                query.order_by(self.model.id.desc())
-                .offset(skip)
-                .limit(limit)
-            )
+            query = query.order_by(self.model.id.desc()).offset(skip).limit(limit)
 
             result = await self.session.execute(query)
 
@@ -439,6 +443,7 @@ class PromotionRepository(
 # CREATE PROMOTION (COMPATIBILITY)
 # ==============================================
 
+
 async def create_promotion(
     *,
     name: str,
@@ -493,6 +498,7 @@ async def create_promotion(
 # GET PROMOTION BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_promotion_by_id(
     *,
     promotion_id: int,
@@ -534,6 +540,7 @@ async def get_promotion_by_id(
 # GET ACTIVE PROMOTION (COMPATIBILITY)
 # ==============================================
 
+
 async def get_active_promotion(
     session: AsyncSession,
 ) -> Optional[Dict[str, Any]]:
@@ -570,6 +577,7 @@ async def get_active_promotion(
 # GET ALL PROMOTIONS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_all_promotions(
     session: AsyncSession,
     *,
@@ -594,15 +602,17 @@ async def get_all_promotions(
     result = []
 
     for promotion in promotions:
-        result.append({
-            "id": promotion.id,
-            "restaurant_id": promotion.restaurant_id,
-            "name": promotion.name,
-            "discount_percent": float(promotion.discount_percent),
-            "starts_at": promotion.starts_at,
-            "expires_at": promotion.expires_at,
-            "active": promotion.active,
-        })
+        result.append(
+            {
+                "id": promotion.id,
+                "restaurant_id": promotion.restaurant_id,
+                "name": promotion.name,
+                "discount_percent": float(promotion.discount_percent),
+                "starts_at": promotion.starts_at,
+                "expires_at": promotion.expires_at,
+                "active": promotion.active,
+            }
+        )
 
     return result
 
@@ -610,6 +620,7 @@ async def get_all_promotions(
 # ==============================================
 # ACTIVATE PROMOTION (COMPATIBILITY)
 # ==============================================
+
 
 async def activate_promotion(
     *,
@@ -632,6 +643,7 @@ async def activate_promotion(
 # DEACTIVATE PROMOTION (COMPATIBILITY)
 # ==============================================
 
+
 async def deactivate_promotion(
     *,
     promotion_id: int,
@@ -652,6 +664,7 @@ async def deactivate_promotion(
 # ==============================================
 # UPDATE PROMOTION DISCOUNT (COMPATIBILITY)
 # ==============================================
+
 
 async def update_promotion_discount(
     *,
@@ -678,6 +691,7 @@ async def update_promotion_discount(
 # ==============================================
 # DELETE PROMOTION (COMPATIBILITY)
 # ==============================================
+
 
 async def delete_promotion(
     *,

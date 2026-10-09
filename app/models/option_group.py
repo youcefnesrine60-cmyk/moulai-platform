@@ -11,6 +11,11 @@
 # يدير مجموعات الخيارات للمنتجات مع إعداداتها
 # ==============================================
 
+"""MoulAI operational module for option group.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from sqlalchemy import (
     Boolean,
     Column,
@@ -26,17 +31,18 @@ from .base import BaseModel
 # 🎯 OPTION GROUP
 # ==============================================
 
+
 class OptionGroup(BaseModel):
     """
     نموذج مجموعة خيارات المنتج
-    
+
     يدير:
         - اسم مجموعة الخيارات
         - إلزامية الاختيار
         - إمكانية اختيار عدة خيارات
         - ترتيب العرض
         - العلاقات مع المنتج والخيارات
-    
+
     Attributes:
         product_id: معرف المنتج (ForeignKey)
         name: اسم مجموعة الخيارات
@@ -46,12 +52,13 @@ class OptionGroup(BaseModel):
         product: علاقة مع نموذج Product
         options: قائمة الخيارات التابعة للمجموعة
     """
+
     __tablename__ = "option_groups"
-    
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
-    
+
     product_id = Column(
         Integer,
         ForeignKey("products.id", ondelete="CASCADE"),
@@ -78,11 +85,11 @@ class OptionGroup(BaseModel):
         default=0,
         comment="ترتيب العرض",
     )
-    
+
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
-    
+
     product = relationship(
         "Product",
         back_populates="option_groups",
@@ -96,15 +103,15 @@ class OptionGroup(BaseModel):
         lazy="selectin",
         # comment="قائمة الخيارات التابعة للمجموعة",
     )
-    
+
     # ==========================================
     # 📝 REPRESENTATION
     # ==========================================
-    
+
     def __repr__(self) -> str:
         """
         تمثيل نصي للنموذج
-        
+
         Returns:
             سلسلة نصية تحتوي على المعرف والاسم ومعرف المنتج
         """

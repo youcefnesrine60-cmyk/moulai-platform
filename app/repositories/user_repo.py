@@ -10,6 +10,11 @@
 # عمليات قاعدة البيانات للمستخدمين باستخدام SQLAlchemy
 # ==============================================
 
+"""MoulAI operational module for user repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -44,16 +49,20 @@ UserList = List[User]
 class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     """
     مستودع المستخدمين - يوفر عمليات خاصة بالمستخدمين.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للمستخدمين
         - البحث والتصفية حسب chat_id والاسم والهاتف
         - إدارة موافقة المستخدم
-    
+
     Attributes:
         model: نموذج User
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -61,7 +70,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> None:
         """
         تهيئة مستودع المستخدمين.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -82,18 +91,16 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> Optional[User]:
         """
         الحصول على مستخدم بواسطة chat_id.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             كائن User أو None
         """
         try:
             result = await self.session.execute(
-                select(self.model)
-                .where(self.model.chat_id == chat_id)
-                .limit(1),
+                select(self.model).where(self.model.chat_id == chat_id).limit(1),
             )
 
             return result.scalar_one_or_none()
@@ -119,18 +126,16 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> Optional[User]:
         """
         الحصول على مستخدم بواسطة رقم الهاتف.
-        
+
         Args:
             phone: رقم الهاتف
-            
+
         Returns:
             كائن User أو None
         """
         try:
             result = await self.session.execute(
-                select(self.model)
-                .where(self.model.customer_phone == phone)
-                .limit(1),
+                select(self.model).where(self.model.customer_phone == phone).limit(1),
             )
 
             return result.scalar_one_or_none()
@@ -158,12 +163,12 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> UserList:
         """
         البحث عن مستخدمين بواسطة الاسم.
-        
+
         Args:
             name: اسم العميل
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المستخدمين
         """
@@ -203,12 +208,12 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> UserList:
         """
         الحصول على المستخدمين حسب حالة الموافقة.
-        
+
         Args:
             has_consent: حالة الموافقة (True = موافق، False = غير موافق)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المستخدمين
         """
@@ -248,12 +253,12 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> UserList:
         """
         البحث عن مستخدمين.
-        
+
         Args:
             query: نص البحث (الاسم أو رقم الهاتف)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             قائمة المستخدمين
         """
@@ -300,10 +305,10 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> bool:
         """
         التحقق مما إذا كان المستخدم قد أعطى موافقته.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             True إذا كان لديه موافقة، False إذا لم يكن
         """
@@ -342,10 +347,10 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> User:
         """
         منح الموافقة للمستخدم (إنشاء المستخدم إذا لم يكن موجوداً).
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             كائن User المنشأ أو المحدث
         """
@@ -411,10 +416,10 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> Optional[User]:
         """
         إلغاء موافقة المستخدم.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
-            
+
         Returns:
             كائن User المحدث أو None
         """
@@ -470,11 +475,11 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> Optional[User]:
         """
         تحديث اسم العميل.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
             customer_name: اسم العميل الجديد
-            
+
         Returns:
             كائن User المحدث أو None
         """
@@ -509,11 +514,11 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> Optional[User]:
         """
         تحديث رقم هاتف العميل.
-        
+
         Args:
             chat_id: معرف المستخدم في تيليجرام
             customer_phone: رقم الهاتف الجديد
-            
+
         Returns:
             كائن User المحدث أو None
         """
@@ -549,7 +554,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> int:
         """
         حساب عدد المستخدمين الذين لديهم موافقة.
-        
+
         Returns:
             عدد المستخدمين بالموافقة
         """
@@ -564,7 +569,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> int:
         """
         حساب عدد المستخدمين الذين ليس لديهم موافقة.
-        
+
         Returns:
             عدد المستخدمين بدون موافقة
         """
@@ -579,7 +584,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> int:
         """
         حساب عدد المستخدمين الذين لديهم اسم.
-        
+
         Returns:
             عدد المستخدمين بالاسم
         """
@@ -608,7 +613,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
     ) -> int:
         """
         حساب عدد المستخدمين الذين لديهم رقم هاتف.
-        
+
         Returns:
             عدد المستخدمين برقم الهاتف
         """
@@ -638,6 +643,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
 # HAS CONSENT (COMPATIBILITY)
 # ==============================================
 
+
 async def has_consent(
     *,
     chat_id: int,
@@ -645,11 +651,11 @@ async def has_consent(
 ) -> bool:
     """
     التحقق مما إذا كان المستخدم قد أعطى موافقته (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         True إذا كان لديه موافقة، False إذا لم يكن
     """
@@ -662,6 +668,7 @@ async def has_consent(
 # GIVE CONSENT (COMPATIBILITY)
 # ==============================================
 
+
 async def give_consent(
     *,
     chat_id: int,
@@ -669,7 +676,7 @@ async def give_consent(
 ) -> None:
     """
     منح الموافقة للمستخدم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -688,6 +695,7 @@ async def give_consent(
 # REVOKE CONSENT (COMPATIBILITY)
 # ==============================================
 
+
 async def revoke_consent(
     *,
     chat_id: int,
@@ -695,7 +703,7 @@ async def revoke_consent(
 ) -> None:
     """
     إلغاء موافقة المستخدم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
@@ -714,6 +722,7 @@ async def revoke_consent(
 # GET USER BY CHAT ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_user_by_chat_id(
     *,
     chat_id: int,
@@ -721,11 +730,11 @@ async def get_user_by_chat_id(
 ) -> Optional[User]:
     """
     الحصول على مستخدم بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         كائن User أو None
     """
@@ -738,6 +747,7 @@ async def get_user_by_chat_id(
 # CREATE USER (COMPATIBILITY)
 # ==============================================
 
+
 async def create_user(
     *,
     chat_id: int,
@@ -748,14 +758,14 @@ async def create_user(
 ) -> User:
     """
     إنشاء مستخدم جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         chat_id: معرف المستخدم في تيليجرام
         consent: حالة الموافقة
         customer_name: اسم العميل (اختياري)
         customer_phone: رقم هاتف العميل (اختياري)
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         كائن User المنشأ
     """

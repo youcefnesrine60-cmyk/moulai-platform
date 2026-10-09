@@ -11,6 +11,11 @@
 # تدير التحقق من صحة البيانات وتسلسلها للمدفوعات
 # ==============================================
 
+"""MoulAI operational module for payment.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     Field,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,12 +43,13 @@ PaymentListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class PaymentBase(BaseModel):
     """
     المخطط الأساسي للدفع.
-    
+
     يحتوي على الحقول المشتركة بين جميع مخططات الدفع.
-    
+
     Attributes:
         owner_id: معرف المالك
         restaurant_id: معرف المطعم
@@ -54,6 +59,7 @@ class PaymentBase(BaseModel):
         status: حالة الدفع (pending, paid, failed, cancelled)
         external_reference: المرجع الخارجي من بوابة الدفع
     """
+
     owner_id: int = Field(
         ...,
         description="معرف المالك",
@@ -99,10 +105,11 @@ class PaymentBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class PaymentCreate(BaseModel):
     """
     مخطط إنشاء دفع جديد.
-    
+
     Attributes:
         owner_id: معرف المالك
         restaurant_id: معرف المطعم
@@ -111,6 +118,7 @@ class PaymentCreate(BaseModel):
         amount: المبلغ
         external_reference: المرجع الخارجي (اختياري)
     """
+
     owner_id: int = Field(
         ...,
         description="معرف المالك",
@@ -150,15 +158,17 @@ class PaymentCreate(BaseModel):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class PaymentUpdate(BaseModel):
     """
     مخطط تحديث الدفع - جميع الحقول اختيارية.
-    
+
     Attributes:
         status: حالة الدفع
         external_reference: المرجع الخارجي
         paid_at: تاريخ الدفع
     """
+
     status: Optional[str] = Field(
         None,
         max_length=50,
@@ -181,14 +191,16 @@ class PaymentUpdate(BaseModel):
 # 📤 STATUS UPDATE SCHEMA
 # ==============================================
 
+
 class PaymentStatusUpdate(BaseModel):
     """
     مخطط تحديث حالة الدفع.
-    
+
     Attributes:
         status: الحالة الجديدة (paid, failed, cancelled)
         paid_at: تاريخ الدفع (عند التأكيد)
     """
+
     status: str = Field(
         ...,
         max_length=50,
@@ -205,14 +217,16 @@ class PaymentStatusUpdate(BaseModel):
 # 📤 CONFIRM PAYMENT SCHEMA
 # ==============================================
 
+
 class PaymentConfirm(BaseModel):
     """
     مخطط تأكيد الدفع.
-    
+
     Attributes:
         external_reference: المرجع الخارجي من بوابة الدفع
         paid_at: تاريخ الدفع
     """
+
     external_reference: str = Field(
         ...,
         max_length=255,
@@ -229,16 +243,18 @@ class PaymentConfirm(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class PaymentResponse(PaymentBase):
     """
     مخطط استجابة الدفع - يحتوي على جميع الحقول بما فيها التواريخ.
-    
+
     Attributes:
         id: معرف الدفع
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
         paid_at: تاريخ الدفع
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -264,18 +280,20 @@ class PaymentResponse(PaymentBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class PaymentListResponse(BaseModel):
     """
     مخطط استجابة قائمة المدفوعات.
-    
+
     يحتوي على قائمة المدفوعات مع معلومات الترقيم.
-    
+
     Attributes:
         items: قائمة المدفوعات
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[PaymentResponse] = Field(
@@ -306,12 +324,13 @@ class PaymentListResponse(BaseModel):
 # 📊 PAYMENT STATUS SCHEMA
 # ==============================================
 
+
 class PaymentStatus(BaseModel):
     """
     مخطط حالة الدفع.
-    
+
     يحتوي على معلومات مفصلة عن حالة الدفع.
-    
+
     Attributes:
         payment_id: معرف الدفع
         status: حالة الدفع
@@ -322,6 +341,7 @@ class PaymentStatus(BaseModel):
         amount: المبلغ
         paid_at: تاريخ الدفع
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     payment_id: int = Field(
@@ -369,12 +389,13 @@ class PaymentStatus(BaseModel):
 # 📊 PAYMENT SUMMARY SCHEMA
 # ==============================================
 
+
 class PaymentSummary(BaseModel):
     """
     مخطط ملخص المدفوعات.
-    
+
     يحتوي على إحصائيات موجزة عن المدفوعات.
-    
+
     Attributes:
         total_payments: إجمالي عدد المدفوعات
         total_paid: إجمالي المدفوعات الناجحة
@@ -385,6 +406,7 @@ class PaymentSummary(BaseModel):
         total_paid_amount: إجمالي المبلغ المدفوع
         total_pending_amount: إجمالي المبلغ المعلق
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_payments: int = Field(

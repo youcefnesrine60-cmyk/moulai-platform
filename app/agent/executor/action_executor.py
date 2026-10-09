@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # ⚡ ACTION EXECUTOR
 # منفذ الإجراءات - يدير تنفيذ الإجراءات بناءً على النوايا
 # ==============================================
+
+"""MoulAI operational module for action executor.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from typing import (
     Any,
@@ -20,7 +25,6 @@ from app.agent.executor.actions import (
     ActionRegistry,
     BaseAction,
     action_registry,
-    get_action_by_intent,
 )
 from app.agent.nlu.intent_classifier import IntentResult
 from app.core.logger import logger
@@ -42,18 +46,22 @@ EntityMap = Dict[str, Any]
 class ActionExecutor:
     """
     منفذ الإجراءات - مسؤول عن تنفيذ الإجراءات بناءً على النوايا.
-    
+
     مسؤول عن:
         - اختيار الإجراء المناسب للنية
         - إدارة عملية التأكيد (عند الحاجة)
         - تنفيذ الإجراءات
         - تجميع النتائج
         - معالجة الأخطاء
-    
+
     Attributes:
         registry: سجل الإجراءات
         confirmation_handler: معالج التأكيد (اختياري)
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -63,7 +71,7 @@ class ActionExecutor:
     ) -> None:
         """
         تهيئة منفذ الإجراءات.
-        
+
         Args:
             registry: سجل الإجراءات (اختياري)
             confirmation_handler: معالج التأكيد (اختياري)
@@ -91,11 +99,11 @@ class ActionExecutor:
     ) -> ExecutionResult:
         """
         تنفيذ الإجراء المناسب للنية.
-        
+
         Args:
             intent_result: نتيجة تصنيف النية
             context: سياق التنفيذ (اختياري)
-            
+
         Returns:
             ExecutionResult: {
                 "success": bool,
@@ -187,7 +195,9 @@ class ActionExecutor:
                         "fr": "\n\nConfirmer cette commande ? (Oui/Non)",
                         "en": "\n\nConfirm this order? (Yes/No)",
                     }
-                    confirmation_message += language_prompt.get(language, language_prompt["en"])
+                    confirmation_message += language_prompt.get(
+                        language, language_prompt["en"]
+                    )
                 else:
                     confirmation_message = self._build_confirmation_message(
                         action=action,
@@ -202,13 +212,21 @@ class ActionExecutor:
                         "params": {
                             key: value
                             for key, value in params.items()
-                            if key not in {"history", "context", "request_context", "session_id"}
+                            if key
+                            not in {
+                                "history",
+                                "context",
+                                "request_context",
+                                "session_id",
+                            }
                         },
                         "context": {
                             "user_id": context.get("user_id") if context else None,
                             "channel": context.get("channel") if context else None,
                             "language": language,
-                            "request_context": context.get("request_context", {}) if context else {},
+                            "request_context": (
+                                context.get("request_context", {}) if context else {}
+                            ),
                         },
                     },
                     "requires_confirmation": True,
@@ -295,12 +313,12 @@ class ActionExecutor:
     ) -> Dict[str, Any]:
         """
         بناء معاملات الإجراء من الكيانات والسياق.
-        
+
         Args:
             entities: الكيانات المستخرجة
             context: سياق التنفيذ (اختياري)
             language: رمز اللغة
-            
+
         Returns:
             معاملات الإجراء
         """
@@ -321,6 +339,10 @@ class ActionExecutor:
 
         return params
 
+    # ==============================================
+    #  REQUEST CONFIRMATION
+    # ==============================================
+
     async def _request_confirmation(
         self,
         *,
@@ -330,12 +352,12 @@ class ActionExecutor:
     ) -> ConfirmationResponse:
         """
         طلب تأكيد من المستخدم.
-        
+
         Args:
             action: الإجراء المطلوب تأكيده
             params: معاملات الإجراء
             context: سياق التنفيذ
-            
+
         Returns:
             True إذا تم التأكيد، False إذا تم الإلغاء
         """
@@ -381,6 +403,10 @@ class ActionExecutor:
         )
         return False
 
+    # ==============================================
+    #  BUILD CONFIRMATION MESSAGE
+    # ==============================================
+
     def _build_confirmation_message(
         self,
         *,
@@ -389,11 +415,11 @@ class ActionExecutor:
     ) -> str:
         """
         بناء رسالة التأكيد.
-        
+
         Args:
             action: الإجراء المطلوب تأكيده
             params: معاملات الإجراء
-            
+
         Returns:
             رسالة التأكيد
         """
@@ -416,13 +442,17 @@ class ActionExecutor:
 
         return message
 
+    # ==============================================
+    #  FORMAT PARAMS ARABIC
+    # ==============================================
+
     def _format_params_arabic(self, params: Dict[str, Any]) -> str:
         """
         تنسيق المعاملات بالعربية.
-        
+
         Args:
             params: معاملات الإجراء
-            
+
         Returns:
             النص المنسق
         """
@@ -447,13 +477,17 @@ class ActionExecutor:
 
         return "\n".join(lines) if lines else "**لا توجد معلومات إضافية**"
 
+    # ==============================================
+    #  FORMAT PARAMS ENGLISH
+    # ==============================================
+
     def _format_params_english(self, params: Dict[str, Any]) -> str:
         """
         تنسيق المعاملات بالإنجليزية.
-        
+
         Args:
             params: معاملات الإجراء
-            
+
         Returns:
             النص المنسق
         """
@@ -477,13 +511,17 @@ class ActionExecutor:
 
         return "\n".join(lines) if lines else "**No additional information**"
 
+    # ==============================================
+    #  FORMAT PARAMS FRENCH
+    # ==============================================
+
     def _format_params_french(self, params: Dict[str, Any]) -> str:
         """
         تنسيق المعاملات بالفرنسية.
-        
+
         Args:
             params: معاملات الإجراء
-            
+
         Returns:
             النص المنسق
         """
@@ -507,6 +545,10 @@ class ActionExecutor:
 
         return "\n".join(lines) if lines else "**Aucune information supplémentaire**"
 
+    # ==============================================
+    #  GET ACTION DISPLAY NAME
+    # ==============================================
+
     def _get_action_display_name(
         self,
         action_name: str,
@@ -514,11 +556,11 @@ class ActionExecutor:
     ) -> str:
         """
         الحصول على اسم الإجراء المعروض.
-        
+
         Args:
             action_name: اسم الإجراء
             language: رمز اللغة
-            
+
         Returns:
             اسم الإجراء المعروض
         """
@@ -547,6 +589,10 @@ class ActionExecutor:
 
         return names.get(action_name, {}).get(language, action_name)
 
+    # ==============================================
+    #  CREATE ERROR RESULT
+    # ==============================================
+
     def _create_error_result(
         self,
         *,
@@ -556,12 +602,12 @@ class ActionExecutor:
     ) -> ExecutionResult:
         """
         إنشاء نتيجة خطأ.
-        
+
         Args:
             action: اسم الإجراء
             message: رسالة الخطأ للمستخدم
             error: رسالة الخطأ التقنية
-            
+
         Returns:
             نتيجة الخطأ
         """
@@ -592,6 +638,7 @@ action_executor = ActionExecutor()
 # EXECUTE ACTION
 # ==============================================
 
+
 async def execute_action(
     *,
     intent_result: IntentResult,
@@ -600,12 +647,12 @@ async def execute_action(
 ) -> ExecutionResult:
     """
     تنفيذ إجراء بناءً على النية (دالة مساعدة).
-    
+
     Args:
         intent_result: نتيجة تصنيف النية
         context: سياق التنفيذ (اختياري)
         executor: منفذ الإجراءات (اختياري)
-        
+
     Returns:
         نتيجة التنفيذ
     """

@@ -13,6 +13,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for feature guard.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import (
     datetime,
     timezone,
@@ -45,6 +50,7 @@ SubscriptionResult = Subscription
 # 🔍 CURRENT PERIOD
 # ==============================================
 
+
 def _current_period() -> tuple[int, int]:
     """
     الحصول على السنة والشهر الحاليين بتوقيت UTC.
@@ -60,6 +66,7 @@ def _current_period() -> tuple[int, int]:
 # ==============================================
 # 🔍 CHECK FEATURE ACCESS
 # ==============================================
+
 
 async def check_feature_access(
     *,
@@ -92,6 +99,7 @@ async def check_feature_access(
 # ==============================================
 # 🚫 REQUIRE FEATURE
 # ==============================================
+
 
 async def require_feature(
     *,
@@ -214,6 +222,7 @@ async def require_feature(
 # ==============================================
 # 🔍 HAS FEATURE (SHORTCUT)
 # ==============================================
+
 
 async def has_feature(
     *,

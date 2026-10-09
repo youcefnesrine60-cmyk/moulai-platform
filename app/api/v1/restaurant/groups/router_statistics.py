@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🏢 RESTAURANT GROUPS ROUTER - STATISTICS
 # نقاط نهاية إحصائيات مجموعات المطاعم
 # ==============================================
+
+"""MoulAI operational module for router statistics.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -28,7 +33,6 @@ from app.schemas.restaurant.restaurant_group import (
 )
 from app.services.business.restaurant.groups.service import RestaurantGroupService
 
-
 # ==============================================
 # 🏗️ ROUTER
 # ==============================================
@@ -42,6 +46,7 @@ router = APIRouter(
 # ==============================================
 # 🔧 DEPENDENCIES
 # ==============================================
+
 
 async def get_restaurant_group_service(
     session: AsyncSession = Depends(get_db),
@@ -57,6 +62,7 @@ async def get_restaurant_group_service(
 # ==============================================
 # GET GROUP STATISTICS
 # ==============================================
+
 
 @router.get(
     "/statistics/{owner_id}",
@@ -92,6 +98,7 @@ async def get_restaurant_group_statistics(
 # ==============================================
 # GET GROUPS WITH RESTAURANTS
 # ==============================================
+
 
 @router.get(
     "/owner/{owner_id}/with-restaurants",

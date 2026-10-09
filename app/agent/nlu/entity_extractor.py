@@ -1,8 +1,8 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
@@ -10,18 +10,21 @@
 # استخراج الكيانات المتقدم من النص
 # ==============================================
 
+"""MoulAI operational module for entity extractor.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 import re
 from typing import (
     Any,
     Dict,
     List,
     Optional,
-    Tuple,
 )
 
 from app.agent.config import (
     LanguageCode,
-    language_config,
 )
 from app.agent.language.detector import detect_language
 from app.core.ai_client import AIClient
@@ -43,7 +46,7 @@ ExtractionResult = Dict[str, Any]
 class EntityExtractor:
     """
     مستخرج الكيانات المتقدم - يستخرج المعلومات المهمة من النص.
-    
+
     يدعم:
         - أسماء المنتجات
         - الكميات والأوزان
@@ -53,11 +56,15 @@ class EntityExtractor:
         - أرقام الطلبات
         - أسماء العملاء
         - أرقام الهواتف
-    
+
     Attributes:
         ai_client: عميل الذكاء الاصطناعي
         confidence_threshold: عتبة الثقة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -67,7 +74,7 @@ class EntityExtractor:
     ) -> None:
         """
         تهيئة مستخرج الكيانات.
-        
+
         Args:
             ai_client: عميل الذكاء الاصطناعي (اختياري)
             confidence_threshold: عتبة الثقة (اختياري)
@@ -95,11 +102,11 @@ class EntityExtractor:
     ) -> ExtractionResult:
         """
         استخراج الكيانات من النص.
-        
+
         Args:
             text: النص المراد استخراج الكيانات منه
             language: رمز اللغة (اختياري - سيتم كشفها تلقائياً)
-            
+
         Returns:
             ExtractionResult: {
                 "entities": List[Dict],
@@ -188,11 +195,11 @@ class EntityExtractor:
     ) -> EntityList:
         """
         استخراج الكيانات باستخدام الذكاء الاصطناعي.
-        
+
         Args:
             text: النص المراد استخراج الكيانات منه
             language: رمز اللغة
-            
+
         Returns:
             قائمة الكيانات المستخرجة
         """
@@ -238,6 +245,7 @@ class EntityExtractor:
                 return []
 
             import json
+
             entities = json.loads(json_str)
 
             if isinstance(entities, dict):
@@ -252,7 +260,8 @@ class EntityExtractor:
 
             # تصفية الكيانات ذات الثقة المنخفضة
             return [
-                e for e in entities
+                e
+                for e in entities
                 if e.get("confidence", 0) >= self.confidence_threshold
             ]
 
@@ -275,11 +284,11 @@ class EntityExtractor:
     ) -> EntityList:
         """
         استخراج الكيانات باستخدام الأنماط.
-        
+
         Args:
             text: النص المراد استخراج الكيانات منه
             language: رمز اللغة
-            
+
         Returns:
             قائمة الكيانات المستخرجة
         """
@@ -287,111 +296,121 @@ class EntityExtractor:
 
         # 1️⃣ استخراج أرقام الطلبات
         order_patterns = [
-            r'\b(RST\d+-\d{6})\b',
-            r'#?(\d{4,8})',
-            r'رقم\s*الطلب\s*[#:]?\s*(\d+)',
-            r'order\s*[#:]?\s*(\d+)',
-            r'commande\s*[#:]?\s*(\d+)',
+            r"\b(RST\d+-\d{6})\b",
+            r"#?(\d{4,8})",
+            r"رقم\s*الطلب\s*[#:]?\s*(\d+)",
+            r"order\s*[#:]?\s*(\d+)",
+            r"commande\s*[#:]?\s*(\d+)",
         ]
 
         for pattern in order_patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                entities.append({
-                    "type": "order_id",
-                    "value": match.group(1),
-                    "confidence": 0.9,
-                })
+                entities.append(
+                    {
+                        "type": "order_id",
+                        "value": match.group(1),
+                        "confidence": 0.9,
+                    }
+                )
                 break
 
         # 2️⃣ استخراج الكميات
         quantity_patterns = [
-            r'(?:quantity|qty)\s*(?:to|of)?\s*(\d+)',
-            r'(?:change|set|make|update)\b.*\bquantity\b.*?\bto\s*(\d+)',
-            r'(?:quantité)\s*(?:à|a|de)?\s*(\d+)',
-            r'(?:chang\w*|modifi\w*|mett\w*)\s+(?:la\s+)?quantité.*?(?:à|a)\s*(\d+)',
-            r'(?:الكمية|عدد الحبات)\s*(?:إلى|الى)?\s*(\d+)',
-            r'(?:كمية)\s*.+?(?:إلى|الى)\s*(\d+)',
-            r'(?:اجعل|خلي|بدلها)\s*(?:الكمية\s*)?(?:إلى|الى)?\s*(\d+)',
-            r'(\d+)\s*(?:كيلو|كغم|غرام|قطعة|حبة|وحدة|كوب|ملعقة)',
-            r'(\d+)\s*(?:kg|g|piece|unit|cup|spoon)',
-            r'(\d+)\s*(?:kg|g|pièce|unité|cuillère)',
-            r'(\d+)\s*(?:بيتزا|برجر|شاورما|وجبة|pizza|burger|repas)',
+            r"(?:quantity|qty)\s*(?:to|of)?\s*(\d+)",
+            r"(?:change|set|make|update)\b.*\bquantity\b.*?\bto\s*(\d+)",
+            r"(?:quantité)\s*(?:à|a|de)?\s*(\d+)",
+            r"(?:chang\w*|modifi\w*|mett\w*)\s+(?:la\s+)?quantité.*?(?:à|a)\s*(\d+)",
+            r"(?:الكمية|عدد الحبات)\s*(?:إلى|الى)?\s*(\d+)",
+            r"(?:كمية)\s*.+?(?:إلى|الى)\s*(\d+)",
+            r"(?:اجعل|خلي|بدلها)\s*(?:الكمية\s*)?(?:إلى|الى)?\s*(\d+)",
+            r"(\d+)\s*(?:كيلو|كغم|غرام|قطعة|حبة|وحدة|كوب|ملعقة)",
+            r"(\d+)\s*(?:kg|g|piece|unit|cup|spoon)",
+            r"(\d+)\s*(?:kg|g|pièce|unité|cuillère)",
+            r"(\d+)\s*(?:بيتزا|برجر|شاورما|وجبة|pizza|burger|repas)",
         ]
 
         for pattern in quantity_patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                entities.append({
-                    "type": "quantity",
-                    "value": int(match.group(1)),
-                    "confidence": 0.8,
-                })
+                entities.append(
+                    {
+                        "type": "quantity",
+                        "value": int(match.group(1)),
+                        "confidence": 0.8,
+                    }
+                )
                 break
 
         # 3️⃣ استخراج الأسعار
         price_patterns = [
-            r'(\d+(?:\.\d{1,2})?)\s*(?:دج|دينار|da|dzd)',
-            r'(\d+(?:\.\d{1,2})?)\s*(?:da|dzd)',
-            r'(\d+(?:\.\d{1,2})?)\s*(?:€|eur|dollar|usd)',
-            r'سعر\s*[هو]?\s*(\d+(?:\.\d{1,2})?)',
-            r'price\s*(?:is)?\s*(\d+(?:\.\d{1,2})?)',
-            r'prix\s*(?:est)?\s*(\d+(?:\.\d{1,2})?)',
-            r'بسعر\s*(\d+(?:\.\d{1,2})?)',
-            r'ب\s*(\d+(?:\.\d{1,2})?)\s*(?:دج|دينار)',
+            r"(\d+(?:\.\d{1,2})?)\s*(?:دج|دينار|da|dzd)",
+            r"(\d+(?:\.\d{1,2})?)\s*(?:da|dzd)",
+            r"(\d+(?:\.\d{1,2})?)\s*(?:€|eur|dollar|usd)",
+            r"سعر\s*[هو]?\s*(\d+(?:\.\d{1,2})?)",
+            r"price\s*(?:is)?\s*(\d+(?:\.\d{1,2})?)",
+            r"prix\s*(?:est)?\s*(\d+(?:\.\d{1,2})?)",
+            r"بسعر\s*(\d+(?:\.\d{1,2})?)",
+            r"ب\s*(\d+(?:\.\d{1,2})?)\s*(?:دج|دينار)",
         ]
 
         for pattern in price_patterns:
             match = re.search(pattern, text)
             if match:
-                entities.append({
-                    "type": "price",
-                    "value": float(match.group(1)),
-                    "confidence": 0.9,
-                })
+                entities.append(
+                    {
+                        "type": "price",
+                        "value": float(match.group(1)),
+                        "confidence": 0.9,
+                    }
+                )
                 break
 
         # 4️⃣ استخراج أسماء المنتجات
         product_patterns = [
-            r'(?:اطلب|اريد|ابغى|بدي|order|commander)\s*(?!(?:#?RST\d+-\d{6}|#?\d{4,8}\b))(.+?)(?:\s*$|\.|،)',
-            r'(بيتزا|برجر|شاورما|فطيرة|كوكا|عصير|مشروب)',
-            r'(pizza|burger|shawarma|drink|juice|coffee|tea)',
+            r"(?:اطلب|اريد|ابغى|بدي|order|commander)\s*(?!(?:#?RST\d+-\d{6}|#?\d{4,8}\b))(.+?)(?:\s*$|\.|،)",
+            r"(بيتزا|برجر|شاورما|فطيرة|كوكا|عصير|مشروب)",
+            r"(pizza|burger|shawarma|drink|juice|coffee|tea)",
         ]
 
         for pattern in product_patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                entities.append({
-                    "type": "product_name",
-                    "value": match.group(1).strip(),
-                    "confidence": 0.7,
-                })
+                entities.append(
+                    {
+                        "type": "product_name",
+                        "value": match.group(1).strip(),
+                        "confidence": 0.7,
+                    }
+                )
                 break
 
         # 5️⃣ استخراج أرقام الهواتف
         phone_patterns = [
-            r'(0[567]\d{8})',
-            r'(\+213\s*[567]\d{8})',
-            r'(\+213\s*\d{9})',
-            r'(05[567]\d{7})',
+            r"(0[567]\d{8})",
+            r"(\+213\s*[567]\d{8})",
+            r"(\+213\s*\d{9})",
+            r"(05[567]\d{7})",
         ]
 
         for pattern in phone_patterns:
             match = re.search(pattern, text)
             if match:
-                entities.append({
-                    "type": "customer_phone",
-                    "value": match.group(1),
-                    "confidence": 0.9,
-                })
+                entities.append(
+                    {
+                        "type": "customer_phone",
+                        "value": match.group(1),
+                        "confidence": 0.9,
+                    }
+                )
                 break
 
         # 6️⃣ استخراج أسماء العملاء
         name_patterns = [
-            r'اسمي\s*(.+?)(?:\s*$|\.|،)',
-            r'اسم العميل\s*(.+?)(?:\s*$|\.|،)',
-            r'my name is\s*(.+?)(?:\s*$|\.|,)',
-            r'je m\'appelle\s*(.+?)(?:\s*$|\.|,)',
+            r"اسمي\s*(.+?)(?:\s*$|\.|،)",
+            r"اسم العميل\s*(.+?)(?:\s*$|\.|،)",
+            r"my name is\s*(.+?)(?:\s*$|\.|,)",
+            r"je m\'appelle\s*(.+?)(?:\s*$|\.|,)",
         ]
 
         for pattern in name_patterns:
@@ -400,18 +419,20 @@ class EntityExtractor:
                 name = match.group(1).strip()
                 # التأكد من أن الاسم ليس طويلاً جداً
                 if len(name) < 50:
-                    entities.append({
-                        "type": "customer_name",
-                        "value": name,
-                        "confidence": 0.7,
-                    })
+                    entities.append(
+                        {
+                            "type": "customer_name",
+                            "value": name,
+                            "confidence": 0.7,
+                        }
+                    )
                 break
 
         # 7️⃣ استخراج العناوين
         address_patterns = [
-            r'(?:عنوان|العنوان|address|adresse)\s*(.+?)(?:\s*$|\.|،)',
-            r'(?:في\s*)(.+?)(?:\s*$|\.|،)(?=.*شارع|.*street|.*rue)',
-            r'(شارع|street|rue)\s*(.+?)(?:\s*$|\.|،)',
+            r"(?:عنوان|العنوان|address|adresse)\s*(.+?)(?:\s*$|\.|،)",
+            r"(?:في\s*)(.+?)(?:\s*$|\.|،)(?=.*شارع|.*street|.*rue)",
+            r"(شارع|street|rue)\s*(.+?)(?:\s*$|\.|،)",
         ]
 
         for pattern in address_patterns:
@@ -419,60 +440,68 @@ class EntityExtractor:
             if match:
                 address = match.group(1).strip()
                 if len(address) > 3:
-                    entities.append({
-                        "type": "delivery_address",
-                        "value": address,
-                        "confidence": 0.7,
-                    })
+                    entities.append(
+                        {
+                            "type": "delivery_address",
+                            "value": address,
+                            "confidence": 0.7,
+                        }
+                    )
                 break
 
         # 8️⃣ استخراج التاريخ
         date_patterns = [
-            r'(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})',
-            r'(\d{1,2}\s*(?:يناير|فبراير|مارس|أبريل|مايو|يونيو|يوليو|أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر)\s*\d{2,4})',
-            r'(\d{1,2}\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{2,4})',
+            r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})",
+            r"(\d{1,2}\s*(?:يناير|فبراير|مارس|أبريل|مايو|يونيو|يوليو|أغسطس|سبتمبر|أكتوبر|نوفمبر|ديسمبر)\s*\d{2,4})",
+            r"(\d{1,2}\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{2,4})",
         ]
 
         for pattern in date_patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                entities.append({
-                    "type": "date",
-                    "value": match.group(1),
-                    "confidence": 0.8,
-                })
+                entities.append(
+                    {
+                        "type": "date",
+                        "value": match.group(1),
+                        "confidence": 0.8,
+                    }
+                )
                 break
 
         # 9️⃣ استخراج الوقت
         time_patterns = [
-            r'(\d{1,2}:\d{2})',
-            r'(\d{1,2}\s*(?:صباحاً|مساءً|ص|م|am|pm))',
+            r"(\d{1,2}:\d{2})",
+            r"(\d{1,2}\s*(?:صباحاً|مساءً|ص|م|am|pm))",
         ]
 
         for pattern in time_patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                entities.append({
-                    "type": "time",
-                    "value": match.group(1),
-                    "confidence": 0.8,
-                })
+                entities.append(
+                    {
+                        "type": "time",
+                        "value": match.group(1),
+                        "confidence": 0.8,
+                    }
+                )
                 break
 
         # 🔟 استخراج وحدة القياس
         unit_patterns = [
-            r'(كيلو|كغم|غرام|قطعة|حبة|وحدة|كوب|ملعقة|لتر)',
-            r'(kg|g|piece|unit|cup|spoon|liter|l)',
+            r"(كيلو|كغم|غرام|قطعة|حبة|وحدة|كوب|ملعقة|لتر)",
+            r"(kg|g|piece|unit|cup|spoon|liter|l)",
         ]
 
         for pattern in unit_patterns:
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                entities.append({
-                    "type": "unit",
-                    "value": match.group(1),
-                    "confidence": 0.8,
-                })
+                entities.append(
+                    {
+                        "type": "unit",
+                        "value": match.group(1),
+                        "confidence": 0.8,
+                    }
+                )
                 break
 
         return entities
@@ -487,23 +516,27 @@ class EntityExtractor:
     ) -> Optional[str]:
         """
         استخراج JSON من النص.
-        
+
         Args:
             text: النص المراد استخراج JSON منه
-            
+
         Returns:
             نص JSON أو None
         """
         # البحث عن JSON بين قوسين
-        match = re.search(r'\[.*\]', text, re.DOTALL)
+        match = re.search(r"\[.*\]", text, re.DOTALL)
         if match:
             return match.group(0)
 
-        match = re.search(r'\{.*\}', text, re.DOTALL)
+        match = re.search(r"\{.*\}", text, re.DOTALL)
         if match:
             return match.group(0)
 
         return None
+
+    # ==============================================
+    #  MERGE ENTITIES
+    # ==============================================
 
     def _merge_entities(
         self,
@@ -511,10 +544,10 @@ class EntityExtractor:
     ) -> EntityList:
         """
         دمج الكيانات المكررة.
-        
+
         Args:
             entities: قائمة الكيانات
-            
+
         Returns:
             قائمة الكيانات المدمجة
         """
@@ -545,7 +578,7 @@ class EntityExtractor:
     def get_entity_types(self) -> List[str]:
         """
         الحصول على قائمة أنواع الكيانات المدعومة.
-        
+
         Returns:
             قائمة أنواع الكيانات
         """
@@ -571,6 +604,7 @@ class EntityExtractor:
 # EXTRACT ENTITIES
 # ==============================================
 
+
 async def extract_entities(
     *,
     text: str,
@@ -579,12 +613,12 @@ async def extract_entities(
 ) -> ExtractionResult:
     """
     استخراج الكيانات من النص (دالة مساعدة).
-    
+
     Args:
         text: النص المراد استخراج الكيانات منه
         language: رمز اللغة (اختياري)
         extractor: مستخرج الكيانات (اختياري)
-        
+
     Returns:
         نتيجة الاستخراج
     """

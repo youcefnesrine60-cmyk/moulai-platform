@@ -9,6 +9,11 @@
 # 🍽️ RESTAURANT API - PACKAGE INIT
 # ==============================================
 
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from fastapi import APIRouter
 
 # ==============================================
@@ -32,7 +37,6 @@ from app.api.v1.restaurant.groups import router as groups_router
 
 # Branches
 from app.api.v1.restaurant.branches import router as branches_router
-
 
 # ==============================================
 # 📋 MAIN ROUTER

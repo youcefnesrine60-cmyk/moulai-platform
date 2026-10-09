@@ -1,11 +1,23 @@
-from app.services.business.orders.transaction import transactional_order
 # ==============================================
-# 📦 ORDERS SERVICE - TOTALS
-# حساب الإجماليات 
-# (calculate_order_totals, update_order_totals)
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
-from typing import Tuple
+# ==============================================
+# 📦 ORDERS SERVICE - TOTALS
+# حساب وتحديث إجماليات الطلبات
+# ==============================================
+
+"""Order-total calculation, persistence, and compatibility use cases.
+
+All write operations run inside the shared order transaction boundary. Read-only
+operations fetch values already persisted on the restaurant-owned order.
+"""
+
+import math
+from typing import TypeAlias
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,13 +33,16 @@ from app.repositories.order_items_repo import OrderItemsRepository
 from app.repositories.orders_repo import OrdersRepository
 from app.repositories.order_item_options_repo import OrderItemOptionsRepository
 from app.services.business.orders.helpers import check_order_editable
+from app.services.business.orders.transaction import transactional_order
 
 # ==============================================
 # 🧩 TYPES
 # ==============================================
 
-OrderTotals = Tuple[float, float, float, float, float]
-OrderTotalsWithOptions = Tuple[float, float, float, float, float, float]
+OrderAmount: TypeAlias = float | int | str
+OrderTotals: TypeAlias = tuple[float, float, float, float, float]
+OrderItemTotals: TypeAlias = tuple[float, float]
+OrderTotalsWithOptions: TypeAlias = tuple[float, float, float, float, float, float]
 
 
 # ==============================================
@@ -35,19 +50,36 @@ OrderTotalsWithOptions = Tuple[float, float, float, float, float, float]
 # ==============================================
 
 
-def compute_order_totals(*, subtotal, discount=0, tax=0, delivery=0) -> OrderTotals:
+def compute_order_totals(
+    *,
+    subtotal: OrderAmount,
+    discount: OrderAmount = 0,
+    tax: OrderAmount = 0,
+    delivery: OrderAmount = 0,
+) -> OrderTotals:
     """Single arithmetic rule shared by customer and restaurant operations."""
-    import math
     try:
-        subtotal, discount, tax, delivery = map(float, (subtotal, discount, tax, delivery))
+        subtotal, discount, tax, delivery = map(
+            float, (subtotal, discount, tax, delivery)
+        )
     except (TypeError, ValueError) as exc:
         raise ValidationError(message="Invalid order amounts") from exc
-    if any(not math.isfinite(value) or value < 0 for value in (subtotal, discount, tax, delivery)):
+    if any(
+        not math.isfinite(value) or value < 0
+        for value in (subtotal, discount, tax, delivery)
+    ):
         raise ValidationError(message="Invalid order amounts")
     total = subtotal - discount + tax + delivery
     if total < 0:
         raise ValidationError(message="Discount exceeds the payable amount")
-    return tuple(round(value, 2) for value in (subtotal, discount, tax, delivery, total))
+    return tuple(
+        round(value, 2) for value in (subtotal, discount, tax, delivery, total)
+    )
+
+
+# ==============================================
+# CALCULATE ORDER TOTALS
+# ==============================================
 
 
 @transactional_order
@@ -59,15 +91,15 @@ async def calculate_order_totals(
 ) -> OrderTotals:
     """
     حساب إجماليات الطلب من عناصره.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         include_options: تضمين أسعار الخيارات في الحساب
-        
+
     Returns:
         OrderTotals: (subtotal, discount, tax, delivery, total)
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
     """
@@ -117,7 +149,10 @@ async def calculate_order_totals(
 
     # 6️⃣ حساب المجموع الكلي
     subtotal, discount, tax, delivery, total = compute_order_totals(
-        subtotal=subtotal, discount=discount, tax=tax, delivery=delivery,
+        subtotal=subtotal,
+        discount=discount,
+        tax=tax,
+        delivery=delivery,
     )
 
     # 7️⃣ تحديث إجماليات الطلب
@@ -146,12 +181,19 @@ async def calculate_order_totals(
         },
     )
 
-    return (round(subtotal, 2), round(discount, 2), round(tax, 2), round(delivery, 2), round(total, 2))
+    return (
+        round(subtotal, 2),
+        round(discount, 2),
+        round(tax, 2),
+        round(delivery, 2),
+        round(total, 2),
+    )
 
 
 # ==============================================
 # 💰 UPDATE ORDER TOTALS
 # ==============================================
+
 
 @transactional_order
 async def update_order_totals(
@@ -166,7 +208,7 @@ async def update_order_totals(
 ) -> Order:
     """
     تحديث إجماليات الطلب.
-    
+
     Args:
         order_id: معرف الطلب
         subtotal_amount: المجموع الفرعي
@@ -175,10 +217,10 @@ async def update_order_totals(
         delivery_amount: مبلغ التوصيل
         total_amount: المجموع الكلي
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Order: الطلب المُحدّث
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
         ValidationError: إذا كانت القيم غير صالحة أو الطلب مقفلاً
@@ -193,12 +235,16 @@ async def update_order_totals(
     )
 
     # 1️⃣ التحقق من صحة القيم
-    import math
     if not math.isfinite(float(total_amount)) or total_amount < 0:
         raise ValidationError(message="Invalid total amount")
-    subtotal_amount, discount_amount, tax_amount, delivery_amount, total_amount = compute_order_totals(
-        subtotal=subtotal_amount, discount=discount_amount,
-        tax=tax_amount, delivery=delivery_amount)
+    subtotal_amount, discount_amount, tax_amount, delivery_amount, total_amount = (
+        compute_order_totals(
+            subtotal=subtotal_amount,
+            discount=discount_amount,
+            tax=tax_amount,
+            delivery=delivery_amount,
+        )
+    )
 
     # 2️⃣ جلب الطلب
     orders_repo = OrdersRepository(session=session)
@@ -253,6 +299,7 @@ async def update_order_totals(
 # 🔄 RECALCULATE ORDER TOTALS
 # ==============================================
 
+
 @transactional_order
 async def recalculate_order_totals(
     *,
@@ -262,15 +309,15 @@ async def recalculate_order_totals(
 ) -> OrderTotals:
     """
     إعادة حساب إجماليات الطلب (جمع بين calculate و update).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
         include_options: تضمين أسعار الخيارات في الحساب
-        
+
     Returns:
         OrderTotals: (subtotal, discount, tax, delivery, total)
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
     """
@@ -305,6 +352,7 @@ async def recalculate_order_totals(
 # 📊 GET ORDER TOTALS
 # ==============================================
 
+
 async def get_order_totals(
     *,
     order_id: int,
@@ -312,14 +360,14 @@ async def get_order_totals(
 ) -> OrderTotals:
     """
     الحصول على إجماليات الطلب دون إعادة الحساب.
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OrderTotals: (subtotal, discount, tax, delivery, total)
-        
+
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
     """
@@ -364,21 +412,22 @@ async def get_order_totals(
 # 🧮 CALCULATE ITEM TOTALS
 # ==============================================
 
+
 async def calculate_item_totals(
     *,
     order_item_id: int,
     session: AsyncSession,
-) -> Tuple[float, float]:
+) -> OrderItemTotals:
     """
     حساب إجماليات عنصر طلب معين (السعر الأساسي + الخيارات).
-    
+
     Args:
         order_item_id: معرف عنصر الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
-        Tuple[float, float]: (base_total, total_with_options)
-        
+        OrderItemTotals: (base_total, total_with_options)
+
     Raises:
         NotFoundError: إذا لم يتم العثور على العنصر
     """
@@ -421,6 +470,7 @@ async def calculate_item_totals(
 # 🔄 COMPATIBILITY FUNCTIONS
 # ==============================================
 
+
 async def calculate_order_totals_compat(
     *,
     order_id: int,
@@ -428,11 +478,11 @@ async def calculate_order_totals_compat(
 ) -> OrderTotals:
     """
     دالة متوافقة مع الإصدار القديم (مغلفة).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OrderTotals: (subtotal, discount, tax, delivery, total)
     """
@@ -443,6 +493,11 @@ async def calculate_order_totals_compat(
     )
 
 
+# ==============================================
+# RECALCULATE ORDER TOTALS COMPAT
+# ==============================================
+
+
 async def recalculate_order_totals_compat(
     *,
     order_id: int,
@@ -450,11 +505,11 @@ async def recalculate_order_totals_compat(
 ) -> OrderTotals:
     """
     دالة متوافقة مع الإصدار القديم (مغلفة).
-    
+
     Args:
         order_id: معرف الطلب
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         OrderTotals: (subtotal, discount, tax, delivery, total)
     """

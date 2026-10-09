@@ -11,6 +11,11 @@
 # Async SQLAlchemy Version
 # ==============================================
 
+"""MoulAI operational module for feature usage counter repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     Any,
     Dict,
@@ -21,7 +26,6 @@ from typing import (
 from sqlalchemy import (
     func,
     select,
-    update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -63,6 +67,10 @@ class FeatureUsageCounterRepository(
         model: نموذج FeatureUsageCounter
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -118,12 +126,9 @@ class FeatureUsageCounterRepository(
             كائن FeatureUsageCounter أو None
         """
         try:
-            query = (
-                self._build_base_query()
-                .where(
-                    self.model.restaurant_id == restaurant_id,
-                    self.model.feature_id == feature_id,
-                )
+            query = self._build_base_query().where(
+                self.model.restaurant_id == restaurant_id,
+                self.model.feature_id == feature_id,
             )
 
             # ✅ معالجة period_year
@@ -474,6 +479,10 @@ class FeatureUsageCounterRepository(
     # (ينشئ العداد إذا لم يكن موجوداً)
     # ==============================================
 
+    # ==============================================
+    # INCREMENT FOR RESTAURANT FEATURE
+    # ==============================================
+
     async def increment_for_restaurant_feature(
         self,
         *,
@@ -552,9 +561,8 @@ class FeatureUsageCounterRepository(
             إجمالي الاستخدام
         """
         try:
-            query = (
-                select(func.coalesce(func.sum(self.model.usage_count), 0))
-                .where(self.model.restaurant_id == restaurant_id)
+            query = select(func.coalesce(func.sum(self.model.usage_count), 0)).where(
+                self.model.restaurant_id == restaurant_id
             )
 
             result = await self.session.execute(query)
@@ -600,6 +608,7 @@ class FeatureUsageCounterRepository(
 # ==============================================
 # GET FEATURE COUNTER (COMPATIBILITY)
 # ==============================================
+
 
 async def get_feature_counter(
     *,
@@ -650,6 +659,7 @@ async def get_feature_counter(
 # CREATE FEATURE COUNTER (COMPATIBILITY)
 # ==============================================
 
+
 async def create_feature_counter(
     *,
     restaurant_id: int,
@@ -690,6 +700,7 @@ async def create_feature_counter(
 # INCREMENT FEATURE COUNTER (COMPATIBILITY)
 # ==============================================
 
+
 async def increment_feature_counter(
     *,
     counter_id: int,
@@ -715,6 +726,7 @@ async def increment_feature_counter(
 # ==============================================
 # DECREMENT FEATURE COUNTER (COMPATIBILITY)
 # ==============================================
+
 
 async def decrement_feature_counter(
     *,
@@ -742,6 +754,7 @@ async def decrement_feature_counter(
 # RESET FEATURE COUNTER (COMPATIBILITY)
 # ==============================================
 
+
 async def reset_feature_counter(
     *,
     counter_id: int,
@@ -762,6 +775,7 @@ async def reset_feature_counter(
 # ==============================================
 # GET CURRENT USAGE (COMPATIBILITY)
 # ==============================================
+
 
 async def get_current_usage(
     *,

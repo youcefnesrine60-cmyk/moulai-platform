@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # 🏦 RESTAURANT PAYMENT SETTINGS ROUTER - BASIC
 # نقاط نهاية إعدادات الدفع الأساسية
 # ==============================================
+
+"""MoulAI operational module for router.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from fastapi import (
     APIRouter,
@@ -37,7 +42,6 @@ from app.services.business.restaurant.payment_setting.service import (
     RestaurantPaymentSettingsService,
 )
 
-
 # ==============================================
 # 🧩 CONSTANTS
 # ==============================================
@@ -59,6 +63,7 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_payment_settings_service(
     session: AsyncSession = Depends(get_db),
 ) -> RestaurantPaymentSettingsService:
@@ -73,6 +78,7 @@ async def get_payment_settings_service(
 # ==============================================
 # LIST PAYMENT SETTINGS
 # ==============================================
+
 
 @router.get(
     "/",
@@ -101,7 +107,9 @@ async def list_payment_settings(
         total = await service.repo.count()
 
         return RestaurantPaymentSettingListResponse(
-            items=[RestaurantPaymentSettingResponse.model_validate(s) for s in settings],
+            items=[
+                RestaurantPaymentSettingResponse.model_validate(s) for s in settings
+            ],
             total=total,
             skip=skip,
             limit=limit,
@@ -121,6 +129,7 @@ async def list_payment_settings(
 # ==============================================
 # GET PAYMENT SETTINGS
 # ==============================================
+
 
 @router.get(
     "/{restaurant_id}",
@@ -165,6 +174,7 @@ async def get_payment_settings(
 # ==============================================
 # CREATE PAYMENT SETTINGS
 # ==============================================
+
 
 @router.post(
     "/",
@@ -219,6 +229,7 @@ async def create_payment_settings(
 # ==============================================
 # UPDATE PAYMENT SETTINGS
 # ==============================================
+
 
 @router.put(
     "/{restaurant_id}",
@@ -279,6 +290,7 @@ async def update_payment_settings(
 # ==============================================
 # DELETE PAYMENT SETTINGS
 # ==============================================
+
 
 @router.delete(
     "/{restaurant_id}",

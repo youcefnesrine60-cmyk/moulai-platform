@@ -28,7 +28,6 @@ from tests.api.v1.restaurant.test_payment_settings import TestPaymentSettingsAPI
 from tests.api.v1.restaurant.test_groups import TestRestaurantGroupsAPI
 from tests.api.v1.restaurant.test_branches import TestRestaurantBranchesAPI
 
-
 # ==============================================
 # 📋 EXPORTS
 # ==============================================

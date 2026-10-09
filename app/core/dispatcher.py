@@ -1,6 +1,19 @@
 # ==============================================
-# 🚀 MAIN UPDATE DISPATCHER
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
+
+# ==============================================
+# MOULAI MODULE - APP / CORE / DISPATCHER
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for dispatcher.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.core.logger import logger
 
@@ -17,6 +30,7 @@ Update = dict[str, object]
 # ==============================================
 # 🚀 DISPATCH UPDATE
 # ==============================================
+
 
 async def dispatch_update(
     *,
@@ -50,10 +64,7 @@ async def dispatch_update(
         # 🌍 WEBAPP DATA
         # ======================================
 
-        if (
-            isinstance(message, dict)
-            and "web_app_data" in message
-        ):
+        if isinstance(message, dict) and "web_app_data" in message:
 
             await handle_webapp_data(
                 data=data,

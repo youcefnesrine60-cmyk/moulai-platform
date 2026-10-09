@@ -11,6 +11,11 @@
 # Repository ---> SQLAlchemy
 # ==============================================
 
+"""MoulAI operational module for restaurant repo.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
     List,
     Optional,
@@ -27,7 +32,6 @@ from app.core.logger import logger
 from app.models.restaurant import Restaurant
 from app.repositories.base import BaseRepository
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,20 +43,25 @@ RestaurantList = List[Restaurant]
 # 🏪 RESTAURANT REPOSITORY
 # ==============================================
 
+
 class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     """
     مستودع المطاعم - يوفر عمليات خاصة بالمطاعم.
-    
+
     مسؤول عن:
         - عمليات CRUD الأساسية للمطاعم
         - البحث والتصفية حسب المالك والولاية
         - البحث النصي
         - جلب المطاعم مع العلاقات
-    
+
     Attributes:
         session: جلسة قاعدة البيانات غير المتزامنة
         model: نموذج Restaurant
     """
+
+    # ==============================================
+    #   INIT
+    # ==============================================
 
     def __init__(
         self,
@@ -60,7 +69,7 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> None:
         """
         تهيئة مستودع المطاعم.
-        
+
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
@@ -84,13 +93,13 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> RestaurantList:
         """
         الحصول على مطاعم المالك.
-        
+
         Args:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
             include_inactive: تضمين المطاعم غير النشطة
-            
+
         Returns:
             RestaurantList: قائمة المطاعم
         """
@@ -131,12 +140,12 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> RestaurantList:
         """
         الحصول على مطاعم حسب الولاية.
-        
+
         Args:
             wilaya: اسم الولاية
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             RestaurantList: قائمة المطاعم
         """
@@ -175,13 +184,13 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> Optional[Restaurant]:
         """
         الحصول على مطعم بواسطة الاسم والمالك.
-        
+
         ✅ يستخدم للتحقق من عدم وجود اسم مكرر لنفس المالك
-        
+
         Args:
             owner_id: معرف المالك
             name: اسم المطعم
-            
+
         Returns:
             Optional[Restaurant]: كائن Restaurant أو None
         """
@@ -221,12 +230,12 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> RestaurantList:
         """
         البحث عن مطاعم.
-        
+
         Args:
             query: نص البحث
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            
+
         Returns:
             RestaurantList: قائمة المطاعم
         """
@@ -259,6 +268,10 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
             )
             raise
 
+    # ==============================================
+    # COUNT SEARCH
+    # ==============================================
+
     async def count_search(
         self,
         *,
@@ -267,11 +280,15 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> int:
         """احسب العدد الإجمالي لنتائج البحث قبل الترقيم."""
         try:
-            stmt = select(func.count()).select_from(self.model).where(
-                or_(
-                    self.model.name.ilike(f"%{query}%"),
-                    self.model.type.ilike(f"%{query}%"),
-                    self.model.wilaya.ilike(f"%{query}%"),
+            stmt = (
+                select(func.count())
+                .select_from(self.model)
+                .where(
+                    or_(
+                        self.model.name.ilike(f"%{query}%"),
+                        self.model.type.ilike(f"%{query}%"),
+                        self.model.wilaya.ilike(f"%{query}%"),
+                    )
                 )
             )
 
@@ -303,10 +320,10 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> Optional[Restaurant]:
         """
         الحصول على مطعم مع جميع علاقاته.
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             Optional[Restaurant]: المطعم مع العلاقات أو None
         """
@@ -355,11 +372,11 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> Optional[Restaurant]:
         """
         تحديث حالة المطعم.
-        
+
         Args:
             restaurant_id: معرف المطعم
             is_active: الحالة الجديدة
-            
+
         Returns:
             Optional[Restaurant]: المطعم المُحدّث أو None
         """
@@ -383,10 +400,10 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> int:
         """
         حساب عدد مطاعم المالك.
-        
+
         Args:
             owner_id: معرف المالك
-            
+
         Returns:
             int: عدد المطاعم
         """
@@ -405,10 +422,10 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> int:
         """
         حساب عدد المطاعم في الولاية.
-        
+
         Args:
             wilaya: اسم الولاية
-            
+
         Returns:
             int: عدد المطاعم
         """
@@ -427,12 +444,12 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> int:
         """
         حساب عدد فروع المطعم.
-        
+
         ✅ يستخدم للتحقق قبل الحذف
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             int: عدد الفروع
         """
@@ -470,12 +487,12 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
     ) -> int:
         """
         حساب عدد منتجات المطعم.
-        
+
         ✅ يستخدم للتحقق قبل الحذف
-        
+
         Args:
             restaurant_id: معرف المطعم
-            
+
         Returns:
             int: عدد المنتجات
         """
@@ -512,6 +529,7 @@ class RestaurantRepository(BaseRepository[Restaurant, dict, dict]):
 # GET RESTAURANT BY ID (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurant_by_id(
     *,
     restaurant_id: int,
@@ -519,11 +537,11 @@ async def get_restaurant_by_id(
 ) -> Optional[Restaurant]:
     """
     الحصول على مطعم بالمعرف (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Restaurant]: كائن Restaurant أو None
     """
@@ -538,6 +556,7 @@ async def get_restaurant_by_id(
 # GET RESTAURANTS BY OWNER (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurants_by_owner(
     *,
     owner_id: int,
@@ -547,13 +566,13 @@ async def get_restaurants_by_owner(
 ) -> RestaurantList:
     """
     الحصول على مطاعم المالك (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         owner_id: معرف المالك
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         RestaurantList: قائمة المطاعم
     """
@@ -570,6 +589,7 @@ async def get_restaurants_by_owner(
 # SEARCH RESTAURANTS (COMPATIBILITY)
 # ==============================================
 
+
 async def search_restaurants(
     *,
     query: str,
@@ -579,13 +599,13 @@ async def search_restaurants(
 ) -> RestaurantList:
     """
     البحث عن مطاعم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         query: نص البحث
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
-        
+
     Returns:
         RestaurantList: قائمة المطاعم
     """
@@ -602,6 +622,7 @@ async def search_restaurants(
 # GET RESTAURANT WITH DETAILS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_restaurant_with_details(
     *,
     restaurant_id: int,
@@ -609,11 +630,11 @@ async def get_restaurant_with_details(
 ) -> Optional[Restaurant]:
     """
     الحصول على مطعم مع جميع علاقاته (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         restaurant_id: معرف المطعم
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         Optional[Restaurant]: كائن Restaurant مع العلاقات أو None
     """
@@ -628,6 +649,7 @@ async def get_restaurant_with_details(
 # GET ALL RESTAURANTS (COMPATIBILITY)
 # ==============================================
 
+
 async def get_all_restaurants(
     *,
     session: AsyncSession,
@@ -637,13 +659,13 @@ async def get_all_restaurants(
 ) -> RestaurantList:
     """
     الحصول على جميع المطاعم (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         only_active: جلب المطاعم النشطة فقط
-        
+
     Returns:
         RestaurantList: قائمة المطاعم
     """
@@ -666,6 +688,7 @@ async def get_all_restaurants(
 # CREATE RESTAURANT (COMPATIBILITY)
 # ==============================================
 
+
 async def create_restaurant(
     *,
     session: AsyncSession,
@@ -673,11 +696,11 @@ async def create_restaurant(
 ) -> Restaurant:
     """
     إنشاء مطعم جديد (دالة متوافقة مع الإصدار القديم).
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
         data: بيانات المطعم
-        
+
     Returns:
         Restaurant: المطعم المُنشأ
     """

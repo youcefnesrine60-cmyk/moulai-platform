@@ -10,6 +10,11 @@
 # مخططات Pydantic للقنوات
 # ==============================================
 
+"""MoulAI operational module for channel.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from datetime import datetime
 from typing import (
     Any,
@@ -25,7 +30,6 @@ from pydantic import (
     field_validator,
 )
 
-
 # ==============================================
 # 🧩 TYPES
 # ==============================================
@@ -39,10 +43,11 @@ ChannelListData = List[Dict[str, Any]]
 # 📦 BASE SCHEMA
 # ==============================================
 
+
 class ChannelBase(BaseModel):
     """
     المخطط الأساسي للقناة.
-    
+
     Attributes:
         agent_id: معرف الوكيل
         type: نوع القناة
@@ -50,6 +55,7 @@ class ChannelBase(BaseModel):
         is_active: حالة النشاط
         config: إعدادات القناة
     """
+
     agent_id: int = Field(
         ...,
         description="معرف الوكيل",
@@ -94,13 +100,13 @@ class ChannelBase(BaseModel):
     def validate_type(cls, value: str) -> str:
         """
         التحقق من صحة نوع القناة.
-        
+
         Args:
             value: نوع القناة
-            
+
         Returns:
             str: نوع القناة المدقق
-            
+
         Raises:
             ValueError: إذا كان النوع غير صالح
         """
@@ -111,18 +117,22 @@ class ChannelBase(BaseModel):
             )
         return value.lower()
 
+    # ==============================================
+    # VALIDATE NAME
+    # ==============================================
+
     @field_validator("name")
     @classmethod
     def validate_name(cls, value: str) -> str:
         """
         التحقق من صحة اسم القناة.
-        
+
         Args:
             value: اسم القناة
-            
+
         Returns:
             str: اسم القناة المدقق
-            
+
         Raises:
             ValueError: إذا كان الاسم غير صالح
         """
@@ -135,10 +145,12 @@ class ChannelBase(BaseModel):
 # 📥 CREATE SCHEMA
 # ==============================================
 
+
 class ChannelCreate(ChannelBase):
     """
     مخطط إنشاء قناة جديدة.
     """
+
     pass
 
 
@@ -146,15 +158,17 @@ class ChannelCreate(ChannelBase):
 # 📤 UPDATE SCHEMA
 # ==============================================
 
+
 class ChannelUpdate(BaseModel):
     """
     مخطط تحديث القناة.
-    
+
     Attributes:
         name: اسم القناة
         is_active: حالة النشاط
         config: إعدادات القناة
     """
+
     name: Optional[str] = Field(
         None,
         max_length=100,
@@ -180,13 +194,13 @@ class ChannelUpdate(BaseModel):
     def validate_name(cls, value: Optional[str]) -> Optional[str]:
         """
         التحقق من صحة اسم القناة.
-        
+
         Args:
             value: اسم القناة
-            
+
         Returns:
             Optional[str]: اسم القناة المدقق
-            
+
         Raises:
             ValueError: إذا كان الاسم غير صالح
         """
@@ -201,15 +215,17 @@ class ChannelUpdate(BaseModel):
 # 📤 RESPONSE SCHEMA
 # ==============================================
 
+
 class ChannelResponse(ChannelBase):
     """
     مخطط استجابة القناة.
-    
+
     Attributes:
         id: معرف القناة
         created_at: تاريخ الإنشاء
         updated_at: تاريخ آخر تحديث
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(
@@ -232,16 +248,18 @@ class ChannelResponse(ChannelBase):
 # 📋 LIST RESPONSE
 # ==============================================
 
+
 class ChannelListResponse(BaseModel):
     """
     مخطط استجابة قائمة القنوات.
-    
+
     Attributes:
         items: قائمة القنوات
         total: العدد الإجمالي
         skip: عدد السجلات المتخطية
         limit: الحد الأقصى للسجلات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     items: List[ChannelResponse] = Field(
@@ -272,16 +290,18 @@ class ChannelListResponse(BaseModel):
 # 📊 STATISTICS SCHEMA
 # ==============================================
 
+
 class ChannelStatistics(BaseModel):
     """
     مخطط إحصائيات القنوات.
-    
+
     Attributes:
         total_channels: إجمالي عدد القنوات
         active_channels: عدد القنوات النشطة
         inactive_channels: عدد القنوات غير النشطة
         types_summary: ملخص أنواع القنوات
     """
+
     model_config = ConfigDict(from_attributes=True)
 
     total_channels: int = Field(

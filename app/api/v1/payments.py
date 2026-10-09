@@ -1,11 +1,21 @@
 # ==============================================
-# 💳 PAYMENTS API
-# نقاط نهاية API للمدفوعات
-# تدير عمليات إنشاء واستعراض وتحديث وحذف المدفوعات
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# MOULAI MODULE - APP / API / V1 / PAYMENTS
+# Operational component of the MoulAI platform.
+# ==============================================
+
+"""MoulAI operational module for payments.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
+
 from typing import (
-    List,
     Optional,
 )
 
@@ -18,6 +28,14 @@ from fastapi import (
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    require_owned_payment,
+    require_owned_restaurant,
+    require_owned_subscription,
+)
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
@@ -56,19 +74,25 @@ router = APIRouter(
 # 🔧 DEPENDENCIES
 # ==============================================
 
+
 async def get_payment_service(
     session: AsyncSession = Depends(get_db),
 ) -> PaymentService:
     """
     الحصول على خدمة المدفوعات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         PaymentService: مثيل من PaymentService
     """
     return PaymentService(session)
+
+
+# ==============================================
+# GET SUBSCRIPTION SERVICE
+# ==============================================
 
 
 async def get_subscription_service(
@@ -76,10 +100,10 @@ async def get_subscription_service(
 ) -> SubscriptionService:
     """
     الحصول على خدمة الاشتراكات.
-    
+
     Args:
         session: جلسة قاعدة البيانات غير المتزامنة
-        
+
     Returns:
         SubscriptionService: مثيل من SubscriptionService
     """
@@ -94,6 +118,7 @@ async def get_subscription_service(
 # LIST PAYMENTS
 # ==============================================
 
+
 @router.get(
     "/",
     response_model=PaymentListResponse,
@@ -102,6 +127,7 @@ async def get_subscription_service(
 )
 async def list_payments(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     owner_id: Optional[int] = Query(
         None,
         description="معرف المالك",
@@ -133,7 +159,7 @@ async def list_payments(
 ) -> PaymentListResponse:
     """
     الحصول على قائمة المدفوعات.
-    
+
     Args:
         owner_id: معرف المالك للتصفية
         restaurant_id: معرف المطعم للتصفية
@@ -141,10 +167,22 @@ async def list_payments(
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentListResponse: قائمة المدفوعات مع الإحصائيات
     """
+    if owner_id is not None and owner_id != owner.owner_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot access another owner's payments",
+        )
+    if restaurant_id is not None:
+        await require_owned_restaurant(
+            restaurant_id=restaurant_id,
+            owner=owner,
+            session=service.session,
+        )
+
     logger.info(
         "api_list_payments",
         extra={
@@ -158,28 +196,18 @@ async def list_payments(
 
     try:
         # تحديد طريقة الجلب بناءً على معايير التصفية
+        filters = {"owner_id": owner.owner_id}
+        if restaurant_id is not None:
+            filters["restaurant_id"] = restaurant_id
         if status is not None:
-            payments = await service.get_by_status(
-                status=status,
-                skip=skip,
-                limit=limit,
-            )
-        else:
-            # بناء الفلاتر
-            filters = {}
-            if owner_id:
-                filters["owner_id"] = owner_id
-            if restaurant_id:
-                filters["restaurant_id"] = restaurant_id
+            filters["status"] = status
 
-            # استخدام المستودع مباشرة للحصول على جميع المدفوعات
-            payments = await service.repo.get_all(
-                skip=skip,
-                limit=limit,
-                filters=filters,
-            )
-
-        total = await service.repo.count(filters=filters) if filters else await service.repo.count()
+        payments = await service.repo.get_all(
+            skip=skip,
+            limit=limit,
+            filters=filters,
+        )
+        total = await service.repo.count(filters=filters)
 
         return PaymentListResponse(
             items=payments,
@@ -212,6 +240,7 @@ async def list_payments(
 # GET PAYMENT BY ID
 # ==============================================
 
+
 @router.get(
     "/{payment_id}",
     response_model=PaymentResponse,
@@ -220,25 +249,32 @@ async def list_payments(
 )
 async def get_payment(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
     """
     الحصول على دفع بالمعرف.
-    
+
     Args:
         payment_id: معرف الدفع
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentResponse: الدفع المطلوب
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الدفع
     """
     logger.info(
         "api_get_payment",
         extra={"payment_id": payment_id},
+    )
+
+    await require_owned_payment(
+        payment_id=payment_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -275,6 +311,7 @@ async def get_payment(
 # GET PAYMENT STATUS
 # ==============================================
 
+
 @router.get(
     "/{payment_id}/status",
     response_model=PaymentStatus,
@@ -283,25 +320,32 @@ async def get_payment(
 )
 async def get_payment_status(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentStatus:
     """
     الحصول على حالة الدفع.
-    
+
     Args:
         payment_id: معرف الدفع
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentStatus: حالة الدفع
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الدفع
     """
     logger.info(
         "api_get_payment_status",
         extra={"payment_id": payment_id},
+    )
+
+    await require_owned_payment(
+        payment_id=payment_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -348,6 +392,7 @@ async def get_payment_status(
 # CREATE PAYMENT
 # ==============================================
 
+
 @router.post(
     "/",
     response_model=PaymentResponse,
@@ -357,19 +402,20 @@ async def get_payment_status(
 )
 async def create_payment(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     data: PaymentCreate,
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
     """
     إنشاء طلب دفع جديد.
-    
+
     Args:
         data: بيانات الدفع
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentResponse: الدفع المنشأ
-        
+
     Raises:
         HTTPException: إذا حدث خطأ أثناء الإنشاء
     """
@@ -381,6 +427,23 @@ async def create_payment(
             "amount": data.amount,
         },
     )
+
+    if data.owner_id != owner.owner_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot create a payment for another owner",
+        )
+    await require_owned_restaurant(
+        restaurant_id=data.restaurant_id,
+        owner=owner,
+        session=service.session,
+    )
+    if data.subscription_id is not None:
+        await require_owned_subscription(
+            subscription_id=data.subscription_id,
+            owner=owner,
+            session=service.session,
+        )
 
     try:
         payment = await service.create_payment(
@@ -442,6 +505,7 @@ async def create_payment(
 # UPDATE PAYMENT
 # ==============================================
 
+
 @router.patch(
     "/{payment_id}",
     response_model=PaymentResponse,
@@ -450,21 +514,22 @@ async def create_payment(
 )
 async def update_payment(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     data: PaymentUpdate,
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
     """
     تحديث دفع موجود.
-    
+
     Args:
         payment_id: معرف الدفع
         data: بيانات التحديث
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentResponse: الدفع المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الدفع
     """
@@ -474,6 +539,12 @@ async def update_payment(
             "payment_id": payment_id,
             "fields": list(data.model_dump(exclude_unset=True).keys()),
         },
+    )
+
+    await require_owned_payment(
+        payment_id=payment_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -525,6 +596,7 @@ async def update_payment(
 # UPDATE PAYMENT STATUS
 # ==============================================
 
+
 @router.patch(
     "/{payment_id}/status",
     response_model=PaymentResponse,
@@ -533,21 +605,22 @@ async def update_payment(
 )
 async def update_payment_status(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     data: PaymentStatusUpdate,
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
     """
     تحديث حالة الدفع.
-    
+
     Args:
         payment_id: معرف الدفع
         data: بيانات تحديث الحالة
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentResponse: الدفع المحدث
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الدفع أو كانت الحالة غير صالحة
     """
@@ -557,6 +630,12 @@ async def update_payment_status(
             "payment_id": payment_id,
             "status": data.status,
         },
+    )
+
+    await require_owned_payment(
+        payment_id=payment_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -608,6 +687,7 @@ async def update_payment_status(
 # CONFIRM PAYMENT
 # ==============================================
 
+
 @router.patch(
     "/{payment_id}/confirm",
     response_model=PaymentResponse,
@@ -616,25 +696,32 @@ async def update_payment_status(
 )
 async def confirm_payment(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
     """
     تأكيد الدفع.
-    
+
     Args:
         payment_id: معرف الدفع
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentResponse: الدفع المحدث
-        
+
     Raises:
         HTTPException: إذا فشل التأكيد
     """
     logger.info(
         "api_confirm_payment",
         extra={"payment_id": payment_id},
+    )
+
+    await require_owned_payment(
+        payment_id=payment_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -683,6 +770,7 @@ async def confirm_payment(
 # FAIL PAYMENT
 # ==============================================
 
+
 @router.patch(
     "/{payment_id}/fail",
     response_model=PaymentResponse,
@@ -691,25 +779,32 @@ async def confirm_payment(
 )
 async def fail_payment(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
     """
     تعيين الدفع كفاشل.
-    
+
     Args:
         payment_id: معرف الدفع
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentResponse: الدفع المحدث
-        
+
     Raises:
         HTTPException: إذا فشلت العملية
     """
     logger.info(
         "api_fail_payment",
         extra={"payment_id": payment_id},
+    )
+
+    await require_owned_payment(
+        payment_id=payment_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -758,6 +853,7 @@ async def fail_payment(
 # CANCEL PAYMENT
 # ==============================================
 
+
 @router.patch(
     "/{payment_id}/cancel",
     response_model=PaymentResponse,
@@ -766,25 +862,32 @@ async def fail_payment(
 )
 async def cancel_payment(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
     """
     إلغاء الدفع.
-    
+
     Args:
         payment_id: معرف الدفع
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentResponse: الدفع المحدث
-        
+
     Raises:
         HTTPException: إذا فشلت العملية
     """
     logger.info(
         "api_cancel_payment",
         extra={"payment_id": payment_id},
+    )
+
+    await require_owned_payment(
+        payment_id=payment_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -833,6 +936,7 @@ async def cancel_payment(
 # REFUND PAYMENT
 # ==============================================
 
+
 @router.patch(
     "/{payment_id}/refund",
     response_model=PaymentResponse,
@@ -841,25 +945,32 @@ async def cancel_payment(
 )
 async def refund_payment(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
     """
     استرداد الدفع.
-    
+
     Args:
         payment_id: معرف الدفع
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentResponse: الدفع المحدث
-        
+
     Raises:
         HTTPException: إذا فشلت العملية
     """
     logger.info(
         "api_refund_payment",
         extra={"payment_id": payment_id},
+    )
+
+    await require_owned_payment(
+        payment_id=payment_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -908,6 +1019,7 @@ async def refund_payment(
 # DELETE PAYMENT
 # ==============================================
 
+
 @router.delete(
     "/{payment_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -916,22 +1028,29 @@ async def refund_payment(
 )
 async def delete_payment(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> None:
     """
     حذف دفع.
-    
+
     Args:
         payment_id: معرف الدفع
         service: خدمة المدفوعات
-        
+
     Raises:
         HTTPException: إذا لم يتم العثور على الدفع أو كان مدفوعاً/معلقاً
     """
     logger.info(
         "api_delete_payment",
         extra={"payment_id": payment_id},
+    )
+
+    await require_owned_payment(
+        payment_id=payment_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:
@@ -984,6 +1103,7 @@ async def delete_payment(
 # GET PAYMENT SUMMARY
 # ==============================================
 
+
 @router.get(
     "/stats/summary",
     response_model=PaymentSummary,
@@ -992,6 +1112,7 @@ async def delete_payment(
 )
 async def get_payment_summary(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     owner_id: Optional[int] = Query(
         None,
         description="معرف المالك (اختياري)",
@@ -1006,12 +1127,12 @@ async def get_payment_summary(
 ) -> PaymentSummary:
     """
     الحصول على ملخص المدفوعات.
-    
+
     Args:
         owner_id: معرف المالك للتصفية
         restaurant_id: معرف المطعم للتصفية
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentSummary: ملخص المدفوعات
     """
@@ -1023,10 +1144,22 @@ async def get_payment_summary(
         },
     )
 
+    if owner_id is not None and owner_id != owner.owner_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot access another owner's payment summary",
+        )
+    if restaurant_id is not None:
+        await require_owned_restaurant(
+            restaurant_id=restaurant_id,
+            owner=owner,
+            session=service.session,
+        )
+
     try:
         summary = await service.get_payment_summary(
             restaurant_id=restaurant_id,
-            owner_id=owner_id,
+            owner_id=owner.owner_id,
         )
         return summary
 
@@ -1045,6 +1178,7 @@ async def get_payment_summary(
 # GET SUBSCRIPTION PAYMENTS
 # ==============================================
 
+
 @router.get(
     "/subscription/{subscription_id}",
     response_model=PaymentListResponse,
@@ -1053,6 +1187,7 @@ async def get_payment_summary(
 )
 async def get_subscription_payments(
     *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
     subscription_id: int = Path(..., ge=1, description="معرف الاشتراك"),
     skip: int = Query(
         0,
@@ -1069,13 +1204,13 @@ async def get_subscription_payments(
 ) -> PaymentListResponse:
     """
     الحصول على مدفوعات اشتراك معين.
-    
+
     Args:
         subscription_id: معرف الاشتراك
         skip: عدد السجلات للتخطي
         limit: الحد الأقصى للسجلات
         service: خدمة المدفوعات
-        
+
     Returns:
         PaymentListResponse: قائمة مدفوعات الاشتراك مع الإحصائيات
     """
@@ -1086,6 +1221,12 @@ async def get_subscription_payments(
             "skip": skip,
             "limit": limit,
         },
+    )
+
+    await require_owned_subscription(
+        subscription_id=subscription_id,
+        owner=owner,
+        session=service.session,
     )
 
     try:

@@ -1,14 +1,19 @@
 # ==============================================
-# MoulAI Platform - Agent-as-a-Service
+# MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
 # ==============================================
 # ⚡ EXECUTOR MODULE
 # وحدة تنفيذ الإجراءات
 # ==============================================
+
+"""Package initializer and public module exports.
+
+Part of MoulAI Platform - Agent-as-a-Service.
+"""
 
 from app.agent.executor.actions import (
     BaseAction,
@@ -18,7 +23,6 @@ from app.agent.executor.actions import (
     action_registry,
     get_action,
     get_action_by_intent,
-    
     # Actions
     OrderFoodAction,
     ViewMenuAction,
@@ -51,13 +55,11 @@ __all__ = [
     "BaseAction",
     "ActionResponse",
     "ActionResult",
-    
     # Registry
     "ActionRegistry",
     "action_registry",
     "get_action",
     "get_action_by_intent",
-    
     # Actions
     "OrderFoodAction",
     "ViewMenuAction",
@@ -71,7 +73,6 @@ __all__ = [
     "HelpAction",
     "GreetingAction",
     "GoodbyeAction",
-    
     # Executor
     "ActionExecutor",
     "action_executor",
