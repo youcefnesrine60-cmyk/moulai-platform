@@ -17,6 +17,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from app.core.logger import logger
 from app.core.router_instance import router
+from app.handlers.manual_billing_handler import is_private_actor
 from app.services.telegram import answer_callback
 
 # ==============================================
@@ -39,6 +40,13 @@ async def handle_callback(
     message_id = query["message"]["message_id"]
     callback_id = query["id"]
     callback_data = query["data"]
+
+    if callback_data.startswith("mb:") and not is_private_actor(
+        message=query["message"],
+        actor=query.get("from", {}),
+    ):
+        await answer_callback(callback_id=callback_id)
+        return
 
     logger.info(
         "callback_received",

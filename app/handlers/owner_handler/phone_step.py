@@ -75,7 +75,7 @@ async def handle_phone_step(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text=("❌ رقم الهاتف غير صحيح.\n\n" "📞 مثال صحيح:\n" "0551234567"),
             reply_markup=await back_ui(),
@@ -110,7 +110,7 @@ async def handle_phone_step(
     # ⚠️ SHOW CONFIRMATION
     # ==========================================
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text="⚠️ هل تؤكد عملية التسجيل؟",
         reply_markup=await confirm_ui(),

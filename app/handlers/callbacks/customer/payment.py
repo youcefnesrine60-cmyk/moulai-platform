@@ -17,23 +17,25 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 import re
 
+from app.core.database import get_session
+from app.core.exceptions import (
+    NotFoundError,
+    ValidationError,
+)
 from app.core.logger import logger
 from app.core.middleware.rate_limit import rate_limit
-
 from app.helpers.ui_manager import UIManager
-from app.repositories.state_repo import get_state, set_state
-
-from app.views.payment_ui import (
-    payment_success_ui,
-    payment_failed_ui,
-    payment_confirmation_ui,
-    payment_ui,
+from app.repositories.state_repo import (
+    get_state,
+    set_state,
 )
-
-from app.services.business.payment_service import create_payment_request
-from app.services.business.order_payments_service import (
-    confirm_payment as confirm_order_payment,
-    get_allowed_payment_methods_for_order,
+from app.services.business.order_payments_service import OrderPaymentsService
+from app.views.payment_ui import (
+    payment_confirmation_ui,
+    payment_failed_ui,
+    payment_pending_ui,
+    payment_success_ui,
+    payment_ui,
 )
 
 # ==============================================
@@ -95,11 +97,24 @@ async def payment_method_callback(
         )
         return
 
+    try:
+        async with await get_session() as session:
+            total, allowed_methods = await OrderPaymentsService(
+                session=session
+            ).get_customer_payment_options(chat_id=chat_id, order_id=order_id)
+        if payment_method not in allowed_methods:
+            raise ValidationError(message="Payment method is unavailable")
+    except (NotFoundError, ValidationError):
+        await UIManager.edit(
+            chat_id=chat_id,
+            message_id=message_id,
+            text="❌ لا يمكن تسجيل الدفع لهذا الطلب بهذه الطريقة.",
+            reply_markup=None,
+        )
+        return
+
     state["payment_method"] = payment_method
     state["order_id"] = order_id
-
-    cart = state.get("cart", [])
-    total = sum(float(item.get("price", 0)) for item in cart)
     state["total_amount"] = total
 
     await set_state(
@@ -107,14 +122,14 @@ async def payment_method_callback(
         state=state,
     )
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=(
             f"💳 **تأكيد الدفع**\n\n"
             f"طريقة الدفع: **{payment_method}**\n"
             f"المبلغ: **{total:.2f} دج**\n\n"
-            f"هل أنت متأكد من إتمام عملية الدفع؟"
+            f"هل تريد تسجيل طلب الدفع بهذه الطريقة؟"
         ),
         reply_markup=await payment_confirmation_ui(
             order_id=order_id,
@@ -184,79 +199,30 @@ async def payment_confirm_callback(
     payment_method = state.get("payment_method", "cash")
     total = state.get("total_amount", 0)
 
-    # ✅ جلب owner_id و restaurant_id من الحالة مع قيم افتراضية آمنة
-    owner_id = state.get("owner_id")
-    restaurant_id = state.get("restaurant_id")
-
-    # ✅ إذا لم تكن موجودة، نحاول جلبها من مصادر أخرى
-    if not owner_id or not restaurant_id:
-        # محاولة جلب restaurant_id من order_id
-        from app.repositories.orders_repo import get_order
-
-        order = await get_order(order_id=order_id)
-        if order:
-            restaurant_id = order.get("restaurant_id")
-            # owner_id لا يمكن جلبها من order مباشرة، نحتاج إلى جلبها من restaurant
-            if restaurant_id:
-                from app.repositories.restaurant.restaurant_repo import (
-                    get_restaurant_by_id,
-                )
-
-                restaurant = await get_restaurant_by_id(restaurant_id=restaurant_id)
-                if restaurant:
-                    owner_id = restaurant.get("owner_id")
-
-    # ✅ إذا بقيت None، نستخدم قيماً افتراضية (مع تسجيل تحذير)
-    if not owner_id:
-        logger.warning(
-            "owner_id_not_found_in_state",
-            extra={
-                "chat_id": chat_id,
-                "order_id": order_id,
-            },
-        )
-        # ✅ في هذه الحالة، نستخدم قيمة افتراضية مؤقتة (يجب تحديثها لاحقاً)
-        owner_id = 1
-
-    if not restaurant_id:
-        logger.warning(
-            "restaurant_id_not_found_in_state",
-            extra={
-                "chat_id": chat_id,
-                "order_id": order_id,
-            },
-        )
-        restaurant_id = 1
-
-    # ==========================================
-    # 💰 تنفيذ الدفع
-    # ==========================================
-
     try:
-        payment_id = await create_payment_request(
-            owner_id=owner_id,
-            restaurant_id=restaurant_id,
-            subscription_id=None,
-            payment_method=payment_method,
-            amount=total,
-        )
-
-        await confirm_order_payment(
-            payment_id=payment_id,
-        )
+        async with await get_session() as session:
+            payment = await OrderPaymentsService(
+                session=session
+            ).submit_customer_payment(
+                chat_id=chat_id,
+                order_id=order_id,
+                payment_method=payment_method,
+            )
+        payment_id = payment.id
+        total = payment.amount
+        state["total_amount"] = total
 
         state["payment_id"] = payment_id
+        state["payment_method"] = payment.payment_method
 
         logger.info(
-            "payment_confirmed",
+            "payment_request_submitted",
             extra={
                 "chat_id": chat_id,
                 "order_id": order_id,
                 "payment_id": payment_id,
                 "payment_method": payment_method,
                 "amount": total,
-                "owner_id": owner_id,
-                "restaurant_id": restaurant_id,
             },
         )
 
@@ -270,7 +236,7 @@ async def payment_confirm_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ فشل تأكيد الدفع. يرجى المحاولة مرة أخرى.",
@@ -281,26 +247,21 @@ async def payment_confirm_callback(
         )
         return
 
-    state["payment_status"] = "paid"
-    await set_state(
-        chat_id=chat_id,
-        state=state,
-    )
-
-    await UIManager.update(
-        chat_id=chat_id,
-        message_id=message_id,
-        text=(
-            f"✅ **تم الدفع بنجاح!**\n\n"
-            f"💰 المبلغ: {total:.2f} دج\n"
-            f"💳 طريقة الدفع: {payment_method}\n\n"
-            f"📦 سيتم إشعارك عند تجهيز طلبك."
-        ),
-        reply_markup=await payment_success_ui(
-            order_id=order_id,
-            payment_method=payment_method,
-            amount=total,
-        ),
+    state["payment_status"] = payment.payment_status
+    await set_state(chat_id=chat_id, state=state)
+    if payment.payment_status == "paid":
+        text = f"✅ تم التحقق من الدفع.\nالمبلغ: {total:.2f} دج"
+        markup = await payment_success_ui(
+            order_id=order_id, payment_method=payment.payment_method, amount=total
+        )
+    else:
+        text = (
+            f"🕒 تم تسجيل طلب الدفع.\nالمبلغ: {total:.2f} دج\n"
+            "حالة الدفع: في انتظار التحقق من استلام المبلغ."
+        )
+        markup = await payment_pending_ui(order_id=order_id)
+    await UIManager.edit(
+        chat_id=chat_id, message_id=message_id, text=text, reply_markup=markup
     )
 
 
@@ -361,17 +322,24 @@ async def retry_payment_callback(
         )
         return
 
-    state["payment_status"] = "pending"
-    await set_state(
-        chat_id=chat_id,
-        state=state,
-    )
+    try:
+        async with await get_session() as session:
+            total, allowed_methods = await OrderPaymentsService(
+                session=session
+            ).get_customer_payment_options(chat_id=chat_id, order_id=order_id)
+    except (NotFoundError, ValidationError):
+        await UIManager.edit(
+            chat_id=chat_id,
+            message_id=message_id,
+            text="\u274c \u0644\u0627 \u064a\u0645\u0643\u0646 \u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u0647\u0630\u0627 \u0627\u0644\u0637\u0644\u0628.",
+            reply_markup=None,
+        )
+        return
+    state["order_id"] = order_id
+    state["total_amount"] = total
+    await set_state(chat_id=chat_id, state=state)
 
-    allowed_methods = await get_allowed_payment_methods_for_order(
-        order_id=order_id,
-    )
-
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text="💳 **اختر طريقة الدفع**",
@@ -439,17 +407,24 @@ async def back_to_payment_callback(
         )
         return
 
-    state["payment_status"] = "pending"
-    await set_state(
-        chat_id=chat_id,
-        state=state,
-    )
+    try:
+        async with await get_session() as session:
+            total, allowed_methods = await OrderPaymentsService(
+                session=session
+            ).get_customer_payment_options(chat_id=chat_id, order_id=order_id)
+    except (NotFoundError, ValidationError):
+        await UIManager.edit(
+            chat_id=chat_id,
+            message_id=message_id,
+            text="\u274c \u0644\u0627 \u064a\u0645\u0643\u0646 \u0627\u0644\u0648\u0635\u0648\u0644 \u0625\u0644\u0649 \u0647\u0630\u0627 \u0627\u0644\u0637\u0644\u0628.",
+            reply_markup=None,
+        )
+        return
+    state["order_id"] = order_id
+    state["total_amount"] = total
+    await set_state(chat_id=chat_id, state=state)
 
-    allowed_methods = await get_allowed_payment_methods_for_order(
-        order_id=order_id,
-    )
-
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text="💳 **اختر طريقة الدفع**",

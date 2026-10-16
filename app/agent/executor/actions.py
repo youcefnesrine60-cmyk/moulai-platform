@@ -15,6 +15,10 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
+from abc import (
+    ABC,
+    abstractmethod,
+)
 from dataclasses import dataclass
 from datetime import datetime
 from typing import (
@@ -24,10 +28,17 @@ from typing import (
     Dict,
     List,
     Optional,
+    TypeAlias,
 )
-from sqlalchemy import or_, select
+from sqlalchemy import (
+    or_,
+    select,
+)
 
-from app.core.exceptions import NotFoundError, ValidationError
+from app.core.exceptions import (
+    NotFoundError,
+    ValidationError,
+)
 from app.core.database import AsyncSessionLocal
 from app.core.logger import logger
 from app.models.loyalty_discount import Promotion
@@ -49,7 +60,8 @@ from app.services.business.complaints import create_customer_complaint
 # ==============================================
 
 
-def _request_context(context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+def _request_context(*, context: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """Return channel metadata without mutating the caller's action context."""
     if not context:
         return {}
     return context.get("request_context", {})
@@ -65,7 +77,8 @@ def _restaurant_id(
     params: Dict[str, Any],
     context: Optional[Dict[str, Any]],
 ) -> Optional[int]:
-    value = params.get("restaurant_id") or _request_context(context).get(
+    """Resolve a restaurant identifier from parameters or channel metadata."""
+    value = params.get("restaurant_id") or _request_context(context=context).get(
         "restaurant_id"
     )
     try:
@@ -79,13 +92,17 @@ def _restaurant_id(
 # ==============================================
 
 
-def _order_restaurant_scope(params, context):
+def _order_restaurant_scope(
+    *,
+    params: Dict[str, Any],
+    context: Optional[Dict[str, Any]],
+) -> Optional[int]:
     """The channel's restaurant takes precedence over extracted entities.
 
     A missing scope denotes the global customer account; an invalid supplied
     scope fails closed by matching no restaurant.
     """
-    request = _request_context(context)
+    request = _request_context(context=context)
     value = request.get("restaurant_id", params.get("restaurant_id"))
     if value is None:
         return None
@@ -100,10 +117,11 @@ def _order_restaurant_scope(params, context):
 # ==============================================
 
 
-def _chat_id(context: Optional[Dict[str, Any]]) -> Optional[int]:
+def _chat_id(*, context: Optional[Dict[str, Any]]) -> Optional[int]:
+    """Read the authenticated channel chat identifier from action metadata."""
     if not context:
         return None
-    value = context.get("user_id") or _request_context(context).get("chat_id")
+    value = context.get("user_id") or _request_context(context=context).get("chat_id")
     try:
         return int(value) if value is not None else None
     except (TypeError, ValueError):
@@ -120,6 +138,7 @@ async def _find_products(
     product_name: Optional[str],
     restaurant_id: Optional[int],
 ) -> list[Any]:
+    """Search active restaurant catalogs within the requested tenant scope."""
     if not product_name:
         return []
     async with AsyncSessionLocal() as session:
@@ -140,9 +159,9 @@ async def _find_products(
 # 🧩 TYPES
 # ==============================================
 
-ActionResult = Dict[str, Any]
-ActionHandler = Callable[..., Awaitable[ActionResult]]
-ActionMap = Dict[str, ActionHandler]
+ActionResult: TypeAlias = Dict[str, Any]
+ActionHandler: TypeAlias = Callable[..., Awaitable[ActionResult]]
+ActionMap: TypeAlias = Dict[str, ActionHandler]
 
 # ==============================================
 # 📦 ACTION RESULT
@@ -172,7 +191,7 @@ class ActionResponse:
 # ==============================================
 
 
-class BaseAction:
+class BaseAction(ABC):
     """
     الفئة الأساسية لجميع الإجراءات.
 
@@ -213,6 +232,7 @@ class BaseAction:
     # EXECUTE
     # ==============================================
 
+    @abstractmethod
     async def execute(
         self,
         *,
@@ -229,12 +249,9 @@ class BaseAction:
         Returns:
             ActionResponse: نتيجة التنفيذ
 
-        Raises:
-            NotImplementedError: يجب تنفيذ هذه الدالة في الفئة الفرعية
+        Concrete actions must implement this contract. The abstract base
+        cannot be instantiated or registered as an executable action.
         """
-        raise NotImplementedError(
-            f"Action '{self.name}' must implement execute() method"
-        )
 
 
 # ==============================================
@@ -252,6 +269,7 @@ class OrderFoodAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Configure order placement and its required customer confirmation."""
         super().__init__(
             name="order_food",
             description="طلب وجبة أو منتج",
@@ -263,24 +281,37 @@ class OrderFoodAction(BaseAction):
     #  ORDER ARGUMENTS
     # ==============================================
 
-    def _order_arguments(self, params, context):
+    def _order_arguments(
+        self,
+        *,
+        params: Dict[str, Any],
+        context: Optional[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Build order arguments using the authoritative channel tenant scope."""
         return dict(
-            chat_id=_chat_id(context),
+            chat_id=_chat_id(context=context),
             product_name=params.get("product_name"),
             product_id=params.get("product_id"),
             quantity=params.get("quantity", 1),
-            restaurant_id=_order_restaurant_scope(params, context),
+            restaurant_id=_order_restaurant_scope(params=params, context=context),
         )
 
     # ==============================================
     # PREPARE
     # ==============================================
 
-    async def prepare(self, *, params, context=None):
+    async def prepare(
+        self,
+        *,
+        params: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> ActionResponse:
+        """Quote an owned order before asking for a customer's confirmation."""
         try:
             async with AsyncSessionLocal() as session:
                 quote = await quote_customer_order(
-                    **self._order_arguments(params, context), session=session
+                    **self._order_arguments(params=params, context=context),
+                    session=session,
                 )
         except (NotFoundError, ValidationError) as error:
             return ActionResponse(False, error.message, error=error.error_code)
@@ -294,11 +325,17 @@ class OrderFoodAction(BaseAction):
     # EXECUTE
     # ==============================================
 
-    async def execute(self, *, params, context=None):
+    async def execute(
+        self,
+        *,
+        params: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+    ) -> ActionResponse:
+        """Place the confirmed order using tenant-scoped business operations."""
         try:
             async with AsyncSessionLocal() as session:
                 result = await place_customer_order(
-                    **self._order_arguments(params, context),
+                    **self._order_arguments(params=params, context=context),
                     session=session,
                     quoted_unit_price=params.get("quoted_unit_price"),
                     order_type=params.get("order_type", "takeaway"),
@@ -324,6 +361,7 @@ class ViewMenuAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Configure the read-only menu action metadata."""
         super().__init__(
             name="view_menu",
             description="عرض قائمة الطعام",
@@ -429,6 +467,7 @@ class ViewRestaurantsAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Configure the restaurant directory action metadata."""
         super().__init__(
             name="view_restaurants",
             description="عرض المطاعم المتاحة",
@@ -510,6 +549,7 @@ class ModifyOrderAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Require confirmation before changing an owned customer order."""
         super().__init__(
             name="modify_order",
             description="تعديل طلب موجود",
@@ -545,7 +585,7 @@ class ModifyOrderAction(BaseAction):
             },
         )
 
-        chat_id = _chat_id(context)
+        chat_id = _chat_id(context=context)
         if not chat_id:
             return ActionResponse(
                 False, "تعذر التحقق من ملكية الطلب.", error="user_not_found"
@@ -568,7 +608,9 @@ class ModifyOrderAction(BaseAction):
             try:
                 order, item = await change_customer_order_item_quantity(
                     chat_id=chat_id,
-                    restaurant_id=_order_restaurant_scope(params, context),
+                    restaurant_id=_order_restaurant_scope(
+                        params=params, context=context
+                    ),
                     order_reference=order_reference,
                     product_name=params.get("product_name"),
                     quantity=quantity,
@@ -618,6 +660,7 @@ class CancelOrderAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Require confirmation before cancelling an owned customer order."""
         super().__init__(
             name="cancel_order",
             description="إلغاء طلب",
@@ -653,7 +696,7 @@ class CancelOrderAction(BaseAction):
             },
         )
 
-        chat_id = _chat_id(context)
+        chat_id = _chat_id(context=context)
         if not chat_id:
             return ActionResponse(
                 False, "تعذر التحقق من ملكية الطلب.", error="user_not_found"
@@ -669,7 +712,9 @@ class CancelOrderAction(BaseAction):
             try:
                 order, previous_status = await cancel_customer_order(
                     chat_id=chat_id,
-                    restaurant_id=_order_restaurant_scope(params, context),
+                    restaurant_id=_order_restaurant_scope(
+                        params=params, context=context
+                    ),
                     order_reference=order_number,
                     reason=params.get("reason"),
                     session=session,
@@ -712,6 +757,7 @@ class TrackOrderAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Configure the read-only order tracking action metadata."""
         super().__init__(
             name="track_order",
             description="تتبع طلب",
@@ -744,7 +790,7 @@ class TrackOrderAction(BaseAction):
             extra={"order_id": params.get("order_id")},
         )
 
-        chat_id = _chat_id(context)
+        chat_id = _chat_id(context=context)
         if not chat_id:
             return ActionResponse(
                 False, "تعذر التحقق من طلبات هذا الحساب.", error="user_not_found"
@@ -759,7 +805,7 @@ class TrackOrderAction(BaseAction):
         async with AsyncSessionLocal() as session:
             order = await get_customer_order(
                 chat_id=chat_id,
-                restaurant_id=_order_restaurant_scope(params, context),
+                restaurant_id=_order_restaurant_scope(params=params, context=context),
                 order_reference=order_number,
                 session=session,
             )
@@ -794,6 +840,7 @@ class AskPriceAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Configure the catalog price enquiry action metadata."""
         super().__init__(
             name="ask_price",
             description="الاستفسار عن السعر",
@@ -870,6 +917,7 @@ class AskOfferAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Configure the available promotions enquiry action metadata."""
         super().__init__(
             name="ask_offer",
             description="الاستفسار عن العروض",
@@ -955,6 +1003,7 @@ class HelpAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Configure the customer help action metadata."""
         super().__init__(
             name="help",
             description="عرض المساعدة",
@@ -1019,6 +1068,7 @@ class GreetingAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Configure the customer greeting action metadata."""
         super().__init__(
             name="greeting",
             description="التحية والترحيب",
@@ -1070,6 +1120,7 @@ class GoodbyeAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Configure the customer farewell action metadata."""
         super().__init__(
             name="goodbye",
             description="الوداع",
@@ -1121,6 +1172,7 @@ class ComplaintAction(BaseAction):
     # ==============================================
 
     def __init__(self) -> None:
+        """Require confirmation before persisting a customer complaint."""
         super().__init__(
             name="complaint",
             description="تسجيل شكوى",
@@ -1138,6 +1190,7 @@ class ComplaintAction(BaseAction):
         params: Dict[str, Any],
         context: Optional[Dict[str, Any]] = None,
     ) -> ActionResponse:
+        """Validate complaint content and ask the customer for confirmation."""
         description = (
             params.get("description")
             or params.get("issue")
@@ -1207,7 +1260,7 @@ class ComplaintAction(BaseAction):
                 "restaurant_id": _restaurant_id(params={}, context=context),
             },
         )
-        chat_id = _chat_id(context)
+        chat_id = _chat_id(context=context)
         if not chat_id:
             return ActionResponse(
                 False, "تعذر التحقق من حسابك.", error="user_not_found"

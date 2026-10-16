@@ -17,28 +17,24 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from datetime import datetime, timezone
 
+from app.core.database import get_session
 from app.core.logger import logger
-
-from app.views.ui import button
-
 from app.helpers.ui_manager import UIManager
-from app.repositories.state_repo import get_state, set_state
-from app.repositories.subscription_plan_repo import get_active_subscription_plans
-
-from app.repositories.products_repo import count_restaurant_products
-from app.repositories.categories_repo import get_restaurant_categories
-from app.repositories.branches_repo import count_restaurant_branches
-from app.repositories.restaurant.restaurant_repo import get_restaurants_by_owner
-from app.repositories.owner_repo import get_owner_created_at
+from app.repositories.branches_repo import BranchesRepository
+from app.repositories.categories_repo import CategoriesRepository
 
 # ✅ إضافة استيراد orders_repo
-from app.repositories.orders_repo import get_restaurant_orders
-
+from app.repositories.orders_repo import OrdersRepository
+from app.repositories.products_repo import ProductRepository
+from app.repositories.restaurant.restaurant_repo import RestaurantRepository
+from app.repositories.state_repo import get_state, set_state
+from app.repositories.subscription_plan_repo import SubscriptionPlanRepository
+from app.services.business.owner_service import OwnerService
 from app.services.business.pricing_service import calculate_subscription_pricing
-
 from app.views.subscription_ui import (
     subscription_ui,
 )
+from app.views.ui import button
 
 # ==============================================
 # 💳 SHOW SUBSCRIPTION PLANS (OWNER)
@@ -79,7 +75,8 @@ async def show_subscription_plans_for_owner(
     # 1️⃣ جلب الباقات النشطة
     # ==========================================
 
-    plans = await get_active_subscription_plans()
+    async with await get_session() as session:
+        plans = await SubscriptionPlanRepository(session).get_active()
 
     if not plans:
         logger.warning(
@@ -90,7 +87,7 @@ async def show_subscription_plans_for_owner(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="⚠️ لا توجد باقات متاحة حالياً. يرجى التواصل مع الدعم.",
             reply_markup=None,
@@ -124,7 +121,7 @@ async def show_subscription_plans_for_owner(
         current_plan_id=None,
     )
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text=plans_ui.get("text", "💳 باقات الاشتراك"),
         reply_markup=plans_ui.get("inline_keyboard"),
@@ -196,34 +193,42 @@ async def calculate_subscription_price_for_owner(
     # ==========================================
 
     # 🔢 عدد المنتجات
-    products_count = await count_restaurant_products(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        products_count = await ProductRepository(session).count_by_restaurant(
+            restaurant_id=restaurant_id,
+        )
 
     # 🔢 عدد الأقسام
-    categories = await get_restaurant_categories(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        categories = await CategoriesRepository(session).get_by_restaurant_id(
+            restaurant_id=restaurant_id,
+        )
     categories_count = len(categories)
 
     # 🔢 عدد الفروع
-    branches_count = await count_restaurant_branches(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        branches_count = await BranchesRepository(session).count_by_restaurant(
+            restaurant_id=restaurant_id,
+        )
 
     # 🔢 عدد المطاعم المملوكة لنفس المالك
-    restaurants = await get_restaurants_by_owner(
-        owner_id=owner_id,
-    )
+    async with await get_session() as session:
+        restaurants = await RestaurantRepository(session).get_by_owner_id(
+            owner_id=owner_id,
+        )
     restaurants_count = len(restaurants)
 
     # 🔢 عدد سنوات التواجد في المنصة
-    created_at = await get_owner_created_at(
-        owner_id=owner_id,
-    )
+    async with await get_session() as session:
+        created_at = await OwnerService(session=session).get_created_at(
+            owner_id=owner_id,
+        )
 
+    now = datetime.now(timezone.utc)
     if created_at:
-        years_with_platform = (datetime.now(timezone.utc) - created_at).days // 365
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        years_with_platform = max(0, (now - created_at).days // 365)
     else:
         years_with_platform = 0
 
@@ -232,19 +237,34 @@ async def calculate_subscription_price_for_owner(
     # ==========================================
 
     # ✅ جلب جميع طلبات المطعم
-    orders = await get_restaurant_orders(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        order_models = await OrdersRepository(session).get_by_restaurant_id(
+            restaurant_id=restaurant_id,
+        )
+    orders = [
+        {
+            "created_at": order.created_at,
+            "status": order.status,
+            "total_amount": order.total_amount,
+        }
+        for order in order_models
+    ]
 
     # ✅ حساب عدد الطلبات الشهرية (آخر 30 يوماً)
     from datetime import timedelta
 
-    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+    thirty_days_ago = now - timedelta(days=30)
 
     monthly_orders = sum(
         1
         for order in orders
-        if order.get("created_at") and order["created_at"] >= thirty_days_ago
+        if order.get("created_at")
+        and (
+            order["created_at"].replace(tzinfo=timezone.utc)
+            if order["created_at"].tzinfo is None
+            else order["created_at"]
+        )
+        >= thirty_days_ago
     )
 
     # ==========================================
@@ -266,19 +286,21 @@ async def calculate_subscription_price_for_owner(
     # 3️⃣ حساب السعر
     # ==========================================
 
-    pricing = await calculate_subscription_pricing(
-        plan_id=plan_id,
-        billing_cycle="monthly",
-        payment_method="electronic",
-        restaurants_count=restaurants_count,
-        branches_count=branches_count,
-        years_with_platform=years_with_platform,
-        products_count=products_count,
-        categories_count=categories_count,
-        monthly_orders=monthly_orders,
-        average_order_value=average_order_value,
-        additional_feature_ids=None,
-    )
+    async with await get_session() as session:
+        pricing = await calculate_subscription_pricing(
+            session=session,
+            plan_id=plan_id,
+            billing_cycle="monthly",
+            payment_method="electronic",
+            restaurants_count=restaurants_count,
+            branches_count=branches_count,
+            years_with_platform=years_with_platform,
+            products_count=products_count,
+            categories_count=categories_count,
+            monthly_orders=monthly_orders,
+            average_order_value=average_order_value,
+            additional_feature_ids=None,
+        )
 
     # ==========================================
     # 4️⃣ حفظ خطة الاشتراك المختارة في الحالة
@@ -319,25 +341,12 @@ async def calculate_subscription_price_for_owner(
         f"💰 **السعر النهائي: {pricing.get('final_price', 0):.2f} دج**\n"
         f"💳 تعديل الدفع: {pricing.get('payment_adjustment', 0):.2f} دج\n"
         f"💰 **المبلغ المستحق: {pricing.get('final_amount_due', 0):.2f} دج**\n\n"
-        f"📌 هل تريد المتابعة إلى الدفع؟"
+        f"📌 تفعيل الاشتراك يتطلب التحقق من وصول مبلغ التحويل."
     )
 
-    buttons = [
-        [
-            await button(
-                text="💳 متابعة إلى الدفع",
-                callback=f"payment_confirm_{plan_id}",
-            ),
-        ],
-        [
-            await button(
-                text="🔙 رجوع إلى الباقات",
-                callback="back_to_plans",
-            ),
-        ],
-    ]
+    buttons = [[await button(text="🔙 القائمة الرئيسية", callback="back_main")]]
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text=text,
         reply_markup={

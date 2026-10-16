@@ -18,9 +18,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 from datetime import datetime
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
+    TypeAlias,
 )
 
 from sqlalchemy import (
@@ -28,19 +26,21 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.logger import logger
 from app.models.admin import Admin
+from app.models.rbac import Role
 from app.repositories.base import BaseRepository
 
 # ==============================================
 # 🧩 TYPES
 # ==============================================
 
-AdminData = Dict[str, Any]
-AdminUpdateData = Dict[str, Any]
-AdminList = List[Admin]
-AdminDictList = List[Dict[str, Any]]
+AdminData: TypeAlias = dict[str, Any]
+AdminUpdateData: TypeAlias = dict[str, Any]
+AdminList: TypeAlias = list[Admin]
+AdminDictList: TypeAlias = list[dict[str, Any]]
 
 # ==============================================
 # 👑 ADMIN REPOSITORY
@@ -90,6 +90,34 @@ class AdminRepository(
     # ==========================================
 
     # ==============================================
+    # ==============================================
+    # GET AUTHORIZATION CONTEXT
+    # ==============================================
+
+    async def get_authorization_context(
+        self,
+        *,
+        admin_id: int,
+    ) -> Admin | None:
+        """Refresh the administrator, normalized role, and current permissions.
+
+        Authorization reads replace cached ORM state so changes committed by
+        another session take effect before the next permission decision.
+        """
+        query = (
+            self._select()
+            .options(
+                selectinload(self.model.role_record).selectinload(
+                    Role.permissions,
+                ),
+            )
+            .where(self.model.id == admin_id)
+            .execution_options(populate_existing=True)
+            .limit(1)
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
+
     # GET BY CHAT ID
     # ==============================================
 
@@ -98,7 +126,7 @@ class AdminRepository(
         *,
         chat_id: int,
         only_active: bool = True,
-    ) -> Optional[Admin]:
+    ) -> Admin | None:
         """
         الحصول على مدير بواسطة معرف الدردشة.
 
@@ -143,7 +171,7 @@ class AdminRepository(
         *,
         username: str,
         only_active: bool = True,
-    ) -> Optional[Admin]:
+    ) -> Admin | None:
         """
         الحصول على مدير بواسطة اسم المستخدم.
 
@@ -234,7 +262,7 @@ class AdminRepository(
         only_active: bool = True,
         skip: int = 0,
         limit: int = 100,
-        order_by: Optional[str] = "id",
+        order_by: str | None = "id",
         order_desc: bool = False,
     ) -> AdminList:
         """
@@ -476,7 +504,7 @@ class AdminRepository(
         username: str,
         full_name: str,
         role: str = "admin",
-        password_hash: Optional[str] = None,
+        password_hash: str | None = None,
         is_active: bool = True,
     ) -> Admin:
         """
@@ -533,7 +561,7 @@ class AdminRepository(
         *,
         admin_id: int,
         **updates,
-    ) -> Optional[Admin]:
+    ) -> Admin | None:
         """
         تحديث بيانات المدير.
 
@@ -592,7 +620,7 @@ class AdminRepository(
         *,
         admin_id: int,
         role: str,
-    ) -> Optional[Admin]:
+    ) -> Admin | None:
         """
         تحديث دور المدير.
 
@@ -624,7 +652,7 @@ class AdminRepository(
         self,
         *,
         admin_id: int,
-    ) -> Optional[Admin]:
+    ) -> Admin | None:
         """
         تبديل حالة المدير (نشط/غير نشط).
 
@@ -673,7 +701,7 @@ class AdminRepository(
         self,
         *,
         admin_id: int,
-    ) -> Optional[Admin]:
+    ) -> Admin | None:
         """
         تنشيط المدير.
 
@@ -701,7 +729,7 @@ class AdminRepository(
         self,
         *,
         admin_id: int,
-    ) -> Optional[Admin]:
+    ) -> Admin | None:
         """
         إلغاء تنشيط المدير.
 
@@ -730,7 +758,7 @@ class AdminRepository(
         *,
         admin_id: int,
         password_hash: str,
-    ) -> Optional[Admin]:
+    ) -> Admin | None:
         """
         تحديث هاش كلمة المرور.
 
@@ -836,204 +864,3 @@ class AdminRepository(
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE ADMIN (COMPATIBILITY)
-# ==============================================
-
-
-async def create_admin(
-    *,
-    chat_id: int,
-    username: str,
-    full_name: str,
-    role: str = "admin",
-    password_hash: Optional[str] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء مدير جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف الدردشة في Telegram
-        username: اسم المستخدم
-        full_name: الاسم الكامل
-        role: دور المدير
-        password_hash: هاش كلمة المرور
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف المدير
-    """
-    repo = AdminRepository(session=session)
-
-    admin_obj = await repo.create_admin(
-        chat_id=chat_id,
-        username=username,
-        full_name=full_name,
-        role=role,
-        password_hash=password_hash,
-    )
-
-    return admin_obj.id
-
-
-# ==============================================
-# GET ADMIN BY CHAT ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_admin_by_chat_id(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مدير بواسطة معرف الدردشة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف الدردشة في Telegram
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات المدير أو None
-    """
-    repo = AdminRepository(session=session)
-
-    admin_obj = await repo.get_by_chat_id(
-        chat_id=chat_id,
-        only_active=True,
-    )
-
-    if not admin_obj:
-        return None
-
-    return {
-        "id": admin_obj.id,
-        "chat_id": admin_obj.chat_id,
-        "username": admin_obj.username,
-        "full_name": admin_obj.full_name,
-        "role": admin_obj.role,
-        "password_hash": admin_obj.password_hash,
-        "created_at": admin_obj.created_at,
-        "updated_at": admin_obj.updated_at,
-        "is_active": admin_obj.is_active,
-    }
-
-
-# ==============================================
-# GET ADMIN BY USERNAME (COMPATIBILITY)
-# ==============================================
-
-
-async def get_admin_by_username(
-    *,
-    username: str,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مدير بواسطة اسم المستخدم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        username: اسم المستخدم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات المدير أو None
-    """
-    repo = AdminRepository(session=session)
-
-    admin_obj = await repo.get_by_username(
-        username=username,
-        only_active=True,
-    )
-
-    if not admin_obj:
-        return None
-
-    return {
-        "id": admin_obj.id,
-        "chat_id": admin_obj.chat_id,
-        "username": admin_obj.username,
-        "full_name": admin_obj.full_name,
-        "role": admin_obj.role,
-        "password_hash": admin_obj.password_hash,
-        "created_at": admin_obj.created_at,
-        "updated_at": admin_obj.updated_at,
-        "is_active": admin_obj.is_active,
-    }
-
-
-# ==============================================
-# ADMIN EXISTS (COMPATIBILITY)
-# ==============================================
-
-
-async def admin_exists(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق من وجود مدير (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف الدردشة في Telegram
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        True إذا كان المدير موجوداً، False وإلا
-    """
-    repo = AdminRepository(session=session)
-
-    return await repo.exists(
-        chat_id=chat_id,
-        only_active=True,
-    )
-
-
-# ==============================================
-# GET ALL ADMINS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_all_admins(
-    *,
-    session: AsyncSession,
-) -> AdminDictList:
-    """
-    الحصول على جميع المديرين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قائمة المديرين
-    """
-    repo = AdminRepository(session=session)
-
-    admins = await repo.get_all(
-        only_active=True,
-    )
-
-    result = []
-
-    for admin in admins:
-        result.append(
-            {
-                "id": admin.id,
-                "chat_id": admin.chat_id,
-                "username": admin.username,
-                "full_name": admin.full_name,
-                "role": admin.role,
-                "password_hash": admin.password_hash,
-                "created_at": admin.created_at,
-                "updated_at": admin.updated_at,
-                "is_active": admin.is_active,
-            }
-        )
-
-    return result

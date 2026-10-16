@@ -16,7 +16,7 @@ Payment changes share the order unit of work and do not transition fulfillment
 status. Callers must enforce restaurant ownership before invoking these helpers.
 """
 
-from typing import Any, TypedDict
+from typing import TypedDict
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -236,23 +236,3 @@ async def process_order_payment(
         session=session,
     )
     return payment.id
-
-
-# ==============================================
-# LEGACY MARK-PAID COMPATIBILITY
-# ==============================================
-
-
-async def mark_order_paid_compat(**kwargs: Any) -> None:
-    """Preserve the legacy payment-confirmation import path."""
-    await mark_order_paid(**kwargs)
-
-
-# ==============================================
-# LEGACY PAYMENT-STATUS COMPATIBILITY
-# ==============================================
-
-
-async def is_order_paid_compat(**kwargs: Any) -> bool:
-    """Preserve the legacy payment-status import path."""
-    return await is_order_paid(**kwargs)

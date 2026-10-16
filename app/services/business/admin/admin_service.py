@@ -17,8 +17,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    Optional,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -42,7 +40,7 @@ from app.schemas.admin import (
 # 🧩 TYPES
 # ==============================================
 
-AdminStats = Dict[str, Any]
+AdminStats = dict[str, Any]
 
 # ==============================================
 # 👑 ADMIN SERVICE
@@ -308,7 +306,7 @@ class AdminService:
         only_active: bool = True,
         skip: int = 0,
         limit: int = 100,
-        order_by: Optional[str] = "id",
+        order_by: str | None = "id",
         order_desc: bool = False,
     ) -> AdminListResponse:
         """
@@ -515,7 +513,7 @@ class AdminService:
                 )
 
         # تشفير كلمة المرور إذا تم تغييرها
-        if "password" in updates and updates["password"]:
+        if updates.get("password"):
             updates["password_hash"] = hash_password(updates["password"])
             del updates["password"]
 
@@ -789,8 +787,8 @@ class AdminService:
         self,
         *,
         admin_id: int,
-        required_role: Optional[str] = None,
-        required_permission: Optional[str] = None,
+        required_role: str | None = None,
+        required_permission: str | None = None,
     ) -> bool:
         """
         التحقق من صلاحيات المدير.
@@ -816,7 +814,9 @@ class AdminService:
             },
         )
 
-        admin_obj = await self.admin_repo.get_by_id(id=admin_id)
+        admin_obj = await self.admin_repo.get_authorization_context(
+            admin_id=admin_id,
+        )
 
         if not admin_obj:
             raise NotFoundError(
@@ -828,17 +828,33 @@ class AdminService:
                 message="المدير غير نشط",
             )
 
-        # التحقق من الدور
-        if required_role:
-            if admin_obj.role != required_role and admin_obj.role != "super_admin":
+        role_record = admin_obj.role_record
+        effective_role = role_record.code if role_record else admin_obj.role
+
+        if required_role and effective_role not in {
+            required_role,
+            "super_admin",
+        }:
+            raise UnauthorizedError(
+                message=f"المدير ليس لديه الدور المطلوب: {required_role}",
+            )
+
+        if required_permission:
+            if not role_record or not role_record.is_active:
                 raise UnauthorizedError(
-                    message=f"المدير ليس لديه الدور المطلوب: {required_role}",
+                    message="لا يملك المدير دور RBAC نشطاً",
                 )
 
-        # التحقق من الصلاحية (للإصدارات المستقبلية)
-        if required_permission:
-            # TODO: تنفيذ نظام الصلاحيات المتقدم
-            pass
+            permission_codes = {
+                permission.code for permission in role_record.permissions
+            }
+            if (
+                "*" not in permission_codes
+                and required_permission not in permission_codes
+            ):
+                raise UnauthorizedError(
+                    message=f"المدير ليس لديه الصلاحية المطلوبة: {required_permission}",
+                )
 
         return True
 
@@ -879,6 +895,46 @@ class AdminService:
             return False
 
     # ==============================================
+    # HAS ACTIVE CHAT
+    # ==============================================
+
+    async def has_active_chat(
+        self,
+        *,
+        chat_id: int,
+    ) -> bool:
+        """Return whether an active administrator is linked to a chat identifier."""
+        logger.info(
+            "admin_service_has_active_chat",
+            extra={"chat_id": chat_id},
+        )
+
+        admin = await self.admin_repo.get_by_chat_id(
+            chat_id=chat_id,
+            only_active=True,
+        )
+        return admin is not None
+
+    # ==============================================
+    # COUNT ADMINS
+    # ==============================================
+
+    async def count_admins(
+        self,
+        *,
+        only_active: bool = True,
+    ) -> int:
+        """Count platform administrators, optionally restricted to active accounts."""
+        logger.info(
+            "admin_service_count_admins",
+            extra={"only_active": only_active},
+        )
+
+        if only_active:
+            return await self.admin_repo.count_active()
+        return await self.admin_repo.count(filters={})
+
+    # ==============================================
     # GET ADMIN STATISTICS
     # ==============================================
 
@@ -912,137 +968,3 @@ class AdminService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# ==============================================
-
-# ==============================================
-# IS ADMIN
-# ==============================================
-
-
-async def is_admin(
-    *,
-    chat_id: int,
-    session: Optional[AsyncSession] = None,
-) -> bool:
-    """
-    التحقق من أن المستخدم هو مدير (دالة مساعدة).
-
-    Args:
-        chat_id: معرف الدردشة في Telegram
-        session: جلسة قاعدة البيانات (اختياري)
-
-    Returns:
-        True إذا كان المستخدم مديراً، False وإلا
-    """
-    try:
-        if session is None:
-            from app.core.database import get_session
-
-            session = await get_session()
-
-        repo = AdminRepository(session)
-
-        admin = await repo.get_by_chat_id(
-            chat_id=chat_id,
-            only_active=True,
-        )
-
-        return admin is not None
-
-    except Exception as e:
-        logger.exception(
-            "is_admin_check_failed",
-            extra={
-                "chat_id": chat_id,
-                "error": str(e),
-            },
-        )
-        return False
-
-
-# ==============================================
-# COUNT ADMINS
-# ==============================================
-
-
-async def count_admins(
-    *,
-    session: Optional[AsyncSession] = None,
-    only_active: bool = True,
-) -> int:
-    """
-    حساب عدد المديرين (دالة مساعدة).
-
-    Args:
-        session: جلسة قاعدة البيانات (اختياري)
-        only_active: حساب المديرين النشطين فقط
-
-    Returns:
-        عدد المديرين
-    """
-    try:
-        if session is None:
-            from app.core.database import get_session
-
-            session = await get_session()
-
-        repo = AdminRepository(session)
-
-        if only_active:
-            return await repo.count_active()
-        else:
-            return await repo.count(filters={})
-
-    except Exception as e:
-        logger.exception(
-            "count_admins_failed",
-            extra={
-                "only_active": only_active,
-                "error": str(e),
-            },
-        )
-        return 0
-
-
-# ==============================================
-# GET ADMIN BY CHAT ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_admin_by_chat_id(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مدير بواسطة معرف الدردشة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف الدردشة في Telegram
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات المدير أو None
-    """
-    repo = AdminRepository(session)
-
-    admin_obj = await repo.get_by_chat_id(
-        chat_id=chat_id,
-        only_active=True,
-    )
-
-    if not admin_obj:
-        return None
-
-    return {
-        "id": admin_obj.id,
-        "chat_id": admin_obj.chat_id,
-        "username": admin_obj.username,
-        "full_name": admin_obj.full_name,
-        "role": admin_obj.role,
-        "password_hash": admin_obj.password_hash,
-        "created_at": admin_obj.created_at,
-        "updated_at": admin_obj.updated_at,
-        "is_active": admin_obj.is_active,
-    }

@@ -17,17 +17,14 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 import re
 
+from app.core.database import get_session
 from app.core.logger import logger
-
-from app.repositories.restaurant.restaurant_repo import get_all_restaurants
-from app.repositories.user_repo import has_consent
-from app.repositories.state_repo import set_state
 from app.helpers.ui_manager import UIManager
-
-from app.views.ui import consent_text, consent_ui
-
+from app.repositories.restaurant.restaurant_repo import RestaurantRepository
+from app.repositories.state_repo import set_state
+from app.services.business.user_service import UserService
 from app.states.customer_states import CustomerStates
-from app.views.ui import restaurants_ui
+from app.views.ui import consent_text, consent_ui, restaurants_ui
 
 # ==============================================
 # 👤 CUSTOMER CALLBACK
@@ -42,11 +39,14 @@ async def customer_callback(
     # 🚫 CONSENT REQUIRED
     # ==========================================
 
-    if not await has_consent(chat_id=chat_id):
+    async with await get_session() as session:
+        has_consent = await UserService(session).has_consent(chat_id=chat_id)
+
+    if not has_consent:
 
         logger.info("customer_consent_required", extra={"chat_id": chat_id})
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             text=consent_text(),
             reply_markup=await consent_ui(role="customer"),
@@ -81,13 +81,21 @@ async def customer_callback(
 
 async def show_restaurants(*, chat_id: int, message_id: int) -> None:
 
-    restaurants = await get_all_restaurants()
+    async with await get_session() as session:
+        restaurant_models = await RestaurantRepository(session).get_all(
+            filters={"is_active": True}, order_by="name"
+        )
+
+    restaurants = [
+        {"id": restaurant.id, "name": restaurant.name, "wilaya": restaurant.wilaya}
+        for restaurant in restaurant_models
+    ]
 
     if not restaurants:
 
         logger.warning("لا توجد مطاعم لعرضها للمستخدم", extra={"chat_id": chat_id})
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             text="❌ عذراً، قائمة المطاعم غير متوفرة حالياً",
             reply_markup=None,
@@ -97,7 +105,7 @@ async def show_restaurants(*, chat_id: int, message_id: int) -> None:
 
     logger.info("عرض قائمة المطاعم للمستخدم", extra={"chat_id": chat_id})
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         text="🍽️ اختر مطعم:",
         reply_markup=await restaurants_ui(restaurants=restaurants),

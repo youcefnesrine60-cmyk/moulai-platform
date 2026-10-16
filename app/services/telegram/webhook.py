@@ -16,6 +16,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 """
 
 from app.core.logger import logger
+from app.core.config import settings
 from app.services.telegram.base import _post
 
 # ============================================
@@ -44,4 +45,12 @@ async def set_webhook(
     # 🚀 CALL TELEGRAM API
     # ========================================
 
-    return await _post(method="setWebhook", data={"url": url})
+    secret = settings.TELEGRAM_WEBHOOK_SECRET_TOKEN
+    if secret is None or not secret.get_secret_value():
+        raise ValueError("telegram_webhook_not_configured")
+    token = secret.get_secret_value()
+    if not 1 <= len(token) <= 256 or any(
+        not (ch.isascii() and (ch.isalnum() or ch in "_-")) for ch in token
+    ):
+        raise ValueError("invalid_telegram_webhook_token_format")
+    return await _post(method="setWebhook", data={"url": url, "secret_token": token})

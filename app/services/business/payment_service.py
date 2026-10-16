@@ -15,14 +15,19 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
+from datetime import (
+    datetime,
+    timezone,
+)
+from decimal import Decimal
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
+    TypeAlias,
 )
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
@@ -32,9 +37,9 @@ from app.core.exceptions import (
 )
 
 # ✅ استيراد دوال الأمان
-
 from app.core.logger import logger
 from app.models.payment import Payment
+from app.models.restaurant import Restaurant
 from app.repositories.payment_repo import PaymentRepository
 from app.repositories.subscription_repo import SubscriptionRepository
 
@@ -45,6 +50,9 @@ from app.schemas.payment import (
     PaymentStatusUpdate,
     PaymentSummary,
 )
+from app.services.business.payment_providers import get_payment_provider
+from app.services.business.payment_transaction import payment_transaction
+from app.services.business.subscription_service import SubscriptionService
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -58,8 +66,8 @@ ALLOWED_PAYMENT_METHODS = {"cash", "card", "ccp", "baridimob", "stripe", "paypal
 # 🧩 TYPES
 # ==============================================
 
-PaymentResult = Dict[str, Any]
-PaymentList = List[Payment]
+PaymentResult: TypeAlias = dict[str, Any]
+PaymentList: TypeAlias = list[Payment]
 
 
 # ==============================================
@@ -91,6 +99,7 @@ class PaymentService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -100,8 +109,52 @@ class PaymentService:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         self.session = session
-        self.repo = PaymentRepository(session)
-        self.subscription_repo = SubscriptionRepository(session)
+        self.repo = PaymentRepository(session=session)
+        self.subscription_repo = SubscriptionRepository(session=session)
+        # Payment response schemas use scalar columns, not relationship graphs.
+        self.repo.query_options = [raiseload("*")]
+        self.subscription_repo.query_options = [raiseload("*")]
+
+    # ==============================================
+    # CONFIRM AUTHENTICATED PROVIDER PAYMENT
+    # ==============================================
+
+    async def confirm_external_payment(self, *, external_reference: str) -> None:
+        """Settle a payment from an authenticated provider event in one transaction."""
+
+        async with payment_transaction(session=self.session):
+            payment = await self.repo.get_by_external_reference(
+                external_reference=external_reference, for_update=True
+            )
+            if payment is None:
+                raise ValueError("payment_not_found")
+            if not payment.subscription_id:
+                raise ValueError("subscription_not_found")
+            await self.confirm_payment(payment_id=payment.id)
+
+    # ==============================================
+    # RECORD AUTHENTICATED PROVIDER FAILURE
+    # ==============================================
+
+    async def fail_external_payment(self, *, external_reference: str) -> None:
+        """Record a gateway failure without downgrading a terminal payment."""
+
+        async with payment_transaction(session=self.session):
+            payment = await self.repo.get_by_external_reference(
+                external_reference=external_reference,
+                for_update=True,
+            )
+            if payment is None:
+                raise ValueError("payment_not_found")
+            if payment.status in {"paid", "failed", "cancelled", "refunded"}:
+                return
+            await self._validate_status_transition(
+                current_status=payment.status,
+                new_status="failed",
+            )
+            if await self.repo.mark_failed(payment_id=payment.id) is None:
+                raise ValueError("payment_not_found")
+        logger.warning("payment_callback_failed", extra={"payment_id": payment.id})
 
     # ==========================================
     # 🛠️ PRIVATE HELPERS
@@ -139,7 +192,7 @@ class PaymentService:
             )
 
         # تعريف انتقالات الحالات الصالحة
-        valid_transitions: Dict[str, set] = {
+        valid_transitions: dict[str, set] = {
             "pending": {"paid", "failed", "cancelled"},
             "paid": {"refunded"},
             "failed": set(),
@@ -208,7 +261,7 @@ class PaymentService:
         self,
         *,
         external_reference: str,
-    ) -> Optional[PaymentResponse]:
+    ) -> PaymentResponse | None:
         """
         الحصول على دفع بواسطة المرجع الخارجي.
 
@@ -242,7 +295,7 @@ class PaymentService:
         subscription_id: int,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[PaymentResponse]:
+    ) -> list[PaymentResponse]:
         """
         الحصول على مدفوعات اشتراك معين.
 
@@ -281,7 +334,7 @@ class PaymentService:
         status: str,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[PaymentResponse]:
+    ) -> list[PaymentResponse]:
         """
         الحصول على مدفوعات حسب الحالة.
 
@@ -329,8 +382,8 @@ class PaymentService:
     async def get_payment_summary(
         self,
         *,
-        restaurant_id: Optional[int] = None,
-        owner_id: Optional[int] = None,
+        restaurant_id: int | None = None,
+        owner_id: int | None = None,
     ) -> PaymentSummary:
         """
         الحصول على ملخص المدفوعات.
@@ -370,7 +423,7 @@ class PaymentService:
         paid_amount = 0.0
         pending_amount = 0.0
 
-        status_counts: Dict[str, int] = {}
+        status_counts: dict[str, int] = {}
 
         for payment in payments:
             total_amount += payment.amount
@@ -398,101 +451,68 @@ class PaymentService:
     # CREATE PAYMENT
     # ==============================================
 
-    async def create_payment(
-        self,
-        *,
-        payment_data: PaymentCreate,
-    ) -> PaymentResponse:
-        """
-        إنشاء طلب دفع جديد.
-
-        Args:
-            payment_data: بيانات الدفع
-
-        Returns:
-            PaymentResponse: بيانات الدفع المنشأ
-
-        Raises:
-            NotFoundError: إذا لم يتم العثور على الاشتراك
-            ConflictError: إذا كان هناك دفع معلق أو مدفوع لنفس الاشتراك
-            ValidationError: إذا كانت البيانات غير صالحة
-        """
-        logger.info(
-            "payment_service_create",
-            extra={
-                "owner_id": payment_data.owner_id,
-                "restaurant_id": payment_data.restaurant_id,
-                "subscription_id": payment_data.subscription_id,
-                "amount": payment_data.amount,
-            },
-        )
-
-        # التحقق من صحة المبلغ
-        if payment_data.amount <= 0:
+    async def create_payment(self, *, payment_data: PaymentCreate) -> PaymentResponse:
+        """Create a manual subscription invoice from the server's stored price."""
+        provider = get_payment_provider(method=payment_data.payment_method)
+        if (
+            not payment_data.subscription_id
+            or payment_data.external_reference is not None
+        ):
             raise ValidationError(
-                message="مبلغ الدفع يجب أن يكون أكبر من الصفر",
+                message="A pending subscription is required; submit its reference with receipt evidence"
             )
-
-        # التحقق من صحة طريقة الدفع
-        if payment_data.payment_method not in ALLOWED_PAYMENT_METHODS:
-            raise ValidationError(
-                message=f"طريقة الدفع '{payment_data.payment_method}' غير مدعومة",
-                details={
-                    "payment_method": payment_data.payment_method,
-                    "allowed_methods": list(ALLOWED_PAYMENT_METHODS),
-                },
+        async with payment_transaction(session=self.session):
+            subscription = await self.subscription_repo.get_by_id_for_update(
+                subscription_id=payment_data.subscription_id
             )
-
-        # التحقق من وجود الاشتراك
-        if payment_data.subscription_id:
-            subscription = await self.subscription_repo.get_by_id(
-                id=payment_data.subscription_id,
-            )
-
-            if not subscription:
-                raise NotFoundError(
-                    message=f"الاشتراك بـ ID '{payment_data.subscription_id}' غير موجود",
+            if subscription is None:
+                raise NotFoundError(message="Subscription not found")
+            if (
+                subscription.owner_id != payment_data.owner_id
+                or subscription.restaurant_id != payment_data.restaurant_id
+            ):
+                raise NotFoundError(message="Subscription not found")
+            restaurant_owner = (
+                await self.session.execute(
+                    select(Restaurant.owner_id).where(
+                        Restaurant.id == payment_data.restaurant_id
+                    )
                 )
-
-        # التحقق من عدم وجود دفع معلق أو مدفوع لنفس الاشتراك
-        existing_payments = await self.repo.get_by_subscription_id(
-            subscription_id=payment_data.subscription_id,
-        )
-
-        for payment in existing_payments:
-            if payment.status in ["pending", "paid"]:
+            ).scalar_one_or_none()
+            if restaurant_owner != payment_data.owner_id:
+                raise NotFoundError(message="Restaurant not found")
+            if subscription.status not in {"pending", "pending_payment"}:
+                raise ValidationError(message="Subscription is not pending payment")
+            amount = Decimal(str(subscription.amount))
+            provider.prepare_payment(
+                method=payment_data.payment_method, amount=amount, currency="DZD"
+            )
+            if Decimal(str(payment_data.amount)) != amount:
+                raise ValidationError(
+                    message="Payment amount must match the stored subscription price"
+                )
+            existing = await self.repo.get_by_subscription_id(
+                subscription_id=subscription.id
+            )
+            if any(p.status in {"pending", "paid"} for p in existing):
                 raise ConflictError(
-                    message=f"يوجد بالفعل دفع {payment.status} لهذا الاشتراك",
-                    details={
-                        "subscription_id": payment_data.subscription_id,
-                        "existing_payment_id": payment.id,
-                        "existing_status": payment.status,
-                    },
+                    message="Subscription already has a pending or paid invoice"
                 )
-
-        # إنشاء الدفع
-        data: Dict[str, Any] = {
-            "owner_id": payment_data.owner_id,
-            "restaurant_id": payment_data.restaurant_id,
-            "subscription_id": payment_data.subscription_id,
-            "payment_method": payment_data.payment_method,
-            "amount": payment_data.amount,
-            "status": "pending",
-            "external_reference": payment_data.external_reference,
-        }
-
-        payment = await self.repo.create(data=data)
-
-        logger.info(
-            "payment_request_created",
-            extra={
-                "payment_id": payment.id,
-                "restaurant_id": payment_data.restaurant_id,
-                "amount": payment_data.amount,
-            },
-        )
-
-        return PaymentResponse.model_validate(payment)
+            payment = await self.repo.create(
+                data={
+                    "owner_id": subscription.owner_id,
+                    "restaurant_id": subscription.restaurant_id,
+                    "subscription_id": subscription.id,
+                    "payment_method": payment_data.payment_method,
+                    "payment_provider": provider.code,
+                    "currency": "DZD",
+                    "amount": float(amount),
+                    "status": "pending",
+                    "external_reference": None,
+                }
+            )
+            result = PaymentResponse.model_validate(payment)
+        return result
 
     # ==============================================
     # UPDATE PAYMENT STATUS
@@ -565,56 +585,36 @@ class PaymentService:
     # CONFIRM PAYMENT
     # ==============================================
 
-    async def confirm_payment(
-        self,
-        *,
-        payment_id: int,
-    ) -> PaymentResponse:
-        """
-        تأكيد الدفع (تعيين الحالة إلى paid).
-
-        Args:
-            payment_id: معرف الدفع
-
-        Returns:
-            PaymentResponse: بيانات الدفع المحدث
-
-        Raises:
-            NotFoundError: إذا لم يتم العثور على الدفع
-            ValidationError: إذا كانت الحالة غير صالحة للانتقال
-        """
-        logger.info(
-            "payment_service_confirm",
-            extra={"payment_id": payment_id},
-        )
-
-        payment = await self.repo.get_by_id(id=payment_id)
-
-        if not payment:
-            raise NotFoundError(
-                message=f"الدفع بـ ID '{payment_id}' غير موجود",
+    async def confirm_payment(self, *, payment_id: int) -> PaymentResponse:
+        """Internal settlement command; API callers must supply verified authority."""
+        async with payment_transaction(session=self.session):
+            payment = (
+                await self.session.execute(
+                    select(Payment)
+                    .options(raiseload("*"))
+                    .where(Payment.id == payment_id)
+                    .with_for_update()
+                    .execution_options(populate_existing=True)
+                )
+            ).scalar_one_or_none()
+            if payment is None:
+                raise NotFoundError(message="Payment not found")
+            if payment.status == "paid":
+                return PaymentResponse.model_validate(payment)
+            await self._validate_status_transition(
+                current_status=payment.status, new_status="paid"
             )
-
-        # التحقق من صحة الانتقال
-        await self._validate_status_transition(
-            current_status=payment.status,
-            new_status="paid",
-        )
-
-        # تأكيد الدفع
-        updated = await self.repo.mark_paid(payment_id=payment_id)
-
-        if not updated:
-            raise NotFoundError(
-                message=f"الدفع بـ ID '{payment_id}' غير موجود",
+            updated = await self.repo.mark_paid(
+                payment_id=payment_id,
+                paid_at=datetime.now(timezone.utc).replace(tzinfo=None),
             )
-
-        logger.info(
-            "payment_confirmed",
-            extra={"payment_id": payment_id},
-        )
-
-        return PaymentResponse.model_validate(updated)
+            if updated is None:
+                raise NotFoundError(message="Payment not found")
+            await SubscriptionService(
+                session=self.session
+            ).activate_for_verified_payment(payment=updated)
+            result = PaymentResponse.model_validate(updated)
+        return result
 
     # ==============================================
     # FAIL PAYMENT
@@ -828,296 +828,3 @@ class PaymentService:
             "payment_deleted_successfully",
             extra={"payment_id": payment_id},
         )
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE PAYMENT REQUEST (COMPATIBILITY)
-# ==============================================
-
-
-async def create_payment_request(
-    *,
-    owner_id: int,
-    restaurant_id: int,
-    subscription_id: Optional[int],
-    payment_method: str,
-    amount: float,
-    external_reference: Optional[str] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء طلب دفع جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        owner_id: معرف المالك
-        restaurant_id: معرف المطعم
-        subscription_id: معرف الاشتراك
-        payment_method: طريقة الدفع
-        amount: المبلغ
-        external_reference: المرجع الخارجي
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف الدفع
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الاشتراك
-        ConflictError: إذا كان هناك دفع معلق أو مدفوع
-        ValidationError: إذا كانت البيانات غير صالحة
-    """
-    service = PaymentService(session=session)
-
-    payment_data = PaymentCreate(
-        owner_id=owner_id,
-        restaurant_id=restaurant_id,
-        subscription_id=subscription_id,
-        payment_method=payment_method,
-        amount=amount,
-        external_reference=external_reference,
-    )
-
-    payment = await service.create_payment(
-        payment_data=payment_data,
-    )
-
-    return payment.id
-
-
-# ==============================================
-# GET PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على دفع بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات الدفع أو None
-    """
-    service = PaymentService(session=session)
-
-    try:
-        payment = await service.get_by_id(payment_id=payment_id)
-        return payment.model_dump()
-    except NotFoundError:
-        return None
-
-
-# ==============================================
-# GET PAYMENT BY EXTERNAL REFERENCE (COMPATIBILITY)
-# ==============================================
-
-
-async def get_payment_by_external_reference(
-    *,
-    external_reference: str,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على دفع بواسطة المرجع الخارجي (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        external_reference: المرجع الخارجي
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات الدفع أو None
-    """
-    service = PaymentService(session=session)
-
-    payment = await service.get_by_external_reference(
-        external_reference=external_reference,
-    )
-
-    if not payment:
-        return None
-
-    return payment.model_dump()
-
-
-# ==============================================
-# CONFIRM PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def confirm_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تأكيد الدفع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الدفع
-        ValidationError: إذا كانت الحالة غير صالحة للانتقال
-    """
-    service = PaymentService(session=session)
-
-    await service.confirm_payment(payment_id=payment_id)
-
-    logger.info(
-        "payment_confirmed",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# FAIL PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def fail_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تعيين الدفع كفاشل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الدفع
-        ValidationError: إذا كانت الحالة غير صالحة للانتقال
-    """
-    service = PaymentService(session=session)
-
-    await service.fail_payment(payment_id=payment_id)
-
-    logger.info(
-        "payment_failed",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# CANCEL PAYMENT REQUEST (COMPATIBILITY)
-# ==============================================
-
-
-async def cancel_payment_request(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء الدفع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الدفع
-        ValidationError: إذا كانت الحالة غير صالحة للانتقال
-    """
-    service = PaymentService(session=session)
-
-    await service.cancel_payment(payment_id=payment_id)
-
-    logger.info(
-        "payment_cancelled",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# REFUND PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def refund_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    استرداد الدفع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الدفع
-        ValidationError: إذا كانت الحالة غير صالحة للانتقال
-    """
-    service = PaymentService(session=session)
-
-    await service.refund_payment(payment_id=payment_id)
-
-    logger.info(
-        "payment_refunded",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# IS PAYMENT PAID (COMPATIBILITY)
-# ==============================================
-
-
-async def is_payment_paid(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق من أن الدفع مدفوع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        bool: True إذا كان مدفوعاً
-    """
-    service = PaymentService(session=session)
-
-    return await service.is_payment_paid(payment_id=payment_id)
-
-
-# ==============================================
-# IS PAYMENT PENDING (COMPATIBILITY)
-# ==============================================
-
-
-async def is_payment_pending(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق من أن الدفع معلق (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        bool: True إذا كان معلقاً
-    """
-    service = PaymentService(session=session)
-
-    return await service.is_payment_pending(payment_id=payment_id)

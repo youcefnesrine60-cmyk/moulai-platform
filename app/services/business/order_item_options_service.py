@@ -15,8 +15,6 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from app.services.business.orders.transaction import transactional_order
-
 # ==============================================
 # 🎛 ORDER ITEM OPTIONS SERVICE
 # Business Logic Layer
@@ -30,12 +28,8 @@ from app.services.business.orders.transaction import transactional_order
 # حذف خيار
 # حذف جميع الخيارات
 # ==============================================
-
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,13 +40,12 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان
 from app.core.security import (
     sanitize_input,
 )
-
-from app.core.logger import logger
 from app.models.order_item import OrderItemOption
 from app.repositories.order_item_options_repo import OrderItemOptionsRepository
 
@@ -62,6 +55,7 @@ from app.schemas.order_item import (
     OrderItemOptionResponse,
     OrderItemOptionSummary,
 )
+from app.services.business.orders.transaction import transactional_order
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -75,8 +69,8 @@ MAX_ADDITIONAL_PRICE = 1000000.0  # 1,000,000 DZD
 # 🧩 TYPES
 # ==============================================
 
-OrderItemOptionData = Dict[str, Any]
-OrderItemOptionList = List[OrderItemOption]
+OrderItemOptionData = dict[str, Any]
+OrderItemOptionList = list[OrderItemOption]
 
 
 # ==============================================
@@ -167,7 +161,7 @@ class OrderItemOptionsService:
         order_item_id: int,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[OrderItemOptionResponse]:
+    ) -> list[OrderItemOptionResponse]:
         """
         الحصول على خيارات عنصر طلب معين.
 
@@ -288,7 +282,7 @@ class OrderItemOptionsService:
         )
 
         # تجميع الخيارات حسب مجموعة الخيارات
-        groups: Dict[str, List[str]] = {}
+        groups: dict[str, list[str]] = {}
 
         for option in options:
             if option.option_group_name not in groups:
@@ -656,264 +650,3 @@ class OrderItemOptionsService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# ADD ORDER ITEM OPTION (COMPATIBILITY)
-# ==============================================
-
-
-async def add_order_item_option(
-    *,
-    order_item_id: int,
-    option_group_name: str,
-    option_name: str,
-    additional_price: float = 0,
-    session: AsyncSession,
-) -> int:
-    """
-    إضافة خيار جديد إلى عنصر الطلب (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_item_id: معرف عنصر الطلب
-        option_group_name: اسم مجموعة الخيارات
-        option_name: اسم الخيار
-        additional_price: السعر الإضافي
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف الخيار
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على عنصر الطلب
-        ConflictError: إذا كان الخيار مكرراً
-        ValidationError: إذا كانت البيانات غير صالحة
-    """
-    service = OrderItemOptionsService(session=session)
-
-    option_data = OrderItemOptionCreate(
-        order_item_id=order_item_id,
-        option_group_name=option_group_name,
-        option_name=option_name,
-        additional_price=additional_price,
-    )
-
-    option = await service.add_option(
-        option_data=option_data,
-    )
-
-    return option.id
-
-
-# ==============================================
-# GET OPTION (COMPATIBILITY)
-# ==============================================
-
-
-async def get_option(
-    *,
-    option_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على خيار بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        option_id: معرف الخيار
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات الخيار أو None
-    """
-    service = OrderItemOptionsService(session=session)
-
-    try:
-        option = await service.get_by_id(option_id=option_id)
-        return option.model_dump()
-    except NotFoundError:
-        return None
-
-
-# ==============================================
-# LIST ITEM OPTIONS (COMPATIBILITY)
-# ==============================================
-
-
-async def list_item_options(
-    *,
-    order_item_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على خيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_item_id: معرف عنصر الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        List[Dict[str, Any]]: قائمة الخيارات
-    """
-    service = OrderItemOptionsService(session=session)
-
-    options = await service.get_by_order_item(
-        order_item_id=order_item_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    return [option.model_dump() for option in options]
-
-
-# ==============================================
-# GET OPTIONS TOTAL (COMPATIBILITY)
-# ==============================================
-
-
-async def get_options_total(
-    *,
-    order_item_id: int,
-    session: AsyncSession,
-) -> float:
-    """
-    حساب السعر الإضافي الإجمالي لخيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_item_id: معرف عنصر الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        float: السعر الإضافي الإجمالي
-    """
-    service = OrderItemOptionsService(session=session)
-
-    return await service.get_total_additional_price(
-        order_item_id=order_item_id,
-    )
-
-
-# ==============================================
-# GET OPTIONS COUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_options_count(
-    *,
-    order_item_id: int,
-    session: AsyncSession,
-) -> int:
-    """
-    حساب عدد خيارات عنصر طلب معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_item_id: معرف عنصر الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: عدد الخيارات
-    """
-    service = OrderItemOptionsService(session=session)
-
-    return await service.count_by_order_item(
-        order_item_id=order_item_id,
-    )
-
-
-# ==============================================
-# REMOVE OPTION (COMPATIBILITY)
-# ==============================================
-
-
-async def remove_option(
-    *,
-    option_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف خيار من عنصر الطلب (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        option_id: معرف الخيار
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الخيار
-    """
-    service = OrderItemOptionsService(session=session)
-
-    await service.remove_option(option_id=option_id)
-
-    logger.info(
-        "order_item_option_removed",
-        extra={"option_id": option_id},
-    )
-
-
-# ==============================================
-# REMOVE ALL ITEM OPTIONS (COMPATIBILITY)
-# ==============================================
-
-
-async def remove_all_item_options(
-    *,
-    order_item_id: int,
-    session: AsyncSession,
-) -> int:
-    """
-    حذف جميع خيارات عنصر الطلب (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_item_id: معرف عنصر الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: عدد الخيارات المحذوفة
-    """
-    service = OrderItemOptionsService(session=session)
-
-    return await service.remove_all_options(order_item_id=order_item_id)
-
-
-# ==============================================
-# UPDATE OPTION PRICE (COMPATIBILITY)
-# ==============================================
-
-
-async def update_option_price(
-    *,
-    option_id: int,
-    additional_price: float,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث السعر الإضافي للخيار (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        option_id: معرف الخيار
-        additional_price: السعر الإضافي الجديد
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الخيار
-        ValidationError: إذا كان السعر غير صالح
-    """
-    service = OrderItemOptionsService(session=session)
-
-    await service.update_option_price(
-        option_id=option_id,
-        additional_price=additional_price,
-    )
-
-    logger.info(
-        "order_item_option_price_updated",
-        extra={
-            "option_id": option_id,
-            "additional_price": additional_price,
-        },
-    )

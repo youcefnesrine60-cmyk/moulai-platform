@@ -16,22 +16,19 @@ Part of MoulAI Platform - Agent-as-a-Service.
 """
 
 # ==============================================
-# 📂 CATEGORY SERVICE
-# Business Logic Layer - منطق الأعمال للتصنيفات
+# ðŸ“‚ CATEGORY SERVICE
+# Business Logic Layer - Ù…Ù†Ø·Ù‚ Ø§Ù„Ø£Ø¹Ù…Ø§Ù„ Ù„Ù„ØªØµÙ†ÙŠÙØ§Øª
 #
-# - إنشاء تصنيف
-# - قراءة التصنيف
-# - قراءة تصنيفات المطعم
-# - حذف التصنيف
+# - Ø¥Ù†Ø´Ø§Ø¡ ØªØµÙ†ÙŠÙ
+# - Ù‚Ø±Ø§Ø¡Ø© Ø§Ù„ØªØµÙ†ÙŠÙ
+# - Ù‚Ø±Ø§Ø¡Ø© ØªØµÙ†ÙŠÙØ§Øª Ø§Ù„Ù…Ø·Ø¹Ù…
+# - Ø­Ø°Ù Ø§Ù„ØªØµÙ†ÙŠÙ
 #
 # Async SQLAlchemy Version
 # ==============================================
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -45,6 +42,7 @@ from app.core.logger import logger
 from app.core.security import sanitize_input
 from app.models.category import Category
 from app.repositories.categories_repo import CategoriesRepository
+from app.repositories.features_repo import FeatureRepository
 from app.repositories.products_repo import ProductRepository
 from app.repositories.restaurant.restaurant_metrics_repo import (
     RestaurantMetricsRepository,
@@ -62,39 +60,39 @@ from app.services.business.feature_usage_counter_engine import (
 )
 
 # ==============================================
-# 🧩 CONSTANTS
+# ðŸ§© CONSTANTS
 # ==============================================
 
-CATEGORY_FEATURE_ID = 2
+CATEGORY_FEATURE_CODE = "categories"
 MAX_CATEGORIES_PER_RESTAURANT = 20
 
 # ==============================================
-# 🧩 TYPES
+# ðŸ§© TYPES
 # ==============================================
 
-CategoryData = Dict[str, Any]
-CategoryList = List[Category]
+CategoryData = dict[str, Any]
+CategoryList = list[Category]
 
 # ==============================================
-# 📂 CATEGORY SERVICE
+# ðŸ“‚ CATEGORY SERVICE
 # ==============================================
 
 
 class CategoryService:
     """
-    خدمة التصنيفات - تدير منطق الأعمال للتصنيفات.
+    Ø®Ø¯Ù…Ø© Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª - ØªØ¯ÙŠØ± Ù…Ù†Ø·Ù‚ Ø§Ù„Ø£Ø¹Ù…Ø§Ù„ Ù„Ù„ØªØµÙ†ÙŠÙØ§Øª.
 
-    مسؤولة عن:
-        - إنشاء وإدارة التصنيفات
-        - تحديث ترتيب التصنيفات
-        - تحديث مقاييس المطعم
-        - إدارة عداد استخدام الميزات
+    Ù…Ø³Ø¤ÙˆÙ„Ø© Ø¹Ù†:
+        - Ø¥Ù†Ø´Ø§Ø¡ ÙˆØ¥Ø¯Ø§Ø±Ø© Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª
+        - ØªØ­Ø¯ÙŠØ« ØªØ±ØªÙŠØ¨ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª
+        - ØªØ­Ø¯ÙŠØ« Ù…Ù‚Ø§ÙŠÙŠØ³ Ø§Ù„Ù…Ø·Ø¹Ù…
+        - Ø¥Ø¯Ø§Ø±Ø© Ø¹Ø¯Ø§Ø¯ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…ÙŠØ²Ø§Øª
 
     Attributes:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        repo: مستودع التصنيفات
-        product_repo: مستودع المنتجات
-        metrics_repo: مستودع مقاييس المطعم
+        session: Ø¬Ù„Ø³Ø© Ù‚Ø§Ø¹Ø¯Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ØºÙŠØ± Ø§Ù„Ù…ØªØ²Ø§Ù…Ù†Ø©
+        repo: Ù…Ø³ØªÙˆØ¯Ø¹ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª
+        product_repo: Ù…Ø³ØªÙˆØ¯Ø¹ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª
+        metrics_repo: Ù…Ø³ØªÙˆØ¯Ø¹ Ù…Ù‚Ø§ÙŠÙŠØ³ Ø§Ù„Ù…Ø·Ø¹Ù…
     """
 
     # ==============================================
@@ -106,19 +104,38 @@ class CategoryService:
         session: AsyncSession,
     ) -> None:
         """
-        تهيئة خدمة التصنيفات.
+        ØªÙ‡ÙŠØ¦Ø© Ø®Ø¯Ù…Ø© Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª.
 
         Args:
-            session: جلسة قاعدة البيانات غير المتزامنة
+            session: Ø¬Ù„Ø³Ø© Ù‚Ø§Ø¹Ø¯Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ØºÙŠØ± Ø§Ù„Ù…ØªØ²Ø§Ù…Ù†Ø©
         """
         self.session = session
         self.repo = CategoriesRepository(session)
         self.product_repo = ProductRepository(session)
         self.metrics_repo = RestaurantMetricsRepository(session)
+        self.feature_repo = FeatureRepository(session)
 
     # ==========================================
-    # 🛠️ PRIVATE HELPERS
+    # ðŸ› ï¸ PRIVATE HELPERS
     # ==========================================
+
+    # ==============================================
+    # RESOLVE CATEGORY FEATURE
+    # ==============================================
+
+    async def _get_category_feature_id(self, *, restaurant_id: int) -> int | None:
+        """Return the optional category feature identifier without assuming database IDs."""
+        feature = await self.feature_repo.get_by_code(code=CATEGORY_FEATURE_CODE)
+        if feature is None:
+            logger.warning(
+                "category_feature_not_configured",
+                extra={
+                    "restaurant_id": restaurant_id,
+                    "feature_code": CATEGORY_FEATURE_CODE,
+                },
+            )
+            return None
+        return feature.id
 
     # ==============================================
     # COUNT PRODUCTS IN CATEGORY
@@ -130,15 +147,15 @@ class CategoryService:
         category_id: int,
     ) -> int:
         """
-        حساب عدد المنتجات في تصنيف معين.
+        Ø­Ø³Ø§Ø¨ Ø¹Ø¯Ø¯ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª ÙÙŠ ØªØµÙ†ÙŠÙ Ù…Ø¹ÙŠÙ†.
 
-        ✅ نستخدم ProductRepository.count_by_category
+        âœ… Ù†Ø³ØªØ®Ø¯Ù… ProductRepository.count_by_category
 
         Args:
-            category_id: معرف التصنيف
+            category_id: Ù…Ø¹Ø±Ù Ø§Ù„ØªØµÙ†ÙŠÙ
 
         Returns:
-            عدد المنتجات
+            Ø¹Ø¯Ø¯ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª
         """
         return await self.product_repo.count_by_category(
             category_id=category_id,
@@ -146,7 +163,7 @@ class CategoryService:
         )
 
     # ==========================================
-    # 📖 QUERIES
+    # ðŸ“– QUERIES
     # ==========================================
 
     # ==============================================
@@ -159,16 +176,16 @@ class CategoryService:
         category_id: int,
     ) -> CategoryResponse:
         """
-        الحصول على تصنيف بالمعرف.
+        Ø§Ù„Ø­ØµÙˆÙ„ Ø¹Ù„Ù‰ ØªØµÙ†ÙŠÙ Ø¨Ø§Ù„Ù…Ø¹Ø±Ù.
 
         Args:
-            category_id: معرف التصنيف
+            category_id: Ù…Ø¹Ø±Ù Ø§Ù„ØªØµÙ†ÙŠÙ
 
         Returns:
-            CategoryResponse: بيانات التصنيف
+            CategoryResponse: Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØµÙ†ÙŠÙ
 
         Raises:
-            NotFoundError: إذا لم يتم العثور على التصنيف
+            NotFoundError: Ø¥Ø°Ø§ Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„ØªØµÙ†ÙŠÙ
         """
         logger.info(
             "category_service_get_by_id",
@@ -179,7 +196,7 @@ class CategoryService:
 
         if not category:
             raise NotFoundError(
-                message=f"التصنيف بـ ID '{category_id}' غير موجود",
+                message=f"Ø§Ù„ØªØµÙ†ÙŠÙ Ø¨Ù€ ID '{category_id}' ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯",
             )
 
         return CategoryResponse.model_validate(category)
@@ -196,15 +213,15 @@ class CategoryService:
         limit: int = 100,
     ) -> CategoryListResponse:
         """
-        الحصول على تصنيفات مطعم معين.
+        Ø§Ù„Ø­ØµÙˆÙ„ Ø¹Ù„Ù‰ ØªØµÙ†ÙŠÙØ§Øª Ù…Ø·Ø¹Ù… Ù…Ø¹ÙŠÙ†.
 
         Args:
-            restaurant_id: معرف المطعم
-            skip: عدد السجلات للتخطي
-            limit: الحد الأقصى للسجلات
+            restaurant_id: Ù…Ø¹Ø±Ù Ø§Ù„Ù…Ø·Ø¹Ù…
+            skip: Ø¹Ø¯Ø¯ Ø§Ù„Ø³Ø¬Ù„Ø§Øª Ù„Ù„ØªØ®Ø·ÙŠ
+            limit: Ø§Ù„Ø­Ø¯ Ø§Ù„Ø£Ù‚ØµÙ‰ Ù„Ù„Ø³Ø¬Ù„Ø§Øª
 
         Returns:
-            CategoryListResponse: قائمة التصنيفات مع الإحصائيات
+            CategoryListResponse: Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª Ù…Ø¹ Ø§Ù„Ø¥Ø­ØµØ§Ø¦ÙŠØ§Øª
         """
         logger.info(
             "category_service_get_by_restaurant",
@@ -241,16 +258,16 @@ class CategoryService:
         *,
         restaurant_id: int,
         name: str,
-    ) -> Optional[Category]:
+    ) -> Category | None:
         """
-        الحصول على تصنيف بواسطة اسمه.
+        Ø§Ù„Ø­ØµÙˆÙ„ Ø¹Ù„Ù‰ ØªØµÙ†ÙŠÙ Ø¨ÙˆØ§Ø³Ø·Ø© Ø§Ø³Ù…Ù‡.
 
         Args:
-            restaurant_id: معرف المطعم
-            name: اسم التصنيف
+            restaurant_id: Ù…Ø¹Ø±Ù Ø§Ù„Ù…Ø·Ø¹Ù…
+            name: Ø§Ø³Ù… Ø§Ù„ØªØµÙ†ÙŠÙ
 
         Returns:
-            كائن Category أو None
+            ÙƒØ§Ø¦Ù† Category Ø£Ùˆ None
         """
         logger.info(
             "category_service_get_by_name",
@@ -273,21 +290,21 @@ class CategoryService:
         self,
         *,
         query: str,
-        restaurant_id: Optional[int] = None,
+        restaurant_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> CategoryListResponse:
         """
-        البحث عن تصنيفات.
+        Ø§Ù„Ø¨Ø­Ø« Ø¹Ù† ØªØµÙ†ÙŠÙØ§Øª.
 
         Args:
-            query: نص البحث
-            restaurant_id: معرف المطعم (اختياري)
-            skip: عدد السجلات للتخطي
-            limit: الحد الأقصى للسجلات
+            query: Ù†Øµ Ø§Ù„Ø¨Ø­Ø«
+            restaurant_id: Ù…Ø¹Ø±Ù Ø§Ù„Ù…Ø·Ø¹Ù… (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)
+            skip: Ø¹Ø¯Ø¯ Ø§Ù„Ø³Ø¬Ù„Ø§Øª Ù„Ù„ØªØ®Ø·ÙŠ
+            limit: Ø§Ù„Ø­Ø¯ Ø§Ù„Ø£Ù‚ØµÙ‰ Ù„Ù„Ø³Ø¬Ù„Ø§Øª
 
         Returns:
-            CategoryListResponse: قائمة التصنيفات مع الإحصائيات
+            CategoryListResponse: Ù‚Ø§Ø¦Ù…Ø© Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª Ù…Ø¹ Ø§Ù„Ø¥Ø­ØµØ§Ø¦ÙŠØ§Øª
         """
         clean_query = sanitize_input(query)
 
@@ -318,7 +335,7 @@ class CategoryService:
         )
 
     # ==========================================
-    # 📊 STATISTICS
+    # ðŸ“Š STATISTICS
     # ==========================================
 
     # ==============================================
@@ -331,13 +348,13 @@ class CategoryService:
         restaurant_id: int,
     ) -> int:
         """
-        حساب عدد تصنيفات مطعم معين.
+        Ø­Ø³Ø§Ø¨ Ø¹Ø¯Ø¯ ØªØµÙ†ÙŠÙØ§Øª Ù…Ø·Ø¹Ù… Ù…Ø¹ÙŠÙ†.
 
         Args:
-            restaurant_id: معرف المطعم
+            restaurant_id: Ù…Ø¹Ø±Ù Ø§Ù„Ù…Ø·Ø¹Ù…
 
         Returns:
-            int: عدد التصنيفات
+            int: Ø¹Ø¯Ø¯ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª
         """
         return await self.repo.count_by_restaurant(
             restaurant_id=restaurant_id,
@@ -353,13 +370,13 @@ class CategoryService:
         restaurant_id: int,
     ) -> CategorySummary:
         """
-        الحصول على ملخص التصنيفات لمطعم معين.
+        Ø§Ù„Ø­ØµÙˆÙ„ Ø¹Ù„Ù‰ Ù…Ù„Ø®Øµ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª Ù„Ù…Ø·Ø¹Ù… Ù…Ø¹ÙŠÙ†.
 
         Args:
-            restaurant_id: معرف المطعم
+            restaurant_id: Ù…Ø¹Ø±Ù Ø§Ù„Ù…Ø·Ø¹Ù…
 
         Returns:
-            CategorySummary: ملخص التصنيفات
+            CategorySummary: Ù…Ù„Ø®Øµ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª
         """
         logger.info(
             "category_service_get_category_summary",
@@ -370,7 +387,7 @@ class CategoryService:
             restaurant_id=restaurant_id,
         )
 
-        # ✅ الحصول على التصنيفات مع عدد المنتجات لكل تصنيف
+        # âœ… Ø§Ù„Ø­ØµÙˆÙ„ Ø¹Ù„Ù‰ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª Ù…Ø¹ Ø¹Ø¯Ø¯ Ø§Ù„Ù…Ù†ØªØ¬Ø§Øª Ù„ÙƒÙ„ ØªØµÙ†ÙŠÙ
         categories = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
             limit=1000,
@@ -400,7 +417,7 @@ class CategoryService:
         )
 
     # ==========================================
-    # ✏️ MUTATIONS
+    # âœï¸ MUTATIONS
     # ==========================================
 
     # ==============================================
@@ -414,18 +431,18 @@ class CategoryService:
         category_data: CategoryCreate,
     ) -> CategoryResponse:
         """
-        إنشاء تصنيف جديد.
+        Ø¥Ù†Ø´Ø§Ø¡ ØªØµÙ†ÙŠÙ Ø¬Ø¯ÙŠØ¯.
 
         Args:
-            restaurant_id: معرف المطعم
-            category_data: بيانات التصنيف
+            restaurant_id: Ù…Ø¹Ø±Ù Ø§Ù„Ù…Ø·Ø¹Ù…
+            category_data: Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØµÙ†ÙŠÙ
 
         Returns:
-            CategoryResponse: بيانات التصنيف المنشأ
+            CategoryResponse: Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„Ù…Ù†Ø´Ø£
 
         Raises:
-            ConflictError: إذا كان الاسم موجوداً مسبقاً
-            ValidationError: إذا كانت البيانات غير صحيحة
+            ConflictError: Ø¥Ø°Ø§ ÙƒØ§Ù† Ø§Ù„Ø§Ø³Ù… Ù…ÙˆØ¬ÙˆØ¯Ø§Ù‹ Ù…Ø³Ø¨Ù‚Ø§Ù‹
+            ValidationError: Ø¥Ø°Ø§ ÙƒØ§Ù†Øª Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ØºÙŠØ± ØµØ­ÙŠØ­Ø©
         """
         name = sanitize_input(category_data.name)
 
@@ -437,7 +454,7 @@ class CategoryService:
             },
         )
 
-        # 1️⃣ التحقق من الحد الأقصى للتصنيفات
+        # 1ï¸âƒ£ Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø§Ù„Ø­Ø¯ Ø§Ù„Ø£Ù‚ØµÙ‰ Ù„Ù„ØªØµÙ†ÙŠÙØ§Øª
         current_count = await self.count_by_restaurant(
             restaurant_id=restaurant_id,
         )
@@ -445,7 +462,7 @@ class CategoryService:
         if current_count >= MAX_CATEGORIES_PER_RESTAURANT:
             raise ValidationError(
                 message=(
-                    f"تجاوزت الحد الأقصى للتصنيفات "
+                    f"ØªØ¬Ø§ÙˆØ²Øª Ø§Ù„Ø­Ø¯ Ø§Ù„Ø£Ù‚ØµÙ‰ Ù„Ù„ØªØµÙ†ÙŠÙØ§Øª "
                     f"({MAX_CATEGORIES_PER_RESTAURANT})"
                 ),
                 details={
@@ -455,7 +472,7 @@ class CategoryService:
                 },
             )
 
-        # 2️⃣ التحقق من عدم وجود تصنيف بنفس الاسم
+        # 2ï¸âƒ£ Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø¹Ø¯Ù… ÙˆØ¬ÙˆØ¯ ØªØµÙ†ÙŠÙ Ø¨Ù†ÙØ³ Ø§Ù„Ø§Ø³Ù…
         existing = await self.repo.get_by_name(
             restaurant_id=restaurant_id,
             name=name,
@@ -463,10 +480,10 @@ class CategoryService:
 
         if existing:
             raise ConflictError(
-                message=f"يوجد تصنيف باسم '{name}' بالفعل لهذا المطعم",
+                message=f"ÙŠÙˆØ¬Ø¯ ØªØµÙ†ÙŠÙ Ø¨Ø§Ø³Ù… '{name}' Ø¨Ø§Ù„ÙØ¹Ù„ Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø·Ø¹Ù…",
             )
 
-        # 3️⃣ إنشاء التصنيف
+        # 3ï¸âƒ£ Ø¥Ù†Ø´Ø§Ø¡ Ø§Ù„ØªØµÙ†ÙŠÙ
         data: CategoryData = {
             "restaurant_id": restaurant_id,
             "name": name,
@@ -475,14 +492,16 @@ class CategoryService:
 
         category = await self.repo.create(data=data)
 
-        # 4️⃣ زيادة عداد استخدام الميزة (مع session)
-        await increase_usage(
-            session=self.session,
-            restaurant_id=restaurant_id,
-            feature_id=CATEGORY_FEATURE_ID,
-        )
+        # 4ï¸âƒ£ Ø²ÙŠØ§Ø¯Ø© Ø¹Ø¯Ø§Ø¯ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…ÙŠØ²Ø© (Ù…Ø¹ session)
+        feature_id = await self._get_category_feature_id(restaurant_id=restaurant_id)
+        if feature_id is not None:
+            await increase_usage(
+                session=self.session,
+                restaurant_id=restaurant_id,
+                feature_id=feature_id,
+            )
 
-        # 5️⃣ تحديث مقاييس المطعم
+        # 5ï¸âƒ£ ØªØ­Ø¯ÙŠØ« Ù…Ù‚Ø§ÙŠÙŠØ³ Ø§Ù„Ù…Ø·Ø¹Ù…
         await self._update_restaurant_metrics(
             restaurant_id=restaurant_id,
             action="category_created",
@@ -509,18 +528,18 @@ class CategoryService:
         update_data: CategoryUpdate,
     ) -> CategoryResponse:
         """
-        تحديث تصنيف.
+        ØªØ­Ø¯ÙŠØ« ØªØµÙ†ÙŠÙ.
 
         Args:
-            category_id: معرف التصنيف
-            update_data: بيانات التحديث
+            category_id: Ù…Ø¹Ø±Ù Ø§Ù„ØªØµÙ†ÙŠÙ
+            update_data: Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØ­Ø¯ÙŠØ«
 
         Returns:
-            CategoryResponse: بيانات التصنيف المحدث
+            CategoryResponse: Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØµÙ†ÙŠÙ Ø§Ù„Ù…Ø­Ø¯Ø«
 
         Raises:
-            NotFoundError: إذا لم يتم العثور على التصنيف
-            ConflictError: إذا كان الاسم مكرراً
+            NotFoundError: Ø¥Ø°Ø§ Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„ØªØµÙ†ÙŠÙ
+            ConflictError: Ø¥Ø°Ø§ ÙƒØ§Ù† Ø§Ù„Ø§Ø³Ù… Ù…ÙƒØ±Ø±Ø§Ù‹
         """
         logger.info(
             "category_service_update",
@@ -532,18 +551,18 @@ class CategoryService:
             },
         )
 
-        # 1️⃣ التحقق من وجود التصنيف
+        # 1ï¸âƒ£ Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† ÙˆØ¬ÙˆØ¯ Ø§Ù„ØªØµÙ†ÙŠÙ
         category = await self.repo.get_by_id(id=category_id)
 
         if not category:
             raise NotFoundError(
-                message=f"التصنيف بـ ID '{category_id}' غير موجود",
+                message=f"Ø§Ù„ØªØµÙ†ÙŠÙ Ø¨Ù€ ID '{category_id}' ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯",
             )
 
-        # 2️⃣ تحضير بيانات التحديث
+        # 2ï¸âƒ£ ØªØ­Ø¶ÙŠØ± Ø¨ÙŠØ§Ù†Ø§Øª Ø§Ù„ØªØ­Ø¯ÙŠØ«
         updates = update_data.model_dump(exclude_unset=True)
 
-        # 3️⃣ تنظيف الاسم إذا تم تغييره
+        # 3ï¸âƒ£ ØªÙ†Ø¸ÙŠÙ Ø§Ù„Ø§Ø³Ù… Ø¥Ø°Ø§ ØªÙ… ØªØºÙŠÙŠØ±Ù‡
         if "name" in updates:
             updates["name"] = sanitize_input(updates["name"])
 
@@ -555,11 +574,12 @@ class CategoryService:
             if existing and existing.id != category_id:
                 raise ConflictError(
                     message=(
-                        f"يوجد تصنيف باسم '{updates['name']}' " f"بالفعل لهذا المطعم"
+                        f"ÙŠÙˆØ¬Ø¯ ØªØµÙ†ÙŠÙ Ø¨Ø§Ø³Ù… '{updates['name']}' "
+                        f"Ø¨Ø§Ù„ÙØ¹Ù„ Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø·Ø¹Ù…"
                     ),
                 )
 
-        # 4️⃣ تحديث التصنيف
+        # 4ï¸âƒ£ ØªØ­Ø¯ÙŠØ« Ø§Ù„ØªØµÙ†ÙŠÙ
         updated = await self.repo.update(
             id=category_id,
             data=updates,
@@ -567,7 +587,7 @@ class CategoryService:
 
         if not updated:
             raise NotFoundError(
-                message=f"التصنيف بـ ID '{category_id}' غير موجود",
+                message=f"Ø§Ù„ØªØµÙ†ÙŠÙ Ø¨Ù€ ID '{category_id}' ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯",
             )
 
         logger.info(
@@ -590,14 +610,14 @@ class CategoryService:
         category_id: int,
     ) -> None:
         """
-        حذف تصنيف.
+        Ø­Ø°Ù ØªØµÙ†ÙŠÙ.
 
         Args:
-            category_id: معرف التصنيف
+            category_id: Ù…Ø¹Ø±Ù Ø§Ù„ØªØµÙ†ÙŠÙ
 
         Raises:
-            NotFoundError: إذا لم يتم العثور على التصنيف
-            ValidationError: إذا كان التصنيف يحتوي على منتجات
+            NotFoundError: Ø¥Ø°Ø§ Ù„Ù… ÙŠØªÙ… Ø§Ù„Ø¹Ø«ÙˆØ± Ø¹Ù„Ù‰ Ø§Ù„ØªØµÙ†ÙŠÙ
+            ValidationError: Ø¥Ø°Ø§ ÙƒØ§Ù† Ø§Ù„ØªØµÙ†ÙŠÙ ÙŠØ­ØªÙˆÙŠ Ø¹Ù„Ù‰ Ù…Ù†ØªØ¬Ø§Øª
         """
         logger.info(
             "category_service_delete",
@@ -608,40 +628,42 @@ class CategoryService:
 
         if not category:
             raise NotFoundError(
-                message=f"التصنيف بـ ID '{category_id}' غير موجود",
+                message=f"Ø§Ù„ØªØµÙ†ÙŠÙ Ø¨Ù€ ID '{category_id}' ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯",
             )
 
         restaurant_id = category.restaurant_id
 
-        # 1️⃣ التحقق من عدم وجود منتجات
+        # 1ï¸âƒ£ Ø§Ù„ØªØ­Ù‚Ù‚ Ù…Ù† Ø¹Ø¯Ù… ÙˆØ¬ÙˆØ¯ Ù…Ù†ØªØ¬Ø§Øª
         product_count = await self._count_products_in_category(
             category_id=category_id,
         )
 
         if product_count > 0:
             raise ValidationError(
-                message="لا يمكن حذف التصنيف لأنه يحتوي على منتجات",
+                message="Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø­Ø°Ù Ø§Ù„ØªØµÙ†ÙŠÙ Ù„Ø£Ù†Ù‡ ÙŠØ­ØªÙˆÙŠ Ø¹Ù„Ù‰ Ù…Ù†ØªØ¬Ø§Øª",
                 details={
                     "category_id": category_id,
                     "product_count": product_count,
                 },
             )
 
-        # 2️⃣ حذف التصنيف
+        # 2ï¸âƒ£ Ø­Ø°Ù Ø§Ù„ØªØµÙ†ÙŠÙ
         await self.repo.delete(id=category_id)
 
-        # 3️⃣ تحديث مقاييس المطعم
+        # 3ï¸âƒ£ ØªØ­Ø¯ÙŠØ« Ù…Ù‚Ø§ÙŠÙŠØ³ Ø§Ù„Ù…Ø·Ø¹Ù…
         await self._update_restaurant_metrics(
             restaurant_id=restaurant_id,
             action="category_deleted",
         )
 
-        # 4️⃣ تقليل عداد استخدام الميزة (مع session)
-        await decrease_usage(
-            session=self.session,
-            restaurant_id=restaurant_id,
-            feature_id=CATEGORY_FEATURE_ID,
-        )
+        # 4ï¸âƒ£ ØªÙ‚Ù„ÙŠÙ„ Ø¹Ø¯Ø§Ø¯ Ø§Ø³ØªØ®Ø¯Ø§Ù… Ø§Ù„Ù…ÙŠØ²Ø© (Ù…Ø¹ session)
+        feature_id = await self._get_category_feature_id(restaurant_id=restaurant_id)
+        if feature_id is not None:
+            await decrease_usage(
+                session=self.session,
+                restaurant_id=restaurant_id,
+                feature_id=feature_id,
+            )
 
         logger.info(
             "category_deleted_successfully",
@@ -659,18 +681,18 @@ class CategoryService:
         self,
         *,
         restaurant_id: int,
-        category_order: List[int],
+        category_order: list[int],
     ) -> None:
         """
-        إعادة ترتيب التصنيفات.
+        Ø¥Ø¹Ø§Ø¯Ø© ØªØ±ØªÙŠØ¨ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª.
 
         Args:
-            restaurant_id: معرف المطعم
-            category_order: قائمة معرفات التصنيفات بالترتيب الجديد
+            restaurant_id: Ù…Ø¹Ø±Ù Ø§Ù„Ù…Ø·Ø¹Ù…
+            category_order: Ù‚Ø§Ø¦Ù…Ø© Ù…Ø¹Ø±ÙØ§Øª Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª Ø¨Ø§Ù„ØªØ±ØªÙŠØ¨ Ø§Ù„Ø¬Ø¯ÙŠØ¯
 
         Raises:
-            NotFoundError: إذا كان أحد التصنيفات غير موجود
-            ValidationError: إذا كانت القائمة فارغة أو تحتوي على معرفات مكررة
+            NotFoundError: Ø¥Ø°Ø§ ÙƒØ§Ù† Ø£Ø­Ø¯ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯
+            ValidationError: Ø¥Ø°Ø§ ÙƒØ§Ù†Øª Ø§Ù„Ù‚Ø§Ø¦Ù…Ø© ÙØ§Ø±ØºØ© Ø£Ùˆ ØªØ­ØªÙˆÙŠ Ø¹Ù„Ù‰ Ù…Ø¹Ø±ÙØ§Øª Ù…ÙƒØ±Ø±Ø©
         """
         logger.info(
             "category_service_reorder",
@@ -682,12 +704,12 @@ class CategoryService:
 
         if not category_order:
             raise ValidationError(
-                message="قائمة ترتيب التصنيفات لا يمكن أن تكون فارغة",
+                message="Ù‚Ø§Ø¦Ù…Ø© ØªØ±ØªÙŠØ¨ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª Ù„Ø§ ÙŠÙ…ÙƒÙ† Ø£Ù† ØªÙƒÙˆÙ† ÙØ§Ø±ØºØ©",
             )
 
         if len(category_order) != len(set(category_order)):
             raise ValidationError(
-                message="قائمة ترتيب التصنيفات تحتوي على معرفات مكررة",
+                message="Ù‚Ø§Ø¦Ù…Ø© ØªØ±ØªÙŠØ¨ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª ØªØ­ØªÙˆÙŠ Ø¹Ù„Ù‰ Ù…Ø¹Ø±ÙØ§Øª Ù…ÙƒØ±Ø±Ø©",
             )
 
         for index, category_id in enumerate(category_order):
@@ -695,12 +717,12 @@ class CategoryService:
 
             if not category:
                 raise NotFoundError(
-                    message=f"التصنيف بـ ID '{category_id}' غير موجود",
+                    message=f"Ø§Ù„ØªØµÙ†ÙŠÙ Ø¨Ù€ ID '{category_id}' ØºÙŠØ± Ù…ÙˆØ¬ÙˆØ¯",
                 )
 
             if category.restaurant_id != restaurant_id:
                 raise ValidationError(
-                    message=f"التصنيف '{category_id}' لا ينتمي لهذا المطعم",
+                    message=f"Ø§Ù„ØªØµÙ†ÙŠÙ '{category_id}' Ù„Ø§ ÙŠÙ†ØªÙ…ÙŠ Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø·Ø¹Ù…",
                 )
 
             await self.repo.update(
@@ -717,7 +739,7 @@ class CategoryService:
         )
 
     # ==========================================
-    # 🛠️ PRIVATE HELPERS
+    # ðŸ› ï¸ PRIVATE HELPERS
     # ==========================================
 
     # ==============================================
@@ -731,14 +753,14 @@ class CategoryService:
         action: str,
     ) -> None:
         """
-        تحديث مقاييس المطعم.
+        ØªØ­Ø¯ÙŠØ« Ù…Ù‚Ø§ÙŠÙŠØ³ Ø§Ù„Ù…Ø·Ø¹Ù….
 
-        ✅ نستخدم RestaurantMetricsRepository
-        ✅ نستخدم increment/decrement بدلاً من update اليدوي
+        âœ… Ù†Ø³ØªØ®Ø¯Ù… RestaurantMetricsRepository
+        âœ… Ù†Ø³ØªØ®Ø¯Ù… increment/decrement Ø¨Ø¯Ù„Ø§Ù‹ Ù…Ù† update Ø§Ù„ÙŠØ¯ÙˆÙŠ
 
         Args:
-            restaurant_id: معرف المطعم
-            action: نوع الإجراء (category_created, category_deleted)
+            restaurant_id: Ù…Ø¹Ø±Ù Ø§Ù„Ù…Ø·Ø¹Ù…
+            action: Ù†ÙˆØ¹ Ø§Ù„Ø¥Ø¬Ø±Ø§Ø¡ (category_created, category_deleted)
         """
         try:
             if action == "category_created":
@@ -772,227 +794,11 @@ class CategoryService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE RESTAURANT CATEGORY (COMPATIBILITY)
-# ==============================================
-
-
-async def create_restaurant_category(
-    *,
-    restaurant_id: int,
-    category_name: str,
-    sort_order: int = 0,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء تصنيف جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        category_name: اسم التصنيف
-        sort_order: ترتيب العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف التصنيف
-
-    Raises:
-        ConflictError: إذا كان الاسم موجوداً مسبقاً
-    """
-    service = CategoryService(session=session)
-
-    category_data = CategoryCreate(
-        name=category_name,
-        sort_order=sort_order,
-    )
-
-    category = await service.create_category(
-        restaurant_id=restaurant_id,
-        category_data=category_data,
-    )
-
-    return category.id
-
-
-# ==============================================
-# GET CATEGORY (COMPATIBILITY)
-# ==============================================
-
-
-async def get_category(
-    *,
-    category_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على تصنيف بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        category_id: معرف التصنيف
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات التصنيف أو None
-    """
-    service = CategoryService(session=session)
-
-    try:
-        category = await service.get_by_id(category_id=category_id)
-        return category.model_dump()
-    except NotFoundError:
-        return None
-
-
-# ==============================================
-# GET CATEGORIES (COMPATIBILITY)
-# ==============================================
-
-
-async def get_categories(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على تصنيفات مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        List[Dict[str, Any]]: قائمة التصنيفات
-    """
-    service = CategoryService(session=session)
-
-    result = await service.get_by_restaurant(
-        restaurant_id=restaurant_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    return [item.model_dump() for item in result.items]
-
-
-# ==============================================
-# REMOVE CATEGORY (COMPATIBILITY)
-# ==============================================
-
-
-async def remove_category(
-    *,
-    category_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف تصنيف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        category_id: معرف التصنيف
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على التصنيف
-        ValidationError: إذا كان التصنيف يحتوي على منتجات
-    """
-    service = CategoryService(session=session)
-
-    await service.delete_category(category_id=category_id)
-
-    logger.info(
-        "category_deleted",
-        extra={"category_id": category_id},
-    )
-
-
-# ==============================================
-# GET CATEGORIES COUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_categories_count(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> int:
-    """
-    حساب عدد تصنيفات مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: عدد التصنيفات
-    """
-    service = CategoryService(session=session)
-
-    return await service.count_by_restaurant(
-        restaurant_id=restaurant_id,
-    )
-
-
-# ==============================================
-# REORDER CATEGORIES (COMPATIBILITY)
-# ==============================================
-
-
-async def reorder_categories(
-    *,
-    restaurant_id: int,
-    category_order: List[int],
-    session: AsyncSession,
-) -> None:
-    """
-    إعادة ترتيب التصنيفات (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        category_order: قائمة معرفات التصنيفات بالترتيب الجديد
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا كان أحد التصنيفات غير موجود
-        ValidationError: إذا كانت القائمة فارغة أو تحتوي على معرفات مكررة
-    """
-    service = CategoryService(session=session)
-
-    await service.reorder_categories(
-        restaurant_id=restaurant_id,
-        category_order=category_order,
-    )
-
-    logger.info(
-        "categories_reordered",
-        extra={
-            "restaurant_id": restaurant_id,
-            "category_count": len(category_order),
-        },
-    )
-
-
-# ==============================================
-# 📋 EXPORTS
-# ==============================================
 
 __all__ = [
-    "CategoryService",
-    "CATEGORY_FEATURE_ID",
+    "CATEGORY_FEATURE_CODE",
     "MAX_CATEGORIES_PER_RESTAURANT",
     "CategoryData",
     "CategoryList",
-    "create_restaurant_category",
-    "get_category",
-    "get_categories",
-    "remove_category",
-    "get_categories_count",
-    "reorder_categories",
+    "CategoryService",
 ]

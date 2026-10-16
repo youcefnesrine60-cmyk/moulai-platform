@@ -17,19 +17,25 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 import re
 
+from app.core.database import get_session
 from app.core.logger import logger
 from app.core.middleware.rate_limit import rate_limit
 
 from app.helpers.ui_manager import UIManager
 
-from app.repositories.state_repo import get_state, set_state
+from app.repositories.state_repo import (
+    get_state,
+    set_state,
+)
 
-from app.views.cart_ui import cart_ui, cart_item_ui, cart_empty_ui
+from app.views.cart_ui import (
+    cart_ui,
+    cart_item_ui,
+    cart_empty_ui,
+)
 from app.views.payment_ui import payment_ui
 
-from app.services.business.order_payments_service import (
-    get_allowed_payment_methods_for_order,
-)
+from app.services.business.order_payments_service import OrderPaymentsService
 
 # ==============================================
 # 🛒 SHOW CART
@@ -89,7 +95,7 @@ async def show_cart_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="🛒 السلة فارغة.",
@@ -100,7 +106,7 @@ async def show_cart_callback(
     # حساب المجموع الكلي
     total = sum(float(item.get("price", 0)) for item in cart)
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=f"🛒 سلة التسوق\n\nالمجموع الكلي: {total:.2f} دج",
@@ -182,7 +188,7 @@ async def cart_item_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ المنتج غير موجود في السلة.",
@@ -190,7 +196,7 @@ async def cart_item_callback(
         )
         return
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=f"📦 {item.get('name', 'منتج')}",
@@ -274,7 +280,7 @@ async def cart_increment_callback(
     # حساب المجموع الكلي
     total = sum(float(item.get("price", 0)) for item in cart)
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=f"🛒 سلة التسوق\n\nالمجموع الكلي: {total:.2f} دج",
@@ -364,7 +370,7 @@ async def cart_decrement_callback(
 
     # إذا أصبحت السلة فارغة
     if not cart:
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="🛒 السلة فارغة.",
@@ -375,7 +381,7 @@ async def cart_decrement_callback(
     # حساب المجموع الكلي
     total = sum(float(item.get("price", 0)) for item in cart)
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=f"🛒 سلة التسوق\n\nالمجموع الكلي: {total:.2f} دج",
@@ -456,7 +462,7 @@ async def cart_remove_callback(
 
     # إذا أصبحت السلة فارغة
     if not cart:
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="🛒 السلة فارغة.",
@@ -467,7 +473,7 @@ async def cart_remove_callback(
     # حساب المجموع الكلي
     total = sum(float(item.get("price", 0)) for item in cart)
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=f"🛒 سلة التسوق\n\nالمجموع الكلي: {total:.2f} دج",
@@ -532,7 +538,7 @@ async def cart_clear_callback(
         state=state,
     )
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text="🗑️ تم إفراغ السلة بنجاح.",
@@ -591,7 +597,7 @@ async def checkout_callback(
     cart = state.get("cart", [])
 
     if not cart:
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="🛒 السلة فارغة. أضف منتجات أولاً.",
@@ -612,7 +618,7 @@ async def checkout_callback(
                 "chat_id": chat_id,
             },
         )
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ حدث خطأ. يرجى المحاولة مرة أخرى.",
@@ -621,13 +627,12 @@ async def checkout_callback(
         return
 
     # جلب طرق الدفع المسموح بها للمطعم
-    allowed_methods = await get_allowed_payment_methods_for_order(
-        order_id=state.get("order_id", 0),
-    )
-
-    # إذا لم توجد طرق دفع مسموح بها، نستخدم الافتراضية
-    if not allowed_methods:
-        allowed_methods = {"cash", "card"}
+    async with await get_session() as session:
+        allowed_methods = await OrderPaymentsService(
+            session=session
+        ).get_allowed_methods_for_order(
+            order_id=state.get("order_id", 0),
+        )
 
     logger.info(
         "checkout_allowed_methods",
@@ -637,12 +642,10 @@ async def checkout_callback(
         },
     )
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
-        text=(
-            f"💳 الدفع\n\n" f"المجموع الكلي: {total:.2f} دج\n\n" f"اختر طريقة الدفع:"
-        ),
+        text=(f"💳 الدفع\n\nالمجموع الكلي: {total:.2f} دج\n\nاختر طريقة الدفع:"),
         reply_markup=await payment_ui(
             allowed_methods=allowed_methods,
             order_id=state.get("order_id", 0),

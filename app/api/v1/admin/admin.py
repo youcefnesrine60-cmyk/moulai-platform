@@ -29,6 +29,7 @@ from fastapi import (
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
+from app.api.auth import require_admin_permission
 from app.core.logger import logger
 from app.core.exceptions import (
     ConflictError,
@@ -51,6 +52,7 @@ from app.services.business.admin.admin_service import AdminService
 router = APIRouter(
     prefix="/admins",
     tags=["Admins"],
+    dependencies=[Depends(require_admin_permission("admins.manage"))],
 )
 
 

@@ -24,6 +24,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.owner import Owner
+
 # ==============================================
 # 🏪 TEST RESTAURANTS API
 # ==============================================
@@ -62,37 +64,21 @@ class TestRestaurantsAPI:
     # 🔧 HELPER FUNCTIONS
     # ==========================================
 
-    async def _create_test_owner_via_api(
+    async def _create_test_owner(
         self,
-        client: AsyncClient,
         sample_owner_data: Dict[str, Any],
     ) -> int:
+        """Persist owner fixtures without weakening administrative API permissions.
+
+        Restaurant tests exercise their own HTTP endpoints. Owner provisioning
+        belongs to the authenticated administration workflow and is covered by
+        owner API tests.
         """
-        إنشاء مالك عبر API.
-
-        ✅ استخدام API بدلاً من DB المباشر
-
-        Args:
-            client: عميل HTTP غير متزامن
-            sample_owner_data: بيانات المالك
-
-        Returns:
-            int: معرف المالك المنشأ
-        """
-        response = await client.post("/api/v1/owners/", json=sample_owner_data)
-
-        # إذا فشل الإنشاء، نحاول مرة أخرى مع بيانات فريدة
-        if response.status_code != 201:
-            # تعديل البيانات لجعلها فريدة
-            import time
-
-            unique_id = int(time.time() * 1000) % 1000000000
-            sample_owner_data["chat_id"] = unique_id
-            sample_owner_data["email"] = f"owner_{unique_id}@example.com"
-            response = await client.post("/api/v1/owners/", json=sample_owner_data)
-
-        assert response.status_code == 201
-        return response.json()["id"]
+        owner = Owner(**sample_owner_data)
+        self.db_session.add(owner)
+        await self.db_session.commit()
+        await self.db_session.refresh(owner)
+        return owner.id
 
     # ==========================================
     # 📖 GET ENDPOINTS TESTS
@@ -136,8 +122,7 @@ class TestRestaurantsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 
@@ -181,8 +166,7 @@ class TestRestaurantsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 
@@ -219,8 +203,7 @@ class TestRestaurantsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 
@@ -252,8 +235,7 @@ class TestRestaurantsAPI:
             client: عميل HTTP غير متزامن للاختبار
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 
@@ -286,8 +268,7 @@ class TestRestaurantsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 
@@ -348,8 +329,7 @@ class TestRestaurantsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 
@@ -414,8 +394,7 @@ class TestRestaurantsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 
@@ -488,8 +467,7 @@ class TestRestaurantsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 
@@ -531,8 +509,7 @@ class TestRestaurantsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 
@@ -596,8 +573,7 @@ class TestRestaurantsAPI:
             sample_restaurant_data: بيانات مطعم نموذجية
             sample_owner_data: بيانات مالك نموذجية
         """
-        owner_id: int = await self._create_test_owner_via_api(
-            client=client,
+        owner_id: int = await self._create_test_owner(
             sample_owner_data=sample_owner_data,
         )
 

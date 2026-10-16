@@ -17,15 +17,13 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 import re
 
+from app.core.database import get_session
 from app.core.logger import logger
 from app.core.middleware.rate_limit import rate_limit
-
 from app.helpers.ui_manager import UIManager
-
-from app.repositories.restaurant.restaurant_repo import get_restaurant_by_id
-from app.repositories.branches_repo import get_restaurant_branches
-from app.repositories.products_repo import count_restaurant_products
-
+from app.repositories.branches_repo import BranchesRepository
+from app.repositories.products_repo import ProductRepository
+from app.repositories.restaurant.restaurant_repo import RestaurantRepository
 from app.views.ui import button
 
 # ==============================================
@@ -75,12 +73,29 @@ async def restaurant_details_callback(
     )
 
     # جلب بيانات المطعم
-    restaurant = await get_restaurant_by_id(
-        restaurant_id=restaurant_id,
+    async with await get_session() as session:
+        restaurant_model = await RestaurantRepository(session).get_by_id(
+            id=restaurant_id
+        )
+        branch_models = await BranchesRepository(session).get_by_restaurant_id(
+            restaurant_id=restaurant_id,
+        )
+        products_count = await ProductRepository(session).count_by_restaurant(
+            restaurant_id=restaurant_id,
+        )
+
+    restaurant = (
+        {
+            "name": restaurant_model.name,
+            "phone": restaurant_model.phone,
+            "wilaya": restaurant_model.wilaya,
+        }
+        if restaurant_model is not None
+        else None
     )
 
     if not restaurant:
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ المطعم غير موجود.",
@@ -89,14 +104,15 @@ async def restaurant_details_callback(
         return
 
     # جلب الفروع
-    branches = await get_restaurant_branches(
-        restaurant_id=restaurant_id,
-    )
+    branches = [
+        {
+            "name": branch.name,
+            "wilaya": branch.wilaya,
+        }
+        for branch in branch_models
+    ]
 
     # جلب عدد المنتجات
-    products_count = await count_restaurant_products(
-        restaurant_id=restaurant_id,
-    )
 
     # بناء الرسالة
     branches_text = (
@@ -138,7 +154,7 @@ async def restaurant_details_callback(
         ],
     ]
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=text,

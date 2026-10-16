@@ -31,9 +31,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import (
@@ -80,8 +77,8 @@ MAX_PRODUCT_PRICE = 10000000.0  # 10,000,000 DZD
 # 🧩 TYPES
 # ==============================================
 
-ProductData = Dict[str, Any]
-ProductList = List[Product]
+ProductData = dict[str, Any]
+ProductList = list[Product]
 
 # ==============================================
 # 🍔 PRODUCT SERVICE
@@ -307,7 +304,7 @@ class ProductService:
         self,
         *,
         query: str,
-        restaurant_id: Optional[int] = None,
+        restaurant_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> ProductListResponse:
@@ -359,7 +356,7 @@ class ProductService:
         self,
         *,
         product_id: int,
-    ) -> Optional[Product]:
+    ) -> Product | None:
         """
         الحصول على منتج مع جميع علاقاته.
 
@@ -963,316 +960,3 @@ class ProductService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE RESTAURANT PRODUCT (COMPATIBILITY)
-# ==============================================
-
-
-async def create_restaurant_product(
-    *,
-    restaurant_id: int,
-    category_id: int,
-    product_name: str,
-    description: Optional[str],
-    price: float,
-    image_url: Optional[str] = None,
-    sort_order: int = 0,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء منتج جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        category_id: معرف التصنيف
-        product_name: اسم المنتج
-        description: وصف المنتج
-        price: السعر
-        image_url: رابط الصورة
-        sort_order: ترتيب العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف المنتج
-
-    Raises:
-        ConflictError: إذا كان الاسم مكرراً
-        ValidationError: إذا كانت البيانات غير صالحة
-    """
-    service = ProductService(session=session)
-
-    product_data = ProductCreate(
-        category_id=category_id,
-        name=product_name,
-        description=description,
-        price=price,
-        image_url=image_url,
-        sort_order=sort_order,
-    )
-
-    product = await service.create_product(
-        product_data=product_data,
-        restaurant_id=restaurant_id,
-    )
-
-    return product.id
-
-
-# ==============================================
-# GET PRODUCT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_product(
-    *,
-    product_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على منتج بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات المنتج أو None
-    """
-    service = ProductService(session=session)
-
-    try:
-        product = await service.get_by_id(product_id=product_id)
-        return product.model_dump()
-    except NotFoundError:
-        return None
-
-
-# ==============================================
-# GET PRODUCTS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_products(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    only_available: bool = True,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على منتجات مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        only_available: جلب المنتجات المتاحة فقط
-
-    Returns:
-        List[Dict[str, Any]]: قائمة المنتجات
-    """
-    service = ProductService(session=session)
-
-    result = await service.get_by_restaurant(
-        restaurant_id=restaurant_id,
-        only_available=only_available,
-    )
-
-    return [item.model_dump() for item in result.items]
-
-
-# ==============================================
-# EDIT PRODUCT (COMPATIBILITY)
-# ==============================================
-
-
-async def edit_product(
-    *,
-    product_id: int,
-    product_name: str,
-    description: Optional[str],
-    price: float,
-    image_url: Optional[str],
-    sort_order: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث منتج (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        product_name: اسم المنتج
-        description: وصف المنتج
-        price: السعر
-        image_url: رابط الصورة
-        sort_order: ترتيب العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المنتج
-        ConflictError: إذا كان الاسم مكرراً
-    """
-    service = ProductService(session=session)
-
-    update_data = ProductUpdate(
-        name=product_name,
-        description=description,
-        price=price,
-        image_url=image_url,
-        sort_order=sort_order,
-    )
-
-    await service.update_product(
-        product_id=product_id,
-        update_data=update_data,
-    )
-
-    logger.info(
-        "product_updated",
-        extra={"product_id": product_id},
-    )
-
-
-# ==============================================
-# ENABLE PRODUCT (COMPATIBILITY)
-# ==============================================
-
-
-async def enable_product(
-    *,
-    product_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تفعيل منتج (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المنتج
-    """
-    service = ProductService(session=session)
-
-    await service.enable_product(product_id=product_id)
-
-    logger.info(
-        "product_enabled",
-        extra={"product_id": product_id},
-    )
-
-
-# ==============================================
-# DISABLE PRODUCT (COMPATIBILITY)
-# ==============================================
-
-
-async def disable_product(
-    *,
-    product_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء تفعيل منتج (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المنتج
-    """
-    service = ProductService(session=session)
-
-    await service.disable_product(product_id=product_id)
-
-    logger.info(
-        "product_disabled",
-        extra={"product_id": product_id},
-    )
-
-
-# ==============================================
-# REMOVE PRODUCT (COMPATIBILITY)
-# ==============================================
-
-
-async def remove_product(
-    *,
-    product_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف منتج (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المنتج
-        ValidationError: إذا كان المنتج مرتبطاً بطلبات
-    """
-    service = ProductService(session=session)
-
-    await service.delete_product(product_id=product_id)
-
-    logger.info(
-        "product_deleted",
-        extra={"product_id": product_id},
-    )
-
-
-# ==============================================
-# GET PRODUCTS COUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_products_count(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    only_available: bool = True,
-) -> int:
-    """
-    حساب عدد منتجات مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        only_available: حساب المنتجات المتاحة فقط
-
-    Returns:
-        int: عدد المنتجات
-    """
-    service = ProductService(session=session)
-
-    return await service.count_by_restaurant(
-        restaurant_id=restaurant_id,
-        only_available=only_available,
-    )
-
-
-# ==============================================
-# 📋 EXPORTS
-# ==============================================
-
-__all__ = [
-    "ProductService",
-    "PRODUCT_FEATURE_ID",
-    "MAX_PRODUCTS_PER_RESTAURANT",
-    "MAX_PRODUCT_PRICE",
-    "ProductData",
-    "ProductList",
-    "create_restaurant_product",
-    "get_product",
-    "get_products",
-    "edit_product",
-    "enable_product",
-    "disable_product",
-    "remove_product",
-    "get_products_count",
-]

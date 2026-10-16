@@ -30,8 +30,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    Optional,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,7 +52,7 @@ from app.schemas.restaurant.restaurant_metric import (
 # 🧩 TYPES
 # ==============================================
 
-MetricsDict = Dict[str, Any]
+MetricsDict = dict[str, Any]
 
 # ==============================================
 # 📊 RESTAURANT METRICS SERVICE
@@ -142,7 +140,7 @@ class RestaurantMetricsService:
         self,
         *,
         restaurant_id: int,
-    ) -> Optional[MetricsDict]:
+    ) -> MetricsDict | None:
         """
         الحصول على مقاييس مطعم معين كقاموس.
 
@@ -414,105 +412,10 @@ class RestaurantMetricsService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# GET METRICS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_metrics(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> Optional[MetricsDict]:
-    """
-    الحصول على مقاييس مطعم معين كقاموس.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[MetricsDict]: قاموس مقاييس المطعم أو None
-    """
-    service = RestaurantMetricsService(session=session)
-
-    return await service.get_metrics_dict(
-        restaurant_id=restaurant_id,
-    )
-
-
-# ==============================================
-# INITIALIZE METRICS (COMPATIBILITY)
-# ==============================================
-
-
-async def initialize_metrics(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تهيئة مقاييس مطعم جديد.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        ValidationError: إذا كانت المقاييس موجودة مسبقاً
-    """
-    service = RestaurantMetricsService(session=session)
-
-    await service.initialize_metrics(restaurant_id=restaurant_id)
-
-    logger.info(
-        "metrics_initialized",
-        extra={"restaurant_id": restaurant_id},
-    )
-
-
-# ==============================================
-# RESET METRICS (COMPATIBILITY)
-# ==============================================
-
-
-async def reset_metrics(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إعادة تعيين مقاييس مطعم معين إلى الصفر.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المقاييس
-    """
-    service = RestaurantMetricsService(session=session)
-
-    await service.reset_metrics(restaurant_id=restaurant_id)
-
-    logger.info(
-        "metrics_reset",
-        extra={"restaurant_id": restaurant_id},
-    )
-
-
-# ==============================================
 # 📋 EXPORTS
 # ==============================================
 
 __all__ = [
-    "RestaurantMetricsService",
     "MetricsDict",
-    "get_metrics",
-    "initialize_metrics",
-    "reset_metrics",
+    "RestaurantMetricsService",
 ]

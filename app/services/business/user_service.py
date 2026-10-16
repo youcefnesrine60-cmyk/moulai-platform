@@ -17,9 +17,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,35 +27,34 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان
 from app.core.security import (
     sanitize_input,
 )
-
-from app.core.logger import logger
 from app.models.user import User
 from app.repositories.user_repo import UserRepository
 
 # ✅ استيراد المخططات
 from app.schemas.user import (
-    UserCreate,
-    UserResponse,
-    UserUpdate,
     UserConsentUpdate,
+    UserCreate,
     UserListResponse,
-    UserSummary,
+    UserResponse,
     UserSearch,
+    UserSummary,
+    UserUpdate,
 )
 
 # ==============================================
 # 🧩 TYPES
 # ==============================================
 
-UserData = Dict[str, Any]
-UserUpdateData = Dict[str, Any]
-UserList = List[User]
-UserStats = Dict[str, Any]
+UserData = dict[str, Any]
+UserUpdateData = dict[str, Any]
+UserList = list[User]
+UserStats = dict[str, Any]
 
 
 # ==============================================
@@ -147,7 +143,7 @@ class UserService:
         self,
         *,
         chat_id: int,
-    ) -> Optional[UserResponse]:
+    ) -> UserResponse | None:
         """
         الحصول على مستخدم بواسطة chat_id.
 
@@ -179,7 +175,7 @@ class UserService:
         self,
         *,
         phone: str,
-    ) -> Optional[UserResponse]:
+    ) -> UserResponse | None:
         """
         الحصول على مستخدم بواسطة رقم الهاتف.
 
@@ -215,7 +211,7 @@ class UserService:
         name: str,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[UserResponse]:
+    ) -> list[UserResponse]:
         """
         البحث عن مستخدمين بواسطة الاسم.
 
@@ -300,7 +296,7 @@ class UserService:
         has_consent: bool = True,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[UserResponse]:
+    ) -> list[UserResponse]:
         """
         الحصول على المستخدمين حسب حالة الموافقة.
 
@@ -834,8 +830,8 @@ class UserService:
         self,
         *,
         chat_id: int,
-        customer_name: Optional[str] = None,
-        customer_phone: Optional[str] = None,
+        customer_name: str | None = None,
+        customer_phone: str | None = None,
         consent: bool = False,
     ) -> UserResponse:
         """
@@ -958,225 +954,3 @@ class UserService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# GET OR CREATE USER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_or_create_user(
-    *,
-    chat_id: int,
-    customer_name: Optional[str] = None,
-    customer_phone: Optional[str] = None,
-    consent: bool = False,
-    session: AsyncSession,
-) -> int:
-    """
-    الحصول على مستخدم أو إنشاؤه (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        customer_name: اسم العميل (اختياري)
-        customer_phone: رقم هاتف العميل (اختياري)
-        consent: حالة الموافقة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف المستخدم
-    """
-    service = UserService(session=session)
-
-    user = await service.upsert_user(
-        chat_id=chat_id,
-        customer_name=customer_name,
-        customer_phone=customer_phone,
-        consent=consent,
-    )
-
-    return user.id
-
-
-# ==============================================
-# GET USER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_user(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مستخدم بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات المستخدم أو None
-    """
-    service = UserService(session=session)
-
-    user = await service.get_by_chat_id(chat_id=chat_id)
-
-    if not user:
-        return None
-
-    return user.model_dump()
-
-
-# ==============================================
-# HAS USER CONSENT (COMPATIBILITY)
-# ==============================================
-
-
-async def has_user_consent(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق من موافقة المستخدم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        bool: True إذا كان لديه موافقة
-    """
-    service = UserService(session=session)
-
-    return await service.has_consent(chat_id=chat_id)
-
-
-# ==============================================
-# GIVE USER CONSENT (COMPATIBILITY)
-# ==============================================
-
-
-async def give_user_consent(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> int:
-    """
-    منح موافقة المستخدم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف المستخدم
-    """
-    service = UserService(session=session)
-
-    user = await service.give_consent(chat_id=chat_id)
-
-    return user.id
-
-
-# ==============================================
-# REVOKE USER CONSENT (COMPATIBILITY)
-# ==============================================
-
-
-async def revoke_user_consent(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء موافقة المستخدم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المستخدم
-    """
-    service = UserService(session=session)
-
-    await service.revoke_consent(chat_id=chat_id)
-
-    logger.info(
-        "user_consent_revoked",
-        extra={"chat_id": chat_id},
-    )
-
-
-# ==============================================
-# UPDATE USER NAME (COMPATIBILITY)
-# ==============================================
-
-
-async def update_user_name(
-    *,
-    chat_id: int,
-    customer_name: str,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث اسم المستخدم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        customer_name: اسم العميل الجديد
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المستخدم
-    """
-    service = UserService(session=session)
-
-    await service.update_name(
-        chat_id=chat_id,
-        customer_name=customer_name,
-    )
-
-    logger.info(
-        "user_name_updated",
-        extra={"chat_id": chat_id},
-    )
-
-
-# ==============================================
-# UPDATE USER PHONE (COMPATIBILITY)
-# ==============================================
-
-
-async def update_user_phone(
-    *,
-    chat_id: int,
-    customer_phone: str,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث رقم هاتف المستخدم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        customer_phone: رقم الهاتف الجديد
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المستخدم
-    """
-    service = UserService(session=session)
-
-    await service.update_phone(
-        chat_id=chat_id,
-        customer_phone=customer_phone,
-    )
-
-    logger.info(
-        "user_phone_updated",
-        extra={"chat_id": chat_id},
-    )

@@ -307,38 +307,3 @@ async def bulk_cancel_orders(
     )
 
     return results
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# ==============================================
-
-
-# دالة التوافق مع الإصدار القديم
-# ==============================================
-# CANCEL ORDER COMPAT
-# ==============================================
-
-
-async def cancel_order_compat(
-    *,
-    order_id: int,
-    employee_id: Optional[int] = None,
-    reason: Optional[str] = None,
-    session: AsyncSession,
-) -> None:
-    """
-    دالة متوافقة مع الإصدار القديم (مغلفة).
-
-    Args:
-        order_id: معرف الطلب
-        employee_id: معرف الموظف (اختياري)
-        reason: سبب الإلغاء (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    await cancel_order(
-        order_id=order_id,
-        employee_id=employee_id,
-        reason=reason,
-        session=session,
-    )

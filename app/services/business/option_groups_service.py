@@ -17,9 +17,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
+    TypeAlias,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,24 +28,22 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان
-from app.core.security import (
-    sanitize_input,
-)
-
-from app.core.logger import logger
+from app.core.security import sanitize_input
 from app.models.option_group import OptionGroup
 from app.repositories.option_groups_repo import OptionGroupsRepository
+from app.repositories.product_option_repo import ProductOptionRepository
 from app.repositories.products_repo import ProductRepository
 
 # ✅ استيراد المخططات
 from app.schemas.option_group import (
     OptionGroupCreate,
     OptionGroupResponse,
+    OptionGroupSummary,
     OptionGroupUpdate,
     OptionGroupWithOptionsResponse,
-    OptionGroupSummary,
 )
 
 # ==============================================
@@ -61,9 +57,9 @@ MAX_OPTION_GROUPS_PER_PRODUCT = 10
 # 🧩 TYPES
 # ==============================================
 
-OptionGroupData = Dict[str, Any]
-OptionGroupUpdateData = Dict[str, Any]
-OptionGroupList = List[OptionGroup]
+OptionGroupData: TypeAlias = dict[str, Any]
+OptionGroupUpdateData: TypeAlias = dict[str, Any]
+OptionGroupList: TypeAlias = list[OptionGroup]
 
 
 # ==============================================
@@ -104,6 +100,7 @@ class OptionGroupsService:
         self.session = session
         self.repo = OptionGroupsRepository(session)
         self.product_repo = ProductRepository(session)
+        self.option_repo = ProductOptionRepository(session=session)
 
     # ==========================================
     # 📖 QUERIES
@@ -156,7 +153,7 @@ class OptionGroupsService:
         product_id: int,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[OptionGroupResponse]:
+    ) -> list[OptionGroupResponse]:
         """
         الحصول على مجموعات خيارات منتج معين.
 
@@ -230,7 +227,7 @@ class OptionGroupsService:
         self,
         *,
         product_id: int,
-    ) -> List[OptionGroupResponse]:
+    ) -> list[OptionGroupResponse]:
         """
         الحصول على مجموعات الخيارات الإجبارية لمنتج معين.
 
@@ -259,10 +256,10 @@ class OptionGroupsService:
         self,
         *,
         query: str,
-        product_id: Optional[int] = None,
+        product_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[OptionGroupResponse]:
+    ) -> list[OptionGroupResponse]:
         """
         البحث عن مجموعات خيارات.
 
@@ -422,7 +419,7 @@ class OptionGroupsService:
 
         # التحقق من وجود المنتج
         product = await self.product_repo.get_by_id(
-            restaurant_id=group_data.product_id,
+            id=group_data.product_id,
         )
 
         if not product:
@@ -522,7 +519,7 @@ class OptionGroupsService:
         updates = update_data.model_dump(exclude_unset=True)
 
         # تنظيف الاسم إذا تم تغييره
-        if "name" in updates:
+        if updates.get("name") is not None:
             updates["name"] = sanitize_input(updates["name"])
 
             # التحقق من عدم وجود اسم مكرر
@@ -743,8 +740,9 @@ class OptionGroupsService:
             )
 
         # التحقق من عدم وجود خيارات في هذه المجموعة
-        options_count = await self.repo.count_options_in_group(
+        options_count = await self.option_repo.count_by_group(
             group_id=group_id,
+            only_available=False,
         )
 
         if options_count > 0:
@@ -792,7 +790,7 @@ class OptionGroupsService:
 
         # التحقق من وجود المنتج
         product = await self.product_repo.get_by_id(
-            restaurant_id=product_id,
+            id=product_id,
         )
 
         if not product:
@@ -823,7 +821,7 @@ class OptionGroupsService:
         self,
         *,
         product_id: int,
-        group_order: List[int],
+        group_order: list[int],
     ) -> None:
         """
         إعادة ترتيب مجموعات الخيارات.
@@ -855,8 +853,8 @@ class OptionGroupsService:
                 message="قائمة ترتيب مجموعات الخيارات تحتوي على معرفات مكررة",
             )
 
-        # تحديث ترتيب كل مجموعة
-        for index, group_id in enumerate(group_order):
+        # Validate the complete product scope before writing any sort order.
+        for group_id in group_order:
             group = await self.repo.get_by_id(id=group_id)
 
             if not group:
@@ -869,6 +867,8 @@ class OptionGroupsService:
                     message=f"مجموعة الخيارات '{group_id}' لا تنتمي لهذا المنتج",
                 )
 
+        # Update only groups proven to belong to the requested product.
+        for index, group_id in enumerate(group_order):
             await self.repo.update_sort_order(
                 group_id=group_id,
                 sort_order=index,
@@ -884,176 +884,3 @@ class OptionGroupsService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE OPTION GROUP (COMPATIBILITY)
-# ==============================================
-
-
-async def create_option_group(
-    *,
-    product_id: int,
-    name: str,
-    required: bool = False,
-    multiple_choice: bool = False,
-    sort_order: int = 0,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء مجموعة خيارات جديدة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        name: اسم مجموعة الخيارات
-        required: هل المجموعة إجبارية
-        multiple_choice: هل يسمح باختيار متعدد
-        sort_order: ترتيب العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف مجموعة الخيارات
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المنتج
-        ConflictError: إذا كان الاسم موجوداً مسبقاً
-    """
-    service = OptionGroupsService(session=session)
-
-    group_data = OptionGroupCreate(
-        product_id=product_id,
-        name=name,
-        required=required,
-        multiple_choice=multiple_choice,
-        sort_order=sort_order,
-    )
-
-    group = await service.create_group(
-        group_data=group_data,
-    )
-
-    return group.id
-
-
-# ==============================================
-# GET OPTION GROUP (COMPATIBILITY)
-# ==============================================
-
-
-async def get_option_group(
-    *,
-    group_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مجموعة خيارات بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        group_id: معرف مجموعة الخيارات
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات المجموعة أو None
-    """
-    service = OptionGroupsService(session=session)
-
-    try:
-        group = await service.get_by_id(group_id=group_id)
-        return group.model_dump()
-    except NotFoundError:
-        return None
-
-
-# ==============================================
-# GET OPTION GROUPS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_option_groups(
-    *,
-    product_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على مجموعات خيارات منتج معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        List[Dict[str, Any]]: قائمة مجموعات الخيارات
-    """
-    service = OptionGroupsService(session=session)
-
-    groups = await service.get_by_product(
-        product_id=product_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    return [group.model_dump() for group in groups]
-
-
-# ==============================================
-# DELETE OPTION GROUP (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_option_group(
-    *,
-    group_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف مجموعة خيارات (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        group_id: معرف مجموعة الخيارات
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المجموعة
-        ValidationError: إذا كانت المجموعة تحتوي على خيارات
-    """
-    service = OptionGroupsService(session=session)
-
-    await service.delete_group(group_id=group_id)
-
-    logger.info(
-        "option_group_deleted",
-        extra={"group_id": group_id},
-    )
-
-
-# ==============================================
-# GET OPTION GROUPS COUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_option_groups_count(
-    *,
-    product_id: int,
-    session: AsyncSession,
-) -> int:
-    """
-    حساب عدد مجموعات الخيارات لمنتج معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: عدد مجموعات الخيارات
-    """
-    service = OptionGroupsService(session=session)
-
-    return await service.count_by_product(
-        product_id=product_id,
-    )

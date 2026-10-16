@@ -183,7 +183,7 @@ async def payment_confirmation_ui(
         "inline_keyboard": [
             [
                 await button(
-                    text=f"💳 تأكيد الدفع ({payment_method})",
+                    text=f"💳 تسجيل طلب الدفع ({payment_method})",
                     callback=f"payment_confirm_{order_id}",
                 ),
             ],
@@ -313,4 +313,13 @@ async def payment_failed_ui(
                 ),
             ],
         ],
+    }
+
+
+async def payment_pending_ui(*, order_id: int) -> dict:
+    """Navigation after submitting a request that has not been settled."""
+    return {
+        "inline_keyboard": [
+            [await button(text="📦 متابعة الطلب", callback=f"track_order_{order_id}")]
+        ]
     }

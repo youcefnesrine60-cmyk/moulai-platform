@@ -17,9 +17,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
+    TypeAlias,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,30 +28,24 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان
-from app.core.security import (
-    sanitize_input,
-)
-
-from app.core.logger import logger
+from app.core.security import sanitize_input
 from app.models.registration_request import RegistrationRequest
-from app.repositories.registration_request_repo import (
-    RegistrationRequestRepository,
-)
+from app.repositories.registration_request_repo import RegistrationRequestRepository
 from app.repositories.restaurant.restaurant_repo import RestaurantRepository
-from app.services.business.owner_service import OwnerService
-from app.services.business.subscription_service import (
-    SubscriptionService,
-)
 
 # ✅ استيراد المخططات
 from app.schemas.registration_request import (
     RegistrationRequestCreate,
     RegistrationRequestResponse,
-    RegistrationRequestUpdate,
     RegistrationRequestStatusUpdate,
+    RegistrationRequestUpdate,
 )
+from app.schemas.owner import OwnerCreate
+from app.services.business.owner_service import OwnerService
+from app.services.business.subscription_service import SubscriptionService
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -67,10 +59,10 @@ MAX_REQUESTS_PER_CHAT = 3
 # 🧩 TYPES
 # ==============================================
 
-RegistrationResult = Dict[str, int]
-RegistrationData = Dict[str, Any]
-RegistrationUpdateData = Dict[str, Any]
-RegistrationList = List[RegistrationRequest]
+RegistrationResult: TypeAlias = dict[str, int]
+RegistrationData: TypeAlias = dict[str, Any]
+RegistrationUpdateData: TypeAlias = dict[str, Any]
+RegistrationList: TypeAlias = list[RegistrationRequest]
 
 
 # ==============================================
@@ -112,9 +104,9 @@ class RegistrationRequestService:
         """
         self.session = session
         self.repo = RegistrationRequestRepository(session)
-        self.owner_service = OwnerService(session)
+        self.owner_service = OwnerService(session=session)
         self.restaurant_repo = RestaurantRepository(session)
-        self.subscription_service = SubscriptionService(session)
+        self.subscription_service = SubscriptionService(session=session)
 
     # ==========================================
     # 📖 QUERIES
@@ -147,7 +139,7 @@ class RegistrationRequestService:
         )
 
         request = await self.repo.get_by_id(
-            request_id=request_id,
+            id=request_id,
         )
 
         if not request:
@@ -165,7 +157,7 @@ class RegistrationRequestService:
         self,
         *,
         chat_id: int,
-    ) -> Optional[RegistrationRequestResponse]:
+    ) -> RegistrationRequestResponse | None:
         """
         الحصول على طلب تسجيل بواسطة chat_id.
 
@@ -199,7 +191,7 @@ class RegistrationRequestService:
         chat_id: int,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[RegistrationRequestResponse]:
+    ) -> list[RegistrationRequestResponse]:
         """
         الحصول على جميع طلبات التسجيل لمستخدم معين.
 
@@ -238,7 +230,7 @@ class RegistrationRequestService:
         status: str,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[RegistrationRequestResponse]:
+    ) -> list[RegistrationRequestResponse]:
         """
         الحصول على طلبات التسجيل حسب الحالة.
 
@@ -288,7 +280,7 @@ class RegistrationRequestService:
         *,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[RegistrationRequestResponse]:
+    ) -> list[RegistrationRequestResponse]:
         """
         الحصول على طلبات التسجيل المعلقة.
 
@@ -323,7 +315,7 @@ class RegistrationRequestService:
         *,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[RegistrationRequestResponse]:
+    ) -> list[RegistrationRequestResponse]:
         """
         الحصول على جميع طلبات التسجيل.
 
@@ -359,7 +351,7 @@ class RegistrationRequestService:
         query: str,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[RegistrationRequestResponse]:
+    ) -> list[RegistrationRequestResponse]:
         """
         البحث عن طلبات التسجيل.
 
@@ -580,7 +572,7 @@ class RegistrationRequestService:
         )
 
         # التحقق من وجود الطلب
-        existing = await self.repo.get_by_id(request_id=request_id)
+        existing = await self.repo.get_by_id(id=request_id)
 
         if not existing:
             raise NotFoundError(
@@ -601,16 +593,16 @@ class RegistrationRequestService:
         updates = update_data.model_dump(exclude_unset=True)
 
         # تنظيف البيانات
-        if "full_name" in updates:
+        if updates.get("full_name") is not None:
             updates["full_name"] = sanitize_input(updates["full_name"])
 
-        if "restaurant_name" in updates:
+        if updates.get("restaurant_name") is not None:
             updates["restaurant_name"] = sanitize_input(updates["restaurant_name"])
 
-        if "restaurant_type" in updates:
+        if updates.get("restaurant_type") is not None:
             updates["restaurant_type"] = sanitize_input(updates["restaurant_type"])
 
-        if "email" in updates:
+        if updates.get("email") is not None:
             updates["email"] = sanitize_input(updates["email"])
             if updates["email"] and "@" not in updates["email"]:
                 raise ValidationError(
@@ -624,7 +616,7 @@ class RegistrationRequestService:
 
         # تحديث الطلب
         request = await self.repo.update(
-            request_id=request_id,
+            id=request_id,
             data=updates,
         )
 
@@ -684,7 +676,7 @@ class RegistrationRequestService:
         )
 
         # التحقق من وجود الطلب
-        existing = await self.repo.get_by_id(request_id=request_id)
+        existing = await self.repo.get_by_id(id=request_id)
 
         if not existing:
             raise NotFoundError(
@@ -701,7 +693,7 @@ class RegistrationRequestService:
             request = await self.repo.reject(request_id=request_id)
         else:
             request = await self.repo.update(
-                request_id=request_id,
+                id=request_id,
                 data={"status": status},
             )
 
@@ -728,7 +720,7 @@ class RegistrationRequestService:
         self,
         *,
         request_id: int,
-        owner_id: Optional[int] = None,
+        owner_id: int | None = None,
     ) -> RegistrationRequestResponse:
         """
         الموافقة على طلب التسجيل وإنشاء المالك والمطعم والاشتراك.
@@ -753,7 +745,7 @@ class RegistrationRequestService:
         )
 
         # 1️⃣ الحصول على الطلب
-        request = await self.repo.get_by_id(request_id=request_id)
+        request = await self.repo.get_by_id(id=request_id)
 
         if not request:
             raise NotFoundError(
@@ -770,23 +762,40 @@ class RegistrationRequestService:
                 message=f"طلب التسجيل #{request_id} مرفوض، لا يمكن اعتماده",
             )
 
-        # 2️⃣ إنشاء المالك (إذا لم يتم توفير owner_id)
-        if owner_id is None:
-            owner = await self.owner_service.create_owner(
-                owner_data={
-                    "chat_id": request.chat_id,
-                    "full_name": request.full_name,
-                    "phone": request.owner_phone,
-                    "email": request.email or "",
-                    "registration_status": "pending",
-                    "trial_used": False,
-                },
+        # 2️⃣ Resolve the owner using the request's persisted Telegram identity.
+        resolved_owner_id = owner_id if owner_id is not None else request.owner_id
+        if resolved_owner_id is not None:
+            owner = await self.owner_service.get_owner_by_id(owner_id=resolved_owner_id)
+            if owner.chat_id != request.chat_id:
+                raise ValidationError(
+                    message="Registration owner does not match the request identity",
+                )
+        else:
+            owner = await self.owner_service.get_owner_by_chat_id(
+                chat_id=request.chat_id
             )
-            owner_id = owner.id
+
+        if owner is None:
+            owner = await self.owner_service.create_owner(
+                owner_data=OwnerCreate(
+                    chat_id=request.chat_id,
+                    full_name=request.full_name,
+                    phone=request.owner_phone,
+                    email=request.email,
+                    registration_status="pending",
+                    trial_used=False,
+                ),
+            )
 
             logger.info(
                 "owner_created_during_approval",
-                extra={"owner_id": owner_id},
+                extra={"owner_id": owner.id},
+            )
+
+        owner_id = owner.id
+        if request.owner_id is not None and request.owner_id != owner_id:
+            raise ValidationError(
+                message="Registration request is linked to another owner",
             )
 
         # 3️⃣ إنشاء المطعم
@@ -809,10 +818,7 @@ class RegistrationRequestService:
             extra={"restaurant_id": restaurant_id},
         )
 
-        # 4️⃣ إنشاء مقاييس المطعم
-        # (سيتم إنشاؤها تلقائياً عبر trigger أو يمكن إضافتها يدوياً)
-
-        # 5️⃣ إنشاء اشتراك تجريبي
+        # 4️⃣ إنشاء اشتراك تجريبي
         subscription = await self.subscription_service.create_trial_subscription(
             owner_id=owner_id,
             restaurant_id=restaurant_id,
@@ -824,10 +830,10 @@ class RegistrationRequestService:
             extra={"subscription_id": subscription_id},
         )
 
-        # 6️⃣ تحديث المالك إلى approved
+        # 5️⃣ تحديث المالك إلى approved
         await self.owner_service.approve_owner(owner_id=owner_id)
 
-        # 7️⃣ تحديث طلب التسجيل إلى approved
+        # 6️⃣ تحديث طلب التسجيل إلى approved
         updated_request = await self.repo.approve(
             request_id=request_id,
             owner_id=owner_id,
@@ -878,7 +884,7 @@ class RegistrationRequestService:
         )
 
         # التحقق من وجود الطلب
-        request = await self.repo.get_by_id(request_id=request_id)
+        request = await self.repo.get_by_id(id=request_id)
 
         if not request:
             raise NotFoundError(
@@ -934,7 +940,7 @@ class RegistrationRequestService:
         )
 
         # التحقق من وجود الطلب
-        request = await self.repo.get_by_id(request_id=request_id)
+        request = await self.repo.get_by_id(id=request_id)
 
         if not request:
             raise NotFoundError(
@@ -944,14 +950,14 @@ class RegistrationRequestService:
         # لا يمكن حذف طلب معتمد
         if request.status == "approved":
             raise ValidationError(
-                message=f"لا يمكن حذف طلب تسجيل معتمد",
+                message="لا يمكن حذف طلب تسجيل معتمد",
                 details={
                     "request_id": request_id,
                     "status": request.status,
                 },
             )
 
-        deleted = await self.repo.delete(request_id=request_id)
+        deleted = await self.repo.delete(id=request_id)
 
         if not deleted:
             raise NotFoundError(
@@ -965,172 +971,3 @@ class RegistrationRequestService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# APPROVE REGISTRATION (COMPATIBILITY)
-# ==============================================
-
-
-async def approve_registration(
-    *,
-    request_id: int,
-    session: AsyncSession,
-) -> RegistrationResult:
-    """
-    الموافقة على طلب التسجيل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        request_id: معرف طلب التسجيل
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        RegistrationResult: نتائج الموافقة (owner_id, restaurant_id, subscription_id)
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الطلب
-        ValidationError: إذا كان الطلب معتمداً أو مرفوضاً
-    """
-    service = RegistrationRequestService(session=session)
-
-    request = await service.approve(request_id=request_id)
-
-    # الحصول على البيانات المطلوبة
-    owner_id = request.id
-
-    # الحصول على المطعم
-    restaurants = await service.restaurant_repo.get_by_owner_id(owner_id=owner_id)
-    restaurant_id = restaurants[0].id if restaurants else None
-
-    # الحصول على الاشتراك
-    if restaurant_id:
-        subscription = await service.subscription_service.get_active_by_restaurant(
-            restaurant_id=restaurant_id,
-        )
-        subscription_id = subscription.id if subscription else None
-    else:
-        subscription_id = None
-
-    return {
-        "owner_id": owner_id,
-        "restaurant_id": restaurant_id,
-        "subscription_id": subscription_id,
-    }
-
-
-# ==============================================
-# REJECT REGISTRATION (COMPATIBILITY)
-# ==============================================
-
-
-async def reject_registration(
-    *,
-    request_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    رفض طلب التسجيل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        request_id: معرف طلب التسجيل
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الطلب
-        ValidationError: إذا كان الطلب معتمداً أو مرفوضاً
-    """
-    service = RegistrationRequestService(session=session)
-
-    await service.reject(request_id=request_id)
-
-
-# ==============================================
-# GET REGISTRATION PREVIEW (COMPATIBILITY)
-# ==============================================
-
-
-async def get_registration_preview(
-    *,
-    request_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على معاينة طلب التسجيل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        request_id: معرف طلب التسجيل
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات الطلب أو None
-    """
-    service = RegistrationRequestService(session=session)
-
-    try:
-        request = await service.get_by_id(request_id=request_id)
-        return request.model_dump()
-    except NotFoundError:
-        return None
-
-
-# ==============================================
-# GET PENDING REQUESTS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_pending_requests(
-    *,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على طلبات التسجيل المعلقة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        List[Dict[str, Any]]: قائمة طلبات التسجيل المعلقة
-    """
-    service = RegistrationRequestService(session=session)
-
-    requests = await service.get_pending(
-        skip=skip,
-        limit=limit,
-    )
-
-    return [req.model_dump() for req in requests]
-
-
-# ==============================================
-# GET REGISTRATION REQUEST BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_registration_request_by_id(
-    *,
-    request_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على طلب تسجيل بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        request_id: معرف طلب التسجيل
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات الطلب أو None
-    """
-    service = RegistrationRequestService(session=session)
-
-    try:
-        request = await service.get_by_id(request_id=request_id)
-        return request.model_dump()
-    except NotFoundError:
-        return None

@@ -18,9 +18,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import select
@@ -34,9 +31,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-FeatureData = Dict[str, Any]
-FeatureUpdateData = Dict[str, Any]
-FeatureList = List[Feature]
+FeatureData = dict[str, Any]
+FeatureUpdateData = dict[str, Any]
+FeatureList = list[Feature]
 
 # ==============================================
 # 🧩 FEATURE REPOSITORY
@@ -105,7 +102,7 @@ class FeatureRepository(
         self,
         *,
         code: str,
-    ) -> Optional[Feature]:
+    ) -> Feature | None:
         """
         الحصول على ميزة بواسطة الكود.
 
@@ -139,7 +136,7 @@ class FeatureRepository(
     async def get_by_codes(
         self,
         *,
-        codes: List[str],
+        codes: list[str],
     ) -> FeatureList:
         """
         الحصول على ميزات بواسطة قائمة أكواد.
@@ -267,7 +264,7 @@ class FeatureRepository(
         self,
         *,
         code: str,
-        exclude_id: Optional[int] = None,
+        exclude_id: int | None = None,
     ) -> bool:
         """
         التحقق من وجود كود الميزة.
@@ -317,240 +314,3 @@ class FeatureRepository(
             عدد الميزات
         """
         return await self.count()
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة (Psycopg3)
-# ==============================================
-
-# ==============================================
-# CREATE FEATURE (COMPATIBILITY)
-# ==============================================
-
-
-async def create_feature(
-    *,
-    code: str,
-    name: str,
-    description: Optional[str] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء ميزة جديدة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        code: كود الميزة
-        name: اسم الميزة
-        description: وصف الميزة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف الميزة
-    """
-    repo = FeatureRepository(session=session)
-
-    data: FeatureData = {
-        "code": code,
-        "name": name,
-        "description": description,
-    }
-
-    feature = await repo.create(data=data)
-
-    logger.info(
-        "feature_created",
-        extra={
-            "feature_id": feature.id,
-            "feature_code": code,
-        },
-    )
-
-    return feature.id
-
-
-# ==============================================
-# GET FEATURE BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_feature_by_id(
-    *,
-    feature_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على ميزة بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        feature_id: معرف الميزة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الميزة أو None
-    """
-    repo = FeatureRepository(session=session)
-
-    feature = await repo.get_by_id(id=feature_id)
-
-    if not feature:
-        logger.warning(
-            "feature_not_found",
-            extra={"feature_id": feature_id},
-        )
-        return None
-
-    return {
-        "id": feature.id,
-        "code": feature.code,
-        "name": feature.name,
-        "description": feature.description,
-    }
-
-
-# ==============================================
-# GET FEATURE BY CODE (COMPATIBILITY)
-# ==============================================
-
-
-async def get_feature_by_code(
-    *,
-    code: str,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على ميزة بالكود (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        code: كود الميزة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الميزة أو None
-    """
-    repo = FeatureRepository(session=session)
-
-    feature = await repo.get_by_code(code=code)
-
-    if not feature:
-        return None
-
-    return {
-        "id": feature.id,
-        "code": feature.code,
-        "name": feature.name,
-        "description": feature.description,
-    }
-
-
-# ==============================================
-# GET ALL FEATURES (COMPATIBILITY)
-# ==============================================
-
-
-async def get_all_features(
-    session: AsyncSession,
-    *,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على جميع الميزات (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة الميزات
-    """
-    repo = FeatureRepository(session=session)
-
-    features = await repo.get_all_ordered(
-        skip=skip,
-        limit=limit,
-    )
-
-    result = []
-
-    for feature in features:
-        result.append(
-            {
-                "id": feature.id,
-                "code": feature.code,
-                "name": feature.name,
-                "description": feature.description,
-            }
-        )
-
-    logger.info(
-        "features_fetched",
-        extra={"count": len(result)},
-    )
-
-    return result
-
-
-# ==============================================
-# UPDATE FEATURE (COMPATIBILITY)
-# ==============================================
-
-
-async def update_feature(
-    *,
-    feature_id: int,
-    name: str,
-    description: Optional[str],
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث ميزة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        feature_id: معرف الميزة
-        name: الاسم الجديد
-        description: الوصف الجديد
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = FeatureRepository(session=session)
-
-    await repo.update(
-        id=feature_id,
-        data={
-            "name": name,
-            "description": description,
-        },
-    )
-
-    logger.info(
-        "feature_updated",
-        extra={"feature_id": feature_id},
-    )
-
-
-# ==============================================
-# DELETE FEATURE (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_feature(
-    *,
-    feature_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف ميزة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        feature_id: معرف الميزة
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = FeatureRepository(session=session)
-
-    await repo.delete(id=feature_id)
-
-    logger.info(
-        "feature_deleted",
-        extra={"feature_id": feature_id},
-    )

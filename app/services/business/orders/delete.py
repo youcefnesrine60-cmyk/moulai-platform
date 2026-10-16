@@ -379,33 +379,3 @@ async def delete_orders_by_status(
         "deleted_count": deleted_count,
         "failed_count": failed_count,
     }
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# ==============================================
-
-
-# دالة التوافق مع الإصدار القديم
-# ==============================================
-# REMOVE ORDER COMPAT
-# ==============================================
-
-
-async def remove_order_compat(
-    *,
-    order_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    دالة متوافقة مع الإصدار القديم (مغلفة).
-
-    Args:
-        order_id: معرف الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    await remove_order(
-        order_id=order_id,
-        permanent=False,
-        session=session,
-    )

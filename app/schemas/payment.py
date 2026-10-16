@@ -255,6 +255,9 @@ class PaymentResponse(PaymentBase):
         paid_at: تاريخ الدفع
     """
 
+    payment_provider: str | None = None
+    currency: str = "DZD"
+
     model_config = ConfigDict(from_attributes=True)
 
     id: int = Field(

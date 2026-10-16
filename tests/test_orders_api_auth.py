@@ -138,6 +138,8 @@ async def test_current_owner_requires_verified_oidc_claims_and_maps_subject(
             "iss": "https://identity.example.com/",
             "aud": "moulai-api",
             "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+            "iat": datetime.now(timezone.utc),
+            "typ": "Bearer",
             "sub": "idp|owner-314",
         },
         private_key,
@@ -180,6 +182,8 @@ async def test_current_owner_rejects_invalid_token(monkeypatch, failure):
         "iss": "https://identity.example.com/",
         "aud": "moulai-api",
         "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+        "iat": datetime.now(timezone.utc),
+        "typ": "Bearer",
         "sub": "idp|owner-314",
     }
     signing_token_key = signing_key
@@ -228,6 +232,8 @@ async def test_current_owner_rejects_subject_without_owner_mapping(monkeypatch):
             "iss": "https://identity.example.com/",
             "aud": "moulai-api",
             "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+            "iat": datetime.now(timezone.utc),
+            "typ": "Bearer",
             "sub": "unlinked",
         },
         signing_key,

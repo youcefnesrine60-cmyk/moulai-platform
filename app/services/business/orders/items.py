@@ -15,25 +15,13 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from app.repositories.orders_repo import lock_order
-from app.services.business.orders.pricing import (
-    catalog_item,
-    item_total,
-    MAX_ITEMS_PER_ORDER,
-)
-from app.services.business.orders.transaction import transactional_order
-
 # ==============================================
 # 📦 ORDERS SERVICE - ITEMS
 # إدارة عناصر الطلب
 # (add_item_to_order, remove_item_from_order)
 # ==============================================
-
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,14 +31,19 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
-
 from app.core.logger import logger
 from app.models.order_item import OrderItem
 from app.repositories.order_item_options_repo import (
     OrderItemOptionsRepository,
 )
 from app.repositories.order_items_repo import OrderItemsRepository
+from app.repositories.orders_repo import lock_order
 from app.services.business.orders.helpers import check_order_editable
+from app.services.business.orders.pricing import (
+    MAX_ITEMS_PER_ORDER,
+    catalog_item,
+)
+from app.services.business.orders.transaction import transactional_order
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -61,8 +54,8 @@ from app.services.business.orders.helpers import check_order_editable
 # 🧩 TYPES
 # ==============================================
 
-OrderOptionPayload = Dict[str, Any]
-OrderItemList = List[OrderItem]
+OrderOptionPayload = dict[str, Any]
+OrderItemList = list[OrderItem]
 
 
 # ==============================================
@@ -79,7 +72,7 @@ async def add_item_to_order(
     unit_price: float,
     quantity: int,
     total_price: float,
-    options: Optional[List[OrderOptionPayload]] = None,
+    options: list[OrderOptionPayload] | None = None,
     session: AsyncSession,
 ) -> OrderItem:
     """
@@ -169,7 +162,7 @@ async def add_item_to_order(
         )
 
     # 6️⃣ إنشاء عنصر الطلب
-    item_data: Dict[str, Any] = {
+    item_data: dict[str, Any] = {
         "order_id": order_id,
         "product_id": product_id,
         "product_name": product_name,
@@ -195,7 +188,7 @@ async def add_item_to_order(
                 )
                 continue
 
-            option_data: Dict[str, Any] = {
+            option_data: dict[str, Any] = {
                 "order_item_id": order_item.id,
                 "option_group_name": option["option_group_name"],
                 "option_name": option["option_name"],
@@ -360,7 +353,7 @@ async def get_order_item_by_id(
     *,
     order_item_id: int,
     session: AsyncSession,
-) -> Optional[OrderItem]:
+) -> OrderItem | None:
     """
     جلب عنصر طلب بالمعرف.
 
@@ -472,80 +465,3 @@ async def _recalculate_order_total(
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# ==============================================
-
-
-# دوال التوافق مع الإصدار القديم
-# ==============================================
-# ADD ITEM TO ORDER COMPAT
-# ==============================================
-
-
-async def add_item_to_order_compat(
-    *,
-    order_id: int,
-    product_id: int,
-    product_name: str,
-    unit_price: float,
-    quantity: int,
-    total_price: float,
-    options: Optional[List[OrderOptionPayload]] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    دالة متوافقة مع الإصدار القديم (تعيد معرف العنصر).
-
-    Args:
-        order_id: معرف الطلب
-        product_id: معرف المنتج
-        product_name: اسم المنتج
-        unit_price: سعر الوحدة
-        quantity: الكمية
-        total_price: السعر الإجمالي
-        options: قائمة الخيارات (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف عنصر الطلب
-    """
-    item = await add_item_to_order(
-        order_id=order_id,
-        product_id=product_id,
-        product_name=product_name,
-        unit_price=unit_price,
-        quantity=quantity,
-        total_price=total_price,
-        options=options,
-        session=session,
-    )
-    return item.id
-
-
-# ==============================================
-# CHANGE ITEM AMOUNTS
-# ==============================================
-
-
-@transactional_order
-async def change_item_amounts(
-    *, order_item_id, session, quantity=None, unit_price=None
-):
-
-    items_repo = OrderItemsRepository(session=session)
-    item = await items_repo.get_by_id(id=order_item_id)
-    if item is None:
-        raise NotFoundError(message="Order item not found")
-    order = await lock_order(order_id=item.order_id, session=session)
-    if order is None:
-        raise NotFoundError(message="Order not found")
-    check_order_editable(order)
-    new_quantity = item.quantity if quantity is None else quantity
-    new_price = item.unit_price if unit_price is None else unit_price
-    total = item_total(new_price, new_quantity)
-    updated = await items_repo.update(
-        id=item.id,
-        data=dict(quantity=new_quantity, unit_price=new_price, total_price=total),
-    )
-    await _recalculate_order_total(order_id=order.id, session=session)
-    return updated

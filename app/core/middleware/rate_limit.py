@@ -89,7 +89,7 @@ def rate_limit(
                     },
                 )
 
-                await UIManager.update(
+                await UIManager.send_new_message(
                     chat_id=chat_id,
                     text="⚠️ عدد المحاولات كبير، حاول بعد قليل.",
                     reply_markup=None,

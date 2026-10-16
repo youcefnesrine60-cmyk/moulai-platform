@@ -17,21 +17,44 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 import re
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload
+
+from app.core.database import get_session
 from app.core.logger import logger
 from app.core.middleware.rate_limit import rate_limit
-
 from app.helpers.ui_manager import UIManager
-from app.repositories.state_repo import get_state, set_state
+from app.models.restaurant import Restaurant
+from app.repositories.categories_repo import CategoriesRepository
+from app.repositories.orders_repo import OrdersRepository
+from app.repositories.owner_repo import OwnerRepository
+from app.repositories.products_repo import ProductRepository
 
 # ✅ استيراد الـ Repositories الصحيحة
-from app.repositories.restaurant.restaurant_repo import get_restaurant_by_id
-from app.repositories.orders_repo import get_restaurant_orders
-from app.repositories.products_repo import count_restaurant_products
-from app.repositories.categories_repo import get_restaurant_categories
+from app.repositories.restaurant.restaurant_repo import RestaurantRepository
+from app.repositories.state_repo import get_state, set_state
 
 # ✅ استيراد واجهات الـ UI
 from app.views.owner_dashboard_ui import owner_dashboard_ui
 from app.views.ui import button
+
+
+async def _owned_restaurant(
+    *, session: AsyncSession, chat_id: int, restaurant_id: int
+) -> Restaurant | None:
+    """Resolve the owner's restaurant before reading its private dashboard data."""
+    owners = OwnerRepository(session=session)
+    owners.query_options = [raiseload("*")]
+    owner = await owners.get_by_chat_id(chat_id=chat_id)
+    if owner is None:
+        return None
+    restaurants = RestaurantRepository(session)
+    restaurants.query_options = [raiseload("*")]
+    restaurant = await restaurants.get_by_id(id=restaurant_id)
+    if restaurant is None or restaurant.owner_id != owner.id:
+        return None
+    return restaurant
+
 
 # ==============================================
 # 🏪 OWNER DASHBOARD
@@ -92,8 +115,17 @@ async def owner_dashboard_callback(
     # 2️⃣ جلب بيانات المطعم
     # ==========================================
 
-    restaurant = await get_restaurant_by_id(
-        restaurant_id=restaurant_id,
+    async with await get_session() as session:
+        restaurant_model = await _owned_restaurant(
+            session=session,
+            chat_id=chat_id,
+            restaurant_id=restaurant_id,
+        )
+
+    restaurant = (
+        {"id": restaurant_model.id, "name": restaurant_model.name}
+        if restaurant_model is not None
+        else None
     )
 
     if not restaurant:
@@ -105,7 +137,7 @@ async def owner_dashboard_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ المطعم غير موجود.",
@@ -118,9 +150,17 @@ async def owner_dashboard_callback(
     # ==========================================
 
     # 📦 عدد الطلبات الكلي
-    orders = await get_restaurant_orders(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        order_models = await OrdersRepository(session).get_by_restaurant_id(
+            restaurant_id=restaurant_id,
+        )
+    orders = [
+        {
+            "status": order.status,
+            "total_amount": order.total_amount,
+        }
+        for order in order_models
+    ]
     orders_count = len(orders)
 
     # ⏳ عدد الطلبات المعلقة
@@ -132,9 +172,10 @@ async def owner_dashboard_callback(
     pending_count = len(pending_orders)
 
     # 🍔 عدد المنتجات
-    products_count = await count_restaurant_products(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        products_count = await ProductRepository(session).count_by_restaurant(
+            restaurant_id=restaurant_id,
+        )
 
     # 💰 حساب الإيرادات (مجموع الطلبات المكتملة)
     completed_orders = [o for o in orders if o.get("status") == "completed"]
@@ -170,7 +211,7 @@ async def owner_dashboard_callback(
         revenue=revenue,
     )
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=dashboard_ui.get("text", "🏪 لوحة تحكم المطعم"),
@@ -231,9 +272,31 @@ async def owner_orders_callback(
         return
 
     # جلب الطلبات
-    orders = await get_restaurant_orders(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        if (
+            await _owned_restaurant(
+                session=session, chat_id=chat_id, restaurant_id=restaurant_id
+            )
+            is None
+        ):
+            await UIManager.edit(
+                chat_id=chat_id,
+                message_id=message_id,
+                text="⛔ لا يمكنك الوصول إلى هذا المطعم.",
+                reply_markup=None,
+            )
+            return
+        order_models = await OrdersRepository(session).get_by_restaurant_id(
+            restaurant_id=restaurant_id,
+        )
+    orders = [
+        {
+            "order_number": order.order_number,
+            "status": order.status,
+            "total_amount": order.total_amount,
+        }
+        for order in order_models
+    ]
 
     if not orders:
         text = "📦 لا توجد طلبات حالياً."
@@ -257,9 +320,7 @@ async def owner_orders_callback(
             orders_text += f"{status_emoji} #{order_number} - {total:.2f} دج\n"
 
         text = (
-            f"📦 **إدارة الطلبات**\n\n"
-            f"{orders_text}\n"
-            f"📊 إجمالي الطلبات: {len(orders)}"
+            f"📦 **إدارة الطلبات**\n\n{orders_text}\n📊 إجمالي الطلبات: {len(orders)}"
         )
 
     buttons = [
@@ -277,7 +338,7 @@ async def owner_orders_callback(
         ],
     ]
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=text,
@@ -340,14 +401,31 @@ async def owner_products_callback(
         return
 
     # جلب المنتجات
-    products_count = await count_restaurant_products(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        if (
+            await _owned_restaurant(
+                session=session, chat_id=chat_id, restaurant_id=restaurant_id
+            )
+            is None
+        ):
+            await UIManager.edit(
+                chat_id=chat_id,
+                message_id=message_id,
+                text="⛔ لا يمكنك الوصول إلى هذا المطعم.",
+                reply_markup=None,
+            )
+            return
+        products_count = await ProductRepository(session).count_by_restaurant(
+            restaurant_id=restaurant_id,
+        )
 
     # جلب الأقسام
-    categories = await get_restaurant_categories(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        category_models = await CategoriesRepository(session).get_by_restaurant_id(
+            restaurant_id=restaurant_id,
+        )
+
+    categories = [{"name": category.name} for category in category_models]
 
     text = (
         f"🍔 **إدارة المنتجات**\n\n"
@@ -385,7 +463,7 @@ async def owner_products_callback(
         ],
     ]
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=text,

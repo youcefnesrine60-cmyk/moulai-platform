@@ -16,22 +16,37 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
+from collections.abc import (
+    Awaitable,
+    Callable,
+)
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, Optional
+from typing import (
+    Annotated,
+    Any,
+    TypeAlias,
+)
 from urllib.parse import urlparse
 
 import jwt
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import (
+    Depends,
+    HTTPException,
+    status,
+)
+from fastapi.security import (
+    HTTPAuthorizationCredentials,
+    HTTPBearer,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
 from starlette.concurrency import run_in_threadpool
 
-from app.core.logger import logger
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.logger import logger
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.owner import Owner
@@ -43,10 +58,10 @@ from app.models.subscription import Subscription
 # 📋 CONSTANTS
 # ==============================================
 
-_ALLOWED_ALGORITHMS = ("RS256", "ES256")
+_ALLOWED_ALGORITHMS = ("RS256",)
 """خوارزميات التوقيع المسموح بها للتحقق من الرموز."""
 
-_REQUIRED_CLAIMS = ("exp", "iss", "aud", "sub")
+_REQUIRED_CLAIMS = ("exp", "iss", "aud", "sub", "iat", "typ")
 """المطالبات الإلزامية في رمز JWT."""
 
 _JWKS_CLIENT_CACHE_SIZE = 4
@@ -54,6 +69,9 @@ _JWKS_CLIENT_CACHE_SIZE = 4
 
 _JWKS_TIMEOUT_SECONDS = 5
 """مهلة الاتصال بمزود مفاتيح JWKS بالثواني."""
+
+_JWKS_CACHE_SECONDS = 300
+"""مدة حفظ مجموعة المفاتيح، دون إبقاء المفاتيح المسحوبة في ذاكرة دائمة."""
 
 # ==============================================
 # 🔐 HTTP BEARER SCHEME
@@ -104,7 +122,9 @@ def _get_jwks_client(jwks_url: str) -> jwt.PyJWKClient:
     """
     return jwt.PyJWKClient(
         jwks_url,
-        cache_keys=True,
+        cache_keys=False,
+        cache_jwk_set=True,
+        lifespan=_JWKS_CACHE_SECONDS,
         timeout=_JWKS_TIMEOUT_SECONDS,
     )
 
@@ -133,24 +153,43 @@ def _oidc_configuration() -> tuple[str, str, str]:
     issuer = settings.OIDC_ISSUER
     audience = settings.OIDC_AUDIENCE
     jwks_url = settings.OIDC_JWKS_URL
-    if not issuer or not audience or not jwks_url:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Orders API authentication is not configured",
-        )
-
-    issuer_parts = urlparse(issuer)
-    jwks_parts = urlparse(jwks_url)
     if (
-        issuer_parts.scheme != "https"
-        or not issuer_parts.netloc
-        or jwks_parts.scheme != "https"
-        or not jwks_parts.netloc
+        not isinstance(issuer, str)
+        or not isinstance(audience, str)
+        or not isinstance(jwks_url, str)
+        or not issuer
+        or not audience
+        or not jwks_url
+        or any(character.isspace() for character in audience)
     ):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Orders API identity provider must use HTTPS",
+            detail="Trusted Keycloak authentication is not configured",
         )
+
+    for value in (issuer, jwks_url):
+        try:
+            parts = urlparse(value)
+            valid = (
+                parts.scheme == "https"
+                and bool(parts.hostname)
+                and parts.username is None
+                and parts.password is None
+                and (parts.port is None or 1 <= parts.port <= 65535)
+                and not any(
+                    character.isspace() or ord(character) < 32 for character in value
+                )
+                and not any(character in value for character in "\\?#")
+            )
+        except ValueError:
+            valid = False
+        if not valid:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Trusted Keycloak endpoints must be valid HTTPS URLs",
+            )
+    # Preserve the configured issuer exactly; never invent a realm or normalize
+    # issuer paths, trailing slashes, subjects, or the expected API audience.
     return issuer, audience, jwks_url
 
 
@@ -244,8 +283,8 @@ def _base_subscription_select() -> Select:
 
 
 async def get_current_owner(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
-    session: AsyncSession = Depends(get_db),
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+    session: Annotated[AsyncSession, Depends(get_db)],
 ) -> OwnerPrincipal:
     """
     التحقق من رمز Bearer واستخراج هوية المالك.
@@ -260,58 +299,7 @@ async def get_current_owner(
     Raises:
         HTTPException: إذا كان الرمز غير صالح أو الهوية غير مرتبطة بمالك.
     """
-    if credentials is None or credentials.scheme.lower() != "bearer":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Bearer token required",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    issuer, audience, jwks_url = _oidc_configuration()
-    try:
-        signing_key = await run_in_threadpool(
-            _get_jwks_client(jwks_url).get_signing_key_from_jwt,
-            credentials.credentials,
-        )
-    except jwt.PyJWKClientConnectionError as exc:
-        logger.error(
-            "Identity provider keys are unavailable",
-            extra={"jwks_url": jwks_url},
-        )
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Identity provider keys are unavailable",
-        ) from exc
-    except (jwt.PyJWKClientError, jwt.InvalidTokenError) as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid bearer token",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-
-    try:
-        claims: dict[str, Any] = jwt.decode(
-            credentials.credentials,
-            signing_key.key,
-            algorithms=list(_ALLOWED_ALGORITHMS),
-            audience=audience,
-            issuer=issuer,
-            options={"require": list(_REQUIRED_CLAIMS)},
-        )
-    except jwt.InvalidTokenError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid bearer token",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-
-    subject = claims.get("sub")
-    if not isinstance(subject, str) or not subject.strip():
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Bearer token has no valid subject",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    subject = await _get_authenticated_subject(credentials)
 
     owner_id = (
         await session.execute(
@@ -319,10 +307,7 @@ async def get_current_owner(
         )
     ).scalar_one_or_none()
     if owner_id is None:
-        logger.warning(
-            "Authenticated identity is not linked to an owner",
-            extra={"subject": subject},
-        )
+        logger.warning("Authenticated identity is not linked to an owner")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Authenticated identity is not linked to an owner",
@@ -503,3 +488,184 @@ async def require_owned_order_item(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Order item not found",
         )
+
+
+# ==============================================
+# VERIFY AUTHENTICATED OIDC SUBJECT
+# ==============================================
+
+
+async def _get_authenticated_subject(
+    credentials: HTTPAuthorizationCredentials | None,
+) -> str:
+    """Verify issuer, audience, signature, expiry, and subject before DB mapping."""
+
+    if credentials is None or credentials.scheme.lower() != "bearer":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer token required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    issuer, audience, jwks_url = _oidc_configuration()
+    try:
+        header = jwt.get_unverified_header(credentials.credentials)
+        if (
+            header.get("alg") not in _ALLOWED_ALGORITHMS
+            or not isinstance(header.get("kid"), str)
+            or not header["kid"].strip()
+            or header.get("typ") not in {"JWT", "at+jwt"}
+        ):
+            raise jwt.InvalidTokenError("Unsupported access token header")
+    except jwt.InvalidTokenError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+    try:
+        signing_key = await run_in_threadpool(
+            _get_jwks_client(jwks_url).get_signing_key_from_jwt,
+            credentials.credentials,
+        )
+    except jwt.PyJWKClientConnectionError as exc:
+        logger.error(
+            "Identity provider keys are unavailable",
+            extra={"jwks_url": jwks_url},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Identity provider keys are unavailable",
+        ) from exc
+    except (jwt.PyJWKClientError, jwt.InvalidTokenError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    try:
+        claims: dict[str, Any] = jwt.decode(
+            credentials.credentials,
+            signing_key.key,
+            algorithms=list(_ALLOWED_ALGORITHMS),
+            audience=audience,
+            issuer=issuer,
+            options={
+                "require": list(_REQUIRED_CLAIMS),
+                "verify_signature": True,
+                "verify_exp": True,
+                "verify_iat": True,
+                "verify_nbf": True,
+                "verify_aud": True,
+                "verify_iss": True,
+                "verify_sub": True,
+            },
+        )
+        if (
+            claims.get("iss") != issuer
+            or claims.get("typ") != "Bearer"
+            or type(claims.get("iat")) is not int
+            or type(claims.get("exp")) is not int
+            or claims["iat"] < 0
+            or claims["exp"] <= claims["iat"]
+            or (
+                "nbf" in claims
+                and (type(claims["nbf"]) is not int or claims["nbf"] < 0)
+            )
+        ):
+            raise jwt.InvalidTokenError("Invalid Keycloak access token claims")
+    except (jwt.PyJWTError, ValueError, TypeError, OverflowError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+    subject = claims.get("sub")
+    if (
+        not isinstance(subject, str)
+        or not subject
+        or subject != subject.strip()
+        or len(subject) > 255
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Bearer token has no valid subject",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return subject
+
+
+@dataclass(frozen=True)
+class AdminPrincipal:
+    """Identify an active administrator through a verified stored OIDC subject."""
+
+    admin_id: int
+
+
+AdminPermissionDependency: TypeAlias = Callable[
+    [AdminPrincipal, AsyncSession], Awaitable[AdminPrincipal]
+]
+
+
+# ==============================================
+# RESOLVE VERIFIED ADMINISTRATOR IDENTITY
+# ==============================================
+
+
+async def get_current_admin(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> AdminPrincipal:
+    """Map a verified token subject to one active persisted administrator."""
+
+    from app.models.admin import Admin
+
+    # An administrator ID or Telegram chat mapping cannot bypass an absent
+    # trusted identity provider, including when no bearer token is supplied.
+    _oidc_configuration()
+    subject = await _get_authenticated_subject(credentials)
+    admin_id = (
+        await session.execute(
+            select(Admin.id).where(
+                Admin.auth_subject == subject, Admin.is_active.is_(True)
+            )
+        )
+    ).scalar_one_or_none()
+    if admin_id is None:
+        raise HTTPException(
+            status_code=403, detail="Identity is not linked to an active administrator"
+        )
+    return AdminPrincipal(admin_id=admin_id)
+
+
+# ==============================================
+# REQUIRE LIVE ADMINISTRATOR PERMISSION
+# ==============================================
+
+
+def require_admin_permission(permission: str) -> AdminPermissionDependency:
+    """Build a dependency that rechecks active database RBAC for each request."""
+
+    async def authorize(
+        admin: Annotated[AdminPrincipal, Depends(get_current_admin)],
+        session: Annotated[AsyncSession, Depends(get_db)],
+    ) -> AdminPrincipal:
+        """Reject authenticated administrators without the requested permission."""
+
+        from app.core.exceptions import UnauthorizedError
+        from app.services.business.admin.admin_service import AdminService
+
+        try:
+            await AdminService(session).check_admin_permission(
+                admin_id=admin.admin_id, required_permission=permission
+            )
+        except UnauthorizedError as error:
+            raise HTTPException(
+                status_code=403, detail="Administrator permission required"
+            ) from error
+        return admin
+
+    return authorize

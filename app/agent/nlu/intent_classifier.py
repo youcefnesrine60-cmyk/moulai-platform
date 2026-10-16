@@ -415,14 +415,9 @@ class IntentClassifier:
             prompt = prompt_template.format(message=text)
 
             # استدعاء الذكاء الاصطناعي
-            response = await self.ai_client.chat_completion(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an intent classifier. Output only valid JSON.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
+            response = await self.ai_client.chat(
+                message=prompt,
+                system_prompt="You are an intent classifier. Output only valid JSON.",
                 temperature=0.1,
                 max_tokens=200,
             )

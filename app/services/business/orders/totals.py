@@ -10,7 +10,7 @@
 # حساب وتحديث إجماليات الطلبات
 # ==============================================
 
-"""Order-total calculation, persistence, and compatibility use cases.
+"""Order-total calculation and persistence use cases.
 
 All write operations run inside the shared order transaction boundary. Read-only
 operations fetch values already persisted on the restaurant-owned order.
@@ -464,57 +464,3 @@ async def calculate_item_totals(
     )
 
     return (base_total, total_with_options)
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# ==============================================
-
-
-async def calculate_order_totals_compat(
-    *,
-    order_id: int,
-    session: AsyncSession,
-) -> OrderTotals:
-    """
-    دالة متوافقة مع الإصدار القديم (مغلفة).
-
-    Args:
-        order_id: معرف الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        OrderTotals: (subtotal, discount, tax, delivery, total)
-    """
-    return await calculate_order_totals(
-        order_id=order_id,
-        session=session,
-        include_options=False,
-    )
-
-
-# ==============================================
-# RECALCULATE ORDER TOTALS COMPAT
-# ==============================================
-
-
-async def recalculate_order_totals_compat(
-    *,
-    order_id: int,
-    session: AsyncSession,
-) -> OrderTotals:
-    """
-    دالة متوافقة مع الإصدار القديم (مغلفة).
-
-    Args:
-        order_id: معرف الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        OrderTotals: (subtotal, discount, tax, delivery, total)
-    """
-    return await recalculate_order_totals(
-        order_id=order_id,
-        session=session,
-        include_options=False,
-    )

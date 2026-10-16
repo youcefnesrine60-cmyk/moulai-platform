@@ -16,14 +16,15 @@ Part of MoulAI Platform - Agent-as-a-Service.
 """
 
 from typing import (
-    List,
-    Optional,
+    Literal,
+    TypeAlias,
 )
 
 from dotenv import load_dotenv
 from pydantic import (
     ConfigDict,
     Field,
+    SecretStr,
 )
 from pydantic_settings import BaseSettings
 
@@ -34,6 +35,12 @@ from app.core.logger import logger
 # ==============================================
 
 load_dotenv()
+
+# ==============================================
+# DATABASE TARGET TYPE
+# ==============================================
+
+DatabaseTarget: TypeAlias = Literal["primary", "development"]
 
 # ==============================================
 # ⚙️ SETTINGS
@@ -47,12 +54,13 @@ class Settings(BaseSettings):
     يتم قراءة القيم من ملف .env
 
     Attributes:
-        APP_ENV: بيئة التشغيل (development, staging, production)
+        APP_ENV: بيئة التشغيل (development, test, staging, production)
         DEBUG: وضع التصحيح
         APP_NAME: اسم التطبيق
         APP_VERSION: إصدار التطبيق
         APP_URL: رابط التطبيق
         DATABASE_URL: رابط قاعدة البيانات (مع +asyncpg)
+        DATABASE_TARGET: اختيار اتصال التطبيق الصريح دون تعديل الرابط الأساسي
         DATABASE_SYNC_URL: رابط قاعدة البيانات (بدون +asyncpg)
         REDIS_URL: رابط Redis
         BOT_TOKEN: رمز بوت Telegram
@@ -88,7 +96,7 @@ class Settings(BaseSettings):
 
     APP_ENV: str = Field(
         default="development",
-        description="بيئة التشغيل: development, staging, production",
+        description="بيئة التشغيل: development, test, staging, production",
     )
     DEBUG: bool = Field(
         default=True,
@@ -111,6 +119,13 @@ class Settings(BaseSettings):
     # 🐘 DATABASE
     # ==========================================
 
+    DATABASE_TARGET: DatabaseTarget = Field(
+        default="primary",
+        description=(
+            "ORM connection target: primary preserves DATABASE_URL; development "
+            "requires the verified TEST_DATABASE_URL and development/test APP_ENV"
+        ),
+    )
     DATABASE_URL: str = Field(
         default="",
         description="رابط قاعدة البيانات (مع +asyncpg)",
@@ -118,7 +133,7 @@ class Settings(BaseSettings):
             "example": "postgresql+asyncpg://user:pass@localhost:5432/db"
         },
     )
-    DATABASE_SYNC_URL: Optional[str] = Field(
+    DATABASE_SYNC_URL: str | None = Field(
         default=None,
         description="رابط قاعدة البيانات (بدون +asyncpg - لـ Psycopg3)",
         json_schema_extra={"example": "postgresql://user:pass@localhost:5432/db"},
@@ -126,6 +141,38 @@ class Settings(BaseSettings):
 
     # ==========================================
     # 🔴 REDIS
+    # ==========================================
+    # TEST DATABASE
+    # ==========================================
+
+    TEST_DATABASE_URL: str = Field(
+        default="",
+        description="Explicit isolated asynchronous database URL for tests",
+    )
+    TEST_DATABASE_SYNC_URL: str | None = Field(
+        default=None,
+        description="Optional synchronous test database URL for migration tooling",
+    )
+    TEST_DATABASE_ENDPOINT_ID: str | None = Field(
+        default=None,
+        description="Verified Neon development endpoint ID for isolated tests",
+    )
+    PROTECTED_DATABASE_ENDPOINT_ID: str | None = Field(
+        default=None,
+        description="Protected production Neon endpoint excluded from test tooling",
+    )
+    TEST_DATABASE_BRANCH_ID: str | None = Field(
+        default=None,
+        description="Verified Neon development branch ID for test identity checks",
+    )
+    TEST_DATABASE_PROJECT_ID: str | None = Field(
+        default=None,
+        description="Verified Neon project ID containing the development branch",
+    )
+    PROTECTED_DATABASE_BRANCH_ID: str | None = Field(
+        default=None,
+        description="Protected production branch excluded from test identity checks",
+    )
     # ==========================================
 
     REDIS_URL: str = Field(
@@ -152,6 +199,17 @@ class Settings(BaseSettings):
         default="/webhook",
         description="مسار Webhook",
     )
+    TELEGRAM_WEBHOOK_SECRET_TOKEN: SecretStr | None = Field(
+        default=None,
+        description="Secret token configured with Telegram setWebhook",
+    )
+    # Phase-one manual subscription billing providers.
+    MANUAL_CCP_ENABLED: bool = True
+    MANUAL_BARIDIMOB_ENABLED: bool = True
+    MANUAL_TRANSFER_BENEFICIARY: str | None = Field(default=None, max_length=255)
+    MANUAL_CCP_ACCOUNT: str | None = Field(default=None, max_length=100)
+    MANUAL_CCP_KEY: str | None = Field(default=None, max_length=10)
+    MANUAL_BARIDIMOB_RIP: str | None = Field(default=None, max_length=100)
 
     # ==========================================
     # 🤖 AI
@@ -180,15 +238,15 @@ class Settings(BaseSettings):
         description="المفتاح السري للتطبيق",
         min_length=32,
     )
-    OIDC_ISSUER: Optional[str] = Field(
+    OIDC_ISSUER: str | None = Field(
         default=None,
         description="Issuer URL for the trusted OpenID Connect provider",
     )
-    OIDC_AUDIENCE: Optional[str] = Field(
+    OIDC_AUDIENCE: str | None = Field(
         default=None,
         description="Expected audience for API access tokens",
     )
-    OIDC_JWKS_URL: Optional[str] = Field(
+    OIDC_JWKS_URL: str | None = Field(
         default=None,
         description="HTTPS URL of the trusted provider's JWKS endpoint",
     )
@@ -360,7 +418,7 @@ class Settings(BaseSettings):
     # ==============================================
 
     @property
-    def ALLOWED_ORIGINS_LIST(self) -> List[str]:
+    def ALLOWED_ORIGINS_LIST(self) -> list[str]:
         """
         تحويل ALLOWED_ORIGINS إلى قائمة.
 
@@ -406,6 +464,7 @@ logger.info(
         "app_name": settings.APP_NAME,
         "app_version": settings.APP_VERSION,
         "app_env": settings.APP_ENV,
+        "database_target": settings.DATABASE_TARGET,
         "debug": settings.DEBUG,
         "db_echo": settings.DB_ECHO,
     },
@@ -417,6 +476,7 @@ logger.info(
 # ==============================================
 
 __all__ = [
+    "DatabaseTarget",
     "Settings",
     "settings",
 ]

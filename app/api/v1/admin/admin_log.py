@@ -10,9 +10,9 @@
 # واجهات API لسجل أنشطة المديرين
 # ==============================================
 
-"""MoulAI operational module for admin log.
+"""Administrative log operations require trusted Keycloak identity and RBAC.
 
-Part of MoulAI Platform - Agent-as-a-Service.
+An admin identifier selects a log subject and never grants HTTP authority.
 """
 
 from datetime import datetime
@@ -25,22 +25,23 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
-    Query,
     Path,
+    Query,
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import require_admin_permission
 from app.core.database import get_db
-from app.core.logger import logger
 from app.core.exceptions import NotFoundError
+from app.core.logger import logger
 from app.schemas.admin_log import (
-    AdminLogCreate,
-    AdminLogResponse,
-    AdminLogListResponse,
-    AdminLogFilter,
-    ActionSummary,
     ActionsSummaryResponse,
+    ActionSummary,
+    AdminLogCreate,
+    AdminLogFilter,
+    AdminLogListResponse,
+    AdminLogResponse,
 )
 from app.services.business.admin.admin_log_service import AdminLogService
 
@@ -51,6 +52,7 @@ from app.services.business.admin.admin_log_service import AdminLogService
 router = APIRouter(
     prefix="/admin-logs",
     tags=["Admin Logs"],
+    dependencies=[Depends(require_admin_permission("admins.manage"))],
 )
 
 
@@ -60,6 +62,7 @@ router = APIRouter(
 
 
 async def get_admin_log_service(
+    *,
     session: AsyncSession = Depends(get_db),
 ) -> AdminLogService:
     """
@@ -136,7 +139,7 @@ async def create_admin_log(
 
 
 @router.get(
-    "/{log_id}",
+    "/{log_id:int}",
     response_model=AdminLogResponse,
     summary="الحصول على سجل نشاط بالمعرف",
     description="الحصول على سجل نشاط محدد بواسطة معرفه",
@@ -199,7 +202,7 @@ async def get_admin_log_by_id(
 
 
 @router.get(
-    "/admin/{admin_id}",
+    "/admin/{admin_id:int}",
     response_model=AdminLogListResponse,
     summary="سجل أنشطة مدير معين",
     description="الحصول على سجل أنشطة مدير محدد",

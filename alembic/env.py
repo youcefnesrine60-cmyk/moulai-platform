@@ -40,7 +40,7 @@ config = context.config
 # 🗂️ SET DATABASE URL FROM SETTINGS
 # ==============================================
 
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
 
 # ==============================================
 # 📝 LOGGING
@@ -121,6 +121,12 @@ async def run_async_migrations() -> None:
 
 def run_migrations_online() -> None:
     """تشغيل الترحيلات في وضع Online (الواجهة العامة)"""
+    shared_connection = config.attributes.get("connection")
+    if shared_connection is not None:
+        if not isinstance(shared_connection, Connection):
+            raise TypeError("Alembic shared connection must be a SQLAlchemy Connection")
+        do_run_migrations(shared_connection)
+        return
     asyncio.run(run_async_migrations())
 
 

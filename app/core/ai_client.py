@@ -195,46 +195,6 @@ class AIClient:
             )
             return "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى."
 
-    # ==========================================
-    # 💬 CHAT COMPLETION (للتوافق مع intent_classifier)
-    # ==========================================
-
-    async def chat_completion(
-        self,
-        *,
-        messages: List[Dict[str, str]],
-        temperature: float = 0.7,
-        max_tokens: int = 500,
-        stream: bool = False,
-    ) -> str:
-        """
-        إجراء مكالمة Chat Completion (متوافقة مع intent_classifier).
-
-        Args:
-            messages: قائمة الرسائل
-            temperature: درجة الحرارة
-            max_tokens: الحد الأقصى للرموز
-            stream: تدفق النتيجة
-
-        Returns:
-            رد النموذج
-        """
-        # استخراج آخر رسالة للمستخدم
-        user_message = ""
-        system_prompt = None
-
-        for msg in messages:
-            if msg.get("role") == "user":
-                user_message = msg.get("content", "")
-            elif msg.get("role") == "system":
-                system_prompt = msg.get("content", "")
-
-        return await self.chat(
-            message=user_message,
-            system_prompt=system_prompt,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
 
     # ==========================================
     # 📊 ANALYZE ORDER

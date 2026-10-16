@@ -16,11 +16,15 @@ Part of MoulAI Platform - Agent-as-a-Service.
 """
 
 import asyncio
+
 import httpx
 
-from app.services.telegram.client import client
 from app.core.logger import logger
-from app.services.telegram.constants import BASE_URL, MAX_RETRIES
+from app.services.telegram.client import client
+from app.services.telegram.constants import (
+    BASE_URL,
+    MAX_RETRIES,
+)
 
 # ============================================
 # 🧩 TYPES
@@ -92,7 +96,11 @@ async def _post(*, method: str, data: dict) -> TelegramResponse:
         except httpx.RequestError as e:
             logger.warning(
                 "telegram_request_retry",
-                extra={"method": method, "attempt": attempt, "error": str(e)},
+                extra={
+                    "method": method,
+                    "attempt": attempt,
+                    "error_type": type(e).__name__,
+                },
             )
 
             # ==============================
@@ -107,8 +115,9 @@ async def _post(*, method: str, data: dict) -> TelegramResponse:
                 await asyncio.sleep(1)
                 continue
 
-            logger.exception(
-                "telegram_request_failed", extra={"method": method, "error": str(e)}
+            logger.error(
+                "telegram_request_failed",
+                extra={"method": method, "error_type": type(e).__name__},
             )
             return None
 
@@ -117,8 +126,9 @@ async def _post(*, method: str, data: dict) -> TelegramResponse:
         # ======================================
 
         except ValueError as e:
-            logger.exception(
-                "telegram_invalid_json", extra={"method": method, "error": str(e)}
+            logger.error(
+                "telegram_invalid_json",
+                extra={"method": method, "error_type": type(e).__name__},
             )
             return None
 
@@ -127,9 +137,9 @@ async def _post(*, method: str, data: dict) -> TelegramResponse:
         # ======================================
 
         except Exception as e:
-
-            logger.exception(
-                "telegram_unknown_error", extra={"method": method, "error": str(e)}
+            logger.error(
+                "telegram_unknown_error",
+                extra={"method": method, "error_type": type(e).__name__},
             )
             return None
     return None

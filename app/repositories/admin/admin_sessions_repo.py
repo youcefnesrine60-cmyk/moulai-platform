@@ -18,9 +18,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 from datetime import datetime
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import (
@@ -38,9 +35,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-AdminSessionData = Dict[str, Any]
-AdminSessionUpdateData = Dict[str, Any]
-AdminSessionList = List[AdminSession]
+AdminSessionData = dict[str, Any]
+AdminSessionUpdateData = dict[str, Any]
+AdminSessionList = list[AdminSession]
 
 # ==============================================
 # 🔐 ADMIN SESSIONS REPOSITORY
@@ -152,7 +149,7 @@ class AdminSessionsRepository(
         self,
         *,
         session_token: str,
-    ) -> Optional[AdminSession]:
+    ) -> AdminSession | None:
         """
         الحصول على جلسة بواسطة رمز الجلسة.
 
@@ -189,7 +186,7 @@ class AdminSessionsRepository(
         self,
         *,
         session_token: str,
-    ) -> Optional[AdminSession]:
+    ) -> AdminSession | None:
         """
         الحصول على جلسة نشطة بواسطة رمز الجلسة.
 
@@ -331,7 +328,7 @@ class AdminSessionsRepository(
         self,
         *,
         query: str,
-        admin_id: Optional[int] = None,
+        admin_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> AdminSessionList:
@@ -461,8 +458,8 @@ class AdminSessionsRepository(
         admin_id: int,
         session_token: str,
         expires_at: datetime,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> AdminSession:
         """
         إنشاء جلسة جديدة للمدير.
@@ -515,7 +512,7 @@ class AdminSessionsRepository(
         self,
         *,
         session_token: str,
-    ) -> Optional[AdminSession]:
+    ) -> AdminSession | None:
         """
         تحديث آخر نشاط للجلسة.
 
@@ -563,7 +560,7 @@ class AdminSessionsRepository(
         self,
         *,
         session_token: str,
-    ) -> Optional[AdminSession]:
+    ) -> AdminSession | None:
         """
         إلغاء تنشيط الجلسة (تسجيل الخروج).
 
@@ -658,7 +655,7 @@ class AdminSessionsRepository(
         *,
         session_token: str,
         expires_at: datetime,
-    ) -> Optional[AdminSession]:
+    ) -> AdminSession | None:
         """
         تمديد صلاحية الجلسة.
 
@@ -738,208 +735,3 @@ class AdminSessionsRepository(
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE ADMIN SESSION (COMPATIBILITY)
-# ==============================================
-
-
-async def create_admin_session(
-    *,
-    admin_id: int,
-    session_token: str,
-    expires_at: datetime,
-    ip_address: Optional[str] = None,
-    user_agent: Optional[str] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء جلسة جديدة للمدير (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        admin_id: معرف المدير
-        session_token: رمز الجلسة
-        expires_at: تاريخ انتهاء الجلسة
-        ip_address: عنوان IP (اختياري)
-        user_agent: متصفح المدير (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف الجلسة
-    """
-    repo = AdminSessionsRepository(session=session)
-
-    session_obj = await repo.create_session(
-        admin_id=admin_id,
-        session_token=session_token,
-        expires_at=expires_at,
-        ip_address=ip_address,
-        user_agent=user_agent,
-    )
-
-    return session_obj.id
-
-
-# ==============================================
-# GET ADMIN SESSION (COMPATIBILITY)
-# ==============================================
-
-
-async def get_admin_session(
-    *,
-    session_token: str,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على جلسة بواسطة رمز الجلسة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session_token: رمز الجلسة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الجلسة أو None
-    """
-    repo = AdminSessionsRepository(session=session)
-
-    session_obj = await repo.get_by_session_token(
-        session_token=session_token,
-    )
-
-    if not session_obj:
-        return None
-
-    return {
-        "id": session_obj.id,
-        "admin_id": session_obj.admin_id,
-        "session_token": session_obj.session_token,
-        "ip_address": session_obj.ip_address,
-        "user_agent": session_obj.user_agent,
-        "expires_at": session_obj.expires_at,
-        "is_active": session_obj.is_active,
-        "last_activity": session_obj.last_activity,
-        "created_at": session_obj.created_at,
-    }
-
-
-# ==============================================
-# GET ADMIN ACTIVE SESSION (COMPATIBILITY)
-# ==============================================
-
-
-async def get_admin_active_session(
-    *,
-    session_token: str,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على جلسة نشطة بواسطة رمز الجلسة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session_token: رمز الجلسة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الجلسة أو None
-    """
-    repo = AdminSessionsRepository(session=session)
-
-    session_obj = await repo.get_active_session(
-        session_token=session_token,
-    )
-
-    if not session_obj:
-        return None
-
-    return {
-        "id": session_obj.id,
-        "admin_id": session_obj.admin_id,
-        "session_token": session_obj.session_token,
-        "ip_address": session_obj.ip_address,
-        "user_agent": session_obj.user_agent,
-        "expires_at": session_obj.expires_at,
-        "is_active": session_obj.is_active,
-        "last_activity": session_obj.last_activity,
-        "created_at": session_obj.created_at,
-    }
-
-
-# ==============================================
-# DEACTIVATE ADMIN SESSION (COMPATIBILITY)
-# ==============================================
-
-
-async def deactivate_admin_session(
-    *,
-    session_token: str,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء تنشيط الجلسة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session_token: رمز الجلسة
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = AdminSessionsRepository(session=session)
-
-    await repo.deactivate_session(
-        session_token=session_token,
-    )
-
-    logger.info(
-        "admin_session_deactivated",
-        extra={"session_token": session_token},
-    )
-
-
-# ==============================================
-# GET ADMIN SESSIONS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_admin_sessions(
-    *,
-    admin_id: int,
-    session: AsyncSession,
-    only_active: bool = True,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على جلسات مدير معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        admin_id: معرف المدير
-        session: جلسة قاعدة البيانات غير المتزامنة
-        only_active: جلب الجلسات النشطة فقط
-
-    Returns:
-        قائمة جلسات المدير
-    """
-    repo = AdminSessionsRepository(session=session)
-
-    sessions = await repo.get_by_admin_id(
-        admin_id=admin_id,
-        only_active=only_active,
-    )
-
-    result = []
-
-    for s in sessions:
-        result.append(
-            {
-                "id": s.id,
-                "admin_id": s.admin_id,
-                "session_token": s.session_token,
-                "ip_address": s.ip_address,
-                "user_agent": s.user_agent,
-                "expires_at": s.expires_at,
-                "is_active": s.is_active,
-                "last_activity": s.last_activity,
-                "created_at": s.created_at,
-            }
-        )
-
-    return result

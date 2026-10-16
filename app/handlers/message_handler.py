@@ -15,26 +15,24 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from app.core.logger import logger
-from app.core.state_dispatcher import StateDispatcher
-from app.core.security.captcha_manager import CaptchaManager
 from app.agent.engine import agent_engine
-
+from app.agent.executor.actions import action_registry
+from app.core.logger import logger
+from app.core.security.captcha_manager import CaptchaManager
+from app.core.state_dispatcher import StateDispatcher
 from app.handlers.captcha_handler import handle_captcha
-
-from app.helpers.ui_helpers import send_main_menu
+from app.handlers.manual_billing_handler import handle_billing_message
 from app.helpers.navigation import go_back
 from app.helpers.state_helper import (
     append_to_state_list,
 )
+from app.helpers.ui_helpers import send_main_menu
 from app.helpers.ui_manager import UIManager
-
 from app.repositories.state_repo import (
     delete_state,
     get_state,
     set_state,
 )
-from app.agent.executor.actions import action_registry
 from app.services.telegram import send_message
 
 # ==============================================
@@ -71,6 +69,13 @@ async def handle_message(
         )
         if not solved:
             return
+
+    # ==========================================
+    # PRIVATE BILLING AND RECEIPT ATTACHMENTS
+    # ==========================================
+
+    if await handle_billing_message(message=message):
+        return
 
     # ==========================================
     # 💾 STORE USER MESSAGE ID (دائماً)

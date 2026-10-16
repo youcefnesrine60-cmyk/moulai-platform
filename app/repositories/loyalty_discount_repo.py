@@ -18,9 +18,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import select
@@ -34,9 +31,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-LoyaltyDiscountData = Dict[str, Any]
-LoyaltyDiscountUpdateData = Dict[str, Any]
-LoyaltyDiscountList = List[LoyaltyDiscount]
+LoyaltyDiscountData = dict[str, Any]
+LoyaltyDiscountUpdateData = dict[str, Any]
+LoyaltyDiscountList = list[LoyaltyDiscount]
 
 # ==============================================
 # 🎖️ LOYALTY DISCOUNT REPOSITORY
@@ -239,7 +236,7 @@ class LoyaltyDiscountRepository(
         *,
         discount_id: int,
         discount_percent: float,
-    ) -> Optional[LoyaltyDiscount]:
+    ) -> LoyaltyDiscount | None:
         """
         تحديث نسبة الخصم.
 
@@ -279,206 +276,3 @@ class LoyaltyDiscountRepository(
             عدد الخصومات
         """
         return await self.count()
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة (Psycopg3)
-# ==============================================
-
-# ==============================================
-# CREATE LOYALTY DISCOUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def create_loyalty_discount(
-    *,
-    years_required: int,
-    discount_percent: float,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء خصم ولاء جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        years_required: عدد السنوات المطلوبة
-        discount_percent: نسبة الخصم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف الخصم
-    """
-    repo = LoyaltyDiscountRepository(session=session)
-
-    data: LoyaltyDiscountData = {
-        "years_required": years_required,
-        "discount_percent": discount_percent,
-    }
-
-    discount = await repo.create(data=data)
-
-    logger.info(
-        "loyalty_discount_created",
-        extra={
-            "discount_id": discount.id,
-            "years_required": years_required,
-            "discount_percent": discount_percent,
-        },
-    )
-
-    return discount.id
-
-
-# ==============================================
-# GET LOYALTY DISCOUNT BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_loyalty_discount_by_id(
-    *,
-    discount_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على خصم ولاء بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        discount_id: معرف الخصم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الخصم أو None
-    """
-    repo = LoyaltyDiscountRepository(session=session)
-
-    discount = await repo.get_by_id(id=discount_id)
-
-    if not discount:
-        return None
-
-    return {
-        "id": discount.id,
-        "owner_id": discount.owner_id,
-        "years_required": discount.years_required,
-        "discount_percent": float(discount.discount_percent),
-    }
-
-
-# ==============================================
-# GET ALL LOYALTY DISCOUNTS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_all_loyalty_discounts(
-    session: AsyncSession,
-    *,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على جميع خصومات الولاء (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة خصومات الولاء
-    """
-    repo = LoyaltyDiscountRepository(session=session)
-
-    discounts = await repo.get_all_ordered(skip=skip, limit=limit)
-
-    result = []
-
-    for discount in discounts:
-        result.append(
-            {
-                "id": discount.id,
-                "owner_id": discount.owner_id,
-                "years_required": discount.years_required,
-                "discount_percent": float(discount.discount_percent),
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# GET LOYALTY DISCOUNT FOR YEARS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_loyalty_discount_for_years(
-    *,
-    years: int,
-    session: AsyncSession,
-) -> float:
-    """
-    حساب نسبة الخصم المطبقة لعدد سنوات (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        years: عدد سنوات التعامل مع المنصة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        نسبة الخصم (0.0 إذا لم يوجد خصم مطابق)
-    """
-    repo = LoyaltyDiscountRepository(session=session)
-
-    return await repo.get_discount_for_years(years=years)
-
-
-# ==============================================
-# UPDATE LOYALTY DISCOUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def update_loyalty_discount(
-    *,
-    discount_id: int,
-    discount_percent: float,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث نسبة خصم الولاء (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        discount_id: معرف الخصم
-        discount_percent: نسبة الخصم الجديدة
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = LoyaltyDiscountRepository(session=session)
-
-    await repo.update_discount_percent(
-        discount_id=discount_id,
-        discount_percent=discount_percent,
-    )
-
-
-# ==============================================
-# DELETE LOYALTY DISCOUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_loyalty_discount(
-    *,
-    discount_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف خصم ولاء (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        discount_id: معرف الخصم
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = LoyaltyDiscountRepository(session=session)
-
-    await repo.delete(id=discount_id)
-
-    logger.info(
-        "loyalty_discount_deleted",
-        extra={"discount_id": discount_id},
-    )

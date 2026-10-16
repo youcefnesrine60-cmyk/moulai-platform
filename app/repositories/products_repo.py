@@ -15,32 +15,24 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from sqlalchemy.orm import raiseload
-
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
-
 # ==============================================
 # 🍔 PRODUCTS REPOSITORY
 # عمليات قاعدة البيانات للمنتجات
 # Repository ---> SQLAlchemy
 # ==============================================
 
-from typing import (
-    List,
-    Optional,
-)
-
 from sqlalchemy import (
     or_,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import raiseload, selectinload
 
 from app.core.logger import logger
 from app.models.product import Product
@@ -50,7 +42,7 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-ProductList = List[Product]
+ProductList = list[Product]
 
 # ==============================================
 # 🍔 PRODUCT REPOSITORY
@@ -121,7 +113,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
         skip: int = 0,
         limit: int = 100,
         only_available: bool = True,
-        category_id: Optional[int] = None,
+        category_id: int | None = None,
     ) -> ProductList:
         """
         الحصول على منتجات مطعم معين.
@@ -233,7 +225,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
         self,
         *,
         product_id: int,
-    ) -> Optional[Product]:
+    ) -> Product | None:
         """
         الحصول على منتج مع جميع علاقاته.
 
@@ -304,7 +296,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     async def get_by_ids(
         self,
         *,
-        product_ids: List[int],
+        product_ids: list[int],
         only_available: bool = True,
     ) -> ProductList:
         """
@@ -347,7 +339,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
         self,
         *,
         query: str,
-        restaurant_id: Optional[int] = None,
+        restaurant_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> ProductList:
@@ -461,7 +453,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
         *,
         product_id: int,
         is_available: bool,
-    ) -> Optional[Product]:
+    ) -> Product | None:
         """
         تحديث حالة توفر المنتج.
 
@@ -473,7 +465,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
             المنتج المُحدّث أو None
         """
         return await self.update(
-            product_id=product_id,
+            id=product_id,
             data={"is_available": is_available},
         )
 
@@ -486,7 +478,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
         *,
         product_id: int,
         price: float,
-    ) -> Optional[Product]:
+    ) -> Product | None:
         """
         تحديث سعر المنتج.
 
@@ -498,7 +490,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
             المنتج المُحدّث أو None
         """
         return await self.update(
-            product_id=product_id,
+            id=product_id,
             data={"price": price},
         )
 
@@ -511,7 +503,7 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
         *,
         product_id: int,
         sort_order: int,
-    ) -> Optional[Product]:
+    ) -> Product | None:
         """
         تحديث ترتيب المنتج.
 
@@ -523,104 +515,6 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
             المنتج المُحدّث أو None
         """
         return await self.update(
-            product_id=product_id,
+            id=product_id,
             data={"sort_order": sort_order},
         )
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# GET PRODUCT BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_product_by_id(
-    *,
-    product_id: int,
-    session: AsyncSession,
-) -> Optional[Product]:
-    """
-    الحصول على منتج بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        المنتج أو None
-    """
-    repo = ProductRepository(session=session)
-
-    return await repo.get_by_id(
-        product_id=product_id,
-    )
-
-
-# ==============================================
-# GET RESTAURANT PRODUCTS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_restaurant_products(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-    only_available: bool = True,
-) -> ProductList:
-    """
-    الحصول على منتجات مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-        only_available: جلب المنتجات المتاحة فقط
-
-    Returns:
-        قائمة المنتجات
-    """
-    repo = ProductRepository(session=session)
-
-    return await repo.get_by_restaurant_id(
-        restaurant_id=restaurant_id,
-        skip=skip,
-        limit=limit,
-        only_available=only_available,
-    )
-
-
-# ==============================================
-# COUNT RESTAURANT PRODUCTS (COMPATIBILITY)
-# ==============================================
-
-
-async def count_restaurant_products(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    only_available: bool = True,
-) -> int:
-    """
-    حساب عدد منتجات مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        only_available: حساب المنتجات المتاحة فقط
-
-    Returns:
-        عدد المنتجات
-    """
-    repo = ProductRepository(session=session)
-
-    return await repo.count_by_restaurant(
-        restaurant_id=restaurant_id,
-        only_available=only_available,
-    )

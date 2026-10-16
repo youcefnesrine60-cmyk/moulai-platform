@@ -73,7 +73,7 @@ async def show_order_status(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="❌ الطلب غير موجود.",
             reply_markup=None,
@@ -92,7 +92,7 @@ async def show_order_status(
         updated_at=str(order.get("updated_at", "")),
     )
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text=status_ui.get("text", "📦 حالة الطلب"),
         reply_markup=status_ui.get("inline_keyboard"),

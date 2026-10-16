@@ -77,7 +77,7 @@ async def send_captcha(
     # 📤 SEND CAPTCHA TO USER
     # ==========================================
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text=captcha["question"],
         reply_markup=captcha.get("keyboard"),
@@ -108,7 +108,7 @@ async def handle_captcha(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="⚠️ الرجاء إدخال الرقم الصحيح فقط.",
             reply_markup=None,
@@ -138,7 +138,7 @@ async def handle_captcha(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="❌ إجابة خاطئة.\nحاول مرة أخرى.",
             reply_markup=None,
@@ -165,7 +165,7 @@ async def handle_captcha(
         },
     )
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text="✅ تم التحقق بنجاح.",
         reply_markup=None,

@@ -17,9 +17,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import (
@@ -36,9 +33,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-OptionGroupData = Dict[str, Any]
-OptionGroupUpdateData = Dict[str, Any]
-OptionGroupList = List[OptionGroup]
+OptionGroupData = dict[str, Any]
+OptionGroupUpdateData = dict[str, Any]
+OptionGroupList = list[OptionGroup]
 
 # ==============================================
 # 🎛 OPTION GROUPS REPOSITORY
@@ -139,7 +136,7 @@ class OptionGroupsRepository(
         *,
         product_id: int,
         name: str,
-    ) -> Optional[OptionGroup]:
+    ) -> OptionGroup | None:
         """
         الحصول على مجموعة خيارات بواسطة اسمها.
 
@@ -181,7 +178,7 @@ class OptionGroupsRepository(
         self,
         *,
         group_id: int,
-    ) -> Optional[OptionGroup]:
+    ) -> OptionGroup | None:
         """
         الحصول على مجموعة خيارات مع خياراتها.
 
@@ -262,7 +259,7 @@ class OptionGroupsRepository(
         self,
         *,
         query: str,
-        product_id: Optional[int] = None,
+        product_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> OptionGroupList:
@@ -326,7 +323,7 @@ class OptionGroupsRepository(
         *,
         group_id: int,
         sort_order: int,
-    ) -> Optional[OptionGroup]:
+    ) -> OptionGroup | None:
         """
         تحديث ترتيب مجموعة الخيارات.
 
@@ -359,7 +356,7 @@ class OptionGroupsRepository(
         *,
         group_id: int,
         required: bool,
-    ) -> Optional[OptionGroup]:
+    ) -> OptionGroup | None:
         """
         تحديث حالة الإجبار لمجموعة الخيارات.
 
@@ -392,7 +389,7 @@ class OptionGroupsRepository(
         *,
         group_id: int,
         multiple_choice: bool,
-    ) -> Optional[OptionGroup]:
+    ) -> OptionGroup | None:
         """
         تحديث حالة الاختيار المتعدد لمجموعة الخيارات.
 
@@ -425,7 +422,7 @@ class OptionGroupsRepository(
         *,
         group_id: int,
         name: str,
-    ) -> Optional[OptionGroup]:
+    ) -> OptionGroup | None:
         """
         تحديث اسم مجموعة الخيارات.
 
@@ -551,264 +548,3 @@ class OptionGroupsRepository(
                 },
             )
             raise
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE OPTION GROUP (COMPATIBILITY)
-# ==============================================
-
-
-async def create_option_group(
-    *,
-    product_id: int,
-    name: str,
-    required: bool = False,
-    multiple_choice: bool = False,
-    sort_order: int = 0,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء مجموعة خيارات جديدة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        name: اسم مجموعة الخيارات
-        required: هل المجموعة إجبارية
-        multiple_choice: هل يسمح باختيار متعدد
-        sort_order: ترتيب العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف مجموعة الخيارات
-    """
-    repo = OptionGroupsRepository(session=session)
-
-    data: OptionGroupData = {
-        "product_id": product_id,
-        "name": name,
-        "required": required,
-        "multiple_choice": multiple_choice,
-        "sort_order": sort_order,
-    }
-
-    group = await repo.create(data=data)
-
-    logger.info(
-        "option_group_created",
-        extra={
-            "group_id": group.id,
-            "product_id": product_id,
-        },
-    )
-
-    return group.id
-
-
-# ==============================================
-# GET OPTION GROUP (COMPATIBILITY)
-# ==============================================
-
-
-async def get_option_group(
-    *,
-    group_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مجموعة خيارات بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        group_id: معرف مجموعة الخيارات
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات مجموعة الخيارات أو None
-    """
-    repo = OptionGroupsRepository(session=session)
-
-    group = await repo.get_by_id(id=group_id)
-
-    if not group:
-        return None
-
-    return {
-        "id": group.id,
-        "product_id": group.product_id,
-        "name": group.name,
-        "required": group.required,
-        "multiple_choice": group.multiple_choice,
-        "sort_order": group.sort_order,
-        "created_at": group.created_at,
-    }
-
-
-# ==============================================
-# GET PRODUCT OPTION GROUPS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_product_option_groups(
-    *,
-    product_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على مجموعات خيارات منتج معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة مجموعات الخيارات
-    """
-    repo = OptionGroupsRepository(session=session)
-
-    groups = await repo.get_by_product_id(
-        product_id=product_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    result = []
-
-    for group in groups:
-        result.append(
-            {
-                "id": group.id,
-                "product_id": group.product_id,
-                "name": group.name,
-                "required": group.required,
-                "multiple_choice": group.multiple_choice,
-                "sort_order": group.sort_order,
-                "created_at": group.created_at,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# GET OPTION GROUP WITH OPTIONS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_option_group_with_options(
-    *,
-    group_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مجموعة خيارات مع خياراتها (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        group_id: معرف مجموعة الخيارات
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات مجموعة الخيارات مع الخيارات أو None
-    """
-    repo = OptionGroupsRepository(session=session)
-
-    group = await repo.get_with_options(group_id=group_id)
-
-    if not group:
-        return None
-
-    return {
-        "id": group.id,
-        "product_id": group.product_id,
-        "name": group.name,
-        "required": group.required,
-        "multiple_choice": group.multiple_choice,
-        "sort_order": group.sort_order,
-        "created_at": group.created_at,
-        "options": [
-            {
-                "id": option.id,
-                "name": option.name,
-                "extra_price": option.extra_price,
-                "is_available": option.is_available,
-                "sort_order": option.sort_order,
-            }
-            for option in group.options
-        ],
-    }
-
-
-# ==============================================
-# DELETE OPTION GROUP (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_option_group(
-    *,
-    group_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف مجموعة خيارات (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        group_id: معرف مجموعة الخيارات
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OptionGroupsRepository(session=session)
-
-    await repo.delete(id=group_id)
-
-    logger.info(
-        "option_group_deleted",
-        extra={"group_id": group_id},
-    )
-
-
-# ==============================================
-# GET REQUIRED OPTION GROUPS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_required_option_groups(
-    *,
-    product_id: int,
-    session: AsyncSession,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على مجموعات الخيارات الإجبارية لمنتج معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        product_id: معرف المنتج
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قائمة مجموعات الخيارات الإجبارية
-    """
-    repo = OptionGroupsRepository(session=session)
-
-    groups = await repo.get_required_by_product(product_id=product_id)
-
-    result = []
-
-    for group in groups:
-        result.append(
-            {
-                "id": group.id,
-                "product_id": group.product_id,
-                "name": group.name,
-                "required": group.required,
-                "multiple_choice": group.multiple_choice,
-                "sort_order": group.sort_order,
-                "created_at": group.created_at,
-            }
-        )
-
-    return result

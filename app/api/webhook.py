@@ -15,9 +15,16 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from fastapi import APIRouter
-from fastapi import Request
+import hmac
+from typing import TypeAlias
 
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    Request,
+)
+
+from app.core.config import settings
 from app.core.dispatcher import dispatch_update
 from app.core.logger import logger
 from app.core.middleware.gateway import GatewayMiddleware
@@ -29,7 +36,7 @@ from app.handlers.callback_routes import setup_routes
 # 🧩 TYPES
 # ==============================================
 
-WebhookResponse = dict[str, bool]
+WebhookResponse: TypeAlias = dict[str, bool]
 
 
 # ==============================================
@@ -61,6 +68,16 @@ async def register_routes() -> None:
 
 @router.post("/webhook")
 async def telegram_webhook(*, request: Request) -> WebhookResponse:
+    """Authenticate Telegram updates before parsing or dispatching billing work."""
+
+    secret = settings.TELEGRAM_WEBHOOK_SECRET_TOKEN
+    if secret is None or not secret.get_secret_value():
+        raise HTTPException(status_code=503, detail="telegram_webhook_not_configured")
+    supplied = request.headers.get("X-Telegram-Bot-Api-Secret-Token", "")
+    if not hmac.compare_digest(
+        supplied.encode("utf-8"), secret.get_secret_value().encode("utf-8")
+    ):
+        raise HTTPException(status_code=403, detail="invalid_telegram_webhook_token")
 
     # ==========================================
     # 📦 PARSE REQUEST

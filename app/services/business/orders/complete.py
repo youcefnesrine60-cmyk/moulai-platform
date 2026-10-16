@@ -385,38 +385,3 @@ async def can_complete_order(
             },
         )
         return False
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# ==============================================
-
-
-# دالة التوافق مع الإصدار القديم
-# ==============================================
-# COMPLETE ORDER COMPAT
-# ==============================================
-
-
-async def complete_order_compat(
-    *,
-    order_id: int,
-    employee_id: Optional[int] = None,
-    note: Optional[str] = None,
-    session: AsyncSession,
-) -> None:
-    """
-    دالة متوافقة مع الإصدار القديم (مغلفة).
-
-    Args:
-        order_id: معرف الطلب
-        employee_id: معرف الموظف (اختياري)
-        note: ملاحظة إضافية (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    await complete_order(
-        order_id=order_id,
-        employee_id=employee_id,
-        note=note,
-        session=session,
-    )

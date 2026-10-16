@@ -15,9 +15,15 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
+import logging
+
 import httpx
 
 from app.core.logger import logger
+
+# Bot API URLs contain the token and must not appear in HTTP transport logs.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 # ============================================
 # 🌐 SHARED HTTP CLIENT

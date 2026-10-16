@@ -15,44 +15,43 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-)
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import SessionTransactionOrigin
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
-    ConflictError,
-    NotFoundError,
     BranchLimitExceededError,
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
 )
+from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان (للتحقق من الصلاحيات)
 from app.core.security import (
     sanitize_input,
 )
-
-from app.core.logger import logger
+from app.guards.feature_guard import require_feature
 from app.models.branch import Branch
-from app.repositories.branches_repo import BranchesRepository
 from app.repositories.branch_pricing_repo import BranchPricingRepository
-from app.services.business.feature_usage_counter_engine import (
-    decrease_usage,
-    increase_usage,
-)
+from app.repositories.branches_repo import BranchesRepository
 
 # ✅ استيراد المخططات
 from app.schemas.branch import (
     BranchCreate,
-    BranchResponse,
-    BranchUpdate,
-    BranchStatusUpdate,
     BranchListResponse,
+    BranchResponse,
+    BranchStatusUpdate,
     BranchSummary,
+    BranchUpdate,
+)
+from app.services.business.feature_usage_counter_engine import (
+    decrease_usage,
+    increase_usage,
 )
 
 # ==============================================
@@ -67,8 +66,41 @@ MAX_BRANCHES_PER_RESTAURANT = 10
 # 🧩 TYPES
 # ==============================================
 
-BranchData = Dict[str, Any]
-BranchList = List[Branch]
+BranchData = dict[str, Any]
+BranchList = list[Branch]
+
+# ==============================================
+# 🔒 BRANCH TRANSACTION BOUNDARY
+# يحافظ على ذرية إنشاء الفرع وعداد استخدام الميزة
+# ==============================================
+
+
+@asynccontextmanager
+async def branch_transaction(session: AsyncSession) -> AsyncIterator[None]:
+    """Create a branch unit of work that also owns its feature usage update."""
+    info: dict[str, Any] = session.info
+    active = session.in_transaction()
+    current = session.get_transaction() if active else None
+    owns_autobegin = bool(
+        current
+        and current.sync_transaction.origin is SessionTransactionOrigin.AUTOBEGIN
+    )
+    previous = info.get("defer_repository_commit")
+    info["defer_repository_commit"] = True
+    try:
+        async with session.begin_nested() if active else session.begin():
+            yield
+        if owns_autobegin:
+            await session.commit()
+    except BaseException:
+        if owns_autobegin:
+            await session.rollback()
+        raise
+    finally:
+        if previous is None:
+            info.pop("defer_repository_commit", None)
+        else:
+            info["defer_repository_commit"] = previous
 
 
 # ==============================================
@@ -245,7 +277,7 @@ class BranchService:
         self,
         *,
         query: str,
-        restaurant_id: Optional[int] = None,
+        restaurant_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> BranchListResponse:
@@ -381,7 +413,7 @@ class BranchService:
             limit=1000,
         )
 
-        branches_per_wilaya: Dict[str, int] = {}
+        branches_per_wilaya: dict[str, int] = {}
 
         for branch in branches:
             wilaya = branch.wilaya or "غير محدد"
@@ -410,22 +442,11 @@ class BranchService:
         branch_data: BranchCreate,
         skip_feature_check: bool = False,
     ) -> BranchResponse:
+        """Create one branch and its feature-usage increment atomically.
+
+        ``skip_feature_check`` is reserved for documented internal migration or
+        super-admin workflows. Public API endpoints never expose that argument.
         """
-        إنشاء فرع جديد.
-
-        Args:
-            restaurant_id: معرف المطعم
-            branch_data: بيانات الفرع
-            skip_feature_check: تخطي التحقق من الميزة (للاستخدام الداخلي)
-
-        Returns:
-            BranchResponse: بيانات الفرع المنشأ
-
-        Raises:
-            BranchLimitExceededError: إذا تجاوز المطعم الحد الأقصى للفروع
-            ValidationError: إذا كانت البيانات غير صحيحة
-        """
-        # تنظيف البيانات
         name = sanitize_input(branch_data.name)
 
         logger.info(
@@ -433,59 +454,68 @@ class BranchService:
             extra={
                 "restaurant_id": restaurant_id,
                 "branch_name": name,
+                "feature_check_skipped": skip_feature_check,
             },
         )
 
-        # التحقق من الحد الأقصى للفروع
-        current_count = await self.count_by_restaurant(
-            restaurant_id=restaurant_id,
-            only_active=True,
-        )
+        async with branch_transaction(self.session):
+            if not skip_feature_check:
+                try:
+                    await require_feature(
+                        session=self.session,
+                        restaurant_id=restaurant_id,
+                        feature_id=BRANCH_FEATURE_ID,
+                    )
+                except ValueError as error:
+                    error_code = str(error)
+                    if error_code not in {
+                        "no_active_subscription",
+                        "feature_not_available",
+                        "feature_limit_reached",
+                    }:
+                        raise
+                    raise ForbiddenError(
+                        message=error_code,
+                        error_code=error_code,
+                    ) from error
 
-        if current_count >= MAX_BRANCHES_PER_RESTAURANT:
-            raise BranchLimitExceededError(
+            current_count = await self.count_by_restaurant(
                 restaurant_id=restaurant_id,
-                max_branches=MAX_BRANCHES_PER_RESTAURANT,
-                message=f"تجاوزت الحد الأقصى للفروع ({MAX_BRANCHES_PER_RESTAURANT})",
+                only_active=True,
             )
+            if current_count >= MAX_BRANCHES_PER_RESTAURANT:
+                raise BranchLimitExceededError(
+                    restaurant_id=restaurant_id,
+                    max_branches=MAX_BRANCHES_PER_RESTAURANT,
+                    message=(
+                        "تجاوزت الحد الأقصى للفروع " f"({MAX_BRANCHES_PER_RESTAURANT})"
+                    ),
+                )
 
-        # التحقق من الميزة (Feature Guard)
-        # TODO: إعادة تفعيل require_feature بعد اكتمال النظام
-        # if not skip_feature_check:
-        #     await require_feature(
-        #         restaurant_id=restaurant_id,
-        #         feature_id=BRANCH_FEATURE_ID,
-        #     )
-
-        # التحقق من عدم وجود فرع بنفس الاسم للمطعم
-        existing = await self.repo.get_by_name(
-            restaurant_id=restaurant_id,
-            name=name,
-        )
-
-        if existing:
-            raise ConflictError(
-                message=f"يوجد فرع باسم '{name}' بالفعل لهذا المطعم",
+            existing = await self.repo.get_by_name(
+                restaurant_id=restaurant_id,
+                name=name,
             )
+            if existing:
+                raise ConflictError(
+                    message=(f"يوجد فرع باسم '{name}' بالفعل لهذا المطعم"),
+                )
 
-        # إنشاء الفرع
-        data: BranchData = {
-            "restaurant_id": restaurant_id,
-            "name": name,
-            "phone": branch_data.phone,
-            "wilaya": branch_data.wilaya,
-            "lat": branch_data.lat,
-            "lng": branch_data.lng,
-            "is_active": True,
-        }
-
-        branch = await self.repo.create(data=data)
-
-        # زيادة عداد استخدام الميزة
-        await increase_usage(
-            restaurant_id=restaurant_id,
-            feature_id=BRANCH_FEATURE_ID,
-        )
+            data: BranchData = {
+                "restaurant_id": restaurant_id,
+                "name": name,
+                "phone": branch_data.phone,
+                "wilaya": branch_data.wilaya,
+                "lat": branch_data.lat,
+                "lng": branch_data.lng,
+                "is_active": True,
+            }
+            branch = await self.repo.create(data=data)
+            await increase_usage(
+                session=self.session,
+                restaurant_id=restaurant_id,
+                feature_id=BRANCH_FEATURE_ID,
+            )
 
         logger.info(
             "branch_created_successfully",
@@ -494,7 +524,6 @@ class BranchService:
                 "restaurant_id": restaurant_id,
             },
         )
-
         return BranchResponse.model_validate(branch)
 
     # ==============================================
@@ -669,6 +698,7 @@ class BranchService:
 
         # تقليل عداد استخدام الميزة
         await decrease_usage(
+            session=self.session,
             restaurant_id=restaurant_id,
             feature_id=BRANCH_FEATURE_ID,
         )
@@ -788,6 +818,7 @@ class BranchService:
 
         # تقليل عداد استخدام الميزة
         await decrease_usage(
+            session=self.session,
             restaurant_id=restaurant_id,
             feature_id=BRANCH_FEATURE_ID,
         )
@@ -800,227 +831,3 @@ class BranchService:
                 "permanent": permanent,
             },
         )
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE RESTAURANT BRANCH (COMPATIBILITY)
-# ==============================================
-
-
-async def create_restaurant_branch(
-    *,
-    restaurant_id: int,
-    name: str,
-    phone: Optional[str],
-    wilaya: Optional[str],
-    lat: Optional[float],
-    lng: Optional[float],
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء فرع جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        name: اسم الفرع
-        phone: رقم الهاتف
-        wilaya: الولاية
-        lat: خط العرض
-        lng: خط الطول
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف الفرع
-    """
-    service = BranchService(session=session)
-
-    branch_data = BranchCreate(
-        name=name,
-        phone=phone,
-        wilaya=wilaya,
-        lat=lat,
-        lng=lng,
-    )
-
-    branch = await service.create_branch(
-        restaurant_id=restaurant_id,
-        branch_data=branch_data,
-        skip_feature_check=True,
-    )
-
-    return branch.id
-
-
-# ==============================================
-# UPDATE RESTAURANT BRANCH (COMPATIBILITY)
-# ==============================================
-
-
-async def update_restaurant_branch(
-    *,
-    branch_id: int,
-    name: str,
-    phone: Optional[str],
-    wilaya: Optional[str],
-    lat: Optional[float],
-    lng: Optional[float],
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث فرع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        branch_id: معرف الفرع
-        name: اسم الفرع
-        phone: رقم الهاتف
-        wilaya: الولاية
-        lat: خط العرض
-        lng: خط الطول
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الفرع
-    """
-    service = BranchService(session=session)
-
-    update_data = BranchUpdate(
-        name=name,
-        phone=phone,
-        wilaya=wilaya,
-        lat=lat,
-        lng=lng,
-    )
-
-    await service.update_branch(
-        branch_id=branch_id,
-        update_data=update_data,
-    )
-
-    logger.info(
-        "restaurant_branch_updated",
-        extra={"branch_id": branch_id},
-    )
-
-
-# ==============================================
-# REMOVE RESTAURANT BRANCH (COMPATIBILITY)
-# ==============================================
-
-
-async def remove_restaurant_branch(
-    *,
-    branch_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء تفعيل فرع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        branch_id: معرف الفرع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الفرع
-    """
-    service = BranchService(session=session)
-
-    await service.deactivate_branch(branch_id=branch_id)
-
-    logger.info(
-        "restaurant_branch_removed",
-        extra={"branch_id": branch_id},
-    )
-
-
-# ==============================================
-# LIST RESTAURANT BRANCHES (COMPATIBILITY)
-# ==============================================
-
-
-async def list_restaurant_branches(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    only_active: bool = True,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على فروع مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        only_active: جلب الفروع النشطة فقط
-
-    Returns:
-        List[Dict[str, Any]]: قائمة الفروع
-    """
-    service = BranchService(session=session)
-
-    result = await service.get_by_restaurant(
-        restaurant_id=restaurant_id,
-        only_active=only_active,
-    )
-
-    return [item.model_dump() for item in result.items]
-
-
-# ==============================================
-# GET BRANCHES COUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_branches_count(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    only_active: bool = True,
-) -> int:
-    """
-    حساب عدد فروع مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        only_active: حساب الفروع النشطة فقط
-
-    Returns:
-        int: عدد الفروع
-    """
-    service = BranchService(session=session)
-
-    return await service.count_by_restaurant(
-        restaurant_id=restaurant_id,
-        only_active=only_active,
-    )
-
-
-# ==============================================
-# GET BRANCH COST (COMPATIBILITY)
-# ==============================================
-
-
-async def get_branch_cost(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> float:
-    """
-    حساب تكلفة الفروع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        float: التكلفة الإجمالية للفروع
-    """
-    service = BranchService(session=session)
-
-    return await service.get_branch_cost(
-        restaurant_id=restaurant_id,
-    )

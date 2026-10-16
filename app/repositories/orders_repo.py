@@ -15,25 +15,18 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from sqlalchemy.orm import raiseload, selectinload
-
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
-
 # ==============================================
 # 📦 ORDERS REPOSITORY
 # عمليات قاعدة البيانات للطلبات باستخدام SQLAlchemy
 # ==============================================
-
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import (
@@ -42,6 +35,7 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload, selectinload
 
 from app.core.logger import logger
 from app.models.order import Order
@@ -51,9 +45,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-OrderData = Dict[str, Any]
-OrderUpdateData = Dict[str, Any]
-OrderList = List[Order]
+OrderData = dict[str, Any]
+OrderUpdateData = dict[str, Any]
+OrderList = list[Order]
 
 # ==============================================
 # 📦 ORDERS REPOSITORY
@@ -131,7 +125,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         *,
         restaurant_id: int,
         order_number: str,
-    ) -> Optional[Order]:
+    ) -> Order | None:
         """
         الحصول على طلب بواسطة رقم الطلب.
 
@@ -175,7 +169,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         restaurant_id: int,
         skip: int = 0,
         limit: int = 100,
-        status: Optional[str] = None,
+        status: str | None = None,
     ) -> OrderList:
         """
         الحصول على طلبات مطعم معين.
@@ -223,7 +217,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         self,
         *,
         status: str,
-        restaurant_id: Optional[int] = None,
+        restaurant_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> OrderList:
@@ -317,7 +311,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         self,
         *,
         customer_phone: str,
-        restaurant_id: Optional[int] = None,
+        restaurant_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> OrderList:
@@ -368,7 +362,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         self,
         *,
         query: str,
-        restaurant_id: Optional[int] = None,
+        restaurant_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> OrderList:
@@ -433,7 +427,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         *,
         order_id: int,
         status: str,
-    ) -> Optional[Order]:
+    ) -> Order | None:
         """
         تحديث حالة الطلب.
 
@@ -470,7 +464,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         tax_amount: float,
         delivery_amount: float,
         total_amount: float,
-    ) -> Optional[Order]:
+    ) -> Order | None:
         """
         تحديث مبالغ الطلب.
 
@@ -566,7 +560,7 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
         self,
         *,
         restaurant_id: int,
-        status: Optional[str] = "completed",
+        status: str | None = "completed",
     ) -> float:
         """
         حساب إجمالي مبلغ الطلبات لمطعم معين.
@@ -602,578 +596,6 @@ class OrdersRepository(BaseRepository[Order, OrderData, OrderUpdateData]):
                 },
             )
             raise
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE ORDER (COMPATIBILITY)
-# ==============================================
-
-
-async def create_order(
-    *,
-    restaurant_id: int,
-    branch_id: Optional[int],
-    table_id: Optional[int],
-    employee_id: Optional[int],
-    order_number: str,
-    order_type: str,
-    customer_name: Optional[str],
-    customer_phone: Optional[str],
-    delivery_address: Optional[str],
-    customer_note: Optional[str],
-    status: str,
-    subtotal_amount: float,
-    discount_amount: float,
-    tax_amount: float,
-    delivery_amount: float,
-    total_amount: float,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء طلب جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        branch_id: معرف الفرع
-        table_id: معرف الطاولة
-        employee_id: معرف الموظف
-        order_number: رقم الطلب
-        order_type: نوع الطلب
-        customer_name: اسم العميل
-        customer_phone: رقم هاتف العميل
-        delivery_address: عنوان التوصيل
-        customer_note: ملاحظات العميل
-        status: حالة الطلب
-        subtotal_amount: المبلغ الإجمالي قبل الخصم
-        discount_amount: مبلغ الخصم
-        tax_amount: مبلغ الضريبة
-        delivery_amount: مبلغ التوصيل
-        total_amount: المبلغ النهائي
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف الطلب
-    """
-    repo = OrdersRepository(session=session)
-
-    data: OrderData = {
-        "restaurant_id": restaurant_id,
-        "branch_id": branch_id,
-        "table_id": table_id,
-        "employee_id": employee_id,
-        "order_number": order_number,
-        "order_type": order_type,
-        "customer_name": customer_name,
-        "customer_phone": customer_phone,
-        "delivery_address": delivery_address,
-        "customer_note": customer_note,
-        "status": status,
-        "subtotal_amount": subtotal_amount,
-        "discount_amount": discount_amount,
-        "tax_amount": tax_amount,
-        "delivery_amount": delivery_amount,
-        "total_amount": total_amount,
-    }
-
-    order = await repo.create(data=data)
-
-    logger.info(
-        "order_created",
-        extra={
-            "order_id": order.id,
-            "restaurant_id": restaurant_id,
-        },
-    )
-
-    return order.id
-
-
-# ==============================================
-# GET ORDER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_order(
-    *,
-    order_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على طلب بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_id: معرف الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الطلب أو None
-    """
-    repo = OrdersRepository(session=session)
-
-    order = await repo.get_by_id(id=order_id)
-
-    if not order:
-        return None
-
-    return {
-        "id": order.id,
-        "restaurant_id": order.restaurant_id,
-        "branch_id": order.branch_id,
-        "table_id": order.table_id,
-        "employee_id": order.employee_id,
-        "order_number": order.order_number,
-        "order_type": order.order_type,
-        "customer_name": order.customer_name,
-        "customer_phone": order.customer_phone,
-        "delivery_address": order.delivery_address,
-        "customer_note": order.customer_note,
-        "status": order.status,
-        "subtotal_amount": order.subtotal_amount,
-        "discount_amount": order.discount_amount,
-        "tax_amount": order.tax_amount,
-        "delivery_amount": order.delivery_amount,
-        "total_amount": order.total_amount,
-        "created_at": order.created_at,
-        "updated_at": order.updated_at,
-    }
-
-
-# ==============================================
-# GET ORDER BY NUMBER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_order_by_number(
-    *,
-    restaurant_id: int,
-    order_number: str,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على طلب بواسطة رقم الطلب (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        order_number: رقم الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الطلب أو None
-    """
-    repo = OrdersRepository(session=session)
-
-    order = await repo.get_by_order_number(
-        restaurant_id=restaurant_id,
-        order_number=order_number,
-    )
-
-    if not order:
-        return None
-
-    return {
-        "id": order.id,
-        "restaurant_id": order.restaurant_id,
-        "branch_id": order.branch_id,
-        "table_id": order.table_id,
-        "employee_id": order.employee_id,
-        "order_number": order.order_number,
-        "order_type": order.order_type,
-        "customer_name": order.customer_name,
-        "customer_phone": order.customer_phone,
-        "delivery_address": order.delivery_address,
-        "customer_note": order.customer_note,
-        "status": order.status,
-        "subtotal_amount": order.subtotal_amount,
-        "discount_amount": order.discount_amount,
-        "tax_amount": order.tax_amount,
-        "delivery_amount": order.delivery_amount,
-        "total_amount": order.total_amount,
-        "created_at": order.created_at,
-        "updated_at": order.updated_at,
-    }
-
-
-# ==============================================
-# GET RESTAURANT ORDERS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_restaurant_orders(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-    status: Optional[str] = None,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على طلبات مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-        status: حالة الطلب (اختياري)
-
-    Returns:
-        قائمة الطلبات
-    """
-    repo = OrdersRepository(session=session)
-
-    orders = await repo.get_by_restaurant_id(
-        restaurant_id=restaurant_id,
-        skip=skip,
-        limit=limit,
-        status=status,
-    )
-
-    result = []
-
-    for order in orders:
-        result.append(
-            {
-                "id": order.id,
-                "restaurant_id": order.restaurant_id,
-                "branch_id": order.branch_id,
-                "table_id": order.table_id,
-                "employee_id": order.employee_id,
-                "order_number": order.order_number,
-                "order_type": order.order_type,
-                "customer_name": order.customer_name,
-                "customer_phone": order.customer_phone,
-                "delivery_address": order.delivery_address,
-                "customer_note": order.customer_note,
-                "status": order.status,
-                "subtotal_amount": order.subtotal_amount,
-                "discount_amount": order.discount_amount,
-                "tax_amount": order.tax_amount,
-                "delivery_amount": order.delivery_amount,
-                "total_amount": order.total_amount,
-                "created_at": order.created_at,
-                "updated_at": order.updated_at,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# GET ORDERS BY STATUS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_orders_by_status(
-    *,
-    restaurant_id: int,
-    status: str,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على طلبات حسب الحالة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        status: حالة الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة الطلبات
-    """
-    repo = OrdersRepository(session=session)
-
-    orders = await repo.get_by_status(
-        status=status,
-        restaurant_id=restaurant_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    result = []
-
-    for order in orders:
-        result.append(
-            {
-                "id": order.id,
-                "restaurant_id": order.restaurant_id,
-                "branch_id": order.branch_id,
-                "table_id": order.table_id,
-                "employee_id": order.employee_id,
-                "order_number": order.order_number,
-                "order_type": order.order_type,
-                "customer_name": order.customer_name,
-                "customer_phone": order.customer_phone,
-                "delivery_address": order.delivery_address,
-                "customer_note": order.customer_note,
-                "status": order.status,
-                "subtotal_amount": order.subtotal_amount,
-                "discount_amount": order.discount_amount,
-                "tax_amount": order.tax_amount,
-                "delivery_amount": order.delivery_amount,
-                "total_amount": order.total_amount,
-                "created_at": order.created_at,
-                "updated_at": order.updated_at,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# UPDATE ORDER STATUS (COMPATIBILITY)
-# ==============================================
-
-
-async def update_order_status(
-    *,
-    order_id: int,
-    status: str,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث حالة الطلب (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_id: معرف الطلب
-        status: الحالة الجديدة
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OrdersRepository(session=session)
-
-    await repo.update_status(
-        order_id=order_id,
-        status=status,
-    )
-
-
-# ==============================================
-# UPDATE ORDER TOTALS (COMPATIBILITY)
-# ==============================================
-
-
-async def update_order_totals(
-    *,
-    order_id: int,
-    subtotal_amount: float,
-    discount_amount: float,
-    tax_amount: float,
-    delivery_amount: float,
-    total_amount: float,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث مبالغ الطلب (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_id: معرف الطلب
-        subtotal_amount: المبلغ الإجمالي قبل الخصم
-        discount_amount: مبلغ الخصم
-        tax_amount: مبلغ الضريبة
-        delivery_amount: مبلغ التوصيل
-        total_amount: المبلغ النهائي
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OrdersRepository(session=session)
-
-    await repo.update_totals(
-        order_id=order_id,
-        subtotal_amount=subtotal_amount,
-        discount_amount=discount_amount,
-        tax_amount=tax_amount,
-        delivery_amount=delivery_amount,
-        total_amount=total_amount,
-    )
-
-
-# ==============================================
-# DELETE ORDER (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_order(
-    *,
-    order_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف طلب (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_id: معرف الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OrdersRepository(session=session)
-
-    await repo.delete(id=order_id)
-
-    logger.info(
-        "order_deleted",
-        extra={"order_id": order_id},
-    )
-
-
-# ==============================================
-# 🔄 TRANSACTION FUNCTIONS (للتوافق مع الكود القديم)
-# دوال معاملات متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE ORDER TX
-# ==============================================
-
-
-async def create_order_tx(
-    *,
-    conn: AsyncSession,
-    restaurant_id: int,
-    branch_id: Optional[int],
-    table_id: Optional[int],
-    employee_id: Optional[int],
-    order_number: str,
-    order_type: str,
-    customer_name: Optional[str],
-    customer_phone: Optional[str],
-    delivery_address: Optional[str],
-    customer_note: Optional[str],
-    status: str,
-    subtotal_amount: float,
-    discount_amount: float,
-    tax_amount: float,
-    delivery_amount: float,
-    total_amount: float,
-) -> int:
-    """
-    إنشاء طلب جديد (معاملة) - دالة متوافقة مع الإصدار القديم.
-
-    Args:
-        conn: جلسة قاعدة البيانات (AsyncSession)
-        restaurant_id: معرف المطعم
-        branch_id: معرف الفرع
-        table_id: معرف الطاولة
-        employee_id: معرف الموظف
-        order_number: رقم الطلب
-        order_type: نوع الطلب
-        customer_name: اسم العميل
-        customer_phone: رقم هاتف العميل
-        delivery_address: عنوان التوصيل
-        customer_note: ملاحظات العميل
-        status: حالة الطلب
-        subtotal_amount: المبلغ الإجمالي قبل الخصم
-        discount_amount: مبلغ الخصم
-        tax_amount: مبلغ الضريبة
-        delivery_amount: مبلغ التوصيل
-        total_amount: المبلغ النهائي
-
-    Returns:
-        معرف الطلب
-    """
-    repo = OrdersRepository(conn)
-
-    data = {
-        "restaurant_id": restaurant_id,
-        "branch_id": branch_id,
-        "table_id": table_id,
-        "employee_id": employee_id,
-        "order_number": order_number,
-        "order_type": order_type,
-        "customer_name": customer_name,
-        "customer_phone": customer_phone,
-        "delivery_address": delivery_address,
-        "customer_note": customer_note,
-        "status": status,
-        "subtotal_amount": subtotal_amount,
-        "discount_amount": discount_amount,
-        "tax_amount": tax_amount,
-        "delivery_amount": delivery_amount,
-        "total_amount": total_amount,
-    }
-
-    order = await repo.create(data=data)
-
-    logger.info(
-        "order_created_tx",
-        extra={
-            "order_id": order.id,
-            "restaurant_id": restaurant_id,
-        },
-    )
-
-    return order.id
-
-
-# ==============================================
-# UPDATE ORDER TOTALS TX
-# ==============================================
-
-
-async def update_order_totals_tx(
-    *,
-    conn: AsyncSession,
-    order_id: int,
-    subtotal_amount: float,
-    discount_amount: float,
-    tax_amount: float,
-    delivery_amount: float,
-    total_amount: float,
-) -> None:
-    """
-    تحديث مبالغ الطلب (معاملة) - دالة متوافقة مع الإصدار القديم.
-
-    Args:
-        conn: جلسة قاعدة البيانات (AsyncSession)
-        order_id: معرف الطلب
-        subtotal_amount: المبلغ الإجمالي قبل الخصم
-        discount_amount: مبلغ الخصم
-        tax_amount: مبلغ الضريبة
-        delivery_amount: مبلغ التوصيل
-        total_amount: المبلغ النهائي
-    """
-    repo = OrdersRepository(conn)
-
-    await repo.update_totals(
-        order_id=order_id,
-        subtotal_amount=subtotal_amount,
-        discount_amount=discount_amount,
-        tax_amount=tax_amount,
-        delivery_amount=delivery_amount,
-        total_amount=total_amount,
-    )
-
-
-# ==============================================
-# UPDATE ORDER STATUS TX
-# ==============================================
-
-
-async def update_order_status_tx(
-    *,
-    conn: AsyncSession,
-    order_id: int,
-    status: str,
-) -> None:
-    """
-    تحديث حالة الطلب (معاملة) - دالة متوافقة مع الإصدار القديم.
-
-    Args:
-        conn: جلسة قاعدة البيانات (AsyncSession)
-        order_id: معرف الطلب
-        status: الحالة الجديدة
-    """
-    repo = OrdersRepository(conn)
-
-    await repo.update_status(
-        order_id=order_id,
-        status=status,
-    )
 
 
 # ==============================================

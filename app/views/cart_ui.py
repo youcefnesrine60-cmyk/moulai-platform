@@ -210,19 +210,19 @@ async def cart_item_ui(
             [
                 await button(
                     text=f"📦 {name}",
-                    callback=f"noop",
+                    callback="noop",
                 ),
             ],
             [
                 await button(
                     text=f"🔢 الكمية: {quantity}",
-                    callback=f"noop",
+                    callback="noop",
                 ),
             ],
             [
                 await button(
                     text=f"💰 السعر: {total_price} دج",
-                    callback=f"noop",
+                    callback="noop",
                 ),
             ],
             [

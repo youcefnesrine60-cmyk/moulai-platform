@@ -15,13 +15,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 """
 
 from app.services.business.restaurant.branches.service import RestaurantBranchService
-from app.services.business.restaurant.branches.compat import (
-    create_branch,
-    get_branch,
-    get_branches_by_group,
-    get_branches_by_restaurant,
-    delete_branch,
-)
 
 # ==============================================
 # 📋 EXPORTS
@@ -29,9 +22,4 @@ from app.services.business.restaurant.branches.compat import (
 
 __all__ = [
     "RestaurantBranchService",
-    "create_branch",
-    "get_branch",
-    "get_branches_by_group",
-    "get_branches_by_restaurant",
-    "delete_branch",
 ]

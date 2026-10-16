@@ -17,133 +17,25 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from app.core.logger import logger
 from app.core.router_instance import router
-
-# ==============================================
-# 📥 استيراد معالجات الدفع
-# ==============================================
-
-# 📡 معالجات بوابات الدفع الخارجية (Webhook)
-from app.handlers.callbacks.payment.payment_callback import (
-    handle_payment_success as handle_external_success,
-    handle_payment_failure as handle_external_failure,
+from app.handlers.callbacks.customer.payment import (
+    back_to_payment_callback,
+    payment_confirm_callback,
+    payment_method_callback,
+    retry_payment_callback,
 )
-
-# 💬 معالجات تفاعلات المستخدم داخل Telegram
-from app.handlers.callbacks.payment.payment_handlers import (
-    handle_payment_success as handle_telegram_success,
-    handle_payment_failure as handle_telegram_failure,
-)
-
-# ==============================================
-# 🚀 REGISTER PAYMENT ROUTES
-# ==============================================
 
 
 async def register_payment_routes() -> None:
-    """
-    تسجيل جميع مسارات الدفع في الـ Router
-
-    المسارات تنقسم إلى نوعين:
-    1. مسارات خارجية (Webhook) - من بوابات الدفع
-    2. مسارات داخلية (Telegram) - من تفاعلات المستخدم
-    """
-    logger.info(
-        "registering_payment_routes",
-    )
-
-    # ==========================================
-    # 📡 EXTERNAL PAYMENT CALLBACKS
-    # معالجة ردود بوابات الدفع الخارجية
-    # (Stripe, PayPal, CCP, BaridiMob)
-    # ==========================================
-
-    # 💳 نجاح الدفع من بوابة خارجية
-    # مثال: payment_success_tx_123456
+    """Register customer payment navigation; gateway events arrive over HTTP."""
     router.register(
-        pattern=r"^payment_success_(?P<external_reference>.+)$",
-        handler=handle_external_success,
+        pattern=r"^payment_(?:cash|card|ccp|baridimob|stripe|paypal)_(\d+)$",
+        handler=payment_method_callback,
     )
-
-    # ❌ فشل الدفع من بوابة خارجية
-    # مثال: payment_failure_tx_123456
     router.register(
-        pattern=r"^payment_failure_(?P<external_reference>.+)$",
-        handler=handle_external_failure,
+        pattern=r"^payment_confirm_(\d+)$", handler=payment_confirm_callback
     )
-
-    # ==========================================
-    # 💬 TELEGRAM PAYMENT CALLBACKS
-    # معالجة تفاعلات المستخدم داخل Telegram
-    # ==========================================
-
-    # ✅ تأكيد الدفع من داخل Telegram
-    # مثال: payment_confirm_15 (حيث 15 هو order_id)
+    router.register(pattern=r"^retry_payment_(\d+)$", handler=retry_payment_callback)
     router.register(
-        pattern=r"^payment_confirm_(\d+)$",
-        handler=handle_telegram_success,
+        pattern=r"^back_to_payment_(\d+)$", handler=back_to_payment_callback
     )
-
-    # 🔄 إعادة محاولة الدفع
-    # مثال: retry_payment_15 (حيث 15 هو order_id)
-    router.register(
-        pattern=r"^retry_payment_(\d+)$",
-        handler=handle_telegram_failure,
-    )
-
-    # 🔙 رجوع إلى واجهة الدفع
-    # مثال: back_to_payment_15 (حيث 15 هو order_id)
-    router.register(
-        pattern=r"^back_to_payment_(\d+)$",
-        handler=handle_telegram_failure,
-    )
-
-    # ==========================================
-    # 💳 طرق الدفع داخل Telegram
-    # اختيار طريقة الدفع من قبل المستخدم
-    # ==========================================
-
-    # 💰 دفع نقداً (Cash) - الطريقة الافتراضية
-    # مثال: payment_cash_15
-    router.register(
-        pattern=r"^payment_cash_(\d+)$",
-        handler=handle_telegram_success,
-    )
-
-    # 💳 دفع ببطاقة POS (Card)
-    # مثال: payment_card_15
-    router.register(
-        pattern=r"^payment_card_(\d+)$",
-        handler=handle_telegram_success,
-    )
-
-    # 📱 دفع عبر CCP (إذا فعّله المطعم)
-    # مثال: payment_ccp_15
-    router.register(
-        pattern=r"^payment_ccp_(\d+)$",
-        handler=handle_telegram_success,
-    )
-
-    # 📱 دفع عبر بريدي موب (إذا فعّله المطعم)
-    # مثال: payment_baridimob_15
-    router.register(
-        pattern=r"^payment_baridimob_(\d+)$",
-        handler=handle_telegram_success,
-    )
-
-    # 🌐 دفع عبر Stripe (إذا فعّله المطعم)
-    # مثال: payment_stripe_15
-    router.register(
-        pattern=r"^payment_stripe_(\d+)$",
-        handler=handle_telegram_success,
-    )
-
-    # 🌐 دفع عبر PayPal (إذا فعّله المطعم)
-    # مثال: payment_paypal_15
-    router.register(
-        pattern=r"^payment_paypal_(\d+)$",
-        handler=handle_telegram_success,
-    )
-
-    logger.info(
-        "payment_routes_registered",
-    )
+    logger.info("payment_routes_registered")

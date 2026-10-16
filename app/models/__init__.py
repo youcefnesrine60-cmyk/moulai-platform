@@ -15,14 +15,22 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
+from .admin import Admin
+from .admin_log import AdminLog
+from .admin_session import AdminSession
+from .agent import Agent, Channel, Conversation, Message
 from .base import Base, BaseModel, BaseModelWithoutId
-from .owner import Owner
-from .restaurant import Restaurant
 from .branch import Branch
 from .category import Category
-from .product import Product
+from .complaint import Complaint
+from .feature_pricing import (
+    BranchPricing,
+    FeaturePricing,
+    FeatureUsageCounter,
+    FeatureUsageLimit,
+)
+from .loyalty_discount import LoyaltyDiscount, MultiRestaurantDiscount, Promotion
 from .option_group import OptionGroup
-from .product_option import ProductOption
 from .order import Order
 from .order_item import (
     OrderItem,
@@ -30,33 +38,27 @@ from .order_item import (
     OrderPayment,
     OrderStatusHistory,
 )
-from .agent import Agent, Channel, Conversation, Message
-from .user import User
-from .admin import Admin
-from .admin_log import AdminLog
-from .admin_session import AdminSession
+from .owner import Owner
+from .payment import Payment
+from .product import Product
+from .product_option import ProductOption
+from .rbac import Permission, Role
+from .registration_request import RegistrationRequest
+from .restaurant import Restaurant
+from .restaurant_group import RestaurantBranch, RestaurantGroup
+from .restaurant_metric import RestaurantMetric
+from .restaurant_order_counter import RestaurantOrderCounter
+from .restaurant_payment_setting import RestaurantPaymentSetting
 from .subscription import (
-    SubscriptionPlan,
     Feature,
     PlanFeature,
     Subscription,
     SubscriptionFeature,
     SubscriptionFeatureRequest,
+    SubscriptionPlan,
 )
-from .feature_pricing import (
-    FeaturePricing,
-    FeatureUsageLimit,
-    FeatureUsageCounter,
-    BranchPricing,
-)
-from .loyalty_discount import LoyaltyDiscount, MultiRestaurantDiscount, Promotion
-from .registration_request import RegistrationRequest
-from .restaurant_group import RestaurantGroup, RestaurantBranch
-from .restaurant_metric import RestaurantMetric
-from .restaurant_order_counter import RestaurantOrderCounter
-from .restaurant_payment_setting import RestaurantPaymentSetting
-from .payment import Payment
-from .complaint import Complaint
+from .user import User
+from .manual_payment import ManualPaymentAudit, ManualPaymentReceipt
 
 # ==============================================
 # 📤 EXPORTS
@@ -89,6 +91,8 @@ __all__ = [
     # Users
     "User",
     "Admin",
+    "Permission",
+    "Role",
     "AdminLog",
     "AdminSession",
     # Subscription
@@ -118,6 +122,8 @@ __all__ = [
     "RestaurantOrderCounter",
     # Payments
     "Payment",
+    "ManualPaymentAudit",
+    "ManualPaymentReceipt",
     "RestaurantPaymentSetting",
     "Complaint",
 ]

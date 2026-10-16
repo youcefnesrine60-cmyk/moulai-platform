@@ -16,12 +16,9 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import (
@@ -39,9 +36,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-PromotionData = Dict[str, Any]
-PromotionUpdateData = Dict[str, Any]
-PromotionList = List[Promotion]
+PromotionData = dict[str, Any]
+PromotionUpdateData = dict[str, Any]
+PromotionList = list[Promotion]
 
 # ==============================================
 # 🎉 PROMOTION REPOSITORY
@@ -110,7 +107,7 @@ class PromotionRepository(
     async def get_active_promotions(
         self,
         *,
-        now: Optional[datetime] = None,
+        now: datetime | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> PromotionList:
@@ -126,7 +123,7 @@ class PromotionRepository(
             قائمة العروض النشطة
         """
         try:
-            current_time = now or datetime.now()
+            current_time = now or datetime.now(UTC).replace(tzinfo=None)
 
             query = (
                 self._build_base_query()
@@ -255,7 +252,7 @@ class PromotionRepository(
         self,
         *,
         search_query: str,
-        restaurant_id: Optional[int] = None,
+        restaurant_id: int | None = None,
         only_active: bool = True,
         skip: int = 0,
         limit: int = 100,
@@ -321,7 +318,7 @@ class PromotionRepository(
         self,
         *,
         promotion_id: int,
-    ) -> Optional[Promotion]:
+    ) -> Promotion | None:
         """
         تفعيل عرض ترويجي.
 
@@ -349,7 +346,7 @@ class PromotionRepository(
         self,
         *,
         promotion_id: int,
-    ) -> Optional[Promotion]:
+    ) -> Promotion | None:
         """
         إلغاء تفعيل عرض ترويجي.
 
@@ -378,7 +375,7 @@ class PromotionRepository(
         *,
         promotion_id: int,
         discount_percent: float,
-    ) -> Optional[Promotion]:
+    ) -> Promotion | None:
         """
         تحديث نسبة الخصم لعرض ترويجي.
 
@@ -432,284 +429,3 @@ class PromotionRepository(
             filters["active"] = True
 
         return await self.count(filters=filters)
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة (Psycopg3)
-# ==============================================
-
-# ==============================================
-# CREATE PROMOTION (COMPATIBILITY)
-# ==============================================
-
-
-async def create_promotion(
-    *,
-    name: str,
-    discount_percent: float,
-    starts_at: Optional[datetime] = None,
-    expires_at: Optional[datetime] = None,
-    restaurant_id: Optional[int] = None,
-    active: bool = True,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء عرض ترويجي جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        name: اسم العرض
-        discount_percent: نسبة الخصم
-        starts_at: تاريخ بدء العرض (اختياري)
-        expires_at: تاريخ انتهاء العرض (اختياري)
-        restaurant_id: معرف المطعم (اختياري)
-        active: حالة النشاط
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف العرض
-    """
-    repo = PromotionRepository(session=session)
-
-    data: PromotionData = {
-        "name": name,
-        "discount_percent": discount_percent,
-        "starts_at": starts_at,
-        "expires_at": expires_at,
-        "restaurant_id": restaurant_id,
-        "active": active,
-    }
-
-    promotion = await repo.create(data=data)
-
-    logger.info(
-        "promotion_created",
-        extra={
-            "promotion_id": promotion.id,
-            "promotion_name": name,
-            "restaurant_id": restaurant_id,
-        },
-    )
-
-    return promotion.id
-
-
-# ==============================================
-# GET PROMOTION BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_promotion_by_id(
-    *,
-    promotion_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على عرض ترويجي بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        promotion_id: معرف العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات العرض أو None
-    """
-    repo = PromotionRepository(session=session)
-
-    promotion = await repo.get_by_id(id=promotion_id)
-
-    if not promotion:
-        logger.warning(
-            "promotion_not_found",
-            extra={"promotion_id": promotion_id},
-        )
-        return None
-
-    return {
-        "id": promotion.id,
-        "restaurant_id": promotion.restaurant_id,
-        "name": promotion.name,
-        "discount_percent": float(promotion.discount_percent),
-        "starts_at": promotion.starts_at,
-        "expires_at": promotion.expires_at,
-        "active": promotion.active,
-    }
-
-
-# ==============================================
-# GET ACTIVE PROMOTION (COMPATIBILITY)
-# ==============================================
-
-
-async def get_active_promotion(
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على أحدث عرض ترويجي نشط (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات العرض أو None
-    """
-    repo = PromotionRepository(session=session)
-
-    promotions = await repo.get_active_promotions(limit=1)
-
-    if not promotions:
-        return None
-
-    promotion = promotions[0]
-
-    return {
-        "id": promotion.id,
-        "restaurant_id": promotion.restaurant_id,
-        "name": promotion.name,
-        "discount_percent": float(promotion.discount_percent),
-        "starts_at": promotion.starts_at,
-        "expires_at": promotion.expires_at,
-        "active": promotion.active,
-    }
-
-
-# ==============================================
-# GET ALL PROMOTIONS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_all_promotions(
-    session: AsyncSession,
-    *,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على جميع العروض الترويجية (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة العروض
-    """
-    repo = PromotionRepository(session=session)
-
-    promotions = await repo.get_all_ordered(skip=skip, limit=limit)
-
-    result = []
-
-    for promotion in promotions:
-        result.append(
-            {
-                "id": promotion.id,
-                "restaurant_id": promotion.restaurant_id,
-                "name": promotion.name,
-                "discount_percent": float(promotion.discount_percent),
-                "starts_at": promotion.starts_at,
-                "expires_at": promotion.expires_at,
-                "active": promotion.active,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# ACTIVATE PROMOTION (COMPATIBILITY)
-# ==============================================
-
-
-async def activate_promotion(
-    *,
-    promotion_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تفعيل عرض ترويجي (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        promotion_id: معرف العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = PromotionRepository(session=session)
-
-    await repo.activate(promotion_id=promotion_id)
-
-
-# ==============================================
-# DEACTIVATE PROMOTION (COMPATIBILITY)
-# ==============================================
-
-
-async def deactivate_promotion(
-    *,
-    promotion_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء تفعيل عرض ترويجي (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        promotion_id: معرف العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = PromotionRepository(session=session)
-
-    await repo.deactivate(promotion_id=promotion_id)
-
-
-# ==============================================
-# UPDATE PROMOTION DISCOUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def update_promotion_discount(
-    *,
-    promotion_id: int,
-    discount_percent: float,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث نسبة خصم عرض ترويجي (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        promotion_id: معرف العرض
-        discount_percent: نسبة الخصم الجديدة
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = PromotionRepository(session=session)
-
-    await repo.update_discount_percent(
-        promotion_id=promotion_id,
-        discount_percent=discount_percent,
-    )
-
-
-# ==============================================
-# DELETE PROMOTION (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_promotion(
-    *,
-    promotion_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف عرض ترويجي (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        promotion_id: معرف العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = PromotionRepository(session=session)
-
-    await repo.delete(id=promotion_id)
-
-    logger.info(
-        "promotion_deleted",
-        extra={"promotion_id": promotion_id},
-    )

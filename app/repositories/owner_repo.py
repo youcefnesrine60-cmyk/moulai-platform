@@ -5,13 +5,6 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
-# ==============================================
-# MoulAI™ Platform - Agent-as-a-Service
-# Author: Youcef Nesrine
-# License: CC BY-NC-ND 4.0
-# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
-# ==============================================
-
 """MoulAI operational module for owner repo.
 
 Part of MoulAI Platform - Agent-as-a-Service.
@@ -22,16 +15,15 @@ Part of MoulAI Platform - Agent-as-a-Service.
 # عمليات قاعدة البيانات للمالكين باستخدام SQLAlchemy
 # ==============================================
 
+from datetime import datetime
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
+    TypeAlias,
 )
 
 from sqlalchemy import (
+    func,
     or_,
-    select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,9 +35,10 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-OwnerData = Dict[str, Any]
-OwnerUpdateData = Dict[str, Any]
-OwnerList = List[Owner]
+OwnerData: TypeAlias = dict[str, Any]
+OwnerUpdateData: TypeAlias = dict[str, Any]
+OwnerList: TypeAlias = list[Owner]
+OwnerStatisticsData: TypeAlias = dict[str, int]
 
 # ==============================================
 # 👤 OWNER REPOSITORY
@@ -73,6 +66,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -95,7 +89,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
         self,
         *,
         chat_id: int,
-    ) -> Optional[Owner]:
+    ) -> Owner | None:
         """
         الحصول على مالك بواسطة chat_id.
 
@@ -107,7 +101,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
         """
         try:
             result = await self.session.execute(
-                select(self.model).where(self.model.chat_id == chat_id),
+                self._select().where(self.model.chat_id == chat_id),
             )
 
             owner = result.scalar_one_or_none()
@@ -162,7 +156,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.registration_status == status)
                 .offset(skip)
                 .limit(limit)
@@ -207,7 +201,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
         """
         try:
             stmt = (
-                select(self.model)
+                self._select()
                 .where(
                     or_(
                         self.model.full_name.ilike(f"%{query}%"),
@@ -284,7 +278,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
         self,
         *,
         owner_id: int,
-    ) -> Optional[Any]:
+    ) -> datetime | None:
         """
         الحصول على تاريخ إنشاء المالك.
 
@@ -295,7 +289,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
             تاريخ الإنشاء أو None
         """
         try:
-            owner = await self.get_by_id(owner_id=owner_id)
+            owner = await self.get_by_id(id=owner_id)
 
             if owner:
                 return owner.created_at
@@ -325,7 +319,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
         *,
         owner_id: int,
         status: str,
-    ) -> Optional[Owner]:
+    ) -> Owner | None:
         """
         تحديث حالة تسجيل المالك.
 
@@ -345,7 +339,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
         )
 
         return await self.update(
-            owner_id=owner_id,
+            id=owner_id,
             data={"registration_status": status},
         )
 
@@ -357,7 +351,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
         self,
         *,
         owner_id: int,
-    ) -> Optional[Owner]:
+    ) -> Owner | None:
         """
         تعيين trial_used = True.
 
@@ -373,7 +367,7 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
         )
 
         return await self.update(
-            owner_id=owner_id,
+            id=owner_id,
             data={"trial_used": True},
         )
 
@@ -396,12 +390,12 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
             True إذا استخدم الفترة التجريبية، False إذا لم يستخدم
         """
         try:
-            owner = await self.get_by_id(owner_id=owner_id)
+            owner = await self.get_by_id(id=owner_id)
 
             if not owner:
                 return False
 
-            return owner.trial_used
+            return bool(owner.trial_used)
 
         except Exception as e:
             logger.exception(
@@ -413,331 +407,38 @@ class OwnerRepository(BaseRepository[Owner, OwnerData, OwnerUpdateData]):
             )
             raise
 
+    # ==============================================
+    # GET STATISTICS
+    # ==============================================
 
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
+    async def get_statistics(self) -> OwnerStatisticsData:
+        """Count registration and trial flags in one consistent SQL snapshot.
 
-# ==============================================
-# CREATE OWNER (COMPATIBILITY)
-# ==============================================
-
-
-async def create_owner(
-    *,
-    chat_id: int,
-    full_name: str,
-    phone: str,
-    email: str,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء مالك جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        full_name: الاسم الكامل
-        phone: رقم الهاتف
-        email: البريد الإلكتروني
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف المالك
-    """
-    repo = OwnerRepository(session=session)
-
-    data: OwnerData = {
-        "chat_id": chat_id,
-        "full_name": full_name,
-        "phone": phone,
-        "email": email,
-        "registration_status": "pending",
-        "trial_used": False,
-    }
-
-    owner = await repo.create(data=data)
-
-    logger.info(
-        "owner_created",
-        extra={
-            "owner_id": owner.id,
-            "chat_id": chat_id,
-        },
-    )
-
-    return owner.id
-
-
-# ==============================================
-# GET OWNER BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_owner_by_id(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مالك بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات المالك أو None
-    """
-    repo = OwnerRepository(session=session)
-
-    owner = await repo.get_by_id(owner_id=owner_id)
-
-    if not owner:
-        logger.warning(
-            "owner_not_found_by_id",
-            extra={"owner_id": owner_id},
+        ``trial_available`` counts owners whose trial flag is false or absent.
+        Trial activation still requires an approved registration in the
+        business service. Aggregate data is exposed only to administrators.
+        """
+        statement = self._select().with_only_columns(
+            func.count(self.model.id).label("total"),
+            func.count(self.model.id)
+            .filter(self.model.registration_status == "pending")
+            .label("pending"),
+            func.count(self.model.id)
+            .filter(self.model.registration_status == "approved")
+            .label("approved"),
+            func.count(self.model.id)
+            .filter(self.model.registration_status == "rejected")
+            .label("rejected"),
+            func.count(self.model.id)
+            .filter(self.model.trial_used.is_(True))
+            .label("trial_used"),
+            func.count(self.model.id)
+            .filter(self.model.trial_used.is_not(True))
+            .label("trial_available"),
         )
-        return None
-
-    return {
-        "id": owner.id,
-        "chat_id": owner.chat_id,
-        "full_name": owner.full_name,
-        "phone": owner.phone,
-        "email": owner.email,
-        "registration_status": owner.registration_status,
-        "trial_used": owner.trial_used,
-        "created_at": owner.created_at,
-    }
+        result = await self.session.execute(statement)
+        row = result.mappings().one()
+        return {name: int(value) for name, value in row.items()}
 
 
 # ==============================================
-# GET OWNER BY CHAT ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_owner_by_chat_id(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مالك بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات المالك أو None
-    """
-    repo = OwnerRepository(session=session)
-
-    owner = await repo.get_by_chat_id(chat_id=chat_id)
-
-    if not owner:
-        return None
-
-    return {
-        "id": owner.id,
-        "chat_id": owner.chat_id,
-        "full_name": owner.full_name,
-        "phone": owner.phone,
-        "email": owner.email,
-        "registration_status": owner.registration_status,
-        "trial_used": owner.trial_used,
-        "created_at": owner.created_at,
-    }
-
-
-# ==============================================
-# OWNER EXISTS (COMPATIBILITY)
-# ==============================================
-
-
-async def owner_exists(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق من وجود مالك بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        True إذا كان موجوداً
-    """
-    repo = OwnerRepository(session=session)
-
-    return await repo.exists_by_chat_id(chat_id=chat_id)
-
-
-# ==============================================
-# GET OWNER CREATED AT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_owner_created_at(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> Optional[Any]:
-    """
-    الحصول على تاريخ إنشاء المالك (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        تاريخ الإنشاء أو None
-    """
-    repo = OwnerRepository(session=session)
-
-    return await repo.get_created_at(owner_id=owner_id)
-
-
-# ==============================================
-# UPDATE REGISTRATION STATUS (COMPATIBILITY)
-# ==============================================
-
-
-async def update_registration_status(
-    *,
-    owner_id: int,
-    status: str,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث حالة تسجيل المالك (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        owner_id: معرف المالك
-        status: الحالة الجديدة
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OwnerRepository(session=session)
-
-    await repo.update_status(
-        owner_id=owner_id,
-        status=status,
-    )
-
-    logger.info(
-        "owner_registration_status_updated",
-        extra={
-            "owner_id": owner_id,
-            "status": status,
-        },
-    )
-
-
-# ==============================================
-# MARK TRIAL USED (COMPATIBILITY)
-# ==============================================
-
-
-async def mark_trial_used(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تعيين trial_used = True (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OwnerRepository(session=session)
-
-    await repo.mark_trial_used(owner_id=owner_id)
-
-    logger.info(
-        "owner_trial_marked_used",
-        extra={"owner_id": owner_id},
-    )
-
-
-# ==============================================
-# HAS USED TRIAL (COMPATIBILITY)
-# ==============================================
-
-
-async def has_used_trial(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق من استخدام الفترة التجريبية (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        True إذا استخدم الفترة التجريبية
-    """
-    repo = OwnerRepository(session=session)
-
-    return await repo.has_used_trial(owner_id=owner_id)
-
-
-# ==============================================
-# GET ALL OWNERS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_all_owners(
-    session: AsyncSession,
-    *,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على جميع المالكين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة المالكين
-    """
-    repo = OwnerRepository(session=session)
-
-    owners = await repo.get_all(
-        skip=skip,
-        limit=limit,
-        order_by="created_at",
-        descending=True,
-    )
-
-    result = []
-
-    for owner in owners:
-        result.append(
-            {
-                "id": owner.id,
-                "chat_id": owner.chat_id,
-                "full_name": owner.full_name,
-                "phone": owner.phone,
-                "email": owner.email,
-                "registration_status": owner.registration_status,
-                "trial_used": owner.trial_used,
-                "created_at": owner.created_at,
-            }
-        )
-
-    logger.info(
-        "owners_fetched",
-        extra={"count": len(result)},
-    )
-
-    return result

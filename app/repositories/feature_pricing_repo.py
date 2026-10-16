@@ -18,9 +18,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import select
@@ -34,9 +31,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-FeaturePricingData = Dict[str, Any]
-FeaturePricingUpdateData = Dict[str, Any]
-FeaturePricingList = List[FeaturePricing]
+FeaturePricingData = dict[str, Any]
+FeaturePricingUpdateData = dict[str, Any]
+FeaturePricingList = list[FeaturePricing]
 
 # ==============================================
 # 💰 FEATURE PRICING REPOSITORY
@@ -107,7 +104,7 @@ class FeaturePricingRepository(
         feature_id: int,
         billing_cycle: str,
         only_active: bool = True,
-    ) -> Optional[FeaturePricing]:
+    ) -> FeaturePricing | None:
         """
         الحصول على تسعير ميزة حسب دورة الفوترة.
 
@@ -238,7 +235,7 @@ class FeaturePricingRepository(
         *,
         pricing_id: int,
         price: float,
-    ) -> Optional[FeaturePricing]:
+    ) -> FeaturePricing | None:
         """
         تحديث سعر ميزة.
 
@@ -270,7 +267,7 @@ class FeaturePricingRepository(
         self,
         *,
         pricing_id: int,
-    ) -> Optional[FeaturePricing]:
+    ) -> FeaturePricing | None:
         """
         تفعيل تسعير ميزة.
 
@@ -298,7 +295,7 @@ class FeaturePricingRepository(
         self,
         *,
         pricing_id: int,
-    ) -> Optional[FeaturePricing]:
+    ) -> FeaturePricing | None:
         """
         إلغاء تفعيل تسعير ميزة.
 
@@ -348,318 +345,3 @@ class FeaturePricingRepository(
             filters["active"] = True
 
         return await self.count(filters=filters)
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة (Psycopg3)
-# ==============================================
-
-# ==============================================
-# CREATE FEATURE PRICING (COMPATIBILITY)
-# ==============================================
-
-
-async def create_feature_pricing(
-    *,
-    feature_id: int,
-    billing_cycle: str,
-    price: float,
-    active: bool = True,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء تسعير ميزة جديدة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        feature_id: معرف الميزة
-        billing_cycle: دورة الفوترة
-        price: السعر
-        active: حالة النشاط
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف التسعير
-    """
-    repo = FeaturePricingRepository(session=session)
-
-    data: FeaturePricingData = {
-        "feature_id": feature_id,
-        "billing_cycle": billing_cycle,
-        "price": price,
-        "active": active,
-    }
-
-    pricing = await repo.create(data=data)
-
-    logger.info(
-        "feature_pricing_created",
-        extra={
-            "pricing_id": pricing.id,
-            "feature_id": feature_id,
-            "billing_cycle": billing_cycle,
-        },
-    )
-
-    return pricing.id
-
-
-# ==============================================
-# GET FEATURE PRICING BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_feature_pricing_by_id(
-    *,
-    pricing_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على تسعير ميزة بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        pricing_id: معرف التسعير
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات التسعير أو None
-    """
-    repo = FeaturePricingRepository(session=session)
-
-    pricing = await repo.get_by_id(id=pricing_id)
-
-    if not pricing:
-        logger.warning(
-            "feature_pricing_not_found",
-            extra={"pricing_id": pricing_id},
-        )
-        return None
-
-    return {
-        "id": pricing.id,
-        "feature_id": pricing.feature_id,
-        "billing_cycle": pricing.billing_cycle,
-        "price": float(pricing.price),
-        "active": pricing.active,
-    }
-
-
-# ==============================================
-# GET FEATURE PRICING (COMPATIBILITY)
-# ==============================================
-
-
-async def get_feature_pricing(
-    *,
-    feature_id: int,
-    billing_cycle: str,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على تسعير ميزة حسب دورة الفوترة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        feature_id: معرف الميزة
-        billing_cycle: دورة الفوترة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات التسعير أو None
-    """
-    repo = FeaturePricingRepository(session=session)
-
-    pricing = await repo.get_by_feature_and_cycle(
-        feature_id=feature_id,
-        billing_cycle=billing_cycle,
-    )
-
-    if not pricing:
-        return None
-
-    return {
-        "id": pricing.id,
-        "feature_id": pricing.feature_id,
-        "billing_cycle": pricing.billing_cycle,
-        "price": float(pricing.price),
-        "active": pricing.active,
-    }
-
-
-# ==============================================
-# GET FEATURE PRICING LIST (COMPATIBILITY)
-# ==============================================
-
-
-async def get_feature_pricing_list(
-    *,
-    feature_id: int,
-    session: AsyncSession,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على قائمة أسعار ميزة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        feature_id: معرف الميزة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قائمة أسعار الميزة
-    """
-    repo = FeaturePricingRepository(session=session)
-
-    pricings = await repo.get_list_by_feature(feature_id=feature_id)
-
-    result = []
-
-    for pricing in pricings:
-        result.append(
-            {
-                "id": pricing.id,
-                "feature_id": pricing.feature_id,
-                "billing_cycle": pricing.billing_cycle,
-                "price": float(pricing.price),
-                "active": pricing.active,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# GET ALL FEATURE PRICING (COMPATIBILITY)
-# ==============================================
-
-
-async def get_all_feature_pricing(
-    session: AsyncSession,
-    *,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على جميع أسعار الميزات النشطة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة أسعار الميزات
-    """
-    repo = FeaturePricingRepository(session=session)
-
-    pricings = await repo.get_all_active(skip=skip, limit=limit)
-
-    result = []
-
-    for pricing in pricings:
-        result.append(
-            {
-                "id": pricing.id,
-                "feature_id": pricing.feature_id,
-                "billing_cycle": pricing.billing_cycle,
-                "price": float(pricing.price),
-                "active": pricing.active,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# UPDATE FEATURE PRICE (COMPATIBILITY)
-# ==============================================
-
-
-async def update_feature_price(
-    *,
-    pricing_id: int,
-    price: float,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث سعر ميزة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        pricing_id: معرف التسعير
-        price: السعر الجديد
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = FeaturePricingRepository(session=session)
-
-    await repo.update_price(
-        pricing_id=pricing_id,
-        price=price,
-    )
-
-
-# ==============================================
-# ACTIVATE FEATURE PRICING (COMPATIBILITY)
-# ==============================================
-
-
-async def activate_feature_pricing(
-    *,
-    pricing_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تفعيل تسعير ميزة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        pricing_id: معرف التسعير
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = FeaturePricingRepository(session=session)
-
-    await repo.activate(pricing_id=pricing_id)
-
-
-# ==============================================
-# DEACTIVATE FEATURE PRICING (COMPATIBILITY)
-# ==============================================
-
-
-async def deactivate_feature_pricing(
-    *,
-    pricing_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء تفعيل تسعير ميزة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        pricing_id: معرف التسعير
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = FeaturePricingRepository(session=session)
-
-    await repo.deactivate(pricing_id=pricing_id)
-
-
-# ==============================================
-# DELETE FEATURE PRICING (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_feature_pricing(
-    *,
-    pricing_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف تسعير ميزة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        pricing_id: معرف التسعير
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = FeaturePricingRepository(session=session)
-
-    await repo.delete(id=pricing_id)
-
-    logger.info(
-        "feature_pricing_deleted",
-        extra={"pricing_id": pricing_id},
-    )

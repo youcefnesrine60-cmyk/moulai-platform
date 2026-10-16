@@ -15,26 +15,19 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from sqlalchemy.orm import raiseload
-
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
-
 # ==============================================
 # 💳 ORDER PAYMENTS REPOSITORY
 # عمليات قاعدة البيانات لمدفوعات الطلبات باستخدام SQLAlchemy
 # ==============================================
-
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import (
@@ -42,6 +35,7 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload
 
 from app.core.logger import logger
 from app.models.order_item import OrderPayment
@@ -51,10 +45,10 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-OrderPaymentData = Dict[str, Any]
-OrderPaymentUpdateData = Dict[str, Any]
-OrderPaymentList = List[OrderPayment]
-OrderPaymentSummary = Dict[str, Any]
+OrderPaymentData = dict[str, Any]
+OrderPaymentUpdateData = dict[str, Any]
+OrderPaymentList = list[OrderPayment]
+OrderPaymentSummary = dict[str, Any]
 
 # ==============================================
 # 💳 ORDER PAYMENTS REPOSITORY
@@ -156,7 +150,7 @@ class OrderPaymentsRepository(
         self,
         *,
         transaction_reference: str,
-    ) -> Optional[OrderPayment]:
+    ) -> OrderPayment | None:
         """
         الحصول على دفع بواسطة مرجع المعاملة.
 
@@ -275,7 +269,7 @@ class OrderPaymentsRepository(
         self,
         *,
         order_id: int,
-        payment_status: Optional[str] = "paid",
+        payment_status: str | None = "paid",
     ) -> float:
         """
         حساب إجمالي مبلغ مدفوعات طلب معين.
@@ -322,8 +316,8 @@ class OrderPaymentsRepository(
         *,
         payment_id: int,
         payment_status: str,
-        paid_at: Optional[datetime] = None,
-    ) -> Optional[OrderPayment]:
+        paid_at: datetime | None = None,
+    ) -> OrderPayment | None:
         """
         تحديث حالة الدفع.
 
@@ -362,8 +356,8 @@ class OrderPaymentsRepository(
         self,
         *,
         payment_id: int,
-        paid_at: Optional[datetime] = None,
-    ) -> Optional[OrderPayment]:
+        paid_at: datetime | None = None,
+    ) -> OrderPayment | None:
         """
         تعيين الدفع كمدفوع.
 
@@ -375,7 +369,7 @@ class OrderPaymentsRepository(
             كائن OrderPayment المحدث أو None
         """
         if paid_at is None:
-            paid_at = datetime.now()
+            paid_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
         logger.info(
             "order_payments_repo_mark_paid",
@@ -396,7 +390,7 @@ class OrderPaymentsRepository(
         self,
         *,
         payment_id: int,
-    ) -> Optional[OrderPayment]:
+    ) -> OrderPayment | None:
         """
         تعيين الدفع كفاشل.
 
@@ -424,7 +418,7 @@ class OrderPaymentsRepository(
         self,
         *,
         payment_id: int,
-    ) -> Optional[OrderPayment]:
+    ) -> OrderPayment | None:
         """
         إلغاء الدفع.
 
@@ -502,298 +496,3 @@ class OrderPaymentsRepository(
                 },
             )
             raise
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE ORDER PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def create_order_payment(
-    *,
-    order_id: int,
-    payment_method: str,
-    payment_status: str,
-    amount: float,
-    transaction_reference: Optional[str] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء دفع جديد للطلب (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_id: معرف الطلب
-        payment_method: طريقة الدفع
-        payment_status: حالة الدفع
-        amount: المبلغ
-        transaction_reference: مرجع المعاملة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف الدفع
-    """
-    repo = OrderPaymentsRepository(session=session)
-
-    data: OrderPaymentData = {
-        "order_id": order_id,
-        "payment_method": payment_method,
-        "payment_status": payment_status,
-        "amount": amount,
-        "transaction_reference": transaction_reference,
-    }
-
-    payment = await repo.create(data=data)
-
-    logger.info(
-        "order_payment_created",
-        extra={
-            "payment_id": payment.id,
-            "order_id": order_id,
-        },
-    )
-
-    return payment.id
-
-
-# ==============================================
-# GET ORDER PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_order_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على دفع بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الدفع أو None
-    """
-    repo = OrderPaymentsRepository(session=session)
-
-    payment = await repo.get_by_id(id=payment_id)
-
-    if not payment:
-        return None
-
-    return {
-        "id": payment.id,
-        "order_id": payment.order_id,
-        "payment_method": payment.payment_method,
-        "payment_status": payment.payment_status,
-        "amount": payment.amount,
-        "transaction_reference": payment.transaction_reference,
-        "paid_at": payment.paid_at,
-        "created_at": payment.created_at,
-    }
-
-
-# ==============================================
-# GET ORDER PAYMENTS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_order_payments(
-    *,
-    order_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على مدفوعات طلب معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_id: معرف الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة مدفوعات الطلب
-    """
-    repo = OrderPaymentsRepository(session=session)
-
-    payments = await repo.get_by_order_id(
-        order_id=order_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    result = []
-
-    for payment in payments:
-        result.append(
-            {
-                "id": payment.id,
-                "order_id": payment.order_id,
-                "payment_method": payment.payment_method,
-                "payment_status": payment.payment_status,
-                "amount": payment.amount,
-                "transaction_reference": payment.transaction_reference,
-                "paid_at": payment.paid_at,
-                "created_at": payment.created_at,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# GET PAYMENT BY REFERENCE (COMPATIBILITY)
-# ==============================================
-
-
-async def get_payment_by_reference(
-    *,
-    transaction_reference: str,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على دفع بواسطة مرجع المعاملة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        transaction_reference: مرجع المعاملة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الدفع أو None
-    """
-    repo = OrderPaymentsRepository(session=session)
-
-    payment = await repo.get_by_transaction_reference(
-        transaction_reference=transaction_reference,
-    )
-
-    if not payment:
-        return None
-
-    return {
-        "id": payment.id,
-        "order_id": payment.order_id,
-        "payment_method": payment.payment_method,
-        "payment_status": payment.payment_status,
-        "amount": payment.amount,
-        "transaction_reference": payment.transaction_reference,
-        "paid_at": payment.paid_at,
-        "created_at": payment.created_at,
-    }
-
-
-# ==============================================
-# MARK PAYMENT PAID (COMPATIBILITY)
-# ==============================================
-
-
-async def mark_payment_paid(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تعيين الدفع كمدفوع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OrderPaymentsRepository(session=session)
-
-    await repo.mark_paid(payment_id=payment_id)
-
-    logger.info(
-        "order_payment_paid",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# MARK PAYMENT FAILED (COMPATIBILITY)
-# ==============================================
-
-
-async def mark_payment_failed(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تعيين الدفع كفاشل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OrderPaymentsRepository(session=session)
-
-    await repo.mark_failed(payment_id=payment_id)
-
-    logger.info(
-        "order_payment_failed",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# MARK PAYMENT CANCELLED (COMPATIBILITY)
-# ==============================================
-
-
-async def mark_payment_cancelled(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء الدفع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OrderPaymentsRepository(session=session)
-
-    await repo.mark_cancelled(payment_id=payment_id)
-
-    logger.info(
-        "order_payment_cancelled",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# DELETE ORDER PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_order_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف دفع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = OrderPaymentsRepository(session=session)
-
-    await repo.delete(id=payment_id)
-
-    logger.info(
-        "order_payment_deleted",
-        extra={"payment_id": payment_id},
-    )

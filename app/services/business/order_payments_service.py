@@ -15,9 +15,6 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from app.repositories.orders_repo import lock_order
-from app.services.business.orders.transaction import transactional_order
-
 # ==============================================
 # 💳 ORDER PAYMENTS SERVICE
 # Business Logic Layer
@@ -31,18 +28,15 @@ from app.services.business.orders.transaction import transactional_order
 # التحقق من حالة الدفعة
 # جلب طرق الدفع المسموح بها
 # ==============================================
-
 import math
-
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
-    Set,
+    TypeAlias,
 )
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
@@ -52,14 +46,18 @@ from app.core.exceptions import (
 )
 
 # ✅ استيراد دوال الأمان
-
 from app.core.logger import logger
+from app.models.order import Order
 from app.models.order_item import OrderPayment
+from app.models.user import User
 from app.repositories.order_payments_repo import OrderPaymentsRepository
-from app.repositories.orders_repo import OrdersRepository
-from app.repositories.restaurant.restaurant_payment_settings_repo import (
-    RestaurantPaymentSettingsRepository,
+from app.repositories.orders_repo import (
+    OrdersRepository,
+    lock_order,
 )
+
+from app.repositories.restaurant.restaurant_payment_settings_repo import RestaurantPaymentSettingsRepository  # fmt: skip # isort: skip
+from app.repositories.user_repo import UserRepository
 
 # ✅ استيراد المخططات
 from app.schemas.order_payment import (
@@ -68,17 +66,18 @@ from app.schemas.order_payment import (
     PaymentStatusUpdate,
     PaymentSummary,
 )
+from app.services.business.orders.transaction import transactional_order
 
 # ==============================================
 # 🧩 CONSTANTS (DEFAULT VALUES)
 # ==============================================
 
-DEFAULT_ALLOWED_METHODS: Set[str] = {
+DEFAULT_ALLOWED_METHODS: set[str] = {
     "cash",
     "card",
 }
 
-VALID_PAYMENT_STATUSES: Set[str] = {
+VALID_PAYMENT_STATUSES: set[str] = {
     "pending",
     "paid",
     "failed",
@@ -91,9 +90,9 @@ VALID_PAYMENT_STATUSES: Set[str] = {
 # 🧩 TYPES
 # ==============================================
 
-PaymentData = Dict[str, Any]
-PaymentList = List[OrderPayment]
-AllowedMethodsSet = Set[str]
+PaymentData: TypeAlias = dict[str, Any]
+PaymentList: TypeAlias = list[OrderPayment]
+AllowedMethodsSet: TypeAlias = set[str]
 
 
 # ==============================================
@@ -124,6 +123,7 @@ class OrderPaymentsService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -136,16 +136,21 @@ class OrderPaymentsService:
         self.repo = OrderPaymentsRepository(session)
         self.orders_repo = OrdersRepository(session)
         self.settings_repo = RestaurantPaymentSettingsRepository(session)
+        self.repo.query_options = [raiseload("*")]
+        self.orders_repo.query_options = [raiseload("*")]
+        self.settings_repo.query_options = [raiseload("*")]
 
     # ==========================================
     # 🛠️ PRIVATE HELPERS
     # ==========================================
 
     # ==============================================
-    # GET ALLOWED PAYMENT METHODS
+    # LOCK AUTHORITATIVE PAYMENT STATE
     # ==============================================
 
-    async def _locked_payment(self, payment_id):
+    async def _locked_payment(self, *, payment_id: int) -> OrderPayment:
+        """Lock the owning order and refresh payment columns before a mutation."""
+
         payment = await self.repo.get_by_id(id=payment_id)
         if payment is None:
             raise NotFoundError(message="Payment not found")
@@ -171,7 +176,7 @@ class OrderPaymentsService:
             restaurant_id: معرف المطعم
 
         Returns:
-            Set[str]: مجموعة طرق الدفع المسموح بها
+            AllowedMethodsSet: مجموعة طرق الدفع المسموح بها
         """
         settings = await self.settings_repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
@@ -202,11 +207,32 @@ class OrderPaymentsService:
         if getattr(settings, "allow_paypal", False):
             allowed.add("paypal")
 
-        # إذا لم توجد أي طريقة مسموحة، نعود للقيم الافتراضية
-        if not allowed:
-            return DEFAULT_ALLOWED_METHODS.copy()
-
         return allowed
+
+    # ==============================================
+    # READ OWNED CUSTOMER PAYMENT OPTIONS
+    # ==============================================
+
+    async def get_customer_payment_options(
+        self, *, chat_id: int, order_id: int
+    ) -> tuple[float, AllowedMethodsSet]:
+        """Read the customer's actual payable amount and permitted methods."""
+
+        order = (
+            await self.session.execute(
+                select(Order.total_amount, Order.restaurant_id, Order.status)
+                .join(User, User.id == Order.user_id)
+                .where(Order.id == order_id, User.chat_id == chat_id)
+            )
+        ).one_or_none()
+        if order is None:
+            raise NotFoundError(message="Order not found")
+        amount = float(order.total_amount or 0)
+        if order.status == "cancelled" or not math.isfinite(amount) or amount <= 0:
+            raise ValidationError(message="Order is not payable")
+        return amount, await self._get_allowed_payment_methods(
+            restaurant_id=order.restaurant_id
+        )
 
     # ==============================================
     # VALIDATE PAYMENT METHOD FOR ORDER
@@ -287,7 +313,7 @@ class OrderPaymentsService:
             )
 
         # تعريف انتقالات الحالات الصالحة
-        valid_transitions: Dict[str, Set[str]] = {
+        valid_transitions: dict[str, set[str]] = {
             "pending": {"paid", "failed", "cancelled"},
             "paid": {"refunded"},
             "failed": set(),
@@ -358,7 +384,7 @@ class OrderPaymentsService:
         order_id: int,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[PaymentResponse]:
+    ) -> list[PaymentResponse]:
         """
         الحصول على مدفوعات طلب معين.
 
@@ -368,7 +394,7 @@ class OrderPaymentsService:
             limit: الحد الأقصى للسجلات
 
         Returns:
-            List[PaymentResponse]: قائمة مدفوعات الطلب
+            list[PaymentResponse]: قائمة مدفوعات الطلب
         """
         logger.info(
             "order_payments_service_get_by_order",
@@ -395,7 +421,7 @@ class OrderPaymentsService:
         self,
         *,
         transaction_reference: str,
-    ) -> Optional[PaymentResponse]:
+    ) -> PaymentResponse | None:
         """
         الحصول على دفعة بواسطة مرجع المعاملة.
 
@@ -403,7 +429,7 @@ class OrderPaymentsService:
             transaction_reference: مرجع المعاملة
 
         Returns:
-            Optional[PaymentResponse]: بيانات الدفعة أو None
+            PaymentResponse | None: بيانات الدفعة أو None
         """
         logger.info(
             "order_payments_service_get_by_reference",
@@ -435,7 +461,7 @@ class OrderPaymentsService:
             order_id: معرف الطلب
 
         Returns:
-            Set[str]: مجموعة طرق الدفع المسموح بها
+            AllowedMethodsSet: مجموعة طرق الدفع المسموح بها
         """
         order = await self.orders_repo.get_by_id(id=order_id)
 
@@ -462,7 +488,7 @@ class OrderPaymentsService:
             restaurant_id: معرف المطعم
 
         Returns:
-            Set[str]: مجموعة طرق الدفع المسموح بها
+            AllowedMethodsSet: مجموعة طرق الدفع المسموح بها
         """
         return await self._get_allowed_payment_methods(
             restaurant_id=restaurant_id,
@@ -501,7 +527,7 @@ class OrderPaymentsService:
         paid_amount = 0.0
         pending_amount = 0.0
 
-        status_counts: Dict[str, int] = {}
+        status_counts: dict[str, int] = {}
 
         for payment in payments:
             total_amount += payment.amount
@@ -528,8 +554,57 @@ class OrderPaymentsService:
     # ==========================================
 
     # ==============================================
-    # CREATE PAYMENT
+    # SUBMIT CUSTOMER PAYMENT FOR VERIFICATION
     # ==============================================
+
+    @transactional_order
+    async def submit_customer_payment(
+        self,
+        *,
+        chat_id: int,
+        order_id: int,
+        payment_method: str,
+    ) -> PaymentResponse:
+        """Submit a pending payment request without claiming received funds.
+
+        Resolve ownership and the payable amount from persisted records rather
+        than Telegram state. Repeated submission reuses the existing payment.
+        """
+        order = await lock_order(order_id=order_id, session=self.session)
+        users = UserRepository(self.session)
+        users.query_options = [raiseload("*")]
+        user = await users.get_by_chat_id(chat_id=chat_id)
+        if order is None or user is None or order.user_id != user.id:
+            raise NotFoundError(message="Order not found")
+        if order.status == "cancelled":
+            raise ValidationError(message="Cannot pay a cancelled order")
+        amount = float(order.total_amount or 0)
+        if not math.isfinite(amount) or amount <= 0:
+            raise ValidationError(message="Order amount must be positive")
+        await self._validate_payment_method_for_order(
+            order_id=order_id,
+            payment_method=payment_method,
+        )
+        existing = await self.repo.get_by_order_id(order_id=order_id, limit=1000)
+        active = [p for p in existing if p.payment_status in {"pending", "paid"}]
+        if active:
+            if (
+                len(active) != 1
+                or active[0].payment_method != payment_method
+                or active[0].amount != amount
+            ):
+                raise ConflictError(message="Order already has another payment")
+            payment = active[0]
+            return PaymentResponse.model_validate(payment)
+        else:
+            payment = await self.create_payment(
+                payment_data=PaymentCreate(
+                    order_id=order_id,
+                    payment_method=payment_method,
+                    amount=amount,
+                )
+            )
+            return payment
 
     @transactional_order
     async def create_payment(
@@ -648,7 +723,7 @@ class OrderPaymentsService:
             },
         )
 
-        payment = await self._locked_payment(payment_id)
+        payment = await self._locked_payment(payment_id=payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -711,7 +786,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self._locked_payment(payment_id)
+        payment = await self._locked_payment(payment_id=payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -767,7 +842,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self._locked_payment(payment_id)
+        payment = await self._locked_payment(payment_id=payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -823,7 +898,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self._locked_payment(payment_id)
+        payment = await self._locked_payment(payment_id=payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -879,7 +954,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self._locked_payment(payment_id)
+        payment = await self._locked_payment(payment_id=payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -935,7 +1010,7 @@ class OrderPaymentsService:
             extra={"payment_id": payment_id},
         )
 
-        payment = await self._locked_payment(payment_id)
+        payment = await self._locked_payment(payment_id=payment_id)
 
         if not payment:
             raise NotFoundError(
@@ -958,319 +1033,3 @@ class OrderPaymentsService:
             "order_payment_deleted_successfully",
             extra={"payment_id": payment_id},
         )
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def create_payment(
-    *,
-    order_id: int,
-    payment_method: str,
-    amount: float,
-    transaction_reference: Optional[str] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء دفعة جديدة للطلب (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_id: معرف الطلب
-        payment_method: طريقة الدفع
-        amount: المبلغ
-        transaction_reference: مرجع المعاملة (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف الدفعة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الطلب
-        ValidationError: إذا كانت البيانات غير صالحة
-    """
-    service = OrderPaymentsService(session=session)
-
-    payment_data = PaymentCreate(
-        order_id=order_id,
-        payment_method=payment_method,
-        amount=amount,
-        transaction_reference=transaction_reference,
-    )
-
-    payment = await service.create_payment(
-        payment_data=payment_data,
-    )
-
-    return payment.id
-
-
-# ==============================================
-# GET ALLOWED PAYMENT METHODS FOR ORDER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_allowed_payment_methods_for_order(
-    *,
-    order_id: int,
-    session: AsyncSession,
-) -> AllowedMethodsSet:
-    """
-    جلب طرق الدفع المسموح بها لطلب معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        order_id: معرف الطلب
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Set[str]: مجموعة طرق الدفع المسموح بها
-    """
-    service = OrderPaymentsService(session=session)
-
-    return await service.get_allowed_methods_for_order(order_id=order_id)
-
-
-# ==============================================
-# GET ALLOWED PAYMENT METHODS BY RESTAURANT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_allowed_payment_methods_by_restaurant(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> AllowedMethodsSet:
-    """
-    جلب طرق الدفع المسموح بها لمطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Set[str]: مجموعة طرق الدفع المسموح بها
-    """
-    service = OrderPaymentsService(session=session)
-
-    return await service.get_allowed_methods_by_restaurant(
-        restaurant_id=restaurant_id,
-    )
-
-
-# ==============================================
-# CONFIRM PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def confirm_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تأكيد دفعة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفعة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الدفعة
-        ValidationError: إذا كانت الحالة غير صالحة للانتقال
-    """
-    service = OrderPaymentsService(session=session)
-
-    await service.confirm_payment(payment_id=payment_id)
-
-    logger.info(
-        "order_payment_confirmed",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# FAIL PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def fail_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تعيين الدفعة كفاشل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفعة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الدفعة
-        ValidationError: إذا كانت الحالة غير صالحة للانتقال
-    """
-    service = OrderPaymentsService(session=session)
-
-    await service.fail_payment(payment_id=payment_id)
-
-    logger.info(
-        "order_payment_failed",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# CANCEL PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def cancel_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء دفعة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفعة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الدفعة
-        ValidationError: إذا كانت الحالة غير صالحة للانتقال
-    """
-    service = OrderPaymentsService(session=session)
-
-    await service.cancel_payment(payment_id=payment_id)
-
-    logger.info(
-        "order_payment_cancelled",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# REFUND PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def refund_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    استرداد دفعة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفعة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الدفعة
-        ValidationError: إذا كانت الحالة غير صالحة للانتقال
-    """
-    service = OrderPaymentsService(session=session)
-
-    await service.refund_payment(payment_id=payment_id)
-
-    logger.info(
-        "order_payment_refunded",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# REMOVE PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def remove_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف دفعة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفعة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الدفعة
-        ValidationError: إذا كانت الدفعة مدفوعة أو معلقة
-    """
-    service = OrderPaymentsService(session=session)
-
-    await service.delete_payment(payment_id=payment_id)
-
-    logger.info(
-        "order_payment_removed",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# IS PAID (COMPATIBILITY)
-# ==============================================
-
-
-async def is_paid(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق من أن الدفعة مدفوعة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفعة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        bool: True إذا كانت مدفوعة
-    """
-    service = OrderPaymentsService(session=session)
-
-    try:
-        payment = await service.get_by_id(payment_id=payment_id)
-        return payment.payment_status == "paid"
-    except NotFoundError:
-        return False
-
-
-# ==============================================
-# IS PENDING (COMPATIBILITY)
-# ==============================================
-
-
-async def is_pending(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق من أن الدفعة معلقة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفعة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        bool: True إذا كانت معلقة
-    """
-    service = OrderPaymentsService(session=session)
-
-    try:
-        payment = await service.get_by_id(payment_id=payment_id)
-        return payment.payment_status == "pending"
-    except NotFoundError:
-        return False

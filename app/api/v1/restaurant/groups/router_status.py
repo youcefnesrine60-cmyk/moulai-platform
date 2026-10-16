@@ -6,11 +6,11 @@
 # ==============================================
 
 # ==============================================
-# 🏢 RESTAURANT GROUPS ROUTER - STATUS
-# نقاط نهاية تبديل حالة مجموعات المطاعم
+# 🏢 RESTAURANT GROUPS ROUTER - DELETION
+# نقاط نهاية حذف مجموعات المطاعم
 # ==============================================
 
-"""MoulAI operational module for router status.
+"""Restaurant-group deletion routes.
 
 Part of MoulAI Platform - Agent-as-a-Service.
 """
@@ -29,9 +29,6 @@ from app.core.exceptions import (
     NotFoundError,
 )
 from app.core.logger import logger
-from app.schemas.restaurant.restaurant_group import (
-    RestaurantGroupResponse,
-)
 from app.services.business.restaurant import (
     RestaurantGroupEventHandlers,
 )
@@ -62,50 +59,6 @@ async def get_group_handlers(
 # 📋 ENDPOINTS
 # ==============================================
 
-# ==============================================
-# TOGGLE GROUP STATUS
-# ==============================================
-
-
-@router.patch(
-    "/{group_id}/toggle-status",
-    response_model=RestaurantGroupResponse,
-    summary="تبديل حالة المجموعة",
-    description="تفعيل أو إلغاء تنشيط مجموعة مطاعم",
-)
-async def toggle_restaurant_group_status(
-    *,
-    group_id: int = Path(..., ge=1, description="معرف المجموعة"),
-    handlers: RestaurantGroupEventHandlers = Depends(get_group_handlers),
-) -> RestaurantGroupResponse:
-    """تبديل حالة المجموعة (نشط/غير نشط)."""
-    logger.info(
-        "api_toggle_restaurant_group_status",
-        extra={"group_id": group_id},
-    )
-
-    try:
-        return await handlers.toggle_group_active(group_id=group_id)
-
-    except NotFoundError as e:
-        logger.warning(
-            "api_restaurant_group_not_found_for_status_toggle",
-            extra={"group_id": group_id, "error": str(e)},
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
-    except Exception as e:
-        logger.exception(
-            "api_toggle_restaurant_group_status_error",
-            extra={"group_id": group_id, "error": str(e)},
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء تبديل حالة المجموعة",
-        )
-
 
 # ==============================================
 # DELETE GROUP
@@ -121,7 +74,6 @@ async def toggle_restaurant_group_status(
 async def delete_restaurant_group(
     *,
     group_id: int = Path(..., ge=1, description="معرف المجموعة"),
-    permanent: bool = False,
     handlers: RestaurantGroupEventHandlers = Depends(get_group_handlers),
 ) -> None:
     """حذف مجموعة مطاعم."""
@@ -129,14 +81,12 @@ async def delete_restaurant_group(
         "api_delete_restaurant_group",
         extra={
             "group_id": group_id,
-            "permanent": permanent,
         },
     )
 
     try:
         await handlers.delete_group(
             group_id=group_id,
-            permanent=permanent,
         )
 
     except NotFoundError as e:
@@ -162,6 +112,5 @@ async def delete_restaurant_group(
         "api_restaurant_group_deleted_successfully",
         extra={
             "group_id": group_id,
-            "permanent": permanent,
         },
     )

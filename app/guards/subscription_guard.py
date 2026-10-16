@@ -124,30 +124,6 @@ async def get_active_subscription(
     )
 
 
-# ==============================================
-# 🔍 GET VALID SUBSCRIPTION (ALIAS)
-# ==============================================
-
-
-async def get_valid_subscription(
-    *,
-    session: AsyncSession,
-    restaurant_id: int,
-) -> Optional[Subscription]:
-    """
-    الحصول على اشتراك صالح (alias لـ get_active_subscription).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        restaurant_id: معرف المطعم
-
-    Returns:
-        كائن Subscription الصالح أو None
-    """
-    return await get_active_subscription(
-        session=session,
-        restaurant_id=restaurant_id,
-    )
 
 
 # ==============================================
@@ -287,7 +263,6 @@ __all__ = [
     "require_active_subscription",
     "has_active_subscription",
     "get_active_subscription",
-    "get_valid_subscription",
     "is_trial_subscription",
     "is_paid_subscription",
     "get_subscription_plan_code",

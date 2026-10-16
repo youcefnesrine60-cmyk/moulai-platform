@@ -383,24 +383,6 @@ def can_transition(from_status: str, to_status: str) -> bool:
 
 
 # ==============================================
-# GET NEXT STATUSES
-# ==============================================
-
-
-def get_next_statuses(status: str) -> Set[str]:
-    """
-    الحصول على الحالات التالية المسموح بها من حالة معينة.
-
-    Args:
-        status: الحالة الحالية
-
-    Returns:
-        Set[str]: مجموعة الحالات التالية
-    """
-    return get_allowed_transitions(status)
-
-
-# ==============================================
 # GET PREVIOUS STATUSES
 # ==============================================
 
@@ -458,6 +440,5 @@ __all__ = [
     "is_editable_status",
     "get_allowed_transitions",
     "can_transition",
-    "get_next_statuses",
     "get_previous_statuses",
 ]

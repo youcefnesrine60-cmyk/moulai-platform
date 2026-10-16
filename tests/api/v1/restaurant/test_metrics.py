@@ -178,6 +178,27 @@ class TestMetricsAPI:
     # TEST RESET METRICS
     # ==============================================
 
+    # ==============================================
+    # TEST INITIALIZE METRICS CONTRACTS
+    # ==============================================
+
+    async def test_initialize_metrics_is_idempotency_protected(
+        self,
+        client: AsyncClient,
+    ) -> None:
+        """A second initialization must return the documented conflict."""
+        endpoint = f"/api/v1/restaurant-metrics/{self.restaurant_id}/initialize"
+        assert (await client.post(endpoint)).status_code == 201
+        assert (await client.post(endpoint)).status_code == 409
+
+    async def test_initialize_metrics_rejects_missing_restaurant(
+        self,
+        client: AsyncClient,
+    ) -> None:
+        """Metrics cannot be initialized for a missing restaurant."""
+        response = await client.post("/api/v1/restaurant-metrics/999999/initialize")
+        assert response.status_code == 404
+
     async def test_reset_metrics(
         self,
         client: AsyncClient,

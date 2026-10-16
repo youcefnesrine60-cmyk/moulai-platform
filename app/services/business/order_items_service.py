@@ -15,23 +15,12 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from app.repositories.orders_repo import lock_order
-from app.services.business.orders.helpers import check_order_editable
-from app.services.business.orders.items import (
-    add_item_to_order,
-    remove_item_from_order,
-    change_item_amounts,
-    _recalculate_order_total,
-)
-from app.services.business.orders.transaction import transactional_order
-
 # ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
-
 # ==============================================
 # 📦 ORDER ITEMS SERVICE
 # Business Logic Layer
@@ -46,11 +35,8 @@ from app.services.business.orders.transaction import transactional_order
 # حذف عنصر
 # حذف جميع العناصر
 # ==============================================
-
 from typing import (
     Any,
-    Dict,
-    List,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -62,18 +48,27 @@ from app.core.exceptions import (
 )
 
 # ✅ استيراد دوال الأمان
-
 from app.core.logger import logger
 from app.models.order_item import OrderItem
 from app.repositories.order_items_repo import OrderItemsRepository
+from app.repositories.orders_repo import lock_order
 
 # ✅ استيراد المخططات
 from app.schemas.order_item import (
     OrderItemCreate,
+    OrderItemListResponse,
     OrderItemResponse,
-    OrderItemWithOptionsResponse,
     OrderItemSummary,
+    OrderItemWithOptionsResponse,
 )
+from app.services.business.orders.helpers import check_order_editable
+from app.services.business.orders.items import (
+    _recalculate_order_total,
+    add_item_to_order,
+    remove_item_from_order,
+)
+from app.services.business.orders.pricing import item_total
+from app.services.business.orders.transaction import transactional_order
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -86,8 +81,8 @@ MAX_ITEMS_PER_ORDER = 50
 # 🧩 TYPES
 # ==============================================
 
-OrderItemData = Dict[str, Any]
-OrderItemList = List[OrderItem]
+OrderItemData = dict[str, Any]
+OrderItemList = list[OrderItem]
 
 
 # ==============================================
@@ -178,7 +173,7 @@ class OrderItemsService:
         order_id: int,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[OrderItemResponse]:
+    ) -> list[OrderItemResponse]:
         """
         الحصول على عناصر طلب معين.
 
@@ -336,7 +331,7 @@ class OrderItemsService:
         )
 
         # تجميع العناصر حسب المنتج
-        product_counts: Dict[str, int] = {}
+        product_counts: dict[str, int] = {}
 
         for item in items:
             if item.product_name not in product_counts:
@@ -395,6 +390,44 @@ class OrderItemsService:
         return OrderItemResponse.model_validate(item)
 
     # ==============================================
+    # CHANGE ITEM AMOUNTS
+    # ==============================================
+
+    async def _change_item_amounts(
+        self,
+        *,
+        order_item_id: int,
+        quantity: int | None = None,
+        unit_price: float | None = None,
+    ) -> OrderItem:
+        """Update editable item amounts while preserving order-total consistency.
+
+        The public callers own the transaction. This helper locks the parent order,
+        updates the item, and recalculates the aggregate total in that same session.
+        """
+        item = await self.repo.get_by_id(id=order_item_id)
+        if item is None:
+            raise NotFoundError(message="Order item not found")
+
+        order = await lock_order(order_id=item.order_id, session=self.session)
+        if order is None:
+            raise NotFoundError(message="Order not found")
+
+        check_order_editable(order)
+        new_quantity = item.quantity if quantity is None else quantity
+        new_unit_price = item.unit_price if unit_price is None else unit_price
+        updated = await self.repo.update(
+            id=item.id,
+            data={
+                "quantity": new_quantity,
+                "unit_price": new_unit_price,
+                "total_price": item_total(new_unit_price, new_quantity),
+            },
+        )
+        await _recalculate_order_total(order_id=order.id, session=self.session)
+        return updated
+
+    # ==============================================
     # UPDATE QUANTITY
     # ==============================================
 
@@ -419,8 +452,9 @@ class OrderItemsService:
             NotFoundError: إذا لم يتم العثور على العنصر
             ValidationError: إذا كانت الكمية غير صالحة
         """
-        item = await change_item_amounts(
-            order_item_id=order_item_id, quantity=quantity, session=self.session
+        item = await self._change_item_amounts(
+            order_item_id=order_item_id,
+            quantity=quantity,
         )
         return OrderItemResponse.model_validate(item)
 
@@ -449,8 +483,9 @@ class OrderItemsService:
             NotFoundError: إذا لم يتم العثور على العنصر
             ValidationError: إذا كان السعر غير صالح
         """
-        item = await change_item_amounts(
-            order_item_id=order_item_id, unit_price=unit_price, session=self.session
+        item = await self._change_item_amounts(
+            order_item_id=order_item_id,
+            unit_price=unit_price,
         )
         return OrderItemResponse.model_validate(item)
 

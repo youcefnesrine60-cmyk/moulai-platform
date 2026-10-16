@@ -1,0 +1,39 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# Keep deployment images free of local credentials and development artifacts.
+.env
+.env.*
+*.env
+!.env.example
+.git
+.agents
+.codex
+.aws
+.venv
+venv
+env
+ENV
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.cache
+.coverage
+htmlcov
+coverage.xml
+logs
+*.log
+*.err
+*.out
+*.snapshot.txt
+billing-production-preflight*.json
+billing-production-constraint-diagnostics.json
+billing-development-*.json
+artifacts
+node_modules

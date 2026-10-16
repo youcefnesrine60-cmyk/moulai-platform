@@ -21,29 +21,30 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
-    Query,
     Path,
+    Query,
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.database import get_db
+
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
+    BranchLimitExceededError,
     ConflictError,
+    ForbiddenError,
     NotFoundError,
     ValidationError,
-    BranchLimitExceededError,
 )
-
-from app.core.database import get_db
 from app.core.logger import logger
 from app.schemas.branch import (
     BranchCreate,
+    BranchListResponse,
     BranchResponse,
     BranchStatusUpdate,
     BranchSummary,
     BranchUpdate,
-    BranchListResponse,
 )
 from app.services.business.branch_service import BranchService
 
@@ -354,6 +355,21 @@ async def create_branch(
         )
         return branch
 
+    except ForbiddenError as error:
+        logger.warning(
+            "api_create_branch_feature_access_denied",
+            extra={
+                "restaurant_id": restaurant_id,
+                "error_code": error.error_code,
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": error.error_code,
+                "message": error.message,
+            },
+        ) from error
     except BranchLimitExceededError as e:
         logger.warning(
             "api_create_branch_limit_exceeded",

@@ -10,37 +10,36 @@
 # واجهات API لجلسات المديرين
 # ==============================================
 
-"""MoulAI operational module for admin session.
+"""Administrative session operations require trusted Keycloak identity and RBAC.
 
-Part of MoulAI Platform - Agent-as-a-Service.
+Legacy session tokens and admin identifiers cannot replace API authentication.
 """
 
-from typing import (
-    Optional,
-)
+from typing import Optional
 
 from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
-    Query,
     Path,
+    Query,
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import require_admin_permission
 from app.core.database import get_db
-from app.core.logger import logger
 from app.core.exceptions import (
     NotFoundError,
     UnauthorizedError,
     ValidationError,
 )
+from app.core.logger import logger
 from app.schemas.admin_session import (
     AdminSessionCreate,
-    AdminSessionResponse,
-    AdminSessionListResponse,
     AdminSessionExtend,
+    AdminSessionListResponse,
+    AdminSessionResponse,
     AdminSessionStatistics,
 )
 from app.services.business.admin.admin_session_service import AdminSessionService
@@ -52,6 +51,7 @@ from app.services.business.admin.admin_session_service import AdminSessionServic
 router = APIRouter(
     prefix="/admin-sessions",
     tags=["Admin Sessions"],
+    dependencies=[Depends(require_admin_permission("admins.manage"))],
 )
 
 
@@ -61,6 +61,7 @@ router = APIRouter(
 
 
 async def get_admin_session_service(
+    *,
     session: AsyncSession = Depends(get_db),
 ) -> AdminSessionService:
     """
@@ -304,7 +305,7 @@ async def get_session_status(
     *,
     session_token: str = Path(..., description="رمز الجلسة"),
     service: AdminSessionService = Depends(get_admin_session_service),
-) -> dict:
+) -> dict[str, bool | int | str | None]:
     """
     الحصول على حالة الجلسة.
 
@@ -354,7 +355,7 @@ async def get_session_status(
 
 
 @router.get(
-    "/admin/{admin_id}",
+    "/admin/{admin_id:int}",
     response_model=AdminSessionListResponse,
     summary="جلسات المدير",
     description="الحصول على جلسات مدير معين",
@@ -415,7 +416,7 @@ async def get_sessions_by_admin(
 
 
 @router.get(
-    "/admin/{admin_id}/active",
+    "/admin/{admin_id:int}/active",
     response_model=AdminSessionListResponse,
     summary="الجلسات النشطة للمدير",
     description="الحصول على الجلسات النشطة لمدير معين",
@@ -592,7 +593,7 @@ async def deactivate_session(
 
 
 @router.delete(
-    "/admin/{admin_id}/all",
+    "/admin/{admin_id:int}/all",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="إلغاء تنشيط جميع جلسات المدير",
     description="إلغاء تنشيط جميع جلسات مدير معين",

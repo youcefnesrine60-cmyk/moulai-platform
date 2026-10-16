@@ -131,33 +131,6 @@ class RestaurantGroupEventHandlers:
             update_data=update_data,
         )
 
-    # ==============================================
-    # TOGGLE GROUP ACTIVE
-    # ==============================================
-
-    async def toggle_group_active(
-        self,
-        *,
-        group_id: int,
-    ) -> RestaurantGroupResponse:
-        """
-        تبديل حالة المجموعة (نشط/غير نشط).
-
-        Args:
-            group_id: معرف المجموعة
-
-        Returns:
-            RestaurantGroupResponse: بيانات المجموعة المحدثة
-
-        Raises:
-            NotFoundError: إذا لم يتم العثور على المجموعة
-        """
-        logger.info(
-            "handler_toggle_group_active",
-            extra={"group_id": group_id},
-        )
-
-        return await self.service.toggle_active(group_id=group_id)
 
     # ==============================================
     # DELETE GROUP
@@ -167,14 +140,12 @@ class RestaurantGroupEventHandlers:
         self,
         *,
         group_id: int,
-        permanent: bool = False,
     ) -> None:
         """
         حذف مجموعة مطاعم.
 
         Args:
             group_id: معرف المجموعة
-            permanent: حذف نهائي
 
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
@@ -183,13 +154,11 @@ class RestaurantGroupEventHandlers:
             "handler_delete_group",
             extra={
                 "group_id": group_id,
-                "permanent": permanent,
             },
         )
 
         await self.service.delete(
             group_id=group_id,
-            permanent=permanent,
         )
 
 

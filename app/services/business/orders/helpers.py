@@ -63,30 +63,6 @@ def check_order_editable(
         )
 
 
-# ==============================================
-# 🔒 CHECK ORDER EDITABLE (DICT VERSION)
-# ==============================================
-
-
-def check_order_editable_from_dict(
-    order: OrderDict,
-) -> None:
-    """
-    تتحقق من إمكانية تعديل الطلب (نسخة متوافقة مع الإصدار القديم).
-
-    Args:
-        order: بيانات الطلب من قاعدة البيانات (قاموس)
-
-    Raises:
-        ValueError: إذا كان الطلب في حالة تمنع التعديل
-    """
-    status = str(order.get("status", ""))
-    order_number = order.get("order_number", "غير معروف")
-
-    if is_locked_status(status):
-        raise ValueError(
-            f"لا يمكن تعديل الطلب #{order_number} لأنه في حالة '{get_status_display_name(status)}'",
-        )
 
 
 # ==============================================
@@ -239,49 +215,3 @@ def build_order_summary(
             "is_paid": order.get("is_paid", False),
             "is_editable": is_order_editable(order),
         }
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# ==============================================
-
-
-# دوال التوافق مع الإصدار القديم
-# ==============================================
-# CHECK ORDER EDITABLE COMPAT
-# ==============================================
-
-
-def check_order_editable_compat(
-    order: Union[Order, OrderDict],
-) -> None:
-    """
-    دالة متوافقة مع الإصدار القديم (مغلفة).
-
-    Args:
-        order: كائن الطلب أو قاموس
-
-    Raises:
-        ValueError: إذا كان الطلب في حالة تمنع التعديل
-    """
-    check_order_editable(order)
-
-
-# ==============================================
-# IS ORDER EDITABLE COMPAT
-# ==============================================
-
-
-def is_order_editable_compat(
-    status: str,
-) -> bool:
-    """
-    دالة متوافقة مع الإصدار القديم (مغلفة).
-
-    Args:
-        status: حالة الطلب
-
-    Returns:
-        bool: True إذا كان قابلاً للتعديل
-    """
-    return is_order_editable(status)

@@ -15,9 +15,7 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from typing import (
-    Optional,
-)
+from typing import Optional
 
 from fastapi import (
     APIRouter,
@@ -56,9 +54,7 @@ from app.schemas.payment import (
     PaymentListResponse,
 )
 from app.services.business.payment_service import PaymentService
-from app.services.business.subscription_service import (
-    SubscriptionService,
-)
+from app.services.business.subscription_service import SubscriptionService
 
 # ==============================================
 # 🏗️ ROUTER
@@ -87,7 +83,7 @@ async def get_payment_service(
     Returns:
         PaymentService: مثيل من PaymentService
     """
-    return PaymentService(session)
+    return PaymentService(session=session)
 
 
 # ==============================================
@@ -107,7 +103,7 @@ async def get_subscription_service(
     Returns:
         SubscriptionService: مثيل من SubscriptionService
     """
-    return SubscriptionService(session)
+    return SubscriptionService(session=session)
 
 
 # ==============================================
@@ -519,77 +515,13 @@ async def update_payment(
     data: PaymentUpdate,
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
-    """
-    تحديث دفع موجود.
-
-    Args:
-        payment_id: معرف الدفع
-        data: بيانات التحديث
-        service: خدمة المدفوعات
-
-    Returns:
-        PaymentResponse: الدفع المحدث
-
-    Raises:
-        HTTPException: إذا لم يتم العثور على الدفع
-    """
-    logger.info(
-        "api_update_payment",
-        extra={
-            "payment_id": payment_id,
-            "fields": list(data.model_dump(exclude_unset=True).keys()),
-        },
-    )
-
     await require_owned_payment(
-        payment_id=payment_id,
-        owner=owner,
-        session=service.session,
+        payment_id=payment_id, owner=owner, session=service.session
     )
-
-    try:
-        payment = await service.update_payment(
-            payment_id=payment_id,
-            update_data=data,
-        )
-        return payment
-
-    except NotFoundError as e:
-        logger.warning(
-            "api_payment_not_found_for_update",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
-    except ValidationError as e:
-        logger.warning(
-            "api_update_payment_validation_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=str(e),
-        )
-    except Exception as e:
-        logger.exception(
-            "api_update_payment_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء تحديث الدفع",
-        )
+    raise HTTPException(
+        status_code=403,
+        detail="Billing ledger changes require the administrative manual-payment review workflow",
+    )
 
 
 # ==============================================
@@ -610,77 +542,13 @@ async def update_payment_status(
     data: PaymentStatusUpdate,
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
-    """
-    تحديث حالة الدفع.
-
-    Args:
-        payment_id: معرف الدفع
-        data: بيانات تحديث الحالة
-        service: خدمة المدفوعات
-
-    Returns:
-        PaymentResponse: الدفع المحدث
-
-    Raises:
-        HTTPException: إذا لم يتم العثور على الدفع أو كانت الحالة غير صالحة
-    """
-    logger.info(
-        "api_update_payment_status",
-        extra={
-            "payment_id": payment_id,
-            "status": data.status,
-        },
-    )
-
     await require_owned_payment(
-        payment_id=payment_id,
-        owner=owner,
-        session=service.session,
+        payment_id=payment_id, owner=owner, session=service.session
     )
-
-    try:
-        payment = await service.update_payment_status(
-            payment_id=payment_id,
-            status_data=data,
-        )
-        return payment
-
-    except NotFoundError as e:
-        logger.warning(
-            "api_payment_not_found_for_status_update",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
-    except ValidationError as e:
-        logger.warning(
-            "api_update_payment_status_validation_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=str(e),
-        )
-    except Exception as e:
-        logger.exception(
-            "api_update_payment_status_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء تحديث حالة الدفع",
-        )
+    raise HTTPException(
+        status_code=403,
+        detail="Billing ledger changes require the administrative manual-payment review workflow",
+    )
 
 
 # ==============================================
@@ -700,70 +568,13 @@ async def confirm_payment(
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
-    """
-    تأكيد الدفع.
-
-    Args:
-        payment_id: معرف الدفع
-        service: خدمة المدفوعات
-
-    Returns:
-        PaymentResponse: الدفع المحدث
-
-    Raises:
-        HTTPException: إذا فشل التأكيد
-    """
-    logger.info(
-        "api_confirm_payment",
-        extra={"payment_id": payment_id},
-    )
-
     await require_owned_payment(
-        payment_id=payment_id,
-        owner=owner,
-        session=service.session,
+        payment_id=payment_id, owner=owner, session=service.session
     )
-
-    try:
-        payment = await service.confirm_payment(payment_id=payment_id)
-        return payment
-
-    except NotFoundError as e:
-        logger.warning(
-            "api_payment_not_found_for_confirm",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
-    except ValidationError as e:
-        logger.warning(
-            "api_confirm_payment_validation_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=str(e),
-        )
-    except Exception as e:
-        logger.exception(
-            "api_confirm_payment_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء تأكيد الدفع",
-        )
+    raise HTTPException(
+        status_code=403,
+        detail="Billing ledger changes require the administrative manual-payment review workflow",
+    )
 
 
 # ==============================================
@@ -783,70 +594,13 @@ async def fail_payment(
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
-    """
-    تعيين الدفع كفاشل.
-
-    Args:
-        payment_id: معرف الدفع
-        service: خدمة المدفوعات
-
-    Returns:
-        PaymentResponse: الدفع المحدث
-
-    Raises:
-        HTTPException: إذا فشلت العملية
-    """
-    logger.info(
-        "api_fail_payment",
-        extra={"payment_id": payment_id},
-    )
-
     await require_owned_payment(
-        payment_id=payment_id,
-        owner=owner,
-        session=service.session,
+        payment_id=payment_id, owner=owner, session=service.session
     )
-
-    try:
-        payment = await service.fail_payment(payment_id=payment_id)
-        return payment
-
-    except NotFoundError as e:
-        logger.warning(
-            "api_payment_not_found_for_fail",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
-    except ValidationError as e:
-        logger.warning(
-            "api_fail_payment_validation_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=str(e),
-        )
-    except Exception as e:
-        logger.exception(
-            "api_fail_payment_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء تعيين الدفع كفاشل",
-        )
+    raise HTTPException(
+        status_code=403,
+        detail="Billing ledger changes require the administrative manual-payment review workflow",
+    )
 
 
 # ==============================================
@@ -866,70 +620,13 @@ async def cancel_payment(
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
-    """
-    إلغاء الدفع.
-
-    Args:
-        payment_id: معرف الدفع
-        service: خدمة المدفوعات
-
-    Returns:
-        PaymentResponse: الدفع المحدث
-
-    Raises:
-        HTTPException: إذا فشلت العملية
-    """
-    logger.info(
-        "api_cancel_payment",
-        extra={"payment_id": payment_id},
-    )
-
     await require_owned_payment(
-        payment_id=payment_id,
-        owner=owner,
-        session=service.session,
+        payment_id=payment_id, owner=owner, session=service.session
     )
-
-    try:
-        payment = await service.cancel_payment(payment_id=payment_id)
-        return payment
-
-    except NotFoundError as e:
-        logger.warning(
-            "api_payment_not_found_for_cancel",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
-    except ValidationError as e:
-        logger.warning(
-            "api_cancel_payment_validation_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=str(e),
-        )
-    except Exception as e:
-        logger.exception(
-            "api_cancel_payment_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء إلغاء الدفع",
-        )
+    raise HTTPException(
+        status_code=403,
+        detail="Billing ledger changes require the administrative manual-payment review workflow",
+    )
 
 
 # ==============================================
@@ -949,70 +646,13 @@ async def refund_payment(
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> PaymentResponse:
-    """
-    استرداد الدفع.
-
-    Args:
-        payment_id: معرف الدفع
-        service: خدمة المدفوعات
-
-    Returns:
-        PaymentResponse: الدفع المحدث
-
-    Raises:
-        HTTPException: إذا فشلت العملية
-    """
-    logger.info(
-        "api_refund_payment",
-        extra={"payment_id": payment_id},
-    )
-
     await require_owned_payment(
-        payment_id=payment_id,
-        owner=owner,
-        session=service.session,
+        payment_id=payment_id, owner=owner, session=service.session
     )
-
-    try:
-        payment = await service.refund_payment(payment_id=payment_id)
-        return payment
-
-    except NotFoundError as e:
-        logger.warning(
-            "api_payment_not_found_for_refund",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
-    except ValidationError as e:
-        logger.warning(
-            "api_refund_payment_validation_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=str(e),
-        )
-    except Exception as e:
-        logger.exception(
-            "api_refund_payment_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء استرداد الدفع",
-        )
+    raise HTTPException(
+        status_code=403,
+        detail="Billing ledger changes require the administrative manual-payment review workflow",
+    )
 
 
 # ==============================================
@@ -1032,70 +672,12 @@ async def delete_payment(
     payment_id: int = Path(..., ge=1, description="معرف الدفع"),
     service: PaymentService = Depends(get_payment_service),
 ) -> None:
-    """
-    حذف دفع.
-
-    Args:
-        payment_id: معرف الدفع
-        service: خدمة المدفوعات
-
-    Raises:
-        HTTPException: إذا لم يتم العثور على الدفع أو كان مدفوعاً/معلقاً
-    """
-    logger.info(
-        "api_delete_payment",
-        extra={"payment_id": payment_id},
-    )
-
     await require_owned_payment(
-        payment_id=payment_id,
-        owner=owner,
-        session=service.session,
+        payment_id=payment_id, owner=owner, session=service.session
     )
-
-    try:
-        await service.delete_payment(payment_id=payment_id)
-
-    except NotFoundError as e:
-        logger.warning(
-            "api_payment_not_found_for_delete",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        )
-    except ValidationError as e:
-        logger.warning(
-            "api_delete_payment_validation_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=str(e),
-        )
-    except Exception as e:
-        logger.exception(
-            "api_delete_payment_error",
-            extra={
-                "payment_id": payment_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء حذف الدفع",
-        )
-
-    logger.info(
-        "api_payment_deleted_successfully",
-        extra={"payment_id": payment_id},
+    raise HTTPException(
+        status_code=403,
+        detail="Billing ledger changes require the administrative manual-payment review workflow",
     )
 
 

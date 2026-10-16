@@ -18,9 +18,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import (
@@ -37,9 +34,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-FeatureUsageCounterData = Dict[str, Any]
-FeatureUsageCounterUpdateData = Dict[str, Any]
-FeatureUsageCounterList = List[FeatureUsageCounter]
+FeatureUsageCounterData = dict[str, Any]
+FeatureUsageCounterUpdateData = dict[str, Any]
+FeatureUsageCounterList = list[FeatureUsageCounter]
 
 # ==============================================
 # 📊 FEATURE USAGE COUNTER REPOSITORY
@@ -110,9 +107,9 @@ class FeatureUsageCounterRepository(
         *,
         restaurant_id: int,
         feature_id: int,
-        period_year: Optional[int] = None,
-        period_month: Optional[int] = None,
-    ) -> Optional[FeatureUsageCounter]:
+        period_year: int | None = None,
+        period_month: int | None = None,
+    ) -> FeatureUsageCounter | None:
         """
         الحصول على عداد استخدام لمطعم وميزة في فترة محددة.
 
@@ -171,8 +168,8 @@ class FeatureUsageCounterRepository(
         *,
         restaurant_id: int,
         feature_id: int,
-        period_year: Optional[int] = None,
-        period_month: Optional[int] = None,
+        period_year: int | None = None,
+        period_month: int | None = None,
     ) -> int:
         """
         قراءة الاستخدام الحالي لمطعم/ميزة في فترة محددة.
@@ -302,8 +299,8 @@ class FeatureUsageCounterRepository(
         restaurant_id: int,
         feature_id: int,
         usage_count: int = 0,
-        period_year: Optional[int] = None,
-        period_month: Optional[int] = None,
+        period_year: int | None = None,
+        period_month: int | None = None,
     ) -> FeatureUsageCounter:
         """
         إنشاء عداد استخدام جديد.
@@ -358,7 +355,7 @@ class FeatureUsageCounterRepository(
         *,
         counter_id: int,
         amount: int = 1,
-    ) -> Optional[FeatureUsageCounter]:
+    ) -> FeatureUsageCounter | None:
         """
         زيادة عداد الاستخدام بمقدار معين.
 
@@ -402,7 +399,7 @@ class FeatureUsageCounterRepository(
         *,
         counter_id: int,
         amount: int = 1,
-    ) -> Optional[FeatureUsageCounter]:
+    ) -> FeatureUsageCounter | None:
         """
         تقليل عداد الاستخدام بمقدار معين (بدون النزول تحت الصفر).
 
@@ -445,7 +442,7 @@ class FeatureUsageCounterRepository(
         self,
         *,
         counter_id: int,
-    ) -> Optional[FeatureUsageCounter]:
+    ) -> FeatureUsageCounter | None:
         """
         إعادة تعيين عداد الاستخدام إلى الصفر.
 
@@ -488,8 +485,8 @@ class FeatureUsageCounterRepository(
         *,
         restaurant_id: int,
         feature_id: int,
-        period_year: Optional[int] = None,
-        period_month: Optional[int] = None,
+        period_year: int | None = None,
+        period_month: int | None = None,
         amount: int = 1,
     ) -> FeatureUsageCounter:
         """
@@ -598,211 +595,3 @@ class FeatureUsageCounterRepository(
             عدد العدادات
         """
         return await self.count(filters={"restaurant_id": restaurant_id})
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة (Psycopg3)
-# ==============================================
-
-# ==============================================
-# GET FEATURE COUNTER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_feature_counter(
-    *,
-    restaurant_id: int,
-    feature_id: int,
-    period_year: Optional[int] = None,
-    period_month: Optional[int] = None,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على عداد استخدام (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        feature_id: معرف الميزة
-        period_year: السنة (اختياري)
-        period_month: الشهر (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات العداد أو None
-    """
-    repo = FeatureUsageCounterRepository(session=session)
-
-    counter = await repo.get_counter(
-        restaurant_id=restaurant_id,
-        feature_id=feature_id,
-        period_year=period_year,
-        period_month=period_month,
-    )
-
-    if not counter:
-        return None
-
-    return {
-        "id": counter.id,
-        "restaurant_id": counter.restaurant_id,
-        "feature_id": counter.feature_id,
-        "usage_count": counter.usage_count,
-        "period_year": counter.period_year,
-        "period_month": counter.period_month,
-        "created_at": counter.created_at,
-        "updated_at": counter.updated_at,
-    }
-
-
-# ==============================================
-# CREATE FEATURE COUNTER (COMPATIBILITY)
-# ==============================================
-
-
-async def create_feature_counter(
-    *,
-    restaurant_id: int,
-    feature_id: int,
-    usage_count: int = 0,
-    period_year: Optional[int] = None,
-    period_month: Optional[int] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء عداد استخدام جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        feature_id: معرف الميزة
-        usage_count: عدد الاستخدام الابتدائي
-        period_year: السنة (اختياري)
-        period_month: الشهر (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف العداد
-    """
-    repo = FeatureUsageCounterRepository(session=session)
-
-    counter = await repo.create_counter(
-        restaurant_id=restaurant_id,
-        feature_id=feature_id,
-        usage_count=usage_count,
-        period_year=period_year,
-        period_month=period_month,
-    )
-
-    return counter.id
-
-
-# ==============================================
-# INCREMENT FEATURE COUNTER (COMPATIBILITY)
-# ==============================================
-
-
-async def increment_feature_counter(
-    *,
-    counter_id: int,
-    amount: int = 1,
-    session: AsyncSession,
-) -> None:
-    """
-    زيادة عداد الاستخدام (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        counter_id: معرف العداد
-        amount: مقدار الزيادة
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = FeatureUsageCounterRepository(session=session)
-
-    await repo.increment_counter(
-        counter_id=counter_id,
-        amount=amount,
-    )
-
-
-# ==============================================
-# DECREMENT FEATURE COUNTER (COMPATIBILITY)
-# ==============================================
-
-
-async def decrement_feature_counter(
-    *,
-    counter_id: int,
-    amount: int = 1,
-    session: AsyncSession,
-) -> None:
-    """
-    تقليل عداد الاستخدام (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        counter_id: معرف العداد
-        amount: مقدار النقصان
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = FeatureUsageCounterRepository(session=session)
-
-    await repo.decrement_counter(
-        counter_id=counter_id,
-        amount=amount,
-    )
-
-
-# ==============================================
-# RESET FEATURE COUNTER (COMPATIBILITY)
-# ==============================================
-
-
-async def reset_feature_counter(
-    *,
-    counter_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إعادة تعيين عداد الاستخدام (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        counter_id: معرف العداد
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = FeatureUsageCounterRepository(session=session)
-
-    await repo.reset_counter(counter_id=counter_id)
-
-
-# ==============================================
-# GET CURRENT USAGE (COMPATIBILITY)
-# ==============================================
-
-
-async def get_current_usage(
-    *,
-    restaurant_id: int,
-    feature_id: int,
-    period_year: Optional[int] = None,
-    period_month: Optional[int] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    قراءة الاستخدام الحالي (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        feature_id: معرف الميزة
-        period_year: السنة (اختياري)
-        period_month: الشهر (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        عدد مرات الاستخدام
-    """
-    repo = FeatureUsageCounterRepository(session=session)
-
-    return await repo.get_current_usage(
-        restaurant_id=restaurant_id,
-        feature_id=feature_id,
-        period_year=period_year,
-        period_month=period_month,
-    )

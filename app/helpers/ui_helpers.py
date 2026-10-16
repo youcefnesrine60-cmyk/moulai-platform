@@ -37,41 +37,6 @@ from app.views.ui import (
 ReplyMarkup = dict[str, object] | None
 
 
-# ==============================================
-# 📤 SEND SCREEN
-# ==============================================
-
-
-async def send_screen(
-    *,
-    chat_id: int,
-    text: str,
-    screen_name: str,
-    reply_markup: ReplyMarkup = None,
-    message_id: int | None = None,
-    store_message_id: bool = True,
-) -> dict | None:
-    """
-    إرسال أو تحديث رسالة مع دعم كامل للإمكانيات الجديدة
-
-    Args:
-        chat_id: معرف المستخدم
-        text: نص الرسالة
-        screen_name: اسم الشاشة للتسجيل
-        reply_markup: أزرار تفاعلية
-        message_id: معرف الرسالة للتعديل (اختياري)
-        store_message_id: تخزين message_id في الحالة (افتراضي True)
-
-    Returns:
-        dict | None: رد من Telegram
-    """
-    return await UIManager.update(
-        chat_id=chat_id,
-        text=text,
-        reply_markup=reply_markup,
-        message_id=message_id,
-        store_message_id=store_message_id,
-    )
 
 
 # ==============================================

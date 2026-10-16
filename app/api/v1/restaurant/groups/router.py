@@ -167,7 +167,6 @@ async def create_restaurant_group(
 async def get_restaurant_group_by_id(
     *,
     group_id: int = Path(..., ge=1, description="معرف المجموعة"),
-    include_inactive: bool = Query(False, description="تضمين المجموعات غير النشطة"),
     service: RestaurantGroupService = Depends(get_group_service),
 ) -> RestaurantGroupResponse:
     """الحصول على مجموعة مطاعم بالمعرف."""
@@ -175,14 +174,12 @@ async def get_restaurant_group_by_id(
         "api_get_restaurant_group_by_id",
         extra={
             "group_id": group_id,
-            "include_inactive": include_inactive,
         },
     )
 
     try:
         return await service.get_by_id(
             group_id=group_id,
-            include_inactive=include_inactive,
         )
 
     except NotFoundError as e:
@@ -266,7 +263,6 @@ async def list_restaurant_groups_by_owner(
     owner_id: int = Path(..., ge=1, description="معرف المالك"),
     skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
     limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
-    only_active: bool = Query(True, description="جلب المجموعات النشطة فقط"),
     service: RestaurantGroupService = Depends(get_group_service),
 ) -> RestaurantGroupListResponse:
     """الحصول على قائمة مجموعات المطاعم لمالك معين."""
@@ -276,7 +272,6 @@ async def list_restaurant_groups_by_owner(
             "owner_id": owner_id,
             "skip": skip,
             "limit": limit,
-            "only_active": only_active,
         },
     )
 
@@ -285,7 +280,6 @@ async def list_restaurant_groups_by_owner(
             owner_id=owner_id,
             skip=skip,
             limit=limit,
-            only_active=only_active,
         )
 
     except Exception as e:
@@ -314,7 +308,6 @@ async def search_restaurant_groups(
     *,
     query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
     owner_id: Optional[int] = Query(None, ge=1, description="معرف المالك (اختياري)"),
-    only_active: bool = Query(True, description="جلب المجموعات النشطة فقط"),
     skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
     limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
     service: RestaurantGroupService = Depends(get_group_service),
@@ -325,7 +318,6 @@ async def search_restaurant_groups(
         extra={
             "query": query,
             "owner_id": owner_id,
-            "only_active": only_active,
         },
     )
 
@@ -333,7 +325,6 @@ async def search_restaurant_groups(
         return await service.search(
             query=query,
             owner_id=owner_id,
-            only_active=only_active,
             skip=skip,
             limit=limit,
         )

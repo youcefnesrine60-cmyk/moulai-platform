@@ -17,6 +17,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 import asyncio
 import time
+from pathlib import Path
 from typing import (
     Any,
     AsyncGenerator,
@@ -25,11 +26,14 @@ from typing import (
 )
 
 import pytest
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from httpx import (
     AsyncClient,
     ASGITransport,
 )
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
@@ -38,6 +42,12 @@ from sqlalchemy.ext.asyncio import (
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.test_database import (
+    isolated_connection_arguments,
+    read_test_database_identity,
+    validate_test_branch_configuration,
+    validated_test_database_url,
+)
 from app.models.base import Base
 from app.main import app
 
@@ -45,8 +55,19 @@ from app.main import app
 # 🔧 TEST DATABASE
 # ==============================================
 
-TEST_DATABASE_URL = settings.DATABASE_URL + "_test"
+TEST_DATABASE_URL = validated_test_database_url(
+    test_database_url=settings.TEST_DATABASE_URL,
+    test_endpoint_id=settings.TEST_DATABASE_ENDPOINT_ID,
+    protected_endpoint_id=settings.PROTECTED_DATABASE_ENDPOINT_ID,
+)
+TEST_DATABASE_NAME = "neondb_test"
+TEST_ALEMBIC_DIRECTORY = Path(__file__).resolve().parents[1] / "alembic_test"
 
+validate_test_branch_configuration(
+    branch_id=settings.TEST_DATABASE_BRANCH_ID,
+    project_id=settings.TEST_DATABASE_PROJECT_ID,
+    protected_branch_id=settings.PROTECTED_DATABASE_BRANCH_ID,
+)
 engine = create_async_engine(
     TEST_DATABASE_URL,
     echo=False,
@@ -54,6 +75,7 @@ engine = create_async_engine(
     max_overflow=0,
     pool_pre_ping=True,
     connect_args={
+        **isolated_connection_arguments(),
         "timeout": 60,
         "command_timeout": 60,
         "server_settings": {
@@ -71,6 +93,58 @@ TestingSessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False,
 )
+
+
+# ==============================================
+# TEST SCHEMA REVISION GUARD
+# ==============================================
+
+
+def get_expected_test_schema_revision() -> str:
+    """Return the head revision from the dedicated test Alembic history."""
+    alembic_config = Config()
+    alembic_config.set_main_option("script_location", str(TEST_ALEMBIC_DIRECTORY))
+    expected_revision = ScriptDirectory.from_config(alembic_config).get_current_head()
+    if expected_revision is None:
+        raise RuntimeError("The dedicated test Alembic history has no head revision.")
+
+    return expected_revision
+
+
+@pytest.fixture(autouse=True, scope="session")
+async def verify_test_schema_revision() -> AsyncGenerator[None, None]:
+    """Fail before cleanup when the isolated schema is not migrated to head."""
+    expected_revision = get_expected_test_schema_revision()
+
+    try:
+        async with engine.connect() as connection:
+            await connection.run_sync(
+                lambda sync: read_test_database_identity(
+                    sync,
+                    endpoint_id=settings.TEST_DATABASE_ENDPOINT_ID,
+                    branch_id=settings.TEST_DATABASE_BRANCH_ID,
+                    project_id=settings.TEST_DATABASE_PROJECT_ID,
+                    protected_branch_id=settings.PROTECTED_DATABASE_BRANCH_ID,
+                )
+            )
+            installed_revision = (
+                await connection.execute(
+                    text("SELECT version_num FROM alembic_version")
+                )
+            ).scalar_one_or_none()
+    except SQLAlchemyError as error:
+        raise RuntimeError(
+            "The test schema is unavailable. Run "
+            "'python scripts/create_test_tables.py' after verifying the development target."
+        ) from error
+
+    if installed_revision != expected_revision:
+        raise RuntimeError(
+            "The test schema is not at the dedicated Alembic head. Run "
+            "'python scripts/create_test_tables.py' before pytest."
+        )
+
+    yield
 
 
 # ==============================================

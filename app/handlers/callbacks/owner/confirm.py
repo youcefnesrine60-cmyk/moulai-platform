@@ -17,12 +17,14 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 import re
 
+from app.core.database import get_session
 from app.core.logger import logger
-
 from app.core.middleware.idempotency import Idempotency
 from app.core.middleware.rate_limit import rate_limit
 from app.helpers.ui_manager import UIManager
-from app.services.business.registration_request_service import approve_registration
+from app.services.business.registration_request_service import (
+    RegistrationRequestService,
+)
 
 # ==============================================
 # ✅ CONFIRM CALLBACK
@@ -68,17 +70,20 @@ async def confirm_callback(
         # ✅ APPROVE REGISTRATION
         # ======================================
 
-        result = await approve_registration(
-            chat_id=chat_id,
-        )
+        async with await get_session() as session:
+            registration_service = RegistrationRequestService(session)
+            request = await registration_service.get_by_chat_id(chat_id=chat_id)
+            if request is None:
+                raise ValueError("No pending registration request exists for this chat.")
+
+            result = await registration_service.approve(request_id=request.id)
+            await session.commit()
 
         logger.info(
             "registration_confirmed",
             extra={
                 "chat_id": chat_id,
-                "owner_id": result["owner_id"],
-                "restaurant_id": result["restaurant_id"],
-                "subscription_id": result["subscription_id"],
+                "owner_id": result.owner_id,
             },
         )
 
@@ -86,7 +91,7 @@ async def confirm_callback(
         # ✅ SUCCESS MESSAGE
         # ======================================
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text=(
@@ -109,7 +114,7 @@ async def confirm_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ تعذر إكمال عملية التسجيل.",
@@ -125,7 +130,7 @@ async def confirm_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ حدث خطأ أثناء معالجة الطلب.",

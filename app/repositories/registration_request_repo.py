@@ -31,15 +31,10 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
+    TypeAlias,
 )
 
-from sqlalchemy import (
-    or_,
-    select,
-)
+from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import logger
@@ -50,9 +45,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-RegistrationRequestData = Dict[str, Any]
-RegistrationRequestUpdateData = Dict[str, Any]
-RegistrationRequestList = List[RegistrationRequest]
+RegistrationRequestData: TypeAlias = dict[str, Any]
+RegistrationRequestUpdateData: TypeAlias = dict[str, Any]
+RegistrationRequestList: TypeAlias = list[RegistrationRequest]
 
 # ==============================================
 # 📝 REGISTRATION REQUEST REPOSITORY
@@ -108,7 +103,7 @@ class RegistrationRequestRepository(
         self,
         *,
         chat_id: int,
-    ) -> Optional[RegistrationRequest]:
+    ) -> RegistrationRequest | None:
         """
         الحصول على طلب تسجيل بواسطة chat_id.
 
@@ -120,7 +115,7 @@ class RegistrationRequestRepository(
         """
         try:
             result = await self.session.execute(
-                select(self.model)
+                self._select()
                 .where(self.model.chat_id == chat_id)
                 .order_by(self.model.created_at.desc())
                 .limit(1),
@@ -162,7 +157,7 @@ class RegistrationRequestRepository(
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.chat_id == chat_id)
                 .order_by(self.model.created_at.desc())
                 .offset(skip)
@@ -207,7 +202,7 @@ class RegistrationRequestRepository(
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.status == status)
                 .order_by(self.model.created_at.asc())
                 .offset(skip)
@@ -278,7 +273,7 @@ class RegistrationRequestRepository(
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.owner_id == owner_id)
                 .order_by(self.model.created_at.desc())
                 .offset(skip)
@@ -323,7 +318,7 @@ class RegistrationRequestRepository(
         """
         try:
             stmt = (
-                select(self.model)
+                self._select()
                 .where(
                     or_(
                         self.model.full_name.ilike(f"%{query}%"),
@@ -364,7 +359,7 @@ class RegistrationRequestRepository(
         *,
         request_id: int,
         status: str,
-    ) -> Optional[RegistrationRequest]:
+    ) -> RegistrationRequest | None:
         """
         تحديث حالة طلب التسجيل.
 
@@ -384,7 +379,7 @@ class RegistrationRequestRepository(
         )
 
         return await self.update(
-            request_id=request_id,
+            id=request_id,
             data={"status": status},
         )
 
@@ -396,8 +391,8 @@ class RegistrationRequestRepository(
         self,
         *,
         request_id: int,
-        owner_id: Optional[int] = None,
-    ) -> Optional[RegistrationRequest]:
+        owner_id: int | None = None,
+    ) -> RegistrationRequest | None:
         """
         الموافقة على طلب التسجيل.
 
@@ -422,7 +417,7 @@ class RegistrationRequestRepository(
             data["owner_id"] = owner_id
 
         return await self.update(
-            request_id=request_id,
+            id=request_id,
             data=data,
         )
 
@@ -434,7 +429,7 @@ class RegistrationRequestRepository(
         self,
         *,
         request_id: int,
-    ) -> Optional[RegistrationRequest]:
+    ) -> RegistrationRequest | None:
         """
         رفض طلب التسجيل.
 
@@ -450,7 +445,7 @@ class RegistrationRequestRepository(
         )
 
         return await self.update(
-            request_id=request_id,
+            id=request_id,
             data={"status": "rejected"},
         )
 
@@ -495,307 +490,3 @@ class RegistrationRequestRepository(
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE REGISTRATION REQUEST (COMPATIBILITY)
-# ==============================================
-
-
-async def create_registration_request(
-    *,
-    chat_id: int,
-    full_name: str,
-    owner_phone: str,
-    email: Optional[str],
-    restaurant_name: str,
-    restaurant_type: str,
-    restaurant_phone: str,
-    wilaya: str,
-    lat: float,
-    lng: float,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء طلب تسجيل جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        full_name: الاسم الكامل
-        owner_phone: رقم هاتف المالك
-        email: البريد الإلكتروني
-        restaurant_name: اسم المطعم
-        restaurant_type: نوع المطعم
-        restaurant_phone: رقم هاتف المطعم
-        wilaya: الولاية
-        lat: خط العرض
-        lng: خط الطول
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف طلب التسجيل
-    """
-    repo = RegistrationRequestRepository(session=session)
-
-    data: RegistrationRequestData = {
-        "chat_id": chat_id,
-        "full_name": full_name,
-        "owner_phone": owner_phone,
-        "email": email,
-        "restaurant_name": restaurant_name,
-        "restaurant_type": restaurant_type,
-        "restaurant_phone": restaurant_phone,
-        "wilaya": wilaya,
-        "lat": lat,
-        "lng": lng,
-        "status": "pending",
-    }
-
-    request_obj = await repo.create(data=data)
-
-    logger.info(
-        "registration_request_created",
-        extra={
-            "request_id": request_obj.id,
-            "chat_id": chat_id,
-        },
-    )
-
-    return request_obj.id
-
-
-# ==============================================
-# GET REGISTRATION REQUEST BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_registration_request_by_id(
-    *,
-    request_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على طلب تسجيل بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        request_id: معرف طلب التسجيل
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الطلب أو None
-    """
-    repo = RegistrationRequestRepository(session=session)
-
-    request_obj = await repo.get_by_id(request_id=request_id)
-
-    if not request_obj:
-        return None
-
-    return {
-        "id": request_obj.id,
-        "chat_id": request_obj.chat_id,
-        "full_name": request_obj.full_name,
-        "owner_phone": request_obj.owner_phone,
-        "email": request_obj.email,
-        "restaurant_name": request_obj.restaurant_name,
-        "restaurant_type": request_obj.restaurant_type,
-        "restaurant_phone": request_obj.restaurant_phone,
-        "wilaya": request_obj.wilaya,
-        "lat": request_obj.lat,
-        "lng": request_obj.lng,
-        "status": request_obj.status,
-        "owner_id": request_obj.owner_id,
-        "created_at": request_obj.created_at,
-    }
-
-
-# ==============================================
-# GET REGISTRATION REQUEST BY CHAT ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_registration_request_by_chat_id(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على طلب تسجيل بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الطلب أو None
-    """
-    repo = RegistrationRequestRepository(session=session)
-
-    request_obj = await repo.get_by_chat_id(chat_id=chat_id)
-
-    if not request_obj:
-        return None
-
-    return {
-        "id": request_obj.id,
-        "chat_id": request_obj.chat_id,
-        "full_name": request_obj.full_name,
-        "owner_phone": request_obj.owner_phone,
-        "email": request_obj.email,
-        "restaurant_name": request_obj.restaurant_name,
-        "restaurant_type": request_obj.restaurant_type,
-        "restaurant_phone": request_obj.restaurant_phone,
-        "wilaya": request_obj.wilaya,
-        "lat": request_obj.lat,
-        "lng": request_obj.lng,
-        "status": request_obj.status,
-        "owner_id": request_obj.owner_id,
-        "created_at": request_obj.created_at,
-    }
-
-
-# ==============================================
-# GET PENDING REQUESTS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_pending_requests(
-    session: AsyncSession,
-    *,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على طلبات التسجيل المعلقة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة طلبات التسجيل المعلقة
-    """
-    repo = RegistrationRequestRepository(session=session)
-
-    requests = await repo.get_pending(
-        skip=skip,
-        limit=limit,
-    )
-
-    result = []
-
-    for req in requests:
-        result.append(
-            {
-                "id": req.id,
-                "chat_id": req.chat_id,
-                "full_name": req.full_name,
-                "owner_phone": req.owner_phone,
-                "email": req.email,
-                "restaurant_name": req.restaurant_name,
-                "restaurant_type": req.restaurant_type,
-                "restaurant_phone": req.restaurant_phone,
-                "wilaya": req.wilaya,
-                "lat": req.lat,
-                "lng": req.lng,
-                "status": req.status,
-                "owner_id": req.owner_id,
-                "created_at": req.created_at,
-            }
-        )
-
-    logger.info(
-        "pending_requests_fetched",
-        extra={"count": len(result)},
-    )
-
-    return result
-
-
-# ==============================================
-# APPROVE REGISTRATION REQUEST (COMPATIBILITY)
-# ==============================================
-
-
-async def approve_registration_request(
-    *,
-    request_id: int,
-    session: AsyncSession,
-    owner_id: Optional[int] = None,
-) -> None:
-    """
-    الموافقة على طلب التسجيل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        request_id: معرف طلب التسجيل
-        session: جلسة قاعدة البيانات غير المتزامنة
-        owner_id: معرف المالك (اختياري)
-    """
-    repo = RegistrationRequestRepository(session=session)
-
-    await repo.approve(
-        request_id=request_id,
-        owner_id=owner_id,
-    )
-
-    logger.info(
-        "registration_request_approved",
-        extra={"request_id": request_id},
-    )
-
-
-# ==============================================
-# REJECT REGISTRATION REQUEST (COMPATIBILITY)
-# ==============================================
-
-
-async def reject_registration_request(
-    *,
-    request_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    رفض طلب التسجيل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        request_id: معرف طلب التسجيل
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = RegistrationRequestRepository(session=session)
-
-    await repo.reject(request_id=request_id)
-
-    logger.info(
-        "registration_request_rejected",
-        extra={"request_id": request_id},
-    )
-
-
-# ==============================================
-# DELETE REGISTRATION REQUEST (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_registration_request(
-    *,
-    request_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف طلب التسجيل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        request_id: معرف طلب التسجيل
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = RegistrationRequestRepository(session=session)
-
-    await repo.delete(request_id=request_id)
-
-    logger.info(
-        "registration_request_deleted",
-        extra={"request_id": request_id},
-    )

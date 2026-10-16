@@ -127,7 +127,6 @@ from app.services.business.orders.paid import (
 
 from app.services.business.orders.helpers import (
     check_order_editable,
-    check_order_editable_from_dict,
     check_order_editable_by_status,
     is_order_editable,
 )
@@ -199,7 +198,6 @@ __all__ = [
     "get_order_payment_status",
     # Helpers
     "check_order_editable",
-    "check_order_editable_from_dict",
     "check_order_editable_by_status",
     "is_order_editable",
     # Constants

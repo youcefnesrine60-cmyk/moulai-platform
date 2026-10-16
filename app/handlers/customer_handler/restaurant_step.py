@@ -174,7 +174,7 @@ async def _parse_restaurant_id(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="❌ الرجاء إدخال رقم المطعم الصحيح.",
             reply_markup=None,
@@ -207,7 +207,7 @@ async def _handle_restaurant_not_found(
         },
     )
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text="❌ المطعم غير موجود. الرجاء المحاولة مرة أخرى.",
         reply_markup=None,
@@ -292,7 +292,7 @@ async def _show_products_list(
             f"💡 يمكنك اختيار عدة منتجات، ثم الذهاب إلى السلة."
         )
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text=text_message,
         reply_markup=None,

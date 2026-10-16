@@ -165,7 +165,7 @@ async def show_cart(
     cart = state.get("cart", [])
 
     if not cart:
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="🛒 السلة فارغة.",
             reply_markup=await cart_empty_ui(),
@@ -175,7 +175,7 @@ async def show_cart(
     # حساب المجموع الكلي
     total = sum(float(item.get("price", 0)) for item in cart)
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text=f"🛒 سلة التسوق\n\nالمجموع الكلي: {total:.2f} دج",
         reply_markup=await cart_ui(
@@ -230,7 +230,7 @@ async def handle_cart_step(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="❌ الرجاء إدخال رقم المنتج الصحيح.",
             reply_markup=None,
@@ -255,7 +255,7 @@ async def handle_cart_step(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="❌ المنتج غير موجود.",
             reply_markup=None,
@@ -281,7 +281,7 @@ async def handle_cart_step(
     )
 
     # عرض رسالة نجاح
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text=(
             f"✅ تم إضافة {product.get('name', 'المنتج')} إلى السلة.\n\n"

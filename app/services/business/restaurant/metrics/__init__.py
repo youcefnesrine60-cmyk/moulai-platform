@@ -19,17 +19,6 @@ from app.services.business.restaurant.metrics.service import (
     MetricsDict,
 )
 from app.services.business.restaurant.metrics.handlers import MetricsEventHandlers
-from app.services.business.restaurant.metrics.compat import (
-    initialize_metrics,
-    product_created,
-    product_deleted,
-    category_created,
-    category_deleted,
-    order_registered,
-    get_metrics,
-    get_metrics_summary,
-    reset_metrics,
-)
 
 # ==============================================
 # 📋 EXPORTS
@@ -39,13 +28,4 @@ __all__ = [
     "RestaurantMetricsService",
     "MetricsDict",
     "MetricsEventHandlers",
-    "initialize_metrics",
-    "product_created",
-    "product_deleted",
-    "category_created",
-    "category_deleted",
-    "order_registered",
-    "get_metrics",
-    "get_metrics_summary",
-    "reset_metrics",
 ]

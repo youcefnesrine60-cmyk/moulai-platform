@@ -15,11 +15,14 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
+import re
+
+from app.core.database import get_session
 from app.core.logger import logger
 
 from app.helpers.ui_manager import UIManager
 
-from app.repositories.restaurant.restaurant_repo import get_restaurant_by_id
+from app.repositories.restaurant.restaurant_repo import RestaurantRepository
 
 from app.views.ui import (
     back_ui,
@@ -36,6 +39,7 @@ async def handle_restaurant_selection(
     chat_id: int,
     message_id: int,
     callback_data: str,
+    match: re.Match[str],
 ) -> None:
 
     # ==========================================
@@ -43,11 +47,9 @@ async def handle_restaurant_selection(
     # ==========================================
 
     try:
+        restaurant_id = int(match.group(1))
 
-        restaurant_id = int(callback_data.removeprefix("rest_"))
-
-    except ValueError:
-
+    except (IndexError, ValueError):
         logger.warning(
             "invalid_restaurant_callback",
             extra={
@@ -62,12 +64,16 @@ async def handle_restaurant_selection(
     # 🔍 LOAD RESTAURANT
     # ==========================================
 
-    restaurant = await get_restaurant_by_id(
-        restaurant_id=restaurant_id,
+    async with await get_session() as session:
+        restaurant_model = await RestaurantRepository(session).get_by_id(
+            id=restaurant_id,
+        )
+
+    restaurant = (
+        {"name": restaurant_model.name} if restaurant_model is not None else None
     )
 
     if not restaurant:
-
         logger.warning(
             "restaurant_not_found",
             extra={
@@ -76,11 +82,11 @@ async def handle_restaurant_selection(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ المطعم غير موجود.",
-            reply_markup=back_ui(),
+            reply_markup=await back_ui(),
         )
 
         return
@@ -97,11 +103,11 @@ async def handle_restaurant_selection(
         },
     )
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=f"🍔 {restaurant['name']}",
-        reply_markup=restaurant_actions_ui(
-            restaurant_id,
+        reply_markup=await restaurant_actions_ui(
+            restaurant_id=restaurant_id,
         ),
     )

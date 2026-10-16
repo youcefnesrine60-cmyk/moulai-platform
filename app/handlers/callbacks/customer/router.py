@@ -25,12 +25,7 @@ from app.handlers.callbacks.customer.restaurant_details import (
 )
 
 # استيراد معالجات الدفع
-from app.handlers.callbacks.customer.payment import (
-    payment_method_callback,
-    payment_confirm_callback,
-    retry_payment_callback,
-    back_to_payment_callback,
-)
+
 
 # استيراد معالجات الطلبات
 from app.handlers.callbacks.customer.order import order_details_callback
@@ -67,34 +62,6 @@ async def register_customer_routes() -> None:
     router.register(
         pattern=r"^order_details_(\d+)$",
         handler=order_details_callback,
-    )
-
-    # ==========================================
-    # 💳 PAYMENT METHODS
-    # ==========================================
-
-    # اختيار طريقة الدفع
-    router.register(
-        pattern=r"^payment_(cash|card|ccp|baridimob|stripe|paypal)_(\d+)$",
-        handler=payment_method_callback,
-    )
-
-    # تأكيد الدفع
-    router.register(
-        pattern=r"^payment_confirm_(\d+)$",
-        handler=payment_confirm_callback,
-    )
-
-    # إعادة محاولة الدفع
-    router.register(
-        pattern=r"^retry_payment_(\d+)$",
-        handler=retry_payment_callback,
-    )
-
-    # الرجوع إلى الدفع
-    router.register(
-        pattern=r"^back_to_payment_(\d+)$",
-        handler=back_to_payment_callback,
     )
 
     logger.info(

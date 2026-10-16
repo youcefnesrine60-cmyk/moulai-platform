@@ -31,8 +31,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    Optional,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -60,9 +58,9 @@ from app.schemas.restaurant.restaurant_order_counter import (
 # 🧩 TYPES
 # ==============================================
 
-OrderCounterData = Dict[str, Any]
-OrderCounterUpdateData = Dict[str, Any]
-CounterSummary = Dict[str, Any]
+OrderCounterData = dict[str, Any]
+OrderCounterUpdateData = dict[str, Any]
+CounterSummary = dict[str, Any]
 
 # ==============================================
 # 🔢 RESTAURANT ORDER COUNTER SERVICE
@@ -653,261 +651,12 @@ class RestaurantOrderCounterService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# INITIALIZE ORDER COUNTER (COMPATIBILITY)
-# ==============================================
-
-
-async def initialize_order_counter(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تهيئة عداد طلبات جديد لمطعم.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المطعم
-        ConflictError: إذا كان العداد موجوداً مسبقاً
-    """
-    service = RestaurantOrderCounterService(session=session)
-
-    await service.initialize_counter(restaurant_id=restaurant_id)
-
-    logger.info(
-        "order_counter_initialized",
-        extra={"restaurant_id": restaurant_id},
-    )
-
-
-# ==============================================
-# GET ORDER COUNTER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_order_counter(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على عداد طلبات مطعم معين.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات العداد أو None
-    """
-    service = RestaurantOrderCounterService(session=session)
-
-    try:
-        counter = await service.get_counter(restaurant_id=restaurant_id)
-        return counter.model_dump()
-    except NotFoundError:
-        return None
-
-
-# ==============================================
-# GENERATE NEXT ORDER NUMBER (COMPATIBILITY)
-# ==============================================
-
-
-async def generate_next_order_number(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> str:
-    """
-    توليد رقم الطلب التالي لمطعم.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        str: رقم الطلب المنسق
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على العداد
-    """
-    service = RestaurantOrderCounterService(session=session)
-
-    result = await service.generate_next_order_number(
-        restaurant_id=restaurant_id,
-    )
-
-    return result.order_number
-
-
-# ==============================================
-# GET ORDER COUNTER SUMMARY (COMPATIBILITY)
-# ==============================================
-
-
-async def get_order_counter_summary(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> Dict[str, Any]:
-    """
-    الحصول على ملخص عداد طلبات مطعم.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Dict[str, Any]: ملخص العداد
-    """
-    service = RestaurantOrderCounterService(session=session)
-
-    summary = await service.get_counter_summary(
-        restaurant_id=restaurant_id,
-    )
-
-    return summary.model_dump()
-
-
-# ==============================================
-# RESET ORDER COUNTER (COMPATIBILITY)
-# ==============================================
-
-
-async def reset_order_counter(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إعادة تعيين عداد طلبات مطعم إلى الصفر.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على العداد
-    """
-    service = RestaurantOrderCounterService(session=session)
-
-    await service.reset_counter(restaurant_id=restaurant_id)
-
-    logger.info(
-        "order_counter_reset",
-        extra={"restaurant_id": restaurant_id},
-    )
-
-
-# ==============================================
-# INCREMENT ORDER COUNTER (COMPATIBILITY)
-# ==============================================
-
-
-async def increment_order_counter(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    زيادة عداد طلبات مطعم بمقدار 1.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على العداد
-    """
-    service = RestaurantOrderCounterService(session=session)
-
-    await service.increment_counter(restaurant_id=restaurant_id)
-
-    logger.info(
-        "order_counter_incremented",
-        extra={"restaurant_id": restaurant_id},
-    )
-
-
-# ==============================================
-# GET CURRENT ORDER NUMBER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_current_order_number(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-) -> int:
-    """
-    الحصول على رقم الطلب الحالي لمطعم معين.
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: آخر رقم طلب
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على العداد
-    """
-    service = RestaurantOrderCounterService(session=session)
-
-    return await service.get_current_number(
-        restaurant_id=restaurant_id,
-    )
-
-
-# ==============================================
-# BUILD ORDER NUMBER (COMPATIBILITY)
-# ==============================================
-
-
-def build_order_number(
-    restaurant_id: int,
-    sequence: int,
-) -> str:
-    """
-    بناء رقم طلب منسق (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        sequence: رقم التسلسل
-
-    Returns:
-        str: رقم الطلب المنسق
-    """
-    return RestaurantOrderCounterService.build_order_number(
-        restaurant_id=restaurant_id,
-        sequence=sequence,
-    )
-
-
-# ==============================================
 # 📋 EXPORTS
 # ==============================================
 
 __all__ = [
-    "RestaurantOrderCounterService",
+    "CounterSummary",
     "OrderCounterData",
     "OrderCounterUpdateData",
-    "CounterSummary",
-    "initialize_order_counter",
-    "get_order_counter",
-    "generate_next_order_number",
-    "get_order_counter_summary",
-    "reset_order_counter",
-    "increment_order_counter",
-    "get_current_order_number",
-    "build_order_number",
+    "RestaurantOrderCounterService",
 ]

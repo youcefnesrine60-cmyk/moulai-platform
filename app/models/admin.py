@@ -20,6 +20,8 @@ from sqlalchemy import (
     BigInteger,
     Boolean,
     Column,
+    ForeignKey,
+    Integer,
     String,
 )
 from sqlalchemy.orm import relationship
@@ -54,6 +56,8 @@ class Admin(BaseModel):
 
     __tablename__ = "admins"
 
+    auth_subject = Column(String(255), unique=True, nullable=True)
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
@@ -74,6 +78,13 @@ class Admin(BaseModel):
         String(255),
         comment="الاسم الكامل",
     )
+    role_id = Column(
+        Integer,
+        ForeignKey("roles.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="معرّف الدور الإداري ضمن منظومة RBAC",
+    )
     role = Column(
         String(50),
         nullable=False,
@@ -93,6 +104,8 @@ class Admin(BaseModel):
     # ==========================================
     # 🔗 RELATIONSHIPS
     # ==========================================
+
+    role_record = relationship("Role", back_populates="admins", lazy="selectin")
 
     logs = relationship(
         "AdminLog",

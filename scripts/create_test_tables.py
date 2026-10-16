@@ -6,88 +6,147 @@
 # ==============================================
 
 # ==============================================
-# MAINTENANCE SCRIPT - SCRIPTS / CREATE TEST TABLES
-# Operational maintenance utility for the MoulAI platform.
+# MAINTENANCE SCRIPT - TEST DATABASE BOOTSTRAP
+# Inspect and migrate the isolated test schema safely.
 # ==============================================
 
-"""Operational maintenance script for create test tables.
+"""Bootstrap the isolated test database through its dedicated Alembic history.
 
-Part of MoulAI Platform - Agent-as-a-Service.
+The script never derives a database name from ``DATABASE_URL`` and never uses
+``Base.metadata.create_all()``. Existing schemas and data are never reset.
 """
 
-# scripts/create_test_tables.py
+from __future__ import annotations
 
+import argparse
+import asyncio
+import subprocess
 import sys
 from pathlib import Path
+from typing import Sequence
 
-# إضافة مسار المشروع
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-import asyncio
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+TEST_DATABASE_NAME = "neondb_test"
+TEST_ALEMBIC_CONFIG = PROJECT_ROOT / "alembic_test.ini"
+
+sys.path.insert(0, str(PROJECT_ROOT))
+
 from app.core.config import settings
+from app.core.test_database import (
+    isolated_connection_arguments,
+    read_test_database_identity,
+    validate_test_branch_configuration,
+    validated_test_database_url,
+)
 
-# ✅ استيراد Base من النماذج
-from app.models.base import Base
 
 # ==============================================
-# CREATE TABLES
+# TEST DATABASE SAFETY
 # ==============================================
 
 
-async def create_tables():
-    """إنشاء جميع الجداول في قاعدة البيانات الاختبارية."""
+def get_test_database_url() -> str:
+    """Return the configured test URL after enforcing the isolated target."""
+    validate_test_branch_configuration(
+        branch_id=settings.TEST_DATABASE_BRANCH_ID,
+        project_id=settings.TEST_DATABASE_PROJECT_ID,
+        protected_branch_id=settings.PROTECTED_DATABASE_BRANCH_ID,
+    )
+    return validated_test_database_url(
+        test_database_url=settings.TEST_DATABASE_URL,
+        test_endpoint_id=settings.TEST_DATABASE_ENDPOINT_ID,
+        protected_endpoint_id=settings.PROTECTED_DATABASE_ENDPOINT_ID,
+    )
 
-    print("=" * 60)
-    print("📋 إنشاء الجداول في قاعدة البيانات الاختبارية")
-    print("=" * 60)
 
-    # ✅ استيراد جميع النماذج لضمان تسجيلها في Base.metadata
-    import app.models  # noqa: F401  # Register ORM models in Base.metadata.
+# ==============================================
+# ALEMBIC BOOTSTRAP
+# ==============================================
 
-    # عرض النماذج المسجلة
-    print(f"\n📊 عدد النماذج المسجلة: {len(Base.metadata.tables)}")
-    if Base.metadata.tables:
-        print("📋 النماذج المسجلة:")
-        for table in Base.metadata.tables.values():
-            print(f"   - {table.name}")
-    else:
-        print("❌ لا توجد نماذج مسجلة!")
-        return
 
-    print("\n" + "=" * 60)
-    print("🔄 إنشاء الجداول...")
-    print("=" * 60)
+def apply_test_migrations() -> None:
+    """Upgrade the isolated test schema to the dedicated Alembic head."""
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "alembic",
+            "-c",
+            str(TEST_ALEMBIC_CONFIG),
+            "upgrade",
+            "head",
+        ],
+        check=True,
+        cwd=PROJECT_ROOT,
+    )
 
-    engine = create_async_engine(settings.DATABASE_URL + "_test")
 
+# ==============================================
+# READ-ONLY SCHEMA SUMMARY
+# ==============================================
+
+
+async def get_schema_summary(*, test_database_url: str) -> tuple[str, int]:
+    """Return the installed test revision and public-table count for verification."""
+    engine = create_async_engine(
+        test_database_url,
+        pool_pre_ping=True,
+        connect_args=isolated_connection_arguments(),
+    )
     try:
-        async with engine.begin() as conn:
-            # ✅ حذف الجداول أولاً (للتأكد من بيئة نظيفة)
-            await conn.run_sync(Base.metadata.drop_all)
-            # ✅ إنشاء جميع الجداول
-            await conn.run_sync(Base.metadata.create_all)
-
-        print("\n✅ تم إنشاء جميع الجداول في قاعدة البيانات الاختبارية")
-
-        # عرض الجداول التي تم إنشاؤها
-        async with engine.begin() as conn:
-            result = await conn.execute(
-                text("SELECT tablename FROM pg_tables WHERE schemaname = 'public'")
+        async with engine.connect() as connection:
+            await connection.run_sync(
+                lambda sync: read_test_database_identity(
+                    sync,
+                    endpoint_id=settings.TEST_DATABASE_ENDPOINT_ID,
+                    branch_id=settings.TEST_DATABASE_BRANCH_ID,
+                    project_id=settings.TEST_DATABASE_PROJECT_ID,
+                    protected_branch_id=settings.PROTECTED_DATABASE_BRANCH_ID,
+                )
             )
-            tables = [row[0] for row in result]
-            if tables:
-                print(f"\n📋 الجداول المنشأة ({len(tables)}):")
-                for table in tables:
-                    print(f"   - {table}")
-            else:
-                print("\n❌ لا توجد جداول في قاعدة البيانات!")
+            revision_result = await connection.execute(
+                text("SELECT version_num FROM alembic_version"),
+            )
+            revision = revision_result.scalar_one()
+            table_count_result = await connection.execute(
+                text(
+                    "SELECT count(*) FROM information_schema.tables "
+                    "WHERE table_schema = 'public'",
+                ),
+            )
+            return revision, int(table_count_result.scalar_one())
+    finally:
+        await engine.dispose()
 
-    except Exception as e:
-        print(f"\n❌ خطأ أثناء إنشاء الجداول: {e}")
-        raise
+
+# ==============================================
+# COMMAND-LINE ENTRY POINT
+# ==============================================
+
+
+def parse_arguments(*, arguments: Sequence[str] | None = None) -> argparse.Namespace:
+    """Parse the explicit maintenance options."""
+    parser = argparse.ArgumentParser(
+        description="Upgrade the isolated MoulAI test schema through Alembic.",
+    )
+    return parser.parse_args(arguments)
+
+
+def main(*, arguments: Sequence[str] | None = None) -> None:
+    """Validate the isolated target and migrate without resetting its data."""
+    parse_arguments(arguments=arguments)
+    test_database_url = get_test_database_url()
+
+    apply_test_migrations()
+    revision, table_count = asyncio.run(
+        get_schema_summary(test_database_url=test_database_url),
+    )
+    print(f"Test schema ready: revision={revision}, public_tables={table_count}")
 
 
 if __name__ == "__main__":
-    asyncio.run(create_tables())
+    main()

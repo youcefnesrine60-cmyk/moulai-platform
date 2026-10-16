@@ -76,7 +76,7 @@ async def order_details_callback(
     )
 
     if not order:
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ الطلب غير موجود.",
@@ -92,7 +92,7 @@ async def order_details_callback(
         f"💰 المجموع: {order.get('total_amount', 0):.2f} دج\n"
     )
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=text,

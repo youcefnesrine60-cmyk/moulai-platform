@@ -58,7 +58,7 @@ async def handle_product_step(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="❌ الرجاء إدخال رقم المنتج الصحيح.",
             reply_markup=None,
@@ -83,7 +83,7 @@ async def handle_product_step(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="❌ المنتج غير موجود.",
             reply_markup=None,
@@ -109,7 +109,7 @@ async def handle_product_step(
     )
 
     # عرض رسالة نجاح
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text=(
             f"✅ تم إضافة {product.get('name', 'المنتج')} إلى السلة.\n\n"

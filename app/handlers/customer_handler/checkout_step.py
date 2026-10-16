@@ -15,13 +15,12 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
+from app.core.database import get_session
 from app.core.logger import logger
 from app.helpers.ui_manager import UIManager
 from app.views.payment_ui import payment_ui
 
-from app.services.business.order_payments_service import (
-    get_allowed_payment_methods_for_order,
-)
+from app.services.business.order_payments_service import OrderPaymentsService
 
 # ==============================================
 # 💳 HANDLE CHECKOUT STEP
@@ -61,7 +60,7 @@ async def handle_checkout_step(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="🛒 السلة فارغة. أضف منتجات أولاً.",
             reply_markup=None,
@@ -82,23 +81,23 @@ async def handle_checkout_step(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="❌ حدث خطأ. يرجى المحاولة مرة أخرى.",
             reply_markup=None,
         )
         return
 
-    # جلب طرق الدفع المسموح بها للمطعم
-    # ملاحظة: نحتاج إلى order_id، لكن قد لا يكون موجوداً بعد
-    # لذلك نستخدم 0 مؤقتاً، وسيتم تحديثه عند إنشاء الطلب
-    allowed_methods = await get_allowed_payment_methods_for_order(
-        order_id=state.get("order_id", 0),
-    )
-
-    # إذا لم توجد طرق دفع مسموح بها، نستخدم الافتراضية
-    if not allowed_methods:
-        allowed_methods = {"cash", "card"}
+    async with await get_session() as session:
+        service = OrderPaymentsService(session=session)
+        if state.get("order_id"):
+            allowed_methods = await service.get_allowed_methods_for_order(
+                order_id=state["order_id"],
+            )
+        else:
+            allowed_methods = await service.get_allowed_methods_by_restaurant(
+                restaurant_id=restaurant_id,
+            )
 
     logger.info(
         "checkout_allowed_methods",
@@ -108,11 +107,9 @@ async def handle_checkout_step(
         },
     )
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
-        text=(
-            f"💳 الدفع\n\n" f"المجموع الكلي: {total:.2f} دج\n\n" f"اختر طريقة الدفع:"
-        ),
+        text=(f"💳 الدفع\n\nالمجموع الكلي: {total:.2f} دج\n\nاختر طريقة الدفع:"),
         reply_markup=await payment_ui(
             allowed_methods=allowed_methods,
             order_id=state.get("order_id", 0),

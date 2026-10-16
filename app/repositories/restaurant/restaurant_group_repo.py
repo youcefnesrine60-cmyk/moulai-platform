@@ -135,7 +135,6 @@ class RestaurantGroupRepository(
         owner_id: int,
         skip: int = 0,
         limit: int = 100,
-        include_inactive: bool = False,  # متجاهل — RestaurantGroup لا يحتوي على is_active
     ) -> List[RestaurantGroup]:
         """
         الحصول على مجموعات المطاعم لمالك معين.
@@ -146,7 +145,6 @@ class RestaurantGroupRepository(
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            include_inactive: متجاهل (RestaurantGroup لا يحتوي على is_active)
 
         Returns:
             List[RestaurantGroup]: قائمة مجموعات المطاعم
@@ -180,7 +178,6 @@ class RestaurantGroupRepository(
         self,
         *,
         owner_id: int,
-        include_inactive: bool = False,  # متجاهل
     ) -> int:
         """
         حساب عدد مجموعات المطاعم لمالك معين.
@@ -189,7 +186,6 @@ class RestaurantGroupRepository(
 
         Args:
             owner_id: معرف المالك
-            include_inactive: متجاهل
 
         Returns:
             int: عدد المجموعات
@@ -213,7 +209,6 @@ class RestaurantGroupRepository(
         *,
         owner_id: int,
         name: str,
-        include_inactive: bool = False,  # متجاهل
     ) -> Optional[RestaurantGroup]:
         """
         الحصول على مجموعة مطاعم بواسطة اسمها.
@@ -225,7 +220,6 @@ class RestaurantGroupRepository(
         Args:
             owner_id: معرف المالك
             name: اسم المجموعة
-            include_inactive: متجاهل
 
         Returns:
             Optional[RestaurantGroup]: المجموعة أو None
@@ -258,7 +252,6 @@ class RestaurantGroupRepository(
         *,
         query: str,
         owner_id: Optional[int] = None,
-        only_active: bool = True,  # متجاهل
         skip: int = 0,
         limit: int = 100,
     ) -> List[RestaurantGroup]:
@@ -270,7 +263,6 @@ class RestaurantGroupRepository(
         Args:
             query: نص البحث
             owner_id: معرف المالك (اختياري)
-            only_active: متجاهل
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
 
@@ -391,73 +383,7 @@ class RestaurantGroupRepository(
     # ✏️ MUTATIONS
     # ==========================================
 
-    # ==============================================
-    # TOGGLE GROUP ACTIVE
-    # ==============================================
 
-    async def toggle_active(
-        self,
-        *,
-        group_id: int,
-    ) -> Optional[RestaurantGroup]:
-        """
-        تبديل حالة المجموعة (نشط/غير نشط).
-
-        ⚠️ RestaurantGroup لا يحتوي على is_active
-        هذه الدالة موجودة للتوافق فقط — تُعيد المجموعة كما هي.
-
-        Args:
-            group_id: معرف المجموعة
-
-        Returns:
-            Optional[RestaurantGroup]: المجموعة أو None
-        """
-        logger.info(
-            "repo_toggle_group_active",
-            extra={"group_id": group_id},
-        )
-
-        group = await self.get_by_id(id=group_id)
-
-        if not group:
-            return None
-
-        # ⚠️ لا يوجد is_active — نُعيد المجموعة كما هي
-        return group
-
-    # ==============================================
-    # BULK TOGGLE GROUPS ACTIVE
-    # ==============================================
-
-    async def bulk_toggle_active(
-        self,
-        *,
-        group_ids: List[int],
-        is_active: bool,
-    ) -> int:
-        """
-        تبديل حالة مجموعة من المجموعات.
-
-        ⚠️ RestaurantGroup لا يحتوي على is_active
-        هذه الدالة موجودة للتوافق فقط — تُعيد 0.
-
-        Args:
-            group_ids: قائمة معرفات المجموعات
-            is_active: الحالة الجديدة (متجاهل)
-
-        Returns:
-            int: 0 (لأنه لا يوجد is_active)
-        """
-        logger.info(
-            "repo_bulk_toggle_groups_active",
-            extra={
-                "group_ids": group_ids,
-                "is_active": is_active,
-            },
-        )
-
-        # ⚠️ لا يوجد is_active — نُعيد 0
-        return 0
 
     # ==============================================
     # DELETE GROUP WITH BRANCHES

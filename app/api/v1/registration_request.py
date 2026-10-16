@@ -10,9 +10,11 @@
 # Operational component of the MoulAI platform.
 # ==============================================
 
-"""MoulAI operational module for registration request.
+"""Registration administration over HTTP requires trusted Keycloak and RBAC.
 
-Part of MoulAI Platform - Agent-as-a-Service.
+Telegram onboarding continues through the business layer independently.
+HTTP request creation, inspection, approval, rejection, and changes are
+reserved for administrators with the current admins.manage permission.
 """
 
 from typing import Optional
@@ -21,11 +23,14 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
-    Query,
     Path,
+    Query,
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.auth import require_admin_permission
+from app.core.database import get_db
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
@@ -33,19 +38,16 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
-
-from app.core.database import get_db
 from app.core.logger import logger
 from app.schemas.registration_request import (
     RegistrationRequestCreate,
-    RegistrationRequestResponse,
-    RegistrationRequestUpdate,
-    RegistrationRequestStatusUpdate,
     RegistrationRequestListResponse,
+    RegistrationRequestResponse,
+    RegistrationRequestStatusUpdate,
+    RegistrationRequestUpdate,
 )
-from app.services.business.registration_request_service import (
-    RegistrationRequestService,
-)
+
+from app.services.business.registration_request_service import RegistrationRequestService  # fmt: skip # isort: skip
 
 # ==============================================
 # 🏗️ ROUTER
@@ -54,6 +56,7 @@ from app.services.business.registration_request_service import (
 router = APIRouter(
     prefix="/registration-requests",
     tags=["Registration Requests"],
+    dependencies=[Depends(require_admin_permission("admins.manage"))],
 )
 
 
@@ -63,6 +66,7 @@ router = APIRouter(
 
 
 async def get_registration_request_service(
+    *,
     session: AsyncSession = Depends(get_db),
 ) -> RegistrationRequestService:
     """
@@ -216,7 +220,7 @@ async def list_registration_requests(
 
 
 @router.get(
-    "/{request_id}",
+    "/{request_id:int}",
     response_model=RegistrationRequestResponse,
     summary="طلب تسجيل بالمعرف",
     description="الحصول على طلب تسجيل محدد",
@@ -284,7 +288,7 @@ async def get_registration_request(
 
 
 @router.get(
-    "/chat/{chat_id}",
+    "/chat/{chat_id:int}",
     response_model=RegistrationRequestResponse,
     summary="طلب تسجيل بـ chat_id",
     description="الحصول على طلب تسجيل بواسطة chat_id",
@@ -440,7 +444,7 @@ async def create_registration_request(
 
 
 @router.patch(
-    "/{request_id}",
+    "/{request_id:int}",
     response_model=RegistrationRequestResponse,
     summary="تحديث طلب تسجيل",
     description="تحديث طلب تسجيل موجود",
@@ -526,7 +530,7 @@ async def update_registration_request(
 
 
 @router.patch(
-    "/{request_id}/status",
+    "/{request_id:int}/status",
     response_model=RegistrationRequestResponse,
     summary="تغيير حالة طلب التسجيل",
     description="تغيير حالة طلب التسجيل (approve/reject)",
@@ -625,7 +629,7 @@ async def update_registration_request_status(
 
 
 @router.post(
-    "/{request_id}/approve",
+    "/{request_id:int}/approve",
     response_model=RegistrationRequestResponse,
     summary="اعتماد طلب التسجيل",
     description="اعتماد طلب التسجيل وإنشاء المالك والمطعم والاشتراك",
@@ -715,7 +719,7 @@ async def approve_registration_request(
 
 
 @router.post(
-    "/{request_id}/reject",
+    "/{request_id:int}/reject",
     response_model=RegistrationRequestResponse,
     summary="رفض طلب التسجيل",
     description="رفض طلب التسجيل",
@@ -795,7 +799,7 @@ async def reject_registration_request(
 
 
 @router.delete(
-    "/{request_id}",
+    "/{request_id:int}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="حذف طلب تسجيل",
     description="حذف طلب تسجيل موجود",
@@ -885,7 +889,7 @@ async def get_registration_requests_summary(
     service: RegistrationRequestService = Depends(
         get_registration_request_service,
     ),
-) -> dict:
+) -> dict[str, int]:
     """
     الحصول على ملخص طلبات التسجيل.
 

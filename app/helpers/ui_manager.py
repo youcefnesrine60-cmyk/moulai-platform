@@ -198,66 +198,6 @@ class UIManager:
             )
             raise
 
-    # ==========================================
-    # 📤 SEND OR EDIT MESSAGE (Legacy Support)
-    # ==========================================
-
-    @staticmethod
-    async def update(
-        *,
-        chat_id: int,
-        text: str,
-        reply_markup: ReplyMarkupInput = None,
-        message_id: int | None = None,
-        store_message_id: bool = True,
-    ) -> TelegramResponse:
-        """
-        إرسال أو تحديث رسالة (دالة متوافقة مع الإصدارات السابقة)
-
-        Args:
-            chat_id: معرف المستخدم
-            text: نص الرسالة
-            reply_markup: أزرار تفاعلية (اختياري)
-            message_id: معرف الرسالة للتعديل (اختياري)
-            store_message_id: تخزين message_id في الحالة (افتراضي True)
-
-        Returns:
-            TelegramResponse: رد من Telegram
-        """
-        try:
-            # ======================================
-            # ✏️ EDIT EXISTING MESSAGE
-            # ======================================
-
-            if message_id is not None:
-                return await UIManager.edit(
-                    chat_id=chat_id,
-                    message_id=message_id,
-                    text=text,
-                    reply_markup=reply_markup,
-                )
-
-            # ======================================
-            # 💬 SEND NEW MESSAGE
-            # ======================================
-
-            return await UIManager.send_new_message(
-                chat_id=chat_id,
-                text=text,
-                reply_markup=reply_markup,
-                store_message_id=store_message_id,
-            )
-
-        except Exception as e:
-            logger.error(
-                "update_message_failed",
-                extra={
-                    "chat_id": chat_id,
-                    "message_id": message_id,
-                    "error": str(e),
-                },
-            )
-            raise
 
     # ==========================================
     # 🗑️ DELETE MESSAGE

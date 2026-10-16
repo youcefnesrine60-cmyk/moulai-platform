@@ -91,7 +91,7 @@ class SubscriptionFeatureRequestRepository(
         Returns:
             Select: استعلام SQLAlchemy الأساسي
         """
-        return select(self.model)
+        return self._select()
 
     # ==========================================
     # 📖 QUERIES
@@ -352,105 +352,3 @@ class SubscriptionFeatureRequestRepository(
         return await self.count(
             filters={"subscription_id": subscription_id},
         )
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة (Psycopg3)
-# ==============================================
-
-# ==============================================
-# CREATE FEATURE REQUEST (COMPATIBILITY)
-# ==============================================
-
-
-async def create_feature_request(
-    *,
-    subscription_id: int,
-    feature_id: int,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء طلب ميزة جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        subscription_id: معرف الاشتراك
-        feature_id: معرف الميزة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف الطلب
-    """
-    repo = SubscriptionFeatureRequestRepository(session=session)
-
-    request = await repo.create_request(
-        subscription_id=subscription_id,
-        feature_id=feature_id,
-    )
-
-    return request.id
-
-
-# ==============================================
-# GET SUBSCRIPTION FEATURE REQUESTS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_subscription_feature_requests(
-    *,
-    subscription_id: int,
-    session: AsyncSession,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على طلبات ميزات اشتراك (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        subscription_id: معرف الاشتراك
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قائمة طلبات الميزات
-    """
-    repo = SubscriptionFeatureRequestRepository(session=session)
-
-    requests = await repo.get_by_subscription(
-        subscription_id=subscription_id,
-    )
-
-    result = []
-
-    for request in requests:
-        result.append(
-            {
-                "id": request.id,
-                "subscription_id": request.subscription_id,
-                "feature_id": request.feature_id,
-                "created_at": request.created_at,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# DELETE SUBSCRIPTION FEATURE REQUESTS (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_subscription_feature_requests(
-    *,
-    subscription_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف طلبات ميزات اشتراك (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        subscription_id: معرف الاشتراك
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = SubscriptionFeatureRequestRepository(session=session)
-
-    await repo.delete_by_subscription(
-        subscription_id=subscription_id,
-    )

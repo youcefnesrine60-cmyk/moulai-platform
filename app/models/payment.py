@@ -97,6 +97,8 @@ class Payment(BaseModel):
         nullable=False,
         comment="طريقة الدفع: card, bank_transfer, manual",
     )
+    payment_provider = Column(String(50), nullable=True)
+    currency = Column(String(3), nullable=False, default="DZD", server_default="DZD")
     amount = Column(
         Float,
         nullable=False,

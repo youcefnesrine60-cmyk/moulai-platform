@@ -229,11 +229,9 @@ class EntityExtractor:
             Extract all entities from the text above.
             """
 
-            response = await self.ai_client.chat_completion(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
+            response = await self.ai_client.chat(
+                message=user_prompt,
+                system_prompt=system_prompt,
                 temperature=0.1,
                 max_tokens=500,
             )

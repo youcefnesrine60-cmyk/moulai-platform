@@ -17,35 +17,36 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 import re
 
+from app.core.database import get_session
+from app.core.exceptions import NotFoundError
 from app.core.logger import logger
 from app.core.middleware.rate_limit import rate_limit
-
 from app.helpers.ui_manager import UIManager
-
-from app.repositories.registration_request_repo import (
-    get_pending_requests,
-    get_registration_request_by_id,
-)
-
-from app.repositories.restaurant.restaurant_repo import get_all_restaurants
-from app.repositories.owner_repo import get_all_owners
-from app.repositories.orders_repo import get_restaurant_orders
-
+from app.repositories.orders_repo import OrdersRepository
+from app.repositories.restaurant.restaurant_repo import RestaurantRepository
+from app.services.business.admin.admin_service import AdminService
+from app.services.business.owner_service import OwnerService
 from app.services.business.registration_request_service import (
-    approve_registration,
-    reject_registration,
+    RegistrationRequestService,
 )
-
-from app.services.business.admin.admin_service import (
-    is_admin,
-    count_admins,
-)
-
 from app.views.admin_ui import (
     admin_dashboard_ui,
-    admin_requests_ui,
     admin_request_details_ui,
+    admin_requests_ui,
 )
+
+# ==============================================
+# AUTHORIZATION HELPERS
+# ==============================================
+
+
+async def _has_active_admin(
+    *,
+    chat_id: int,
+) -> bool:
+    """Resolve active administrator access through the SQLAlchemy service contract."""
+    async with await get_session() as session:
+        return await AdminService(session).has_active_chat(chat_id=chat_id)
 
 # ==============================================
 # 🛡️ ADMIN DASHBOARD
@@ -71,7 +72,7 @@ async def admin_dashboard_callback(
     # 🔒 التحقق من صلاحية المسؤول
     # ==========================================
 
-    if not await is_admin(chat_id=chat_id):
+    if not await _has_active_admin(chat_id=chat_id):
         logger.warning(
             "unauthorized_admin_access",
             extra={
@@ -79,7 +80,7 @@ async def admin_dashboard_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="⛔ غير مصرح لك بالوصول إلى لوحة المسؤول.",
@@ -98,20 +99,24 @@ async def admin_dashboard_callback(
     # 📊 جلب الإحصائيات
     # ==========================================
 
-    pending_requests = await get_pending_requests()
-
-    restaurants = await get_all_restaurants()
-    owners = await get_all_owners()
-
-    # حساب عدد الطلبات (تقريبي)
-    total_orders = 0
-    for restaurant in restaurants:
-        orders = await get_restaurant_orders(
-            restaurant_id=restaurant["id"],
+    async with await get_session() as session:
+        registration_service = RegistrationRequestService(session)
+        pending_requests = [
+            request.model_dump()
+            for request in await registration_service.get_pending()
+        ]
+        restaurant_models = await RestaurantRepository(session).get_all(order_by="name")
+        orders_repo = OrdersRepository(session)
+        total_orders = sum(
+            [
+                await orders_repo.count(filters={"restaurant_id": restaurant.id})
+                for restaurant in restaurant_models
+            ],
         )
-        total_orders += len(orders)
+        total_owners = await OwnerService(session=session).count_owners()
+        total_admins = await AdminService(session).count_admins()
 
-    total_admins = await count_admins()
+    restaurants = [{"id": restaurant.id} for restaurant in restaurant_models]
 
     # ==========================================
     # 🖥️ عرض لوحة التحكم
@@ -120,12 +125,12 @@ async def admin_dashboard_callback(
     dashboard_ui = await admin_dashboard_ui(
         pending_requests=len(pending_requests),
         total_restaurants=len(restaurants),
-        total_owners=len(owners),
+        total_owners=total_owners,
         total_orders=total_orders,
         total_admins=total_admins,
     )
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=dashboard_ui.get("text", "🛡️ لوحة تحكم المسؤول"),
@@ -160,8 +165,8 @@ async def admin_requests_callback(
     عرض طلبات التسجيل المعلقة
     """
     # 🔒 التحقق من صلاحية المسؤول
-    if not await is_admin(chat_id=chat_id):
-        await UIManager.update(
+    if not await _has_active_admin(chat_id=chat_id):
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="⛔ غير مصرح لك بالوصول.",
@@ -176,13 +181,18 @@ async def admin_requests_callback(
         },
     )
 
-    pending_requests = await get_pending_requests()
+    async with await get_session() as session:
+        registration_service = RegistrationRequestService(session)
+        pending_requests = [
+            request.model_dump()
+            for request in await registration_service.get_pending()
+        ]
 
     requests_ui = await admin_requests_ui(
         requests=pending_requests,
     )
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=requests_ui.get("text", "📋 طلبات التسجيل"),
@@ -217,8 +227,8 @@ async def admin_request_details_callback(
     عرض تفاصيل طلب تسجيل معين
     """
     # 🔒 التحقق من صلاحية المسؤول
-    if not await is_admin(chat_id=chat_id):
-        await UIManager.update(
+    if not await _has_active_admin(chat_id=chat_id):
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="⛔ غير مصرح لك بالوصول.",
@@ -248,12 +258,15 @@ async def admin_request_details_callback(
     )
 
     # جلب تفاصيل الطلب
-    request = await get_registration_request_by_id(
-        request_id=request_id,
-    )
-
-    if not request:
-        await UIManager.update(
+    try:
+        async with await get_session() as session:
+            request = (
+                await RegistrationRequestService(session).get_by_id(
+                    request_id=request_id,
+                )
+            ).model_dump()
+    except NotFoundError:
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="❌ طلب التسجيل غير موجود.",
@@ -265,7 +278,7 @@ async def admin_request_details_callback(
         request=request,
     )
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=details_ui.get("text", "📋 تفاصيل الطلب"),
@@ -300,8 +313,8 @@ async def admin_approve_callback(
     الموافقة على طلب تسجيل
     """
     # 🔒 التحقق من صلاحية المسؤول
-    if not await is_admin(chat_id=chat_id):
-        await UIManager.update(
+    if not await _has_active_admin(chat_id=chat_id):
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="⛔ غير مصرح لك بالوصول.",
@@ -331,21 +344,22 @@ async def admin_approve_callback(
     )
 
     try:
-        result = await approve_registration(
-            request_id=request_id,
-        )
+        async with await get_session() as session:
+            result = await RegistrationRequestService(session).approve(
+                request_id=request_id,
+            )
+            await session.commit()
 
         logger.info(
             "registration_approved_by_admin",
             extra={
                 "chat_id": chat_id,
                 "request_id": request_id,
-                "owner_id": result.get("owner_id"),
-                "restaurant_id": result.get("restaurant_id"),
+                "owner_id": result.owner_id,
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text=(
@@ -367,10 +381,10 @@ async def admin_approve_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
-            text=f"❌ فشلت الموافقة على الطلب: {str(e)}",
+            text=f"❌ فشلت الموافقة على الطلب: {e!s}",
             reply_markup=None,
         )
 
@@ -402,8 +416,8 @@ async def admin_reject_callback(
     رفض طلب تسجيل
     """
     # 🔒 التحقق من صلاحية المسؤول
-    if not await is_admin(chat_id=chat_id):
-        await UIManager.update(
+    if not await _has_active_admin(chat_id=chat_id):
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text="⛔ غير مصرح لك بالوصول.",
@@ -433,9 +447,11 @@ async def admin_reject_callback(
     )
 
     try:
-        await reject_registration(
-            request_id=request_id,
-        )
+        async with await get_session() as session:
+            await RegistrationRequestService(session).reject(
+                request_id=request_id,
+            )
+            await session.commit()
 
         logger.info(
             "registration_rejected_by_admin",
@@ -445,7 +461,7 @@ async def admin_reject_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
             text=f"❌ تم رفض طلب التسجيل #{request_id}.",
@@ -462,9 +478,9 @@ async def admin_reject_callback(
             },
         )
 
-        await UIManager.update(
+        await UIManager.edit(
             chat_id=chat_id,
             message_id=message_id,
-            text=f"❌ فشل رفض الطلب: {str(e)}",
+            text=f"❌ فشل رفض الطلب: {e!s}",
             reply_markup=None,
         )

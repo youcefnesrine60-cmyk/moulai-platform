@@ -94,7 +94,6 @@ class RestaurantGroupService:
         self,
         *,
         group_id: int,
-        include_inactive: bool = False,
     ) -> RestaurantGroupResponse:
         """
         الحصول على مجموعة مطاعم بالمعرف.
@@ -103,7 +102,6 @@ class RestaurantGroupService:
 
         Args:
             group_id: معرف المجموعة
-            include_inactive: متجاهل (للتوافق مع الواجهة)
 
         Returns:
             RestaurantGroupResponse: بيانات المجموعة
@@ -115,7 +113,6 @@ class RestaurantGroupService:
             "service_get_group_by_id",
             extra={
                 "group_id": group_id,
-                "include_inactive": include_inactive,
             },
         )
 
@@ -173,7 +170,6 @@ class RestaurantGroupService:
         owner_id: int,
         skip: int = 0,
         limit: int = 100,
-        only_active: bool = True,
     ) -> RestaurantGroupListResponse:
         """
         الحصول على مجموعات المطاعم لمالك معين.
@@ -184,7 +180,6 @@ class RestaurantGroupService:
             owner_id: معرف المالك
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
-            only_active: متجاهل (للتوافق مع الواجهة)
 
         Returns:
             RestaurantGroupListResponse: قائمة المجموعات
@@ -195,7 +190,6 @@ class RestaurantGroupService:
                 "owner_id": owner_id,
                 "skip": skip,
                 "limit": limit,
-                "only_active": only_active,
             },
         )
 
@@ -261,7 +255,6 @@ class RestaurantGroupService:
         *,
         query: str,
         owner_id: Optional[int] = None,
-        only_active: bool = True,
         skip: int = 0,
         limit: int = 100,
     ) -> RestaurantGroupListResponse:
@@ -271,7 +264,6 @@ class RestaurantGroupService:
         Args:
             query: نص البحث
             owner_id: معرف المالك (اختياري)
-            only_active: متجاهل (للتوافق مع الواجهة)
             skip: عدد السجلات للتخطي
             limit: الحد الأقصى للسجلات
 
@@ -283,7 +275,6 @@ class RestaurantGroupService:
             extra={
                 "query": query,
                 "owner_id": owner_id,
-                "only_active": only_active,
             },
         )
 
@@ -500,43 +491,6 @@ class RestaurantGroupService:
 
         return RestaurantGroupResponse.model_validate(group)
 
-    # ==============================================
-    # TOGGLE GROUP ACTIVE
-    # ==============================================
-
-    async def toggle_active(
-        self,
-        *,
-        group_id: int,
-    ) -> RestaurantGroupResponse:
-        """
-        تبديل حالة المجموعة (نشط/غير نشط).
-
-        ⚠️ ملاحظة: RestaurantGroup لا يحتوي على is_active.
-        هذه الدالة موجودة للتوافق فقط — تُعيد المجموعة كما هي.
-
-        Args:
-            group_id: معرف المجموعة
-
-        Returns:
-            RestaurantGroupResponse: بيانات المجموعة
-
-        Raises:
-            NotFoundError: إذا لم يتم العثور على المجموعة
-        """
-        logger.info(
-            "service_toggle_group_active",
-            extra={"group_id": group_id},
-        )
-
-        group = await self.repo.get_by_id(id=group_id)
-
-        if not group:
-            raise NotFoundError(
-                message=f"المجموعة بـ ID '{group_id}' غير موجودة",
-            )
-
-        return RestaurantGroupResponse.model_validate(group)
 
     # ==============================================
     # DELETE GROUP
@@ -546,14 +500,12 @@ class RestaurantGroupService:
         self,
         *,
         group_id: int,
-        permanent: bool = False,
     ) -> None:
         """
         حذف مجموعة مطاعم.
 
         Args:
             group_id: معرف المجموعة
-            permanent: حذف نهائي
 
         Raises:
             NotFoundError: إذا لم يتم العثور على المجموعة
@@ -562,7 +514,6 @@ class RestaurantGroupService:
             "service_delete_group",
             extra={
                 "group_id": group_id,
-                "permanent": permanent,
             },
         )
 

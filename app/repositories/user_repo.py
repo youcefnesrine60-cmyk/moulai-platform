@@ -17,9 +17,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import (
@@ -37,9 +34,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-UserData = Dict[str, Any]
-UserUpdateData = Dict[str, Any]
-UserList = List[User]
+UserData = dict[str, Any]
+UserUpdateData = dict[str, Any]
+UserList = list[User]
 
 # ==============================================
 # 👤 USER REPOSITORY
@@ -88,7 +85,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
         self,
         *,
         chat_id: int,
-    ) -> Optional[User]:
+    ) -> User | None:
         """
         الحصول على مستخدم بواسطة chat_id.
 
@@ -100,7 +97,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
         """
         try:
             result = await self.session.execute(
-                select(self.model).where(self.model.chat_id == chat_id).limit(1),
+                self._select().where(self.model.chat_id == chat_id).limit(1),
             )
 
             return result.scalar_one_or_none()
@@ -123,7 +120,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
         self,
         *,
         phone: str,
-    ) -> Optional[User]:
+    ) -> User | None:
         """
         الحصول على مستخدم بواسطة رقم الهاتف.
 
@@ -413,7 +410,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
         self,
         *,
         chat_id: int,
-    ) -> Optional[User]:
+    ) -> User | None:
         """
         إلغاء موافقة المستخدم.
 
@@ -472,7 +469,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
         *,
         chat_id: int,
         customer_name: str,
-    ) -> Optional[User]:
+    ) -> User | None:
         """
         تحديث اسم العميل.
 
@@ -511,7 +508,7 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
         *,
         chat_id: int,
         customer_phone: str,
-    ) -> Optional[User]:
+    ) -> User | None:
         """
         تحديث رقم هاتف العميل.
 
@@ -635,161 +632,3 @@ class UserRepository(BaseRepository[User, UserData, UserUpdateData]):
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# HAS CONSENT (COMPATIBILITY)
-# ==============================================
-
-
-async def has_consent(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق مما إذا كان المستخدم قد أعطى موافقته (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        True إذا كان لديه موافقة، False إذا لم يكن
-    """
-    repo = UserRepository(session=session)
-
-    return await repo.has_consent(chat_id=chat_id)
-
-
-# ==============================================
-# GIVE CONSENT (COMPATIBILITY)
-# ==============================================
-
-
-async def give_consent(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    منح الموافقة للمستخدم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = UserRepository(session=session)
-
-    await repo.give_consent(chat_id=chat_id)
-
-    logger.info(
-        "consent_given",
-        extra={"chat_id": chat_id},
-    )
-
-
-# ==============================================
-# REVOKE CONSENT (COMPATIBILITY)
-# ==============================================
-
-
-async def revoke_consent(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء موافقة المستخدم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = UserRepository(session=session)
-
-    await repo.revoke_consent(chat_id=chat_id)
-
-    logger.info(
-        "consent_revoked",
-        extra={"chat_id": chat_id},
-    )
-
-
-# ==============================================
-# GET USER BY CHAT ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_user_by_chat_id(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> Optional[User]:
-    """
-    الحصول على مستخدم بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        كائن User أو None
-    """
-    repo = UserRepository(session=session)
-
-    return await repo.get_by_chat_id(chat_id=chat_id)
-
-
-# ==============================================
-# CREATE USER (COMPATIBILITY)
-# ==============================================
-
-
-async def create_user(
-    *,
-    chat_id: int,
-    consent: bool = False,
-    customer_name: Optional[str] = None,
-    customer_phone: Optional[str] = None,
-    session: AsyncSession,
-) -> User:
-    """
-    إنشاء مستخدم جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        consent: حالة الموافقة
-        customer_name: اسم العميل (اختياري)
-        customer_phone: رقم هاتف العميل (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        كائن User المنشأ
-    """
-    repo = UserRepository(session=session)
-
-    data: UserData = {
-        "chat_id": chat_id,
-        "consent": consent,
-    }
-
-    if customer_name is not None:
-        data["customer_name"] = customer_name
-
-    if customer_phone is not None:
-        data["customer_phone"] = customer_phone
-
-    user = await repo.create(data=data)
-
-    logger.info(
-        "user_created",
-        extra={
-            "user_id": user.id,
-            "chat_id": chat_id,
-        },
-    )
-
-    return user

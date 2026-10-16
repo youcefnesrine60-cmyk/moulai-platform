@@ -18,9 +18,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 from datetime import datetime, timedelta
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import (
@@ -39,10 +36,10 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-AdminLogData = Dict[str, Any]
-AdminLogUpdateData = Dict[str, Any]
-AdminLogList = List[AdminLog]
-ActionsSummary = List[Dict[str, Any]]
+AdminLogData = dict[str, Any]
+AdminLogUpdateData = dict[str, Any]
+AdminLogList = list[AdminLog]
+ActionsSummary = list[dict[str, Any]]
 
 # ==============================================
 # 📋 ADMIN LOG REPOSITORY
@@ -93,8 +90,8 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
         admin_id: int,
         skip: int = 0,
         limit: int = 100,
-        action: Optional[str] = None,
-        resource: Optional[str] = None,
+        action: str | None = None,
+        resource: str | None = None,
     ) -> AdminLogList:
         """
         الحصول على سجل أنشطة مدير معين.
@@ -155,7 +152,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
         action: str,
         skip: int = 0,
         limit: int = 100,
-        admin_id: Optional[int] = None,
+        admin_id: int | None = None,
     ) -> AdminLogList:
         """
         الحصول على سجل الأنشطة حسب نوع الإجراء.
@@ -211,7 +208,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
         resource: str,
         skip: int = 0,
         limit: int = 100,
-        resource_id: Optional[int] = None,
+        resource_id: int | None = None,
     ) -> AdminLogList:
         """
         الحصول على سجل الأنشطة حسب نوع المورد.
@@ -266,8 +263,8 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
         *,
         start_date: datetime,
         end_date: datetime,
-        admin_id: Optional[int] = None,
-        action: Optional[str] = None,
+        admin_id: int | None = None,
+        action: str | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> AdminLogList:
@@ -333,7 +330,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
         self,
         *,
         query: str,
-        admin_id: Optional[int] = None,
+        admin_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> AdminLogList:
@@ -402,7 +399,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
         self,
         *,
         admin_id: int,
-        action: Optional[str] = None,
+        action: str | None = None,
     ) -> int:
         """
         حساب عدد سجلات الأنشطة لمدير معين.
@@ -468,7 +465,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     async def get_actions_summary(
         self,
         *,
-        admin_id: Optional[int] = None,
+        admin_id: int | None = None,
         limit: int = 10,
     ) -> ActionsSummary:
         """
@@ -514,7 +511,7 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
     async def get_recent_activity(
         self,
         *,
-        admin_id: Optional[int] = None,
+        admin_id: int | None = None,
         limit: int = 10,
     ) -> AdminLogList:
         """
@@ -567,11 +564,11 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
         *,
         admin_id: int,
         action: str,
-        resource: Optional[str] = None,
-        resource_id: Optional[int] = None,
-        details: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        resource: str | None = None,
+        resource_id: int | None = None,
+        details: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
     ) -> AdminLog:
         """
         إنشاء سجل نشاط جديد.
@@ -682,146 +679,3 @@ class AdminLogRepository(BaseRepository[AdminLog, AdminLogData, AdminLogUpdateDa
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE ADMIN LOG (COMPATIBILITY)
-# ==============================================
-
-
-async def create_admin_log(
-    *,
-    admin_id: int,
-    action: str,
-    resource: Optional[str] = None,
-    resource_id: Optional[int] = None,
-    details: Optional[str] = None,
-    ip_address: Optional[str] = None,
-    user_agent: Optional[str] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء سجل نشاط جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        admin_id: معرف المدير
-        action: نوع الإجراء
-        resource: نوع المورد (اختياري)
-        resource_id: معرف المورد (اختياري)
-        details: تفاصيل إضافية (اختياري)
-        ip_address: عنوان IP (اختياري)
-        user_agent: متصفح المدير (اختياري)
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف سجل النشاط
-    """
-    repo = AdminLogRepository(session=session)
-
-    log = await repo.create_log(
-        admin_id=admin_id,
-        action=action,
-        resource=resource,
-        resource_id=resource_id,
-        details=details,
-        ip_address=ip_address,
-        user_agent=user_agent,
-    )
-
-    return log.id
-
-
-# ==============================================
-# GET ADMIN LOGS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_admin_logs(
-    *,
-    admin_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على سجل أنشطة مدير معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        admin_id: معرف المدير
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة سجل الأنشطة
-    """
-    repo = AdminLogRepository(session=session)
-
-    logs = await repo.get_by_admin_id(
-        admin_id=admin_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    result = []
-
-    for log in logs:
-        result.append(
-            {
-                "id": log.id,
-                "admin_id": log.admin_id,
-                "action": log.action,
-                "resource": log.resource,
-                "resource_id": log.resource_id,
-                "details": log.details,
-                "ip_address": log.ip_address,
-                "user_agent": log.user_agent,
-                "timestamp": log.timestamp,
-                "created_at": log.created_at,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# GET ADMIN LOG BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_admin_log_by_id(
-    *,
-    log_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على سجل نشاط بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        log_id: معرف سجل النشاط
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات سجل النشاط أو None
-    """
-    repo = AdminLogRepository(session=session)
-
-    log = await repo.get_by_id(id=log_id)
-
-    if not log:
-        return None
-
-    return {
-        "id": log.id,
-        "admin_id": log.admin_id,
-        "action": log.action,
-        "resource": log.resource,
-        "resource_id": log.resource_id,
-        "details": log.details,
-        "ip_address": log.ip_address,
-        "user_agent": log.user_agent,
-        "timestamp": log.timestamp,
-        "created_at": log.created_at,
-    }

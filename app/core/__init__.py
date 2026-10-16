@@ -74,7 +74,6 @@ from app.core.security import (
     # Password
     hash_password,
     verify_password,
-    get_password_hash,
     # Tokens
     generate_session_token,
     generate_verification_token,
@@ -98,7 +97,6 @@ from app.core.security import (
 from app.core.database import (
     Base,
     get_db,
-    get_async_session,
     get_session,
     init_db,
     drop_db,
@@ -154,7 +152,6 @@ __all__ = [
     # Security
     "hash_password",
     "verify_password",
-    "get_password_hash",
     "generate_session_token",
     "generate_verification_token",
     "generate_api_key",
@@ -168,7 +165,6 @@ __all__ = [
     # Database
     "Base",
     "get_db",
-    "get_async_session",
     "get_session",
     "init_db",
     "drop_db",

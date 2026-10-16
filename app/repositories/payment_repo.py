@@ -28,7 +28,7 @@ from sqlalchemy import (
     or_,
     select,
 )
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import logger
 from app.models.payment import Payment
@@ -68,6 +68,7 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -106,7 +107,7 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.owner_id == owner_id)
                 .order_by(self.model.created_at.desc())
                 .offset(skip)
@@ -151,7 +152,7 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.restaurant_id == restaurant_id)
                 .order_by(self.model.created_at.desc())
                 .offset(skip)
@@ -192,7 +193,7 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
         """
         try:
             result = await self.session.execute(
-                select(self.model)
+                self._select()
                 .where(self.model.subscription_id == subscription_id)
                 .order_by(self.model.created_at.desc()),
             )
@@ -233,7 +234,7 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
         """
         try:
             query = (
-                select(self.model)
+                self._select()
                 .where(self.model.status == status)
                 .order_by(self.model.created_at.desc())
                 .offset(skip)
@@ -262,22 +263,27 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
         self,
         *,
         external_reference: str,
+        for_update: bool = False,
     ) -> Optional[Payment]:
         """
         الحصول على دفع بواسطة المرجع الخارجي.
 
         Args:
             external_reference: المرجع الخارجي من بوابة الدفع
+            for_update: Lock the payment row for a composed billing operation.
 
         Returns:
             كائن Payment أو None
         """
         try:
-            result = await self.session.execute(
-                select(self.model).where(
-                    self.model.external_reference == external_reference
-                ),
+            query = self._select().where(
+                self.model.external_reference == external_reference
             )
+            if for_update:
+                query = query.with_for_update(of=self.model).execution_options(
+                    populate_existing=True
+                )
+            result = await self.session.execute(query)
 
             return result.scalar_one_or_none()
 
@@ -341,7 +347,7 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
         """
         try:
             stmt = (
-                select(self.model)
+                self._select()
                 .where(
                     or_(
                         self.model.external_reference.ilike(f"%{query}%"),
@@ -611,395 +617,3 @@ class PaymentRepository(BaseRepository[Payment, PaymentData, PaymentUpdateData])
                 },
             )
             raise
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def create_payment(
-    *,
-    owner_id: int,
-    restaurant_id: int,
-    subscription_id: Optional[int],
-    payment_method: str,
-    amount: float,
-    status: str = "pending",
-    external_reference: Optional[str] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء دفع جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        owner_id: معرف المالك
-        restaurant_id: معرف المطعم
-        subscription_id: معرف الاشتراك
-        payment_method: طريقة الدفع
-        amount: المبلغ
-        status: حالة الدفع
-        external_reference: المرجع الخارجي
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف الدفع
-    """
-    repo = PaymentRepository(session=session)
-
-    data: PaymentData = {
-        "owner_id": owner_id,
-        "restaurant_id": restaurant_id,
-        "subscription_id": subscription_id,
-        "payment_method": payment_method,
-        "amount": amount,
-        "status": status,
-        "external_reference": external_reference,
-    }
-
-    payment = await repo.create(data=data)
-
-    logger.info(
-        "payment_created",
-        extra={
-            "payment_id": payment.id,
-            "owner_id": owner_id,
-            "restaurant_id": restaurant_id,
-        },
-    )
-
-    return payment.id
-
-
-# ==============================================
-# GET PAYMENT BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_payment_by_id(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على دفع بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الدفع أو None
-    """
-    repo = PaymentRepository(session=session)
-
-    payment = await repo.get_by_id(id=payment_id)
-
-    if not payment:
-        return None
-
-    return {
-        "id": payment.id,
-        "owner_id": payment.owner_id,
-        "restaurant_id": payment.restaurant_id,
-        "subscription_id": payment.subscription_id,
-        "payment_method": payment.payment_method,
-        "amount": payment.amount,
-        "status": payment.status,
-        "external_reference": payment.external_reference,
-        "created_at": payment.created_at,
-        "paid_at": payment.paid_at,
-    }
-
-
-# ==============================================
-# GET PAYMENT BY REFERENCE (COMPATIBILITY)
-# ==============================================
-
-
-async def get_payment_by_reference(
-    *,
-    external_reference: str,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على دفع بواسطة المرجع الخارجي (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        external_reference: المرجع الخارجي
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الدفع أو None
-    """
-    repo = PaymentRepository(session=session)
-
-    payment = await repo.get_by_external_reference(
-        external_reference=external_reference,
-    )
-
-    if not payment:
-        return None
-
-    return {
-        "id": payment.id,
-        "owner_id": payment.owner_id,
-        "restaurant_id": payment.restaurant_id,
-        "subscription_id": payment.subscription_id,
-        "payment_method": payment.payment_method,
-        "amount": payment.amount,
-        "status": payment.status,
-        "external_reference": payment.external_reference,
-        "created_at": payment.created_at,
-        "paid_at": payment.paid_at,
-    }
-
-
-# ==============================================
-# MARK PAYMENT PAID (COMPATIBILITY)
-# ==============================================
-
-
-async def mark_payment_paid(
-    *,
-    payment_id: int,
-    paid_at: datetime,
-    session: AsyncSession,
-) -> None:
-    """
-    تعيين الدفع كمدفوع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        paid_at: تاريخ الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = PaymentRepository(session=session)
-
-    await repo.mark_paid(
-        payment_id=payment_id,
-        paid_at=paid_at,
-    )
-
-    logger.info(
-        "payment_marked_paid",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# MARK PAYMENT FAILED (COMPATIBILITY)
-# ==============================================
-
-
-async def mark_payment_failed(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تعيين الدفع كفاشل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = PaymentRepository(session=session)
-
-    await repo.mark_failed(payment_id=payment_id)
-
-    logger.info(
-        "payment_marked_failed",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# CANCEL PAYMENT (COMPATIBILITY)
-# ==============================================
-
-
-async def cancel_payment(
-    *,
-    payment_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء الدفع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        payment_id: معرف الدفع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = PaymentRepository(session=session)
-
-    await repo.mark_cancelled(payment_id=payment_id)
-
-    logger.info(
-        "payment_cancelled",
-        extra={"payment_id": payment_id},
-    )
-
-
-# ==============================================
-# GET OWNER PAYMENTS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_owner_payments(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على مدفوعات مالك معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة المدفوعات
-    """
-    repo = PaymentRepository(session=session)
-
-    payments = await repo.get_by_owner_id(
-        owner_id=owner_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    result = []
-
-    for payment in payments:
-        result.append(
-            {
-                "id": payment.id,
-                "owner_id": payment.owner_id,
-                "restaurant_id": payment.restaurant_id,
-                "subscription_id": payment.subscription_id,
-                "payment_method": payment.payment_method,
-                "amount": payment.amount,
-                "status": payment.status,
-                "external_reference": payment.external_reference,
-                "created_at": payment.created_at,
-                "paid_at": payment.paid_at,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# GET RESTAURANT PAYMENTS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_restaurant_payments(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على مدفوعات مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة المدفوعات
-    """
-    repo = PaymentRepository(session=session)
-
-    payments = await repo.get_by_restaurant_id(
-        restaurant_id=restaurant_id,
-        skip=skip,
-        limit=limit,
-    )
-
-    result = []
-
-    for payment in payments:
-        result.append(
-            {
-                "id": payment.id,
-                "owner_id": payment.owner_id,
-                "restaurant_id": payment.restaurant_id,
-                "subscription_id": payment.subscription_id,
-                "payment_method": payment.payment_method,
-                "amount": payment.amount,
-                "status": payment.status,
-                "external_reference": payment.external_reference,
-                "created_at": payment.created_at,
-                "paid_at": payment.paid_at,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# 🔄 TRANSACTION FUNCTIONS
-# (للتوافق مع الكود القديم)
-# ==============================================
-
-# ==============================================
-# CONFIRM PAYMENT TRANSACTIONS (COMPATIBILITY)
-# ==============================================
-
-
-async def confirm_payment_tx(
-    *,
-    conn: AsyncConnection,
-    payment_id: int,
-) -> int:
-    """
-    تأكيد الدفع (معاملة) - دالة متوافقة مع الإصدار القديم.
-
-    Args:
-        conn: اتصال قاعدة البيانات (غير مستخدم في SQLAlchemy)
-        payment_id: معرف الدفع
-
-    Returns:
-        int: عدد الصفوف المتأثرة
-    """
-    # في SQLAlchemy، نستخدم session مباشرة
-    repo = PaymentRepository(conn)  # conn هو AsyncSession في الواقع
-    payment = await repo.mark_paid(payment_id)
-    return 1 if payment else 0
-
-
-# ==============================================
-# FAIL PAYMENT TRANSACTIONS (COMPATIBILITY)
-# ==============================================
-
-
-async def fail_payment_tx(
-    *,
-    conn: AsyncConnection,
-    payment_id: int,
-) -> None:
-    """
-    تعيين الدفع كفاشل (معاملة) - دالة متوافقة مع الإصدار القديم.
-
-    Args:
-        conn: اتصال قاعدة البيانات (غير مستخدم في SQLAlchemy)
-        payment_id: معرف الدفع
-    """
-    # في SQLAlchemy، نستخدم session مباشرة
-    repo = PaymentRepository(conn)  # conn هو AsyncSession في الواقع
-    await repo.mark_failed(payment_id)

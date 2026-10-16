@@ -6,111 +6,87 @@
 # ==============================================
 
 # ==============================================
-# 📁 requirements.txt - MoulAI™ Platform
+# REQUIREMENTS - REVIEWED APPLICATION BASELINE
 # ==============================================
-# 🚀 Python 3.14+ | Last Updated: 2026-10-13
-# ==============================================
+# Local interpreter: Python 3.14.4 | Reviewed: 2026-10-16
+# Exact direct and selected transitive pins; not a cross-platform lock file.
+# Runtime and development tools remain together for the current install path.
 
 # ==============================================
-# 🔷 CORE FRAMEWORKS & SERVER
+# CORE FRAMEWORK AND SERVER
 # ==============================================
-annotated-doc==0.0.4
-annotated-types==0.7.0
-anyio==4.13.0
-fastapi==0.136.1
-starlette==1.0.0
+fastapi==0.136.3
+starlette==1.8.0
 uvicorn==0.46.0
+anyio==4.13.0
+annotated-doc==0.0.5
 click==8.3.3
 
 # ==============================================
-# 🗄️ DATABASE - PostgreSQL Drivers
+# SQLALCHEMY AND POSTGRESQL
 # ==============================================
-psycopg[binary]>=3.1.0              # PostgreSQL adapter (sync)
-psycopg-pool>=3.1.0                 # Connection pooling for psycopg
+SQLAlchemy[asyncio]==2.0.51
+alembic==1.18.5
+asyncpg==0.31.0
+greenlet==3.5.3
+# Retained for the existing app.core.db pool and legacy diagnostic entry point.
+psycopg[binary]==3.3.4
+psycopg-pool==3.3.1
 
 # ==============================================
-# 🗄️ DATABASE - SQLAlchemy ORM & Migrations
+# AUTHENTICATION AND ENCRYPTION
 # ==============================================
-sqlalchemy[asyncio]>=2.0.30  # SQLAlchemy with async support
-alembic>=1.13.0              # Database migrations
-asyncpg>=0.29.0              # Async PostgreSQL driver (recommended)
-greenlet>=3.0.0              # Required for async in Windows
+passlib[bcrypt]==1.7.4
+# Passlib's bcrypt backend probes are incompatible with bcrypt 5.
+bcrypt==4.0.1
+PyJWT[crypto]==2.13.0
+cryptography==50.0.2
 
 # ==============================================
-# SECURITY & PASSWORD HASHING
+# AI AND HTTP TRANSPORT
 # ==============================================
-passlib==1.7.4
+openai==2.32.0
+# Telegram Bot API calls also use HTTPX directly.
+httpx==0.28.1
+httpcore==1.0.9
+h11==0.16.0
+certifi==2026.7.22
+idna==3.13
+sniffio==1.3.1
+jiter==0.14.0
+tqdm==4.67.3
+distro==1.9.0
 
 # ==============================================
-# 🔴 CACHE & MESSAGE QUEUE
+# VALIDATION AND SETTINGS
 # ==============================================
-redis==7.4.0                  # Redis client for caching & rate limiting
+pydantic==2.13.5
+# Keep this exact core version aligned with Pydantic's package metadata.
+pydantic-core==2.46.5
+pydantic-settings==2.14.2
+annotated-types==0.7.0
+typing-extensions==4.15.0
+typing-inspection==0.4.4
+python-dotenv==1.2.4
 
 # ==============================================
-# 🤖 AI & LANGUAGE MODELS
+# REDIS AND STRUCTURED LOGGING
 # ==============================================
-openai==2.32.0                # OpenAI API client (GPT-4, etc.)
-httpx==0.28.1                 # HTTP client (used by OpenAI & testing)
-httpcore==1.0.9               # HTTP core (httpx dependency)
-PyJWT[crypto]==2.13.0         # OIDC JWT validation and asymmetric JWKS keys
-cryptography==50.0.2         # Authenticated Fernet encryption and JWKS primitives
-jiter==0.14.0                 # JSON parser (OpenAI dependency)
-tqdm==4.67.3                  # Progress bars (OpenAI dependency)
-distro==1.9.0                 # OS detection (OpenAI dependency)
+redis==7.4.1
+python-json-logger==4.1.0
 
 # ==============================================
-# 📱 TELEGRAM BOT
+# TESTING AND COVERAGE
 # ==============================================
-python-telegram-bot==22.7     # Telegram Bot API wrapper
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+coverage[toml]==7.15.2
 
 # ==============================================
-# 📊 DATA VALIDATION & SERIALIZATION
+# DEVELOPMENT QUALITY TOOLS
 # ==============================================
-pydantic==2.13.4              # Data validation
-pydantic_core==2.46.4         # Core Pydantic (dependency)
-pydantic-settings>=2.14.2     # Settings Management
-typing_extensions==4.15.0     # Type hints extensions
-typing-inspection==0.4.2      # Type inspection (Pydantic dependency)
-
-# ==============================================
-# 📁 FILE HANDLING & EXCEL
-# ==============================================
-openpyxl==3.1.5               # Excel file handling (.xlsx)
-et_xmlfile==2.0.0             # XML file handling (openpyxl dependency)
-
-# ==============================================
-# ⚙️ ENVIRONMENT & CONFIGURATION
-# ==============================================
-python-dotenv==1.2.2          # Environment variables (.env files)
-
-# ==============================================
-# 📝 LOGGING & MONITORING
-# ==============================================
-python-json-logger==4.1.0     # JSON structured logging
-
-# ==============================================
-# 🌐 NETWORK & HTTP
-# ==============================================
-requests==2.33.1              # HTTP requests (sync)
-urllib3==2.6.3                # HTTP client (requests dependency)
-certifi==2026.4.22            # SSL certificates
-charset-normalizer==3.4.7     # Character encoding
-idna==3.13                    # Internationalized domain names
-sniffio==1.3.1                # Async context manager (anyio dependency)
-h11==0.16.0                   # HTTP/1.1 protocol (uvicorn dependency)
-
-# ==============================================
-# 🧪 TESTING & DEVELOPMENT
-# ==============================================
-pytest==9.1.1                 # Testing framework
-pytest-asyncio==1.4.0         # Async support for pytest
-pytest-cov==5.0.0             # Code coverage for pytest
-git-filter-repo==2.47.0       # Git history rewriting (development)
-
-# ==============================================
-# 🔧 TOOLS & UTILITIES
-# ==============================================
-black>=23.0.0                 # Code formatter (optional)
-ruff==0.16.10                 # Fast linter used by the project quality checks
-pylint>=3.0.0                 # Code linter (optional)
-mypy>=1.0.0                   # Static type checking (optional)
+black==26.5.1
+ruff==0.16.10
+pylint==4.0.6
+mypy==2.3.0

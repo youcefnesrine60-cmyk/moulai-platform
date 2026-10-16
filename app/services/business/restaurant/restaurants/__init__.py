@@ -24,15 +24,6 @@ from app.services.business.restaurant.restaurants.validators import (
     validate_restaurant_type,
     validate_owner_limit,
 )
-from app.services.business.restaurant.restaurants.compat import (
-    create_restaurant,
-    get_restaurant,
-    get_restaurants,
-    get_all_restaurants,
-    update_restaurant,
-    delete_restaurant,
-    toggle_restaurant_status,
-)
 
 # ==============================================
 # 📋 EXPORTS
@@ -45,11 +36,4 @@ __all__ = [
     "VALID_RESTAURANT_TYPES",
     "validate_restaurant_type",
     "validate_owner_limit",
-    "create_restaurant",
-    "get_restaurant",
-    "get_restaurants",
-    "get_all_restaurants",
-    "update_restaurant",
-    "delete_restaurant",
-    "toggle_restaurant_status",
 ]

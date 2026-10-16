@@ -1,20 +1,26 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
 # ========================
-# 🔐 Secrets & Env
+# Secrets and environment configuration
 # ========================
 # Env files
 .env
 .env.*
 *.env
 !.env.example
+.aws/
 
 # ========================
-# 🐍 Python
+# Python
 # ========================
 __pycache__/
 *.py[cod]
 *$py.class
-*.pyc
-*.pyo
 *.pyd
 *.so
 *.egg
@@ -29,7 +35,7 @@ env/
 ENV/
 
 # ========================
-# 🧪 Testing / Coverage
+# Testing, analysis caches, and coverage
 # ========================
 .coverage
 htmlcov/
@@ -39,9 +45,12 @@ coverage.xml
 *.cover
 *.py,cover
 .hypothesis/
+.cache/
+.mypy_cache/
+.ruff_cache/
 
 # ========================
-# 🧠 IDE / Editor
+# IDE and editor files
 # ========================
 .vscode/
 .idea/
@@ -53,53 +62,54 @@ coverage.xml
 *.iws
 
 # ========================
-# 🐳 Docker
+# Docker
 # ========================
 docker-compose.override.yml
 
 # ========================
-# 🪵 Logs
+# Logs and temporary captures
 # ========================
 *.log
+*.err
+*.out
 logs/
 *.tmp
 *.temp
+/*.snapshot.txt
 
 # ========================
-# 🗃️ Database / Cache (local only)
+# Local database and cache files
 # ========================
 *.sqlite3
 *.db
 dump.rdb
-__pycache__/
 
 # ========================
-# 📦 Build / Dist
+# Build and distribution files
 # ========================
 build/
 dist/
-*.egg-info/
 *.whl
 *.tar.gz
 
 # ========================
-# 🧾 OS files
+# Operating system files
 # ========================
 .DS_Store
 Thumbs.db
-*.tmp
-*.temp
 
 # ========================
-# 🔧 Development files
+# Development process files
 # ========================
-*.log
 *.pid
 *.seed
 *.pid.lock
 
 # ========================
-# 🌐 Web files
+# Web files and local verification reports
 # ========================
 *.map.html
-.cache/pytest/
+artifacts/
+billing-production-preflight*.json
+billing-production-constraint-diagnostics.json
+billing-development-*.json

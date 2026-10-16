@@ -45,6 +45,7 @@ from app.api.v1.order_item import router as order_items_router
 from app.api.v1.orders import router as orders_router
 from app.api.v1.owners import router as owners_router
 from app.api.v1.payments import router as payments_router
+from app.api.v1.manual_payments import router as manual_payments_router
 from app.api.v1.product_option import router as product_options_router
 from app.api.v1.products import router as products_router
 from app.api.v1.registration_request import router as registration_requests_router
@@ -273,6 +274,8 @@ app.include_router(
 )
 
 # ---------- Users ----------
+app.include_router(manual_payments_router, prefix="/api/v1")
+
 app.include_router(
     users_router,
     prefix="/api/v1",

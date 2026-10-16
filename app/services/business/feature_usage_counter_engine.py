@@ -33,7 +33,6 @@ from datetime import (
     datetime,
     timezone,
 )
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -270,7 +269,7 @@ async def get_remaining_usage(
     restaurant_id: int,
     plan_id: int,
     feature_id: int,
-) -> Optional[int]:
+) -> int | None:
     """
     حساب الاستخدام المتبقي للميزة في الشهر الحالي.
 
@@ -308,30 +307,3 @@ async def get_remaining_usage(
         monthly_limit - usage,
         0,
     )
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-#
-# ⚠️ مؤقتة فقط — يجب حذفها بعد تحديث كل Callers
-# ==============================================
-
-# ==============================================
-# GET USAGE (COMPATIBILITY)
-# بدون session → يستخدم get_usage
-# ⚠️ غير مدعوم في SQLAlchemy — يجب تمرير session
-# ==============================================
-
-# ❌ لا يمكن توفير نسخة بدون session في SQLAlchemy
-# أي Caller قديم يجب تحديثه لتمرير session
-
-
-# ==============================================
-# INCREASE USAGE (COMPATIBILITY)
-# بدون session → يستخدم increase_usage
-# ⚠️ غير مدعوم في SQLAlchemy — يجب تمرير session
-# ==============================================
-
-# ❌ لا يمكن توفير نسخة بدون session في SQLAlchemy
-# أي Caller قديم يجب تحديثه لتمرير session

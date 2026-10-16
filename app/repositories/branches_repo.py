@@ -81,6 +81,38 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
     # ==========================================
 
     # ==============================================
+    # GET BY RESTAURANT AND NAME
+    # ==============================================
+
+    async def get_by_name(
+        self,
+        *,
+        restaurant_id: int,
+        name: str,
+    ) -> Optional[Branch]:
+        """Return one branch by its restaurant-scoped name, when it exists."""
+        try:
+            result = await self.session.execute(
+                select(self.model)
+                .where(
+                    self.model.restaurant_id == restaurant_id,
+                    self.model.name == name,
+                )
+                .limit(1),
+            )
+            return result.scalar_one_or_none()
+        except Exception as error:
+            logger.exception(
+                "branches_repo_get_by_name_failed",
+                extra={
+                    "restaurant_id": restaurant_id,
+                    "branch_name": name,
+                    "error": str(error),
+                },
+            )
+            raise
+
+    # ==============================================
     # GET BY RESTAURANT ID
     # ==============================================
 
@@ -413,308 +445,3 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE BRANCH (COMPATIBILITY)
-# ==============================================
-
-
-async def create_branch(
-    *,
-    restaurant_id: int,
-    name: str,
-    phone: Optional[str] = None,
-    wilaya: Optional[str] = None,
-    lat: Optional[float] = None,
-    lng: Optional[float] = None,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء فرع جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        name: اسم الفرع
-        phone: رقم الهاتف
-        wilaya: الولاية
-        lat: خط العرض
-        lng: خط الطول
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف الفرع
-    """
-    repo = BranchesRepository(session=session)
-
-    data: BranchData = {
-        "restaurant_id": restaurant_id,
-        "name": name,
-        "phone": phone,
-        "wilaya": wilaya,
-        "lat": lat,
-        "lng": lng,
-        "is_active": True,
-    }
-
-    branch = await repo.create(data=data)
-
-    logger.info(
-        "branch_created",
-        extra={
-            "branch_id": branch.id,
-            "restaurant_id": restaurant_id,
-        },
-    )
-
-    return branch.id
-
-
-# ==============================================
-# GET BRANCH (COMPATIBILITY)
-# ==============================================
-
-
-async def get_branch(
-    *,
-    branch_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على فرع بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        branch_id: معرف الفرع
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الفرع أو None
-    """
-    repo = BranchesRepository(session=session)
-
-    branch = await repo.get_by_id(id=branch_id)
-
-    if not branch:
-        return None
-
-    return {
-        "id": branch.id,
-        "restaurant_id": branch.restaurant_id,
-        "name": branch.name,
-        "phone": branch.phone,
-        "wilaya": branch.wilaya,
-        "lat": branch.lat,
-        "lng": branch.lng,
-        "is_active": branch.is_active,
-        "created_at": branch.created_at,
-    }
-
-
-# ==============================================
-# GET RESTAURANT BRANCHES (COMPATIBILITY)
-# ==============================================
-
-
-async def get_restaurant_branches(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    only_active: bool = True,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على فروع مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        only_active: جلب الفروع النشطة فقط
-
-    Returns:
-        قائمة الفروع
-    """
-    repo = BranchesRepository(session=session)
-
-    branches = await repo.get_by_restaurant_id(
-        restaurant_id=restaurant_id,
-        only_active=only_active,
-    )
-
-    result = []
-
-    for branch in branches:
-        result.append(
-            {
-                "id": branch.id,
-                "restaurant_id": branch.restaurant_id,
-                "name": branch.name,
-                "phone": branch.phone,
-                "wilaya": branch.wilaya,
-                "lat": branch.lat,
-                "lng": branch.lng,
-                "is_active": branch.is_active,
-                "created_at": branch.created_at,
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# COUNT RESTAURANT BRANCHES (COMPATIBILITY)
-# ==============================================
-
-
-async def count_restaurant_branches(
-    *,
-    restaurant_id: int,
-    session: AsyncSession,
-    only_active: bool = True,
-) -> int:
-    """
-    حساب عدد فروع مطعم معين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurant_id: معرف المطعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-        only_active: حساب الفروع النشطة فقط
-
-    Returns:
-        عدد الفروع
-    """
-    repo = BranchesRepository(session=session)
-
-    return await repo.count_by_restaurant(
-        restaurant_id=restaurant_id,
-        only_active=only_active,
-    )
-
-
-# ==============================================
-# DELETE BRANCH (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_branch(
-    *,
-    branch_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف فرع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        branch_id: معرف الفرع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = BranchesRepository(session=session)
-
-    await repo.delete(id=branch_id)
-
-    logger.info(
-        "branch_deleted",
-        extra={"branch_id": branch_id},
-    )
-
-
-# ==============================================
-# UPDATE BRANCH (COMPATIBILITY)
-# ==============================================
-
-
-async def update_branch(
-    *,
-    branch_id: int,
-    name: str,
-    phone: Optional[str] = None,
-    wilaya: Optional[str] = None,
-    lat: Optional[float] = None,
-    lng: Optional[float] = None,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث فرع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        branch_id: معرف الفرع
-        name: اسم الفرع
-        phone: رقم الهاتف
-        wilaya: الولاية
-        lat: خط العرض
-        lng: خط الطول
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = BranchesRepository(session=session)
-
-    data: BranchUpdateData = {
-        "name": name,
-        "phone": phone,
-        "wilaya": wilaya,
-        "lat": lat,
-        "lng": lng,
-    }
-
-    await repo.update(
-        id=branch_id,
-        data=data,
-    )
-
-    logger.info(
-        "branch_updated",
-        extra={"branch_id": branch_id},
-    )
-
-
-# ==============================================
-# DEACTIVATE BRANCH (COMPATIBILITY)
-# ==============================================
-
-
-async def deactivate_branch(
-    *,
-    branch_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    إلغاء تفعيل فرع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        branch_id: معرف الفرع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = BranchesRepository(session=session)
-
-    await repo.deactivate(branch_id=branch_id)
-
-    logger.info(
-        "branch_deactivated",
-        extra={"branch_id": branch_id},
-    )
-
-
-# ==============================================
-# ACTIVATE BRANCH (COMPATIBILITY)
-# ==============================================
-
-
-async def activate_branch(
-    *,
-    branch_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تفعيل فرع (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        branch_id: معرف الفرع
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = BranchesRepository(session=session)
-
-    await repo.activate(branch_id=branch_id)
-
-    logger.info(
-        "branch_activated",
-        extra={"branch_id": branch_id},
-    )

@@ -22,8 +22,9 @@ from app.core.middleware.rate_limit import rate_limit
 
 from app.helpers.ui_manager import UIManager
 
-from app.repositories.products_repo import get_restaurant_products
-from app.repositories.categories_repo import get_restaurant_categories
+from app.repositories.products_repo import ProductRepository
+from app.core.database import get_session
+from app.repositories.categories_repo import CategoriesRepository
 
 from app.views.ui import button
 
@@ -74,17 +75,30 @@ async def restaurant_menu_callback(
     )
 
     # جلب الأقسام
-    categories = await get_restaurant_categories(
-        restaurant_id=restaurant_id,
-    )
+    async with await get_session() as session:
+        category_models = await CategoriesRepository(session).get_by_restaurant_id(
+            restaurant_id=restaurant_id,
+        )
+        product_models = await ProductRepository(session).get_by_restaurant_id(
+            restaurant_id=restaurant_id,
+        )
+
+    categories = [
+        {"id": category.id, "name": category.name} for category in category_models
+    ]
+    products = [
+        {
+            "category_id": product.category_id,
+            "name": product.name,
+            "price": product.price,
+        }
+        for product in product_models
+    ]
 
     # جلب المنتجات
-    products = await get_restaurant_products(
-        restaurant_id=restaurant_id,
-    )
 
     # بناء الرسالة
-    text = f"🍽️ **قائمة المطعم**\n\n"
+    text = "🍽️ **قائمة المطعم**\n\n"
 
     if categories:
         for category in categories:
@@ -107,7 +121,7 @@ async def restaurant_menu_callback(
         ],
     ]
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=text,

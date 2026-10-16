@@ -114,7 +114,7 @@ async def type_callback(
     # 📞 REQUEST PHONE NUMBER
     # ==========================================
 
-    await UIManager.update(
+    await UIManager.edit(
         chat_id=chat_id,
         message_id=message_id,
         text=PHONE_NUMBER,

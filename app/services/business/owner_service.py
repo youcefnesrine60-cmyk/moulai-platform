@@ -17,15 +17,9 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-)
-
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
@@ -33,22 +27,22 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان
-from app.core.security import (
-    sanitize_input,
+from app.core.security import sanitize_input
+from app.repositories.owner_repo import (
+    OwnerData,
+    OwnerRepository,
+    OwnerStatisticsData,
 )
-
-from app.core.logger import logger
-from app.models.owner import Owner
-from app.repositories.owner_repo import OwnerRepository
 
 # ✅ استيراد المخططات
 from app.schemas.owner import (
     OwnerCreate,
     OwnerResponse,
-    OwnerUpdate,
     OwnerStatusUpdate,
+    OwnerUpdate,
 )
 
 # ==============================================
@@ -56,15 +50,6 @@ from app.schemas.owner import (
 # ==============================================
 
 VALID_REGISTRATION_STATUSES = {"pending", "approved", "rejected"}
-
-
-# ==============================================
-# 🧩 TYPES
-# ==============================================
-
-OwnerData = Dict[str, Any]
-OwnerUpdateData = Dict[str, Any]
-OwnerList = List[Owner]
 
 
 # ==============================================
@@ -93,6 +78,7 @@ class OwnerService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -102,7 +88,7 @@ class OwnerService:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         self.session = session
-        self.repo = OwnerRepository(session)
+        self.repo = OwnerRepository(session=session)
 
     # ==========================================
     # 📖 QUERIES
@@ -135,7 +121,7 @@ class OwnerService:
         )
 
         owner = await self.repo.get_by_id(
-            owner_id=owner_id,
+            id=owner_id,
         )
 
         if not owner:
@@ -146,6 +132,30 @@ class OwnerService:
         return OwnerResponse.model_validate(owner)
 
     # ==============================================
+    # GET OWNER CREATED AT
+    # ==============================================
+
+    async def get_created_at(
+        self,
+        *,
+        owner_id: int,
+    ) -> datetime | None:
+        """Return the owner creation timestamp when the owner exists.
+
+        Args:
+            owner_id: Persistent owner identifier.
+
+        Returns:
+            The creation timestamp, or ``None`` when no owner matches the identifier.
+        """
+        logger.info(
+            "owner_service_get_created_at",
+            extra={"owner_id": owner_id},
+        )
+
+        return await self.repo.get_created_at(owner_id=owner_id)
+
+    # ==============================================
     # GET OWNER BY CHAT ID
     # ==============================================
 
@@ -153,7 +163,7 @@ class OwnerService:
         self,
         *,
         chat_id: int,
-    ) -> Optional[OwnerResponse]:
+    ) -> OwnerResponse | None:
         """
         الحصول على مالك بواسطة chat_id.
 
@@ -187,7 +197,7 @@ class OwnerService:
         skip: int = 0,
         limit: int = 100,
         only_approved: bool = False,
-    ) -> List[OwnerResponse]:
+    ) -> list[OwnerResponse]:
         """
         الحصول على جميع المالكين.
 
@@ -233,7 +243,7 @@ class OwnerService:
         status: str,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[OwnerResponse]:
+    ) -> list[OwnerResponse]:
         """
         الحصول على المالكين حسب حالة التسجيل.
 
@@ -286,7 +296,7 @@ class OwnerService:
         query: str,
         skip: int = 0,
         limit: int = 100,
-    ) -> List[OwnerResponse]:
+    ) -> list[OwnerResponse]:
         """
         البحث عن المالكين.
 
@@ -328,7 +338,7 @@ class OwnerService:
     async def count_owners(
         self,
         *,
-        status: Optional[str] = None,
+        status: str | None = None,
     ) -> int:
         """
         حساب عدد المالكين.
@@ -360,7 +370,7 @@ class OwnerService:
 
     async def get_owner_statistics(
         self,
-    ) -> Dict[str, int]:
+    ) -> OwnerStatisticsData:
         """
         الحصول على إحصائيات المالكين.
 
@@ -369,17 +379,7 @@ class OwnerService:
         """
         logger.info("owner_service_get_statistics")
 
-        total = await self.count_owners()
-        pending = await self.count_owners(status="pending")
-        approved = await self.count_owners(status="approved")
-        rejected = await self.count_owners(status="rejected")
-
-        return {
-            "total": total,
-            "pending": pending,
-            "approved": approved,
-            "rejected": rejected,
-        }
+        return await self.repo.get_statistics()
 
     # ==========================================
     # ✏️ MUTATIONS
@@ -521,7 +521,7 @@ class OwnerService:
         )
 
         # التحقق من وجود المالك
-        existing = await self.repo.get_by_id(owner_id=owner_id)
+        existing = await self.repo.get_by_id(id=owner_id)
 
         if not existing:
             raise NotFoundError(
@@ -532,13 +532,13 @@ class OwnerService:
         updates = update_data.model_dump(exclude_unset=True)
 
         # تنظيف البيانات
-        if "full_name" in updates:
+        if updates.get("full_name") is not None:
             updates["full_name"] = sanitize_input(updates["full_name"])
 
-        if "phone" in updates:
+        if updates.get("phone") is not None:
             updates["phone"] = sanitize_input(updates["phone"])
 
-        if "email" in updates:
+        if updates.get("email") is not None:
             updates["email"] = sanitize_input(updates["email"])
 
             # التحقق من صحة البريد الإلكتروني
@@ -549,7 +549,7 @@ class OwnerService:
 
         # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
-            owner_id=owner_id,
+            id=owner_id,
             data=updates,
         )
 
@@ -617,7 +617,7 @@ class OwnerService:
 
         # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
-            owner_id=owner_id,
+            id=owner_id,
             data={"registration_status": status},
         )
 
@@ -668,7 +668,7 @@ class OwnerService:
 
         # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
-            owner_id=owner_id,
+            id=owner_id,
             data={"registration_status": "approved"},
         )
 
@@ -716,7 +716,7 @@ class OwnerService:
 
         # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
-            owner_id=owner_id,
+            id=owner_id,
             data={"registration_status": "rejected"},
         )
 
@@ -764,7 +764,7 @@ class OwnerService:
 
         # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
-            owner_id=owner_id,
+            id=owner_id,
             data={"registration_status": "pending"},
         )
 
@@ -817,7 +817,7 @@ class OwnerService:
 
         # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
-            owner_id=owner_id,
+            id=owner_id,
             data={"trial_used": trial_used},
         )
 
@@ -860,7 +860,7 @@ class OwnerService:
         Returns:
             bool: True إذا كان يمكن استخدام الفترة التجريبية
         """
-        owner = await self.repo.get_by_id(owner_id=owner_id)
+        owner = await self.repo.get_by_id(id=owner_id)
 
         if not owner:
             return False
@@ -903,7 +903,7 @@ class OwnerService:
         can_use = await self.can_use_trial(owner_id=owner_id)
 
         if not can_use:
-            owner = await self.repo.get_by_id(owner_id=owner_id)
+            owner = await self.repo.get_by_id(id=owner_id)
 
             if not owner:
                 raise NotFoundError(
@@ -922,7 +922,7 @@ class OwnerService:
 
         # ✅ base.py يقوم بـ commit() و refresh()
         owner = await self.repo.update(
-            owner_id=owner_id,
+            id=owner_id,
             data={"trial_used": True},
         )
 
@@ -971,7 +971,7 @@ class OwnerService:
         )
 
         # التحقق من وجود المالك
-        owner = await self.repo.get_by_id(owner_id=owner_id)
+        owner = await self.repo.get_by_id(id=owner_id)
 
         if not owner:
             raise NotFoundError(
@@ -991,7 +991,7 @@ class OwnerService:
             )
 
         # ✅ base.py يقوم بـ commit()
-        deleted = await self.repo.delete(owner_id=owner_id)
+        deleted = await self.repo.delete(id=owner_id)
 
         if not deleted:
             raise NotFoundError(
@@ -1007,311 +1007,3 @@ class OwnerService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# GET OR CREATE OWNER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_or_create_owner(
-    *,
-    chat_id: int,
-    full_name: str,
-    phone: str,
-    email: str,
-    session: AsyncSession,
-) -> int:
-    """
-    الحصول على مالك أو إنشاؤه (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        full_name: الاسم الكامل
-        phone: رقم الهاتف
-        email: البريد الإلكتروني
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف المالك
-    """
-    service = OwnerService(session=session)
-
-    # البحث عن مالك موجود
-    owner = await service.get_owner_by_chat_id(chat_id=chat_id)
-
-    if owner:
-        logger.info(
-            "owner_already_exists",
-            extra={
-                "owner_id": owner.id,
-                "chat_id": chat_id,
-            },
-        )
-        return owner.id
-
-    # إنشاء مالك جديد
-    owner_data = OwnerCreate(
-        chat_id=chat_id,
-        full_name=full_name,
-        phone=phone,
-        email=email,
-        registration_status="pending",
-        trial_used=False,
-    )
-
-    owner = await service.create_owner(owner_data=owner_data)
-
-    logger.info(
-        "owner_created_from_service",
-        extra={
-            "owner_id": owner.id,
-            "chat_id": chat_id,
-        },
-    )
-
-    return owner.id
-
-
-# ==============================================
-# CAN USE TRIAL (COMPATIBILITY)
-# ==============================================
-
-
-async def can_use_trial(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> bool:
-    """
-    التحقق من إمكانية استخدام الفترة التجريبية.
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        bool: True إذا كان يمكن استخدام الفترة التجريبية
-    """
-    service = OwnerService(session=session)
-
-    return await service.can_use_trial(owner_id=owner_id)
-
-
-# ==============================================
-# ACTIVATE TRIAL USAGE (COMPATIBILITY)
-# ==============================================
-
-
-async def activate_trial_usage(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تفعيل استخدام الفترة التجريبية.
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    service = OwnerService(session=session)
-
-    await service.activate_trial(owner_id=owner_id)
-
-
-# ==============================================
-# APPROVE OWNER (COMPATIBILITY)
-# ==============================================
-
-
-async def approve_owner(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    اعتماد مالك.
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    service = OwnerService(session=session)
-
-    await service.approve_owner(owner_id=owner_id)
-
-
-# ==============================================
-# REJECT OWNER (COMPATIBILITY)
-# ==============================================
-
-
-async def reject_owner(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    رفض مالك.
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    service = OwnerService(session=session)
-
-    await service.reject_owner(owner_id=owner_id)
-
-
-# ==============================================
-# SET OWNER PENDING (COMPATIBILITY)
-# ==============================================
-
-
-async def set_owner_pending(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    تعيين حالة المالك إلى pending.
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    service = OwnerService(session=session)
-
-    await service.set_owner_pending(owner_id=owner_id)
-
-
-# ==============================================
-# GET OWNER (COMPATIBILITY)
-# ==============================================
-
-
-async def get_owner(
-    *,
-    owner_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مالك بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        owner_id: معرف المالك
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات المالك أو None
-    """
-    service = OwnerService(session=session)
-
-    try:
-        owner = await service.get_owner_by_id(owner_id=owner_id)
-        return owner.model_dump()
-    except NotFoundError:
-        return None
-
-
-# ==============================================
-# GET OWNER BY CHAT ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_owner_by_chat_id(
-    *,
-    chat_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على مالك بواسطة chat_id (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        chat_id: معرف المستخدم في تيليجرام
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات المالك أو None
-    """
-    service = OwnerService(session=session)
-
-    owner = await service.get_owner_by_chat_id(chat_id=chat_id)
-
-    if not owner:
-        return None
-
-    return owner.model_dump()
-
-
-# ==============================================
-# GET ALL OWNERS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_all_owners(
-    *,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-    only_approved: bool = False,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على جميع المالكين (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-        only_approved: جلب المالكين المعتمدين فقط
-
-    Returns:
-        List[Dict[str, Any]]: قائمة المالكين
-    """
-    service = OwnerService(session=session)
-
-    owners = await service.get_all_owners(
-        skip=skip,
-        limit=limit,
-        only_approved=only_approved,
-    )
-
-    return [owner.model_dump() for owner in owners]
-
-
-# ==============================================
-# GET OWNERS BY STATUS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_owners_by_status(
-    *,
-    status: str,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على المالكين حسب حالة التسجيل (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        status: حالة التسجيل (pending, approved, rejected)
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        List[Dict[str, Any]]: قائمة المالكين
-    """
-    service = OwnerService(session=session)
-
-    owners = await service.get_owners_by_status(
-        status=status,
-        skip=skip,
-        limit=limit,
-    )
-
-    return [owner.model_dump() for owner in owners]

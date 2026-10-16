@@ -118,13 +118,13 @@ async def handle_webapp_data(
     # 🍽️ SHOW TYPES
     # ==========================================
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text="📍 تم حفظ موقع المحل بنجاح.",
         reply_markup=None,
     )
 
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text="🍽️ اختر نوع المحل:",
         reply_markup=await types_ui(),

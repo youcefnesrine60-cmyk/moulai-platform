@@ -57,7 +57,7 @@ async def handle_payment_step(
             },
         )
 
-        await UIManager.update(
+        await UIManager.send_new_message(
             chat_id=chat_id,
             text="❌ يرجى اختيار طريقة الدفع أولاً.",
             reply_markup=None,
@@ -69,7 +69,7 @@ async def handle_payment_step(
     total = sum(float(item.get("price", 0)) for item in cart)
 
     # عرض واجهة تأكيد الدفع
-    await UIManager.update(
+    await UIManager.send_new_message(
         chat_id=chat_id,
         text=(
             f"💳 تأكيد الدفع\n\n"

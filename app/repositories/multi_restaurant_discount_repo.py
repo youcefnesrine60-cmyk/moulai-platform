@@ -18,9 +18,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy import select
@@ -34,9 +31,9 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-MultiRestaurantDiscountData = Dict[str, Any]
-MultiRestaurantDiscountUpdateData = Dict[str, Any]
-MultiRestaurantDiscountList = List[MultiRestaurantDiscount]
+MultiRestaurantDiscountData = dict[str, Any]
+MultiRestaurantDiscountUpdateData = dict[str, Any]
+MultiRestaurantDiscountList = list[MultiRestaurantDiscount]
 
 # ==============================================
 # 🏢 MULTI RESTAURANT DISCOUNT REPOSITORY
@@ -144,7 +141,7 @@ class MultiRestaurantDiscountRepository(
         self,
         *,
         restaurants_count: int,
-    ) -> Optional[MultiRestaurantDiscount]:
+    ) -> MultiRestaurantDiscount | None:
         """
         الحصول على الخصم المطبق لعدد مطاعم معين.
 
@@ -217,7 +214,7 @@ class MultiRestaurantDiscountRepository(
         discount_id: int,
         min_restaurants: int,
         discount_percent: float,
-    ) -> Optional[MultiRestaurantDiscount]:
+    ) -> MultiRestaurantDiscount | None:
         """
         تحديث خصم المطاعم المتعددة.
 
@@ -262,244 +259,3 @@ class MultiRestaurantDiscountRepository(
             عدد الخصومات
         """
         return await self.count()
-
-
-# ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة (Psycopg3)
-# ==============================================
-
-# ==============================================
-# CREATE MULTI RESTAURANT DISCOUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def create_multi_restaurant_discount(
-    *,
-    min_restaurants: int,
-    discount_percent: float,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء خصم مطاعم متعددة جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        min_restaurants: الحد الأدنى لعدد المطاعم
-        discount_percent: نسبة الخصم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        معرف الخصم
-    """
-    repo = MultiRestaurantDiscountRepository(session=session)
-
-    data: MultiRestaurantDiscountData = {
-        "min_restaurants": min_restaurants,
-        "discount_percent": discount_percent,
-    }
-
-    discount = await repo.create(data=data)
-
-    logger.info(
-        "multi_restaurant_discount_created",
-        extra={
-            "discount_id": discount.id,
-            "min_restaurants": min_restaurants,
-        },
-    )
-
-    return discount.id
-
-
-# ==============================================
-# GET BY ID (COMPATIBILITY)
-# ==============================================
-
-
-async def get_multi_restaurant_discount_by_id(
-    *,
-    discount_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على خصم مطاعم متعددة بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        discount_id: معرف الخصم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الخصم أو None
-    """
-    repo = MultiRestaurantDiscountRepository(session=session)
-
-    discount = await repo.get_by_id(id=discount_id)
-
-    if not discount:
-        return None
-
-    return {
-        "id": discount.id,
-        "min_restaurants": discount.min_restaurants,
-        "discount_percent": float(discount.discount_percent),
-    }
-
-
-# ==============================================
-# GET ALL (COMPATIBILITY)
-# ==============================================
-
-
-async def get_all_multi_restaurant_discounts(
-    session: AsyncSession,
-    *,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على جميع خصومات المطاعم المتعددة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        قائمة الخصومات
-    """
-    repo = MultiRestaurantDiscountRepository(session=session)
-
-    discounts = await repo.get_all_ordered(skip=skip, limit=limit)
-
-    result = []
-
-    for discount in discounts:
-        result.append(
-            {
-                "id": discount.id,
-                "min_restaurants": discount.min_restaurants,
-                "discount_percent": float(discount.discount_percent),
-            }
-        )
-
-    return result
-
-
-# ==============================================
-# GET APPLICABLE DISCOUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_multi_restaurant_discount_for_count(
-    *,
-    restaurants_count: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على الخصم المطبق لعدد مطاعم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurants_count: عدد المطاعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        قاموس بيانات الخصم أو None
-    """
-    repo = MultiRestaurantDiscountRepository(session=session)
-
-    discount = await repo.get_discount_for_count(
-        restaurants_count=restaurants_count,
-    )
-
-    if not discount:
-        return None
-
-    return {
-        "id": discount.id,
-        "min_restaurants": discount.min_restaurants,
-        "discount_percent": float(discount.discount_percent),
-    }
-
-
-# ==============================================
-# GET DISCOUNT PERCENT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_multi_restaurant_discount_percent(
-    *,
-    restaurants_count: int,
-    session: AsyncSession,
-) -> float:
-    """
-    حساب نسبة الخصم لعدد مطاعم (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        restaurants_count: عدد المطاعم
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        نسبة الخصم (0.0 إذا لم يوجد)
-    """
-    repo = MultiRestaurantDiscountRepository(session=session)
-
-    return await repo.get_discount_percent_for_count(
-        restaurants_count=restaurants_count,
-    )
-
-
-# ==============================================
-# UPDATE DISCOUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def update_multi_restaurant_discount(
-    *,
-    discount_id: int,
-    min_restaurants: int,
-    discount_percent: float,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث خصم المطاعم المتعددة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        discount_id: معرف الخصم
-        min_restaurants: الحد الأدنى لعدد المطاعم
-        discount_percent: نسبة الخصم الجديدة
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = MultiRestaurantDiscountRepository(session=session)
-
-    await repo.update_discount(
-        discount_id=discount_id,
-        min_restaurants=min_restaurants,
-        discount_percent=discount_percent,
-    )
-
-
-# ==============================================
-# DELETE DISCOUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_multi_restaurant_discount(
-    *,
-    discount_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف خصم مطاعم متعددة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        discount_id: معرف الخصم
-        session: جلسة قاعدة البيانات غير المتزامنة
-    """
-    repo = MultiRestaurantDiscountRepository(session=session)
-
-    await repo.delete(id=discount_id)
-
-    logger.info(
-        "multi_restaurant_discount_deleted",
-        extra={"discount_id": discount_id},
-    )

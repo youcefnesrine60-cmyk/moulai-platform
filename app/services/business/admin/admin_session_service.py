@@ -17,7 +17,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from datetime import (
     datetime,
-    timedelta,
 )
 from typing import (
     Any,
@@ -675,100 +674,3 @@ class AdminSessionService:
             return True
         except (NotFoundError, UnauthorizedError):
             return False
-
-
-# ==============================================
-# 🏢 BUSINESS LOGIC HELPERS
-# ==============================================
-
-
-async def create_admin_session(
-    *,
-    session: AsyncSession,
-    admin_id: int,
-    expires_in_hours: int = 24,
-    ip_address: Optional[str] = None,
-    user_agent: Optional[str] = None,
-) -> AdminSessionResponse:
-    """
-    دالة مساعدة لإنشاء جلسة مدير جديدة.
-
-    Args:
-        session: جلسة قاعدة البيانات
-        admin_id: معرف المدير
-        expires_in_hours: عدد ساعات صلاحية الجلسة (افتراضي: 24)
-        ip_address: عنوان IP (اختياري)
-        user_agent: متصفح المستخدم (اختياري)
-
-    Returns:
-        AdminSessionResponse: بيانات الجلسة المنشأة
-    """
-    service = AdminSessionService(session)
-
-    expires_at = datetime.utcnow() + timedelta(hours=expires_in_hours)
-
-    session_data = AdminSessionCreate(
-        admin_id=admin_id,
-        expires_at=expires_at,
-        ip_address=ip_address,
-        user_agent=user_agent,
-    )
-
-    return await service.create_session(session_data=session_data)
-
-
-# ==============================================
-# LOGOUT ADMIN
-# ==============================================
-
-
-async def logout_admin(
-    *,
-    session: AsyncSession,
-    session_token: str,
-) -> AdminSessionResponse:
-    """
-    دالة مساعدة لتسجيل خروج المدير.
-
-    Args:
-        session: جلسة قاعدة البيانات
-        session_token: رمز الجلسة
-
-    Returns:
-        AdminSessionResponse: بيانات الجلسة المحدثة
-    """
-    service = AdminSessionService(session)
-
-    return await service.deactivate_session(
-        session_token=session_token,
-    )
-
-
-# ==============================================
-# LOGOUT ALL DEVICES
-# ==============================================
-
-
-async def logout_all_devices(
-    *,
-    session: AsyncSession,
-    admin_id: int,
-    except_session_token: Optional[str] = None,
-) -> int:
-    """
-    دالة مساعدة لتسجيل الخروج من جميع الأجهزة.
-
-    Args:
-        session: جلسة قاعدة البيانات
-        admin_id: معرف المدير
-        except_session_token: استثناء جلسة معينة (اختياري)
-
-    Returns:
-        int: عدد الجلسات التي تم إلغاء تنشيطها
-    """
-    service = AdminSessionService(session)
-
-    return await service.deactivate_all_sessions(
-        admin_id=admin_id,
-        except_session_token=except_session_token,
-    )

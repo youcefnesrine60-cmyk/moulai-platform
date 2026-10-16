@@ -17,9 +17,6 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,25 +27,24 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان
 from app.core.security import (
     sanitize_input,
 )
-
-from app.core.logger import logger
 from app.models.product_option import ProductOption
 from app.repositories.option_groups_repo import OptionGroupsRepository
 from app.repositories.product_option_repo import ProductOptionRepository
 
 # ✅ استيراد المخططات
 from app.schemas.product_option import (
-    ProductOptionCreate,
-    ProductOptionResponse,
-    ProductOptionUpdate,
     ProductOptionAvailabilityUpdate,
+    ProductOptionCreate,
     ProductOptionListResponse,
+    ProductOptionResponse,
     ProductOptionSummary,
+    ProductOptionUpdate,
 )
 
 # ==============================================
@@ -63,9 +59,9 @@ MAX_EXTRA_PRICE = 1000000.0  # 1,000,000 DZD
 # 🧩 TYPES
 # ==============================================
 
-ProductOptionData = Dict[str, Any]
-ProductOptionUpdateData = Dict[str, Any]
-ProductOptionList = List[ProductOption]
+ProductOptionData = dict[str, Any]
+ProductOptionUpdateData = dict[str, Any]
+ProductOptionList = list[ProductOption]
 
 
 # ==============================================
@@ -257,7 +253,7 @@ class ProductOptionService:
         self,
         *,
         query: str,
-        group_id: Optional[int] = None,
+        group_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
         only_available: bool = True,
@@ -965,7 +961,7 @@ class ProductOptionService:
         self,
         *,
         group_id: int,
-        option_order: List[int],
+        option_order: list[int],
     ) -> None:
         """
         إعادة ترتيب خيارات المجموعة.
@@ -1036,297 +1032,3 @@ class ProductOptionService:
 
 
 # ==============================================
-# 🔄 COMPATIBILITY FUNCTIONS
-# دوال متوافقة مع الاستيرادات القديمة
-# ==============================================
-
-# ==============================================
-# CREATE PRODUCT OPTION (COMPATIBILITY)
-# ==============================================
-
-
-async def create_product_option(
-    *,
-    group_id: int,
-    name: str,
-    extra_price: float = 0,
-    is_available: bool = True,
-    sort_order: int = 0,
-    session: AsyncSession,
-) -> int:
-    """
-    إنشاء خيار منتج جديد (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        group_id: معرف مجموعة الخيارات
-        name: اسم الخيار
-        extra_price: السعر الإضافي
-        is_available: حالة التوفر
-        sort_order: ترتيب العرض
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        int: معرف الخيار
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على المجموعة
-        ConflictError: إذا كان الاسم مكرراً
-        ValidationError: إذا كانت البيانات غير صالحة
-    """
-    service = ProductOptionService(session=session)
-
-    option_data = ProductOptionCreate(
-        group_id=group_id,
-        name=name,
-        extra_price=extra_price,
-        is_available=is_available,
-        sort_order=sort_order,
-    )
-
-    option = await service.create_option(
-        option_data=option_data,
-    )
-
-    return option.id
-
-
-# ==============================================
-# GET PRODUCT OPTION (COMPATIBILITY)
-# ==============================================
-
-
-async def get_product_option(
-    *,
-    option_id: int,
-    session: AsyncSession,
-) -> Optional[Dict[str, Any]]:
-    """
-    الحصول على خيار منتج بالمعرف (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        option_id: معرف الخيار
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Returns:
-        Optional[Dict[str, Any]]: قاموس بيانات الخيار أو None
-    """
-    service = ProductOptionService(session=session)
-
-    try:
-        option = await service.get_by_id(option_id=option_id)
-        return option.model_dump()
-    except NotFoundError:
-        return None
-
-
-# ==============================================
-# GET PRODUCT OPTIONS (COMPATIBILITY)
-# ==============================================
-
-
-async def get_product_options(
-    *,
-    group_id: int,
-    session: AsyncSession,
-    skip: int = 0,
-    limit: int = 100,
-    only_available: bool = True,
-) -> List[Dict[str, Any]]:
-    """
-    الحصول على خيارات مجموعة معينة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        group_id: معرف مجموعة الخيارات
-        session: جلسة قاعدة البيانات غير المتزامنة
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-        only_available: جلب الخيارات المتاحة فقط
-
-    Returns:
-        List[Dict[str, Any]]: قائمة خيارات المنتج
-    """
-    service = ProductOptionService(session=session)
-
-    result = await service.get_by_group(
-        group_id=group_id,
-        skip=skip,
-        limit=limit,
-        only_available=only_available,
-    )
-
-    return [item.model_dump() for item in result.items]
-
-
-# ==============================================
-# UPDATE PRODUCT OPTION (COMPATIBILITY)
-# ==============================================
-
-
-async def update_product_option(
-    *,
-    option_id: int,
-    data: ProductOptionUpdateData,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث خيار منتج (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        option_id: معرف الخيار
-        data: بيانات التحديث
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الخيار
-        ConflictError: إذا كان الاسم مكرراً
-        ValidationError: إذا كانت البيانات غير صالحة
-    """
-    service = ProductOptionService(session=session)
-
-    update_data = ProductOptionUpdate(**data)
-
-    await service.update_option(
-        option_id=option_id,
-        update_data=update_data,
-    )
-
-
-# ==============================================
-# DELETE PRODUCT OPTION (COMPATIBILITY)
-# ==============================================
-
-
-async def delete_product_option(
-    *,
-    option_id: int,
-    session: AsyncSession,
-) -> None:
-    """
-    حذف خيار منتج (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        option_id: معرف الخيار
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الخيار
-    """
-    service = ProductOptionService(session=session)
-
-    await service.delete_option(option_id=option_id)
-
-    logger.info(
-        "product_option_deleted",
-        extra={"option_id": option_id},
-    )
-
-
-# ==============================================
-# GET OPTIONS COUNT (COMPATIBILITY)
-# ==============================================
-
-
-async def get_options_count(
-    *,
-    group_id: int,
-    session: AsyncSession,
-    only_available: bool = True,
-) -> int:
-    """
-    حساب عدد خيارات مجموعة معينة (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        group_id: معرف مجموعة الخيارات
-        session: جلسة قاعدة البيانات غير المتزامنة
-        only_available: حساب الخيارات المتاحة فقط
-
-    Returns:
-        int: عدد الخيارات
-    """
-    service = ProductOptionService(session=session)
-
-    return await service.count_by_group(
-        group_id=group_id,
-        only_available=only_available,
-    )
-
-
-# ==============================================
-# UPDATE OPTION AVAILABILITY (COMPATIBILITY)
-# ==============================================
-
-
-async def update_option_availability(
-    *,
-    option_id: int,
-    is_available: bool,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث حالة توفر الخيار (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        option_id: معرف الخيار
-        is_available: حالة التوفر الجديدة
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الخيار
-    """
-    service = ProductOptionService(session=session)
-
-    availability_data = ProductOptionAvailabilityUpdate(
-        is_available=is_available,
-    )
-
-    await service.update_availability(
-        option_id=option_id,
-        availability_data=availability_data,
-    )
-
-    logger.info(
-        "option_availability_updated",
-        extra={
-            "option_id": option_id,
-            "is_available": is_available,
-        },
-    )
-
-
-# ==============================================
-# UPDATE OPTION PRICE (COMPATIBILITY)
-# ==============================================
-
-
-async def update_option_price(
-    *,
-    option_id: int,
-    extra_price: float,
-    session: AsyncSession,
-) -> None:
-    """
-    تحديث السعر الإضافي للخيار (دالة متوافقة مع الإصدار القديم).
-
-    Args:
-        option_id: معرف الخيار
-        extra_price: السعر الإضافي الجديد
-        session: جلسة قاعدة البيانات غير المتزامنة
-
-    Raises:
-        NotFoundError: إذا لم يتم العثور على الخيار
-        ValidationError: إذا كان السعر غير صالح
-    """
-    service = ProductOptionService(session=session)
-
-    await service.update_price(
-        option_id=option_id,
-        extra_price=extra_price,
-    )
-
-    logger.info(
-        "option_price_updated",
-        extra={
-            "option_id": option_id,
-            "extra_price": extra_price,
-        },
-    )

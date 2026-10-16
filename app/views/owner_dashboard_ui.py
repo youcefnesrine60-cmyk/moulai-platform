@@ -86,7 +86,7 @@ async def owner_dashboard_ui(
         [
             await button(
                 text="💳 الاشتراك والباقات",
-                callback=f"owner_subscription_{restaurant_id}",
+                callback=f"mb:plans:{restaurant_id}",
             ),
         ],
         [
