@@ -24,6 +24,8 @@ from dotenv import load_dotenv
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
 
+from app.core.config import settings
+from app.core.health_only import HealthOnlyConfigurationError
 from app.core.logger import logger
 
 # ==============================================
@@ -62,6 +64,12 @@ async def init_db() -> None:
     تهيئة تجمع اتصالات قاعدة البيانات
     """
     global db_pool
+
+    # The health profile owns only the guarded SQLAlchemy engine.
+    if settings.HEALTH_ONLY_MODE:
+        raise HealthOnlyConfigurationError(
+            "health_only_legacy_database_access_disabled"
+        )
 
     if db_pool is not None:
         return

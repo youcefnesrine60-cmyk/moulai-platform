@@ -66,6 +66,7 @@ from app.core.database import (
     close_db,
     init_db,
 )
+from app.core.health_only import HealthOnlyMiddleware
 from app.core.logger import logger
 
 # ==============================================
@@ -96,6 +97,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         extra={
             "environment": settings.APP_ENV,
             "debug": settings.DEBUG,
+            "health_only": settings.HEALTH_ONLY_MODE,
         },
     )
 
@@ -103,7 +105,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     await init_db()
 
     # 2️⃣ تسجيل مسارات الكولباك
-    await register_routes()
+    if not settings.HEALTH_ONLY_MODE:
+        await register_routes()
 
     logger.info(
         "application_started",
@@ -152,6 +155,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Added last so rejected requests never reach CORS, routers or dependencies.
+app.add_middleware(HealthOnlyMiddleware, enabled=settings.HEALTH_ONLY_MODE)
 
 # ==============================================
 # 📋 INCLUDE ROUTERS - /api/v1

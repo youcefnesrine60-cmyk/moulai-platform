@@ -17,6 +17,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Literal,
+    Self,
     TypeAlias,
 )
 
@@ -25,9 +26,11 @@ from pydantic import (
     ConfigDict,
     Field,
     SecretStr,
+    model_validator,
 )
 from pydantic_settings import BaseSettings
 
+from app.core.health_only import validate_health_only_configuration
 from app.core.logger import logger
 
 # ==============================================
@@ -97,6 +100,10 @@ class Settings(BaseSettings):
     APP_ENV: str = Field(
         default="development",
         description="بيئة التشغيل: development, test, staging, production",
+    )
+    HEALTH_ONLY_MODE: bool = Field(
+        default=False,
+        description="Explicit development observation: GET / and /health only",
     )
     DEBUG: bool = Field(
         default=True,
@@ -250,6 +257,15 @@ class Settings(BaseSettings):
         default=None,
         description="HTTPS URL of the trusted provider's JWKS endpoint",
     )
+    # Observation safety flags only; no diagnostics or local HTTP auth is added.
+    OIDC_DIAGNOSTICS_ENABLED: bool = Field(
+        default=False,
+        description="Must remain false for Health-Only observation",
+    )
+    OIDC_ALLOW_LOCAL_HTTP: bool = Field(
+        default=False,
+        description="Must remain false for Health-Only observation",
+    )
 
     # ==========================================
     # 🌐 CORS
@@ -396,6 +412,16 @@ class Settings(BaseSettings):
             True إذا كانت البيئة Testing
         """
         return self.APP_ENV == "testing"
+
+    # ==============================================
+    # VALIDATE THE OPT-IN OBSERVATION PROFILE
+    # ==============================================
+
+    @model_validator(mode="after")
+    def validate_health_only_profile(self) -> Self:
+        """Reject unsafe observation settings before any engine is constructed."""
+        validate_health_only_configuration(configuration=self)
+        return self
 
     # ==============================================
     # DB ECHO ENABLED

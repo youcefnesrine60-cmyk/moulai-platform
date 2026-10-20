@@ -1,0 +1,29 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+services:
+  postgres-tests:
+    image: postgres:18.3
+    command: ["postgres", "-c", "log_min_error_statement=panic"]
+    ports:
+      - "127.0.0.1:55432:5432"
+    environment:
+      POSTGRES_USER: moulai_test_bootstrap
+      POSTGRES_DB: postgres
+      POSTGRES_PASSWORD: ${MOULAI_LOCAL_BOOTSTRAP_PASSWORD:?Provided by the local test launcher}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=trust
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moulai_test_bootstrap -d postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    shm_size: 128mb
+    mem_limit: 512m
+    cpus: 1
+    restart: "no"

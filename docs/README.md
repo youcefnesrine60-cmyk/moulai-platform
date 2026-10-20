@@ -13,6 +13,7 @@ report does not rerun its checks or authorize an operational action.
 
 | Document | Purpose |
 | --- | --- |
+| [Standalone Render Health-Only correction](render-health-only-standalone.md) | Base-pinned observation mode, targeted proofs and separately authorized publication/deployment procedure |
 | [Architecture audit](order-architecture-audit.md) | Order architecture findings and the dated refactoring history |
 | [Payment strategy](payment-integration-strategy.md) | Manual billing contracts and boundaries for later provider integrations |
 | [Development verification](billing-development-verification.md) | Recorded isolated-database checks, migration rehearsal, and local startup |

@@ -41,6 +41,11 @@ from app.core.config import (
     Settings,
     settings,
 )
+from app.core.health_only import (
+    HealthOnlyDatabasePolicy,
+    health_only_database_policy,
+    install_health_only_database_guard,
+)
 from app.core.logger import logger
 from app.core.test_database import (
     UnsafeTestDatabaseError,
@@ -82,10 +87,12 @@ class DatabaseEngineConfiguration:
     branch_id: str | None = None
     project_id: str | None = None
     protected_branch_id: str | None = None
+    health_only_policy: HealthOnlyDatabasePolicy | None = None
 
 
 def _engine_configuration(*, configuration: Settings) -> DatabaseEngineConfiguration:
     """Resolve an explicit ORM target and validate development before creation."""
+    health_policy = health_only_database_policy(configuration=configuration)
     if configuration.DATABASE_TARGET == "primary":
         return DatabaseEngineConfiguration(
             target="primary",
@@ -108,14 +115,21 @@ def _engine_configuration(*, configuration: Settings) -> DatabaseEngineConfigura
         test_endpoint_id=configuration.TEST_DATABASE_ENDPOINT_ID,
         protected_endpoint_id=configuration.PROTECTED_DATABASE_ENDPOINT_ID,
     )
+    arguments = isolated_connection_arguments()
+    if health_policy is not None:
+        arguments["server_settings"] = {
+            **arguments["server_settings"],
+            "default_transaction_read_only": "on",
+        }
     return DatabaseEngineConfiguration(
         target="development",
         database_url=url,
-        connect_arguments=isolated_connection_arguments(),
+        connect_arguments=arguments,
         endpoint_id=configuration.TEST_DATABASE_ENDPOINT_ID,
         branch_id=configuration.TEST_DATABASE_BRANCH_ID,
         project_id=configuration.TEST_DATABASE_PROJECT_ID,
         protected_branch_id=configuration.PROTECTED_DATABASE_BRANCH_ID,
+        health_only_policy=health_policy,
     )
 
 
@@ -129,12 +143,18 @@ engine = create_async_engine(
     _DATABASE_CONFIGURATION.database_url,
     connect_args=_DATABASE_CONFIGURATION.connect_arguments,
     echo=settings.DB_ECHO,
+    hide_parameters=_DATABASE_CONFIGURATION.health_only_policy is not None,
     pool_size=settings.DB_POOL_SIZE,
     max_overflow=settings.DB_MAX_OVERFLOW,
     pool_timeout=settings.DB_POOL_TIMEOUT,
     pool_pre_ping=settings.DB_POOL_PRE_PING,
     pool_recycle=settings.DB_POOL_RECYCLE,
 )
+
+if _DATABASE_CONFIGURATION.health_only_policy is not None:
+    install_health_only_database_guard(
+        engine=engine, policy=_DATABASE_CONFIGURATION.health_only_policy
+    )
 
 
 # ==============================================
@@ -238,7 +258,8 @@ async def init_db() -> None:
         async with engine.connect() as conn:
             try:
                 if _DATABASE_CONFIGURATION.target == "development":
-                    await conn.execute(text("SET TRANSACTION READ ONLY"))
+                    if _DATABASE_CONFIGURATION.health_only_policy is None:
+                        await conn.execute(text("SET TRANSACTION READ ONLY"))
                     await conn.run_sync(
                         partial(
                             read_test_database_identity,
