@@ -98,8 +98,9 @@ async def get_registration_request_service(
 )
 async def list_registration_requests(
     *,
-    status: Optional[str] = Query(
+    request_status: Optional[str] = Query(
         None,
+        alias="status",
         description="حالة الطلب (pending, approved, rejected)",
         min_length=1,
         max_length=50,
@@ -134,7 +135,7 @@ async def list_registration_requests(
     الحصول على قائمة طلبات التسجيل.
 
     Args:
-        status: حالة الطلب للتصفية
+        request_status: حالة الطلب للتصفية
         chat_id: معرف المستخدم للتصفية
         search: نص البحث
         skip: عدد السجلات للتخطي
@@ -147,7 +148,7 @@ async def list_registration_requests(
     logger.info(
         "api_list_registration_requests",
         extra={
-            "status": status,
+            "status": request_status,
             "chat_id": chat_id,
             "search": search,
             "skip": skip,
@@ -172,13 +173,13 @@ async def list_registration_requests(
                 limit=limit,
             )
             total = len(requests)
-        elif status is not None:
+        elif request_status is not None:
             requests = await service.get_by_status(
-                status=status,
+                status=request_status,
                 skip=skip,
                 limit=limit,
             )
-            total = await service.count_by_status(status=status)
+            total = await service.count_by_status(status=request_status)
         else:
             requests = await service.get_all(
                 skip=skip,

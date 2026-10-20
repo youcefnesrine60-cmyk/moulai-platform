@@ -23,6 +23,7 @@ from typing import (
 )
 
 from sqlalchemy import (
+    String,
     and_,
     or_,
     select,
@@ -320,7 +321,7 @@ class ConversationRepository(
             conditions = [
                 or_(
                     self.model.user_id.ilike(f"%{query}%"),
-                    self.model.context.cast().cast(str).ilike(f"%{query}%"),
+                    self.model.context.cast(String).ilike(f"%{query}%"),
                 ),
             ]
 

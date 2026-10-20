@@ -253,7 +253,7 @@ async def test_registration_reuses_the_owner_bound_to_the_request_chat() -> None
 @pytest.mark.asyncio
 async def test_option_group_create_looks_up_the_product_by_primary_key() -> None:
     """A product identifier is never mislabelled as a restaurant identifier."""
-    service = OptionGroupsService(session=MagicMock(spec=AsyncSession))
+    service = OptionGroupsService(session=AsyncSession(), owner_id=7)
     service.product_repo = create_autospec(ProductRepository, instance=True)
     service.product_repo.get_by_id.return_value = SimpleNamespace(
         id=17, restaurant_id=5
@@ -274,7 +274,7 @@ async def test_option_group_create_looks_up_the_product_by_primary_key() -> None
 @pytest.mark.asyncio
 async def test_option_groups_delete_by_product_uses_primary_key_lookup() -> None:
     """Product deletion scope is resolved with the canonical product ID."""
-    service = OptionGroupsService(session=MagicMock(spec=AsyncSession))
+    service = OptionGroupsService(session=AsyncSession(), owner_id=7)
     service.product_repo = create_autospec(ProductRepository, instance=True)
     service.product_repo.get_by_id.return_value = SimpleNamespace(
         id=17, restaurant_id=5
@@ -290,7 +290,7 @@ async def test_option_groups_delete_by_product_uses_primary_key_lookup() -> None
 @pytest.mark.asyncio
 async def test_reorder_validates_all_product_membership_before_any_write() -> None:
     """A foreign product group late in the batch cannot leave partial changes."""
-    service = OptionGroupsService(session=MagicMock(spec=AsyncSession))
+    service = OptionGroupsService(session=AsyncSession(), owner_id=7)
     service.repo = create_autospec(OptionGroupsRepository, instance=True)
     service.repo.get_by_id.side_effect = [
         SimpleNamespace(id=8, product_id=17),
@@ -309,7 +309,7 @@ async def test_group_deletion_counts_hidden_options_through_canonical_repository
     None
 ):
     """An unavailable option still prevents destructive group deletion."""
-    service = OptionGroupsService(session=MagicMock(spec=AsyncSession))
+    service = OptionGroupsService(session=AsyncSession(), owner_id=7)
     service.repo = create_autospec(OptionGroupsRepository, instance=True)
     service.repo.get_by_id.return_value = option_group_record()
     service.option_repo = create_autospec(ProductOptionRepository, instance=True)

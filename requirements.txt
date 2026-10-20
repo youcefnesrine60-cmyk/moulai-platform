@@ -8,9 +8,12 @@
 # ==============================================
 # REQUIREMENTS - REVIEWED APPLICATION BASELINE
 # ==============================================
-# Local interpreter: Python 3.14.4 | Reviewed: 2026-10-16
+# Local interpreter: Python 3.14.4 | Dependency baseline: 2026-10-16
+# Import and K10 compatibility review: 2026-10-20
 # Exact direct and selected transitive pins; not a cross-platform lock file.
 # Runtime and development tools remain together for the current install path.
+# K9/K10 reuse this baseline; no additional Python dependency is required.
+# The existing .venv differs from these pins; see README.md before alignment.
 
 # ==============================================
 # CORE FRAMEWORK AND SERVER
@@ -29,7 +32,7 @@ SQLAlchemy[asyncio]==2.0.51
 alembic==1.18.5
 asyncpg==0.31.0
 greenlet==3.5.3
-# Retained for the existing app.core.db pool and legacy diagnostic entry point.
+# Retained for the existing app.core.db pool; canonical ORM access uses asyncpg.
 psycopg[binary]==3.3.4
 psycopg-pool==3.3.1
 
@@ -39,7 +42,9 @@ psycopg-pool==3.3.1
 passlib[bcrypt]==1.7.4
 # Passlib's bcrypt backend probes are incompatible with bcrypt 5.
 bcrypt==4.0.1
+# Shared K8/K10 RS256/JWKS validation; no additional Keycloak SDK.
 PyJWT[crypto]==2.13.0
+# RS256 verification and in-memory signing keys for isolated authorization tests.
 cryptography==50.0.2
 
 # ==============================================
@@ -82,6 +87,9 @@ pytest==9.1.1
 pytest-asyncio==1.4.0
 pytest-cov==7.1.0
 coverage[toml]==7.15.2
+# Local PostgreSQL tests require external server binaries or a running Docker
+# engine. Native PostgreSQL 18.3 was verified; it is not a pip dependency.
+# The legacy and K10/E1 profiles use the existing SQLAlchemy/Alembic/asyncpg stack.
 
 # ==============================================
 # DEVELOPMENT QUALITY TOOLS

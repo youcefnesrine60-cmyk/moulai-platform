@@ -78,8 +78,7 @@ def administrative_endpoints() -> tuple[AdministrativeEndpoint, ...]:
                 continue
             path = route.path_format
             for parameter in route.param_convertors:
-                value = "local-session-token" if parameter == "session_token" else "7"
-                path = path.replace("{" + parameter + "}", value)
+                path = path.replace("{" + parameter + "}", "7")
             for method in sorted(route.methods):
                 endpoints.append(AdministrativeEndpoint(method, "/api/v1" + path))
     return tuple(endpoints)
@@ -171,7 +170,12 @@ async def test_unconfigured_keycloak_rejects_every_admin_http_operation(
     bearer: bool,
 ) -> None:
     """IDs in paths, query, and bodies cannot approve registrations or administer IO."""
-    headers = {"Authorization": "Bearer untrusted-admin-id-7"} if bearer else {}
+    headers = {
+        "X-Admin-Session-Token": "local-session-token",
+        "X-Preserve-Session-Token": "local-session-token",
+    }
+    if bearer:
+        headers["Authorization"] = "Bearer untrusted-admin-id-7"
     async with AsyncClient(
         transport=ASGITransport(app=administrative_harness.app),
         base_url="https://local.test",
@@ -209,7 +213,11 @@ async def test_configured_keycloak_does_not_trust_forged_identifiers(
         response = await client.request(
             endpoint.method,
             endpoint.path,
-            headers={"Authorization": "Bearer untrusted-admin-id-7"},
+            headers={
+                "Authorization": "Bearer untrusted-admin-id-7",
+                "X-Admin-Session-Token": "local-session-token",
+                "X-Preserve-Session-Token": "local-session-token",
+            },
             params={"admin_id": 7, "chat_id": 7, "owner_id": 7},
             json=spoofed_identifiers(),
         )
@@ -243,6 +251,10 @@ async def test_verified_identity_still_requires_current_admin_management_permiss
         response = await client.request(
             endpoint.method,
             endpoint.path,
+            headers={
+                "X-Admin-Session-Token": "local-session-token",
+                "X-Preserve-Session-Token": "local-session-token",
+            },
             params={"admin_id": 999, "chat_id": 999},
             json=spoofed_identifiers(),
         )

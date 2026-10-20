@@ -1,46 +1,65 @@
-# Catalog option groups and product options: isolation review
+# Catalog authorization and tenant isolation
 
-Review date: 2026-10-13.
+Review updated: 2026-10-16.
 
-Calls to `ProductRepository.get_by_id` when creating option groups and deleting
-them by product were corrected to use `id=product_id`. Group reordering now
-verifies that every listed group belongs to the requested product before writing
-any ordering changes. Group deletion also counts unavailable options through
-`ProductOptionRepository.count_by_group`.
+The catalog authentication and tenant-isolation finding recorded on 2026-10-13
+has been remediated in the API, business, and SQLAlchemy session boundaries.
+This supersedes the earlier statement that catalog administration was public.
 
-These corrections address broken contracts and product membership.
-**Authentication and tenant isolation for catalog option routes remain
-incomplete in this review.** These routes are separate from the subscription
-receipt-review workflow.
+## Verified identity and SQL scope
 
-## Source findings
+- Products, categories, option groups, and product options require the existing
+  trusted Keycloak owner dependency for every administrative HTTP operation,
+  including list, search, count, summary, and related-resource reads.
+- Their service constructors require a keyword-only `owner_id` and bind the
+  SQLAlchemy session to that identity. Rebinding a session to a different owner
+  is forbidden. A request parameter cannot select the authenticated owner.
+- The session guard applies owner predicates to ORM reads and bulk writes,
+  including relationship loads and aggregates. Before flushing, it validates
+  pending catalog rows and their parent relationships before emitting writes.
+- The group ownership chain is
+  `OptionGroup -> Product -> Restaurant -> Owner`. Product-option ownership adds
+  `ProductOption -> OptionGroup` to that chain. A foreign identifier is hidden
+  with HTTP 404 rather than exposing another owner's record.
+- Category and product creation check their restaurant relationship before any
+  write. Product creation and category changes also verify that the category
+  belongs to the product's restaurant. Reordering validates the complete set
+  before updating its first member.
 
-- `app/api/v1/option_group.py` constructs `OptionGroupsService` with only a
-  SQLAlchemy session. It does not pass a verified owner identity. Group creation,
-  updates, and deletion remain available without a `get_current_owner`
-  dependency or an administrative permission requirement.
-- `app/api/v1/product_option.py` constructs `ProductOptionService` in the same
-  way. Securing option groups alone does not secure writes to their options.
-- `app/models/option_group.py` associates each group through `product_id`; a
-  group has no `restaurant_id` column. Its restaurant is determined through
-  `Product.restaurant_id`, and its owner through `Restaurant.owner_id`.
-- `app/repositories/option_groups_repo.py` and
-  `app/repositories/product_option_repo.py` filter by group or product ID without
-  enforcing an owner identity on every read and write.
+The implementation is in
+[`tenant_scope.py`](../app/core/security/tenant_scope.py) and the four catalog
+routers and services. Existing trusted Telegram menu reads continue to use their
+explicit selected-restaurant repository contracts; they do not become global
+public catalog-administration endpoints.
 
-## Required remediation and verification
+## Regression verification
 
-The API, service, and repository layers must be addressed together. Administrative
-operations must receive a verified identity and enforce the
-`OptionGroup → Product → Restaurant → Owner` relationship in SQL queries. A group
-or option must not be moved outside its tenant boundary. Public restaurant-menu
-reads must remain scoped to the selected restaurant.
+The following tests exercise the actual implementation:
 
-HTTP and PostgreSQL tests must demonstrate that creation, updates, and deletion
-using another owner's identifiers are rejected before any write.
+- [Authentication contracts](../tests/api/unit/business/test_catalog_authorization.py)
+  reject missing bearer credentials before database access, including unfiltered
+  lists and searches.
+- [Business membership checks](../tests/api/unit/business/test_catalog_membership.py)
+  prevent partial reordering when a later member is invalid and reject product
+  categories from another restaurant before writes.
+- [Relational HTTP checks](../tests/api/unit/business/test_catalog_sqlite_authorization.py)
+  run real routers, services, repositories, and owner-scoped SQL against two
+  owners in disposable in-memory SQLite databases. They cover list/search totals,
+  foreign reads, updates, deletion, creation through foreign parents, mixed-owner
+  reorder batches, and legitimate updates by the correct owner. Mutation tracing
+  verifies that denied operations emit no SQL insert, update, or delete.
 
-This document records the remaining work; it does not claim that authentication
-or isolation has already been implemented, or certify the catalog routes as
-production-ready. The manual-payment review boundary is independent and uses a
-verified owner identity or the `payments.review` permission within its existing
-scope.
+The SQLite adapter preserves SQLAlchemy session events and relational queries.
+It does not test asyncpg, PostgreSQL locking, or production data. A PostgreSQL
+deployment rehearsal remains a separate environment-specific validation step.
+
+## Operational limits
+
+Real Keycloak issuer, audience, JWKS configuration, and verified stored identity
+bindings remain prerequisites for operational access. The routes fail closed
+when trusted authentication is unavailable. This review creates no identity,
+changes no administrator permission, and performs no production migration.
+
+This catalog remediation does not certify the entire application or replace
+the independent manual-payment review and deployment safeguards. Current test
+execution and coverage results are documented in [API testing](api-testing.md).

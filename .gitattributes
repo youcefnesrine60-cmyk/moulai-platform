@@ -1,0 +1,12 @@
+# ==============================================
+# MoulAI™ Platform - Agent-as-a-Service
+# Author: Youcef Nesrine
+# License: CC BY-NC-ND 4.0
+# Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+# ==============================================
+
+# Preserve reviewed byte-level migration/catalog hashes on Windows and Linux.
+migration_support/*.py -text whitespace=cr-at-eol
+alembic/versions/2026_10_18_15_00_00_tenant_foundation_e1.py -text whitespace=cr-at-eol
+alembic_test/versions/e1b92b200001_tenant_foundation_e1.py -text whitespace=cr-at-eol
+scripts/tenant_catalog_queries.py -text whitespace=cr-at-eol

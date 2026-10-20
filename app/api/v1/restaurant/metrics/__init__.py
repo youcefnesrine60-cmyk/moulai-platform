@@ -26,9 +26,6 @@ from app.api.v1.restaurant.metrics.metrics_products_router import (
 from app.api.v1.restaurant.metrics.metrics_trend_router import (
     router as metrics_trend_router,
 )
-from app.api.v1.restaurant.metrics.metrics_test_router import (
-    router as metrics_test_router,
-)
 
 # ==============================================
 # 📋 MAIN ROUTER
@@ -40,7 +37,6 @@ router.include_router(metrics_basic_router)
 router.include_router(metrics_summary_router)
 router.include_router(metrics_products_router)
 router.include_router(metrics_trend_router)
-router.include_router(metrics_test_router)
 
 
 # ==============================================

@@ -312,7 +312,7 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
         البحث عن القنوات.
 
         Args:
-            query: نص البحث (النوع أو الوصف)
+            query: نص البحث (النوع أو الاسم)
             agent_id: معرف الوكيل (اختياري)
             only_active: جلب القنوات النشطة فقط
             skip: عدد السجلات للتخطي
@@ -325,7 +325,7 @@ class ChannelRepository(BaseRepository[Channel, ChannelData, ChannelUpdateData])
             conditions = [
                 or_(
                     self.model.type.ilike(f"%{query}%"),
-                    self.model.description.ilike(f"%{query}%"),
+                    self.model.name.ilike(f"%{query}%"),
                 ),
             ]
 

@@ -37,7 +37,11 @@ from app.core.exceptions import (
     ValidationError,
 )
 
-from app.core.database import get_db
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    get_owner_tenant_db,
+)
 from app.core.logger import logger
 from app.schemas.product_option import (
     ProductOptionAvailabilityUpdate,
@@ -64,6 +68,7 @@ ProductOptionList = List[ProductOptionResponse]
 
 router = APIRouter(
     prefix="/product-options",
+    dependencies=[Depends(get_current_owner)],
     tags=["Product Options"],
 )
 
@@ -74,7 +79,8 @@ router = APIRouter(
 
 
 async def get_product_option_service(
-    session: AsyncSession = Depends(get_db),
+    owner: OwnerPrincipal = Depends(get_current_owner),
+    session: AsyncSession = Depends(get_owner_tenant_db),
 ) -> ProductOptionService:
     """
     الحصول على خدمة خيارات المنتج.
@@ -85,7 +91,7 @@ async def get_product_option_service(
     Returns:
         ProductOptionService: مثيل من ProductOptionService
     """
-    return ProductOptionService(session)
+    return ProductOptionService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
@@ -94,7 +100,8 @@ async def get_product_option_service(
 
 
 async def get_option_groups_service(
-    session: AsyncSession = Depends(get_db),
+    owner: OwnerPrincipal = Depends(get_current_owner),
+    session: AsyncSession = Depends(get_owner_tenant_db),
 ) -> OptionGroupsService:
     """
     الحصول على خدمة مجموعات الخيارات.
@@ -105,7 +112,7 @@ async def get_option_groups_service(
     Returns:
         OptionGroupsService: مثيل من OptionGroupsService
     """
-    return OptionGroupsService(session)
+    return OptionGroupsService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
@@ -217,6 +224,8 @@ async def list_product_options(
 
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_product_options_error",
@@ -291,6 +300,8 @@ async def get_group_options(
         )
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_group_options_error",
@@ -357,6 +368,8 @@ async def get_product_option(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_product_option_error",
@@ -417,9 +430,8 @@ async def create_product_option(
     )
 
     try:
-        # إضافة group_id إلى البيانات
-        data.group_id = group_id
         option = await service.create_option(
+            group_id=group_id,
             option_data=data,
         )
         return option
@@ -461,6 +473,8 @@ async def create_product_option(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_product_option_error",
@@ -515,6 +529,7 @@ async def create_product_options_bulk(
     try:
         for option_data in data.options:
             option = await service.create_option(
+                group_id=data.group_id,
                 option_data=option_data,
             )
             created_options.append(option)
@@ -562,6 +577,8 @@ async def create_product_options_bulk(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_product_options_bulk_error",
@@ -658,6 +675,8 @@ async def update_product_option(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_product_option_error",
@@ -730,6 +749,8 @@ async def update_product_option_availability(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_product_option_availability_error",
@@ -818,6 +839,8 @@ async def update_product_option_price(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_product_option_price_error",
@@ -894,6 +917,8 @@ async def update_product_option_sort_order(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_product_option_sort_order_error",
@@ -981,6 +1006,8 @@ async def reorder_product_options(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_reorder_product_options_error",
@@ -1043,6 +1070,8 @@ async def delete_product_option(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_product_option_error",
@@ -1110,6 +1139,8 @@ async def delete_group_options(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_group_options_error",
@@ -1166,6 +1197,8 @@ async def get_group_options_summary(
         )
         return summary
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_group_options_summary_error",

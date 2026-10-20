@@ -13,6 +13,7 @@
 """Administrative session operations require trusted Keycloak identity and RBAC.
 
 Legacy session tokens and admin identifiers cannot replace API authentication.
+Session credentials are accepted only in headers or JSON bodies, never URLs.
 """
 
 from typing import Optional
@@ -20,9 +21,11 @@ from typing import Optional
 from fastapi import (
     APIRouter,
     Depends,
+    Header,
     HTTPException,
     Path,
     Query,
+    Request,
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,10 +51,23 @@ from app.services.business.admin.admin_session_service import AdminSessionServic
 # 🏗️ ROUTER
 # ==============================================
 
+
+async def reject_session_credentials_in_url(*, request: Request) -> None:
+    """Reject retired credential query inputs before administrative business IO."""
+    if {"session_token", "except_session_token"}.intersection(request.query_params):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Session credentials must be sent in the documented headers.",
+        )
+
+
 router = APIRouter(
     prefix="/admin-sessions",
     tags=["Admin Sessions"],
-    dependencies=[Depends(require_admin_permission("admins.manage"))],
+    dependencies=[
+        Depends(require_admin_permission("admins.manage")),
+        Depends(reject_session_credentials_in_url),
+    ],
 )
 
 
@@ -146,11 +162,11 @@ async def create_admin_session(
             detail=str(e),
         )
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_create_admin_session_error",
             extra={
                 "admin_id": data.admin_id,
-                "error": str(e),
+                "error_type": type(e).__name__,
             },
         )
         raise HTTPException(
@@ -165,14 +181,21 @@ async def create_admin_session(
 
 
 @router.get(
-    "/token/{session_token}",
+    "/lookup",
     response_model=AdminSessionResponse,
     summary="الحصول على جلسة بالرمز",
     description="الحصول على جلسة مدير بواسطة رمز الجلسة",
 )
 async def get_session_by_token(
     *,
-    session_token: str = Path(..., description="رمز الجلسة"),
+    session_token: str = Header(
+        ...,
+        alias="X-Admin-Session-Token",
+        min_length=1,
+        max_length=255,
+        pattern=r"\S",
+        description="Session credential; does not replace trusted OIDC authentication.",
+    ),
     service: AdminSessionService = Depends(get_admin_session_service),
 ) -> AdminSessionResponse:
     """
@@ -189,18 +212,18 @@ async def get_session_by_token(
     """
     logger.info(
         "api_get_session_by_token",
-        extra={"session_token": session_token[:20] + "..."},
     )
 
     try:
-        session = await service.get_session_by_token(session_token=session_token)
+        session = await service.get_session_by_token(
+            session_token=session_token.strip()
+        )
         return session
 
     except NotFoundError as e:
         logger.warning(
             "api_admin_session_not_found",
             extra={
-                "session_token": session_token[:20] + "...",
                 "error": str(e),
             },
         )
@@ -209,9 +232,9 @@ async def get_session_by_token(
             detail=str(e),
         )
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_get_session_by_token_error",
-            extra={"error": str(e)},
+            extra={"error_type": type(e).__name__},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -225,14 +248,21 @@ async def get_session_by_token(
 
 
 @router.get(
-    "/token/{session_token}/active",
+    "/lookup/active",
     response_model=AdminSessionResponse,
     summary="الحصول على جلسة نشطة",
     description="الحصول على جلسة مدير نشطة بواسطة رمز الجلسة",
 )
 async def get_active_session(
     *,
-    session_token: str = Path(..., description="رمز الجلسة"),
+    session_token: str = Header(
+        ...,
+        alias="X-Admin-Session-Token",
+        min_length=1,
+        max_length=255,
+        pattern=r"\S",
+        description="Session credential; does not replace trusted OIDC authentication.",
+    ),
     service: AdminSessionService = Depends(get_admin_session_service),
 ) -> AdminSessionResponse:
     """
@@ -249,18 +279,16 @@ async def get_active_session(
     """
     logger.info(
         "api_get_active_session",
-        extra={"session_token": session_token[:20] + "..."},
     )
 
     try:
-        session = await service.get_active_session(session_token=session_token)
+        session = await service.get_active_session(session_token=session_token.strip())
         return session
 
     except NotFoundError as e:
         logger.warning(
             "api_admin_session_not_found_active",
             extra={
-                "session_token": session_token[:20] + "...",
                 "error": str(e),
             },
         )
@@ -272,7 +300,6 @@ async def get_active_session(
         logger.warning(
             "api_admin_session_unauthorized",
             extra={
-                "session_token": session_token[:20] + "...",
                 "error": str(e),
             },
         )
@@ -281,9 +308,9 @@ async def get_active_session(
             detail=str(e),
         )
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_get_active_session_error",
-            extra={"error": str(e)},
+            extra={"error_type": type(e).__name__},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -297,13 +324,20 @@ async def get_active_session(
 
 
 @router.get(
-    "/token/{session_token}/status",
+    "/lookup/status",
     summary="حالة الجلسة",
     description="الحصول على حالة جلسة المدير",
 )
 async def get_session_status(
     *,
-    session_token: str = Path(..., description="رمز الجلسة"),
+    session_token: str = Header(
+        ...,
+        alias="X-Admin-Session-Token",
+        min_length=1,
+        max_length=255,
+        pattern=r"\S",
+        description="Session credential; does not replace trusted OIDC authentication.",
+    ),
     service: AdminSessionService = Depends(get_admin_session_service),
 ) -> dict[str, bool | int | str | None]:
     """
@@ -320,17 +354,15 @@ async def get_session_status(
     """
     logger.info(
         "api_get_session_status",
-        extra={"session_token": session_token[:20] + "..."},
     )
 
     try:
-        return await service.get_session_status(session_token=session_token)
+        return await service.get_session_status(session_token=session_token.strip())
 
     except NotFoundError as e:
         logger.warning(
             "api_session_not_found_for_status",
             extra={
-                "session_token": session_token[:20] + "...",
                 "error": str(e),
             },
         )
@@ -339,9 +371,9 @@ async def get_session_status(
             detail=str(e),
         )
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_get_session_status_error",
-            extra={"error": str(e)},
+            extra={"error_type": type(e).__name__},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -397,11 +429,11 @@ async def get_sessions_by_admin(
         )
 
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_get_sessions_by_admin_error",
             extra={
                 "admin_id": admin_id,
-                "error": str(e),
+                "error_type": type(e).__name__,
             },
         )
         raise HTTPException(
@@ -454,11 +486,11 @@ async def get_active_sessions_by_admin(
         )
 
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_get_active_sessions_by_admin_error",
             extra={
                 "admin_id": admin_id,
-                "error": str(e),
+                "error_type": type(e).__name__,
             },
         )
         raise HTTPException(
@@ -473,14 +505,21 @@ async def get_active_sessions_by_admin(
 
 
 @router.patch(
-    "/token/{session_token}/activity",
+    "/lookup/activity",
     response_model=AdminSessionResponse,
     summary="تحديث آخر نشاط",
     description="تحديث آخر نشاط لجلسة المدير",
 )
 async def update_activity(
     *,
-    session_token: str = Path(..., description="رمز الجلسة"),
+    session_token: str = Header(
+        ...,
+        alias="X-Admin-Session-Token",
+        min_length=1,
+        max_length=255,
+        pattern=r"\S",
+        description="Session credential; does not replace trusted OIDC authentication.",
+    ),
     service: AdminSessionService = Depends(get_admin_session_service),
 ) -> AdminSessionResponse:
     """
@@ -497,18 +536,16 @@ async def update_activity(
     """
     logger.info(
         "api_update_activity",
-        extra={"session_token": session_token[:20] + "..."},
     )
 
     try:
-        session = await service.update_activity(session_token=session_token)
+        session = await service.update_activity(session_token=session_token.strip())
         return session
 
     except NotFoundError as e:
         logger.warning(
             "api_session_not_found_for_activity",
             extra={
-                "session_token": session_token[:20] + "...",
                 "error": str(e),
             },
         )
@@ -517,9 +554,9 @@ async def update_activity(
             detail=str(e),
         )
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_update_activity_error",
-            extra={"error": str(e)},
+            extra={"error_type": type(e).__name__},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -533,14 +570,21 @@ async def update_activity(
 
 
 @router.delete(
-    "/token/{session_token}",
+    "/lookup/deactivate",
     response_model=AdminSessionResponse,
     summary="إلغاء تنشيط جلسة",
     description="إلغاء تنشيط جلسة مدير (تسجيل الخروج)",
 )
 async def deactivate_session(
     *,
-    session_token: str = Path(..., description="رمز الجلسة"),
+    session_token: str = Header(
+        ...,
+        alias="X-Admin-Session-Token",
+        min_length=1,
+        max_length=255,
+        pattern=r"\S",
+        description="Session credential; does not replace trusted OIDC authentication.",
+    ),
     service: AdminSessionService = Depends(get_admin_session_service),
 ) -> AdminSessionResponse:
     """
@@ -557,18 +601,16 @@ async def deactivate_session(
     """
     logger.info(
         "api_deactivate_session",
-        extra={"session_token": session_token[:20] + "..."},
     )
 
     try:
-        session = await service.deactivate_session(session_token=session_token)
+        session = await service.deactivate_session(session_token=session_token.strip())
         return session
 
     except NotFoundError as e:
         logger.warning(
             "api_admin_session_not_found_for_deactivate",
             extra={
-                "session_token": session_token[:20] + "...",
                 "error": str(e),
             },
         )
@@ -577,9 +619,9 @@ async def deactivate_session(
             detail=str(e),
         )
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_deactivate_session_error",
-            extra={"error": str(e)},
+            extra={"error_type": type(e).__name__},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -601,7 +643,14 @@ async def deactivate_session(
 async def deactivate_all_sessions(
     *,
     admin_id: int = Path(..., ge=1, description="معرف المدير"),
-    except_session_token: Optional[str] = Query(None, description="استثناء جلسة معينة"),
+    except_session_token: Optional[str] = Header(
+        None,
+        alias="X-Preserve-Session-Token",
+        min_length=1,
+        max_length=255,
+        pattern=r"\S",
+        description="Optional session credential to preserve; never put it in a URL.",
+    ),
     service: AdminSessionService = Depends(get_admin_session_service),
 ) -> None:
     """
@@ -618,24 +667,25 @@ async def deactivate_all_sessions(
         "api_deactivate_all_sessions",
         extra={
             "admin_id": admin_id,
-            "except_session_token": (
-                except_session_token[:20] + "..." if except_session_token else None
-            ),
         },
     )
 
     try:
         await service.deactivate_all_sessions(
             admin_id=admin_id,
-            except_session_token=except_session_token,
+            except_session_token=(
+                except_session_token.strip()
+                if except_session_token is not None
+                else None
+            ),
         )
 
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_deactivate_all_sessions_error",
             extra={
                 "admin_id": admin_id,
-                "error": str(e),
+                "error_type": type(e).__name__,
             },
         )
         raise HTTPException(
@@ -680,7 +730,6 @@ async def extend_session(
     logger.info(
         "api_extend_session",
         extra={
-            "session_token": data.session_token[:20] + "...",
             "expires_at": data.expires_at,
         },
     )
@@ -693,7 +742,6 @@ async def extend_session(
         logger.warning(
             "api_admin_session_not_found_for_extend",
             extra={
-                "session_token": data.session_token[:20] + "...",
                 "error": str(e),
             },
         )
@@ -705,7 +753,6 @@ async def extend_session(
         logger.warning(
             "api_extend_session_validation_error",
             extra={
-                "session_token": data.session_token[:20] + "...",
                 "error": str(e),
             },
         )
@@ -714,9 +761,9 @@ async def extend_session(
             detail=str(e),
         )
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_extend_session_error",
-            extra={"error": str(e)},
+            extra={"error_type": type(e).__name__},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -764,9 +811,9 @@ async def get_session_statistics(
         )
 
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_get_session_statistics_error",
-            extra={"error": str(e)},
+            extra={"error_type": type(e).__name__},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -815,9 +862,9 @@ async def cleanup_expired_sessions(
         }
 
     except Exception as e:
-        logger.exception(
+        logger.error(
             "api_cleanup_expired_sessions_error",
-            extra={"error": str(e)},
+            extra={"error_type": type(e).__name__},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

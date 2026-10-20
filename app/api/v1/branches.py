@@ -27,7 +27,11 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    get_owner_tenant_db,
+)
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
@@ -62,6 +66,7 @@ BranchCostResponse = dict
 router = APIRouter(
     prefix="/branches",
     tags=["Branches"],
+    dependencies=[Depends(get_current_owner)],
 )
 
 
@@ -71,7 +76,9 @@ router = APIRouter(
 
 
 async def get_branch_service(
-    session: AsyncSession = Depends(get_db),
+    *,
+    session: AsyncSession = Depends(get_owner_tenant_db),
+    owner: OwnerPrincipal = Depends(get_current_owner),
 ) -> BranchService:
     """
     الحصول على خدمة الفروع.
@@ -82,7 +89,7 @@ async def get_branch_service(
     Returns:
         BranchService: مثيل من BranchService
     """
-    return BranchService(session)
+    return BranchService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
@@ -229,6 +236,8 @@ async def list_branches(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_branches_error",
@@ -290,6 +299,8 @@ async def get_branch(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_branch_error",
@@ -407,6 +418,10 @@ async def create_branch(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
     except Exception as e:
         logger.exception(
             "api_create_branch_error",
@@ -503,6 +518,8 @@ async def update_branch(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_branch_error",
@@ -575,6 +592,17 @@ async def update_branch_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
+    except ForbiddenError as error:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": error.error_code, "message": error.message},
+        ) from error
+    except BranchLimitExceededError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)
+        ) from error
     except Exception as e:
         logger.exception(
             "api_update_branch_status_error",
@@ -639,6 +667,17 @@ async def activate_branch(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
+    except ForbiddenError as error:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": error.error_code, "message": error.message},
+        ) from error
+    except BranchLimitExceededError as error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)
+        ) from error
     except Exception as e:
         logger.exception(
             "api_activate_branch_error",
@@ -703,6 +742,8 @@ async def deactivate_branch(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_deactivate_branch_error",
@@ -786,6 +827,8 @@ async def delete_branch(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_branch_error",
@@ -864,6 +907,8 @@ async def get_branch_summary(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_branch_summary_error",
@@ -941,6 +986,10 @@ async def get_restaurant_branches(
         )
         return result
 
+    except HTTPException:
+        raise
+    except NotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
     except Exception as e:
         logger.exception(
             "api_get_restaurant_branches_error",
@@ -1024,6 +1073,8 @@ async def get_branch_cost(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_branch_cost_error",

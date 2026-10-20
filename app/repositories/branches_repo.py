@@ -76,6 +76,17 @@ class BranchesRepository(BaseRepository[Branch, BranchData, BranchUpdateData]):
         """
         super().__init__(Branch, session)
 
+    # ==============================================
+    # LOCK A BRANCH FOR ITS ATOMIC UNIT OF WORK
+    # ==============================================
+
+    async def get_for_update(self, *, branch_id: int) -> Optional[Branch]:
+        """Lock an owner-visible branch until the surrounding transaction ends."""
+        result = await self.session.execute(
+            self._select().where(self.model.id == branch_id).with_for_update()
+        )
+        return result.scalar_one_or_none()
+
     # ==========================================
     # 📖 QUERIES
     # ==========================================

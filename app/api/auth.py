@@ -17,6 +17,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 """
 
 from collections.abc import (
+    AsyncIterator,
     Awaitable,
     Callable,
 )
@@ -47,6 +48,11 @@ from starlette.concurrency import run_in_threadpool
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.logger import logger
+from app.core.security.oidc import (
+    OIDCPrincipal,
+    extract_realm_roles,
+)
+from app.core.security.tenant_scope import bind_owner_scope
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.owner import Owner
@@ -140,7 +146,7 @@ def _get_jwks_client(jwks_url: str) -> jwt.PyJWKClient:
 # ==============================================
 
 
-def _oidc_configuration() -> tuple[str, str, str]:
+def _oidc_configuration(*, allow_local_http: bool = False) -> tuple[str, str, str]:
     """
     التحقق من إعدادات OIDC وإرجاع القيم المطلوبة.
 
@@ -167,11 +173,20 @@ def _oidc_configuration() -> tuple[str, str, str]:
             detail="Trusted Keycloak authentication is not configured",
         )
 
+    local_http = allow_local_http and oidc_diagnostics_available()
     for value in (issuer, jwks_url):
         try:
             parts = urlparse(value)
             valid = (
-                parts.scheme == "https"
+                (
+                    parts.scheme == "https"
+                    or (
+                        local_http
+                        and settings.OIDC_ALLOW_LOCAL_HTTP
+                        and parts.scheme == "http"
+                        and parts.hostname in {"localhost", "127.0.0.1", "::1"}
+                    )
+                )
                 and bool(parts.hostname)
                 and parts.username is None
                 and parts.password is None
@@ -187,6 +202,19 @@ def _oidc_configuration() -> tuple[str, str, str]:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Trusted Keycloak endpoints must be valid HTTPS URLs",
+            )
+    if urlparse(issuer).scheme == "http" or urlparse(jwks_url).scheme == "http":
+        issuer_parts = urlparse(issuer)
+        jwks_parts = urlparse(jwks_url)
+        if (issuer_parts.scheme, issuer_parts.netloc) != (
+            jwks_parts.scheme,
+            jwks_parts.netloc,
+        ) or jwks_parts.path != issuer_parts.path.rstrip(
+            "/"
+        ) + "/protocol/openid-connect/certs":
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Local Keycloak issuer and JWKS must share the realm origin",
             )
     # Preserve the configured issuer exactly; never invent a realm or normalize
     # issuer paths, trailing slashes, subjects, or the expected API audience.
@@ -324,6 +352,15 @@ async def get_current_owner(
 # ==============================================
 # REQUIRE OWNED RESTAURANT
 # ==============================================
+
+
+async def get_owner_tenant_db(
+    owner: Annotated[OwnerPrincipal, Depends(get_current_owner)],
+    session: Annotated[AsyncSession, Depends(get_db)],
+) -> AsyncIterator[AsyncSession]:
+    """Yield a request session whose SQL and pending writes enforce owner scope."""
+    bind_owner_scope(session=session, owner_id=owner.owner_id)
+    yield session
 
 
 async def require_owned_restaurant(
@@ -495,10 +532,17 @@ async def require_owned_order_item(
 # ==============================================
 
 
-async def _get_authenticated_subject(
+async def _verified_access_token_claims(
+    *,
     credentials: HTTPAuthorizationCredentials | None,
-) -> str:
-    """Verify issuer, audience, signature, expiry, and subject before DB mapping."""
+    allow_local_http: bool = False,
+) -> dict[str, Any]:
+    """Verify access-token claims using the existing RS256/JWKS trust boundary.
+
+    Business subject mapping never enables the diagnostic HTTP exception.
+    JWKS retrieval runs in a worker thread with the existing bounded cache
+    and timeout. Token data and validation exceptions are never logged.
+    """
 
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
@@ -507,14 +551,14 @@ async def _get_authenticated_subject(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    issuer, audience, jwks_url = _oidc_configuration()
+    issuer, audience, jwks_url = _oidc_configuration(allow_local_http=allow_local_http)
     try:
         header = jwt.get_unverified_header(credentials.credentials)
         if (
             header.get("alg") not in _ALLOWED_ALGORITHMS
             or not isinstance(header.get("kid"), str)
             or not header["kid"].strip()
-            or header.get("typ") not in {"JWT", "at+jwt"}
+            or header.get("typ") not in ("JWT", "at+jwt")
         ):
             raise jwt.InvalidTokenError("Unsupported access token header")
     except jwt.InvalidTokenError as exc:
@@ -542,6 +586,12 @@ async def _get_authenticated_subject(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid bearer token",
             headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+    except (jwt.PyJWKError, jwt.PyJWKSetError, ValueError, TypeError) as exc:
+        logger.error("Identity provider keys are invalid")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Identity provider keys are invalid",
         ) from exc
 
     try:
@@ -595,7 +645,74 @@ async def _get_authenticated_subject(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return subject
+    return claims
+
+
+async def _get_authenticated_subject(
+    credentials: HTTPAuthorizationCredentials | None,
+) -> str:
+    """Keep business identity mapping on the established HTTPS-only verifier."""
+    claims = await _verified_access_token_claims(credentials=credentials)
+    return claims["sub"]
+
+
+# ==============================================
+# DIAGNOSTIC IDENTITY AND REALM ROLE DEPENDENCIES
+# ==============================================
+
+
+def oidc_diagnostics_available() -> bool:
+    """Require explicit opt-in and the complete safe local execution profile."""
+    return (
+        settings.OIDC_DIAGNOSTICS_ENABLED
+        and settings.APP_ENV == "development"
+        and settings.DATABASE_TARGET == "development"
+        and settings.DEBUG is False
+        and settings.DB_ECHO is False
+    )
+
+
+async def get_current_oidc_principal(
+    *,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+) -> OIDCPrincipal:
+    """Authenticate diagnostic requests without looking up or creating a tenant."""
+    if not oidc_diagnostics_available():
+        raise HTTPException(status_code=404, detail="Not found")
+    claims = await _verified_access_token_claims(
+        credentials=credentials, allow_local_http=True
+    )
+    try:
+        roles = extract_realm_roles(claims=claims)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid bearer token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from error
+    return OIDCPrincipal(subject=claims["sub"], issuer=claims["iss"], realm_roles=roles)
+
+
+OIDCRoleDependency: TypeAlias = Callable[[OIDCPrincipal], Awaitable[OIDCPrincipal]]
+
+
+def require_realm_roles(*, roles: frozenset[str]) -> OIDCRoleDependency:
+    """Require every named realm role without granting any business permission."""
+    if not roles or any(
+        not isinstance(role, str) or not role or role != role.strip() for role in roles
+    ):
+        raise ValueError("Explicit nonempty realm roles are required")
+
+    async def authorize(
+        *,
+        principal: Annotated[OIDCPrincipal, Depends(get_current_oidc_principal)],
+    ) -> OIDCPrincipal:
+        """Return the verified principal or deny insufficient realm roles."""
+        if not roles.issubset(principal.realm_roles):
+            raise HTTPException(status_code=403, detail="Required realm role missing")
+        return principal
+
+    return authorize
 
 
 @dataclass(frozen=True)

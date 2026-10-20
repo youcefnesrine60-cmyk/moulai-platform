@@ -16,6 +16,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 """
 
 from datetime import (
+    UTC,
     datetime,
 )
 from typing import (
@@ -117,10 +118,7 @@ class AdminSessionService:
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
         """
-        logger.info(
-            "admin_session_service_get_by_token",
-            extra={"session_token": session_token},
-        )
+        logger.info("admin_session_service_get_by_token")
 
         session_obj = await self.repo.get_by_session_token(
             session_token=session_token,
@@ -155,10 +153,7 @@ class AdminSessionService:
             NotFoundError: إذا لم يتم العثور على الجلسة
             UnauthorizedError: إذا كانت الجلسة غير نشطة أو منتهية
         """
-        logger.info(
-            "admin_session_service_get_active",
-            extra={"session_token": session_token},
-        )
+        logger.info("admin_session_service_get_active")
 
         session_obj = await self.repo.get_active_session(
             session_token=session_token,
@@ -287,10 +282,7 @@ class AdminSessionService:
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
         """
-        logger.info(
-            "admin_session_service_get_status",
-            extra={"session_token": session_token},
-        )
+        logger.info("admin_session_service_get_status")
 
         session_obj = await self.repo.get_by_session_token(
             session_token=session_token,
@@ -301,7 +293,7 @@ class AdminSessionService:
                 message="الجلسة غير موجودة",
             )
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC).replace(tzinfo=None)
         is_active = session_obj.is_active and session_obj.expires_at > now
 
         return {
@@ -431,7 +423,7 @@ class AdminSessionService:
         session_token = generate_session_token()
 
         # إنشاء الجلسة
-        session_obj = await self.repo.create(
+        session_obj = await self.repo.create_session(
             admin_id=session_data.admin_id,
             session_token=session_token,
             expires_at=session_data.expires_at,
@@ -471,10 +463,7 @@ class AdminSessionService:
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
         """
-        logger.info(
-            "admin_session_service_update_activity",
-            extra={"session_token": session_token},
-        )
+        logger.info("admin_session_service_update_activity")
 
         session_obj = await self.repo.update_activity(
             session_token=session_token,
@@ -510,12 +499,9 @@ class AdminSessionService:
         Raises:
             NotFoundError: إذا لم يتم العثور على الجلسة
         """
-        logger.info(
-            "admin_session_service_deactivate",
-            extra={"session_token": session_token},
-        )
+        logger.info("admin_session_service_deactivate")
 
-        session_obj = await self.repo.deactivate(
+        session_obj = await self.repo.deactivate_session(
             session_token=session_token,
         )
 
@@ -552,7 +538,6 @@ class AdminSessionService:
             "admin_session_service_deactivate_all",
             extra={
                 "admin_id": admin_id,
-                "except_session_token": except_session_token,
             },
         )
 
@@ -589,13 +574,12 @@ class AdminSessionService:
         logger.info(
             "admin_session_service_extend",
             extra={
-                "session_token": extend_data.session_token,
                 "expires_at": extend_data.expires_at,
             },
         )
 
         # التحقق من أن تاريخ الانتهاء في المستقبل
-        if extend_data.expires_at <= datetime.utcnow():
+        if extend_data.expires_at <= datetime.now(UTC).replace(tzinfo=None):
             raise ValidationError(
                 message="تاريخ الانتهاء يجب أن يكون في المستقبل",
             )

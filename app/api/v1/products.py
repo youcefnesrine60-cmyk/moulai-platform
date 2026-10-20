@@ -35,7 +35,11 @@ from app.core.exceptions import (
     ValidationError,
 )
 
-from app.core.database import get_db
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    get_owner_tenant_db,
+)
 from app.core.logger import logger
 from app.schemas.product import (
     ProductAvailabilityUpdate,
@@ -53,6 +57,7 @@ from app.services.business.product_service import ProductService
 
 router = APIRouter(
     prefix="/products",
+    dependencies=[Depends(get_current_owner)],
     tags=["Products"],
 )
 
@@ -63,7 +68,8 @@ router = APIRouter(
 
 
 async def get_product_service(
-    session: AsyncSession = Depends(get_db),
+    owner: OwnerPrincipal = Depends(get_current_owner),
+    session: AsyncSession = Depends(get_owner_tenant_db),
 ) -> ProductService:
     """
     الحصول على خدمة المنتجات.
@@ -74,7 +80,7 @@ async def get_product_service(
     Returns:
         ProductService: مثيل من ProductService
     """
-    return ProductService(session)
+    return ProductService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
@@ -200,6 +206,8 @@ async def list_products(
 
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_products_error",
@@ -261,6 +269,8 @@ async def get_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_product_error",
@@ -365,6 +375,8 @@ async def create_product(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_product_error",
@@ -461,6 +473,8 @@ async def update_product(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_product_error",
@@ -533,6 +547,8 @@ async def update_product_availability(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_product_availability_error",
@@ -597,6 +613,8 @@ async def enable_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_enable_product_error",
@@ -661,6 +679,8 @@ async def disable_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_disable_product_error",
@@ -733,6 +753,8 @@ async def delete_product(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_product_error",
@@ -796,6 +818,8 @@ async def get_product_summary(
         )
         return summary
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_product_summary_error",
@@ -873,6 +897,8 @@ async def get_restaurant_products(
         )
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_restaurant_products_error",
@@ -950,6 +976,8 @@ async def get_category_products(
         )
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_category_products_error",
@@ -1020,6 +1048,8 @@ async def get_product_with_details(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_product_with_details_error",

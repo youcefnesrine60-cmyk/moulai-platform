@@ -18,6 +18,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
+    ClassVar,
     Dict,
     Generic,
     List,
@@ -69,6 +70,8 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         session: جلسة قاعدة البيانات غير المتزامنة
         _primary_key_name: اسم المفتاح الأساسي (id أو غيره)
     """
+
+    redact_storage_errors: ClassVar[bool] = False
 
     # ==============================================
     #   INIT
@@ -143,6 +146,18 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     # 📥 CREATE
     # ==========================================
 
+    def _log_create_error(self, *, error: Exception, integrity: bool) -> None:
+        """Keep credentials out of opted-in repository storage failure logs."""
+        suffix = "create_integrity_error" if integrity else "create_failed"
+        event = f"{self.model.__name__}_{suffix}"
+        if self.redact_storage_errors:
+            log_method = logger.warning if integrity else logger.error
+            log_method(event, extra={"error_type": type(error).__name__})
+        elif integrity:
+            logger.warning(event, extra={"error": str(error)})
+        else:
+            logger.exception(event, extra={"error": str(error)})
+
     async def create(
         self,
         *,
@@ -184,20 +199,14 @@ class BaseRepository(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
                 "defer_repository_commit"
             ):
                 await self.session.rollback()
-            logger.warning(
-                f"{self.model.__name__}_create_integrity_error",
-                extra={"error": str(e)},
-            )
+            self._log_create_error(error=e, integrity=True)
             raise
         except Exception as e:
             if getattr(self, "commit_on_write", True) and not self.session.info.get(
                 "defer_repository_commit"
             ):
                 await self.session.rollback()
-            logger.exception(
-                f"{self.model.__name__}_create_failed",
-                extra={"error": str(e)},
-            )
+            self._log_create_error(error=e, integrity=False)
             raise
 
     # ==============================================

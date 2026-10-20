@@ -16,7 +16,11 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from typing import Optional, Any, Dict
+from typing import (
+    Any,
+    Dict,
+    Optional,
+)
 
 from fastapi import (
     APIRouter,
@@ -28,7 +32,11 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    get_owner_tenant_db,
+)
 from app.core.logger import logger
 from app.core.exceptions import (
     ConflictError,
@@ -49,6 +57,7 @@ from app.services.business.agent.channel_service import ChannelService
 
 router = APIRouter(
     prefix="/channels",
+    dependencies=[Depends(get_current_owner)],
     tags=["📡 Channels"],
 )
 
@@ -59,7 +68,9 @@ router = APIRouter(
 
 
 async def get_channel_service(
-    session: AsyncSession = Depends(get_db),
+    *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
+    session: AsyncSession = Depends(get_owner_tenant_db),
 ) -> ChannelService:
     """
     الحصول على خدمة القنوات.
@@ -70,12 +81,142 @@ async def get_channel_service(
     Returns:
         ChannelService: مثيل من ChannelService
     """
-    return ChannelService(session)
+    return ChannelService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
 # 📋 ENDPOINTS
 # ==============================================
+
+# ==============================================
+# GET CHANNEL BY TYPE
+# ==============================================
+
+
+@router.get(
+    "/type",
+    response_model=Optional[ChannelResponse],
+    summary="الحصول على قناة حسب النوع",
+    description="الحصول على قناة محددة حسب نوعها",
+)
+async def get_channel_by_type(
+    *,
+    agent_id: int = Query(..., ge=1, description="معرف الوكيل"),
+    channel_type: str = Query(..., description="نوع القناة"),
+    only_active: bool = Query(True, description="جلب القناة النشطة فقط"),
+    service: ChannelService = Depends(get_channel_service),
+) -> Optional[ChannelResponse]:
+    """
+    الحصول على قناة حسب النوع.
+
+    Args:
+        agent_id: معرف الوكيل
+        channel_type: نوع القناة
+        only_active: جلب القناة النشطة فقط
+
+    Returns:
+        Optional[ChannelResponse]: القناة المطلوبة أو None
+    """
+    logger.info(
+        "api_get_channel_by_type",
+        extra={
+            "agent_id": agent_id,
+            "channel_type": channel_type,
+            "only_active": only_active,
+        },
+    )
+
+    try:
+        return await service.get_by_type(
+            agent_id=agent_id,
+            channel_type=channel_type,
+            only_active=only_active,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(
+            "api_get_channel_by_type_error",
+            extra={
+                "agent_id": agent_id,
+                "channel_type": channel_type,
+                "error": str(e),
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="حدث خطأ أثناء جلب القناة حسب النوع",
+        )
+
+
+# ==============================================
+# SEARCH CHANNELS
+# ==============================================
+
+
+@router.get(
+    "/search",
+    response_model=ChannelListResponse,
+    summary="البحث عن القنوات",
+    description="البحث عن القنوات باستخدام كلمات مفتاحية",
+)
+async def search_channels(
+    *,
+    query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
+    agent_id: Optional[int] = Query(None, ge=1, description="معرف الوكيل (اختياري)"),
+    only_active: bool = Query(True, description="جلب القنوات النشطة فقط"),
+    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
+    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
+    service: ChannelService = Depends(get_channel_service),
+) -> ChannelListResponse:
+    """
+    البحث عن القنوات.
+
+    Args:
+        query: نص البحث
+        agent_id: معرف الوكيل (اختياري)
+        only_active: جلب القنوات النشطة فقط
+        skip: عدد السجلات للتخطي
+        limit: الحد الأقصى للسجلات
+
+    Returns:
+        ChannelListResponse: قائمة القنوات مع الإحصائيات
+    """
+    logger.info(
+        "api_search_channels",
+        extra={
+            "query": query,
+            "agent_id": agent_id,
+            "only_active": only_active,
+        },
+    )
+
+    try:
+        return await service.search(
+            query=query,
+            agent_id=agent_id,
+            only_active=only_active,
+            skip=skip,
+            limit=limit,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(
+            "api_search_channels_error",
+            extra={
+                "query": query,
+                "agent_id": agent_id,
+                "error": str(e),
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="حدث خطأ أثناء البحث عن القنوات",
+        )
+
 
 # ==============================================
 # CREATE CHANNEL
@@ -119,6 +260,11 @@ async def create_channel(
         channel = await service.create(channel_data=data)
         return channel
 
+    except NotFoundError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from e
     except ConflictError as e:
         logger.warning(
             "api_create_channel_conflict",
@@ -145,6 +291,8 @@ async def create_channel(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_channel_error",
@@ -217,6 +365,8 @@ async def get_channel_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_channel_by_id_error",
@@ -292,6 +442,8 @@ async def list_channels_by_agent(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_channels_by_agent_error",
@@ -303,132 +455,6 @@ async def list_channels_by_agent(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب قائمة القنوات",
-        )
-
-
-# ==============================================
-# GET CHANNEL BY TYPE
-# ==============================================
-
-
-@router.get(
-    "/type",
-    response_model=Optional[ChannelResponse],
-    summary="الحصول على قناة حسب النوع",
-    description="الحصول على قناة محددة حسب نوعها",
-)
-async def get_channel_by_type(
-    *,
-    agent_id: int = Query(..., ge=1, description="معرف الوكيل"),
-    channel_type: str = Query(..., description="نوع القناة"),
-    only_active: bool = Query(True, description="جلب القناة النشطة فقط"),
-    service: ChannelService = Depends(get_channel_service),
-) -> Optional[ChannelResponse]:
-    """
-    الحصول على قناة حسب النوع.
-
-    Args:
-        agent_id: معرف الوكيل
-        channel_type: نوع القناة
-        only_active: جلب القناة النشطة فقط
-
-    Returns:
-        Optional[ChannelResponse]: القناة المطلوبة أو None
-    """
-    logger.info(
-        "api_get_channel_by_type",
-        extra={
-            "agent_id": agent_id,
-            "channel_type": channel_type,
-            "only_active": only_active,
-        },
-    )
-
-    try:
-        return await service.get_by_type(
-            agent_id=agent_id,
-            channel_type=channel_type,
-            only_active=only_active,
-        )
-
-    except Exception as e:
-        logger.exception(
-            "api_get_channel_by_type_error",
-            extra={
-                "agent_id": agent_id,
-                "channel_type": channel_type,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء جلب القناة حسب النوع",
-        )
-
-
-# ==============================================
-# SEARCH CHANNELS
-# ==============================================
-
-
-@router.get(
-    "/search",
-    response_model=ChannelListResponse,
-    summary="البحث عن القنوات",
-    description="البحث عن القنوات باستخدام كلمات مفتاحية",
-)
-async def search_channels(
-    *,
-    query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
-    agent_id: Optional[int] = Query(None, ge=1, description="معرف الوكيل (اختياري)"),
-    only_active: bool = Query(True, description="جلب القنوات النشطة فقط"),
-    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
-    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
-    service: ChannelService = Depends(get_channel_service),
-) -> ChannelListResponse:
-    """
-    البحث عن القنوات.
-
-    Args:
-        query: نص البحث
-        agent_id: معرف الوكيل (اختياري)
-        only_active: جلب القنوات النشطة فقط
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        ChannelListResponse: قائمة القنوات مع الإحصائيات
-    """
-    logger.info(
-        "api_search_channels",
-        extra={
-            "query": query,
-            "agent_id": agent_id,
-            "only_active": only_active,
-        },
-    )
-
-    try:
-        return await service.search(
-            query=query,
-            agent_id=agent_id,
-            only_active=only_active,
-            skip=skip,
-            limit=limit,
-        )
-
-    except Exception as e:
-        logger.exception(
-            "api_search_channels_error",
-            extra={
-                "query": query,
-                "agent_id": agent_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء البحث عن القنوات",
         )
 
 
@@ -501,6 +527,8 @@ async def update_channel(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_channel_error",
@@ -571,6 +599,8 @@ async def update_channel_config(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_channel_config_error",
@@ -634,6 +664,8 @@ async def toggle_channel_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_toggle_channel_status_error",
@@ -713,6 +745,8 @@ async def delete_channel(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_channel_error",
@@ -796,6 +830,8 @@ async def delete_channels_by_agent(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_channels_by_agent_error",
@@ -855,6 +891,8 @@ async def get_channel_statistics(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_channel_statistics_error",

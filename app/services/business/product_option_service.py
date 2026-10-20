@@ -17,6 +17,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
+    TypeAlias,
 )
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,9 +31,8 @@ from app.core.exceptions import (
 from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان
-from app.core.security import (
-    sanitize_input,
-)
+from app.core.security import sanitize_input
+from app.core.security.tenant_scope import bind_owner_scope
 from app.models.product_option import ProductOption
 from app.repositories.option_groups_repo import OptionGroupsRepository
 from app.repositories.product_option_repo import ProductOptionRepository
@@ -59,9 +59,9 @@ MAX_EXTRA_PRICE = 1000000.0  # 1,000,000 DZD
 # 🧩 TYPES
 # ==============================================
 
-ProductOptionData = dict[str, Any]
-ProductOptionUpdateData = dict[str, Any]
-ProductOptionList = list[ProductOption]
+ProductOptionData: TypeAlias = dict[str, Any]
+ProductOptionUpdateData: TypeAlias = dict[str, Any]
+ProductOptionList: TypeAlias = list[ProductOption]
 
 
 # ==============================================
@@ -91,7 +91,9 @@ class ProductOptionService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
+        owner_id: int,
     ) -> None:
         """
         تهيئة خدمة خيارات المنتج.
@@ -99,6 +101,8 @@ class ProductOptionService:
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
+        bind_owner_scope(session=session, owner_id=owner_id)
+        self.owner_id = owner_id
         self.session = session
         self.repo = ProductOptionRepository(session)
         self.group_repo = OptionGroupsRepository(session)
@@ -418,12 +422,14 @@ class ProductOptionService:
     async def create_option(
         self,
         *,
+        group_id: int,
         option_data: ProductOptionCreate,
     ) -> ProductOptionResponse:
         """
         إنشاء خيار منتج جديد.
 
         Args:
+            group_id: معرف مجموعة الخيارات المستقل عن بيانات الخيار
             option_data: بيانات الخيار
 
         Returns:
@@ -440,7 +446,7 @@ class ProductOptionService:
         logger.info(
             "product_option_service_create",
             extra={
-                "group_id": option_data.group_id,
+                "group_id": group_id,
                 "product_option_name": name,
                 "extra_price": option_data.extra_price,
             },
@@ -448,17 +454,17 @@ class ProductOptionService:
 
         # التحقق من وجود المجموعة
         group = await self.group_repo.get_by_id(
-            id=option_data.group_id,
+            id=group_id,
         )
 
         if not group:
             raise NotFoundError(
-                message=f"مجموعة الخيارات بـ ID '{option_data.group_id}' غير موجودة",
+                message=f"مجموعة الخيارات بـ ID '{group_id}' غير موجودة",
             )
 
         # التحقق من الحد الأقصى للخيارات
         current_count = await self.count_by_group(
-            group_id=option_data.group_id,
+            group_id=group_id,
             only_available=False,
         )
 
@@ -466,7 +472,7 @@ class ProductOptionService:
             raise ValidationError(
                 message=f"تجاوزت الحد الأقصى للخيارات ({MAX_OPTIONS_PER_GROUP})",
                 details={
-                    "group_id": option_data.group_id,
+                    "group_id": group_id,
                     "current_count": current_count,
                     "max_allowed": MAX_OPTIONS_PER_GROUP,
                 },
@@ -485,7 +491,7 @@ class ProductOptionService:
 
         # التحقق من عدم وجود خيار بنفس الاسم
         existing = await self.repo.get_by_name(
-            group_id=option_data.group_id,
+            group_id=group_id,
             name=name,
         )
 
@@ -496,7 +502,7 @@ class ProductOptionService:
 
         # إنشاء الخيار
         data: ProductOptionData = {
-            "group_id": option_data.group_id,
+            "group_id": group_id,
             "name": name,
             "extra_price": option_data.extra_price,
             "is_available": (
@@ -513,7 +519,7 @@ class ProductOptionService:
             "product_option_created_successfully",
             extra={
                 "option_id": option.id,
-                "group_id": option_data.group_id,
+                "group_id": group_id,
             },
         )
 
@@ -1003,8 +1009,8 @@ class ProductOptionService:
                 message=f"مجموعة الخيارات بـ ID '{group_id}' غير موجودة",
             )
 
-        # تحديث ترتيب كل خيار
-        for index, option_id in enumerate(option_order):
+        # Validate every option before writing the first ordering change.
+        for option_id in option_order:
             option = await self.repo.get_by_id(id=option_id)
 
             if not option:
@@ -1017,6 +1023,7 @@ class ProductOptionService:
                     message=f"الخيار '{option_id}' لا ينتمي لهذه المجموعة",
                 )
 
+        for index, option_id in enumerate(option_order):
             await self.repo.update_sort_order(
                 option_id=option_id,
                 sort_order=index,

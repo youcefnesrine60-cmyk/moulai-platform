@@ -15,7 +15,10 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from datetime import datetime
+from datetime import (
+    UTC,
+    datetime,
+)
 from typing import (
     Any,
     Dict,
@@ -37,6 +40,26 @@ from pydantic import (
 AdminSessionData = Dict[str, Any]
 AdminSessionUpdateData = Dict[str, Any]
 AdminSessionListData = List[Dict[str, Any]]
+
+
+# ==============================================
+# UTC TIMESTAMP BOUNDARY
+# ==============================================
+
+
+def _utc_naive_expiration(*, value: datetime) -> datetime:
+    """Match the existing SQLAlchemy DateTime columns and UTC business clock."""
+    if value.tzinfo is not None:
+        return value.astimezone(UTC).replace(tzinfo=None)
+    return value
+
+
+def _future_expiration(*, value: datetime) -> datetime:
+    """Normalize request timestamps and reject expiry before a session mutation."""
+    normalized = _utc_naive_expiration(value=value)
+    if normalized <= datetime.now(UTC).replace(tzinfo=None):
+        raise ValueError("تاريخ انتهاء الجلسة يجب أن يكون في المستقبل")
+    return normalized
 
 
 # ==============================================
@@ -103,21 +126,8 @@ class AdminSessionBase(BaseModel):
     @field_validator("expires_at")
     @classmethod
     def validate_expires_at(cls, value: datetime) -> datetime:
-        """
-        التحقق من أن تاريخ الانتهاء في المستقبل.
-
-        Args:
-            value: تاريخ الانتهاء
-
-        Returns:
-            datetime: تاريخ الانتهاء المدقق
-
-        Raises:
-            ValueError: إذا كان التاريخ في الماضي
-        """
-        if value <= datetime.now():
-            raise ValueError("تاريخ انتهاء الجلسة يجب أن يكون في المستقبل")
-        return value
+        """Normalize stored timestamps while preserving expired session history."""
+        return _utc_naive_expiration(value=value)
 
     # ==============================================
     # VALIDATE SESSION TOKEN
@@ -201,9 +211,7 @@ class AdminSessionCreate(BaseModel):
         Raises:
             ValueError: إذا كان التاريخ في الماضي
         """
-        if value <= datetime.now():
-            raise ValueError("تاريخ انتهاء الجلسة يجب أن يكون في المستقبل")
-        return value
+        return _future_expiration(value=value)
 
 
 # ==============================================
@@ -250,9 +258,7 @@ class AdminSessionExtend(BaseModel):
         Raises:
             ValueError: إذا كان التاريخ في الماضي
         """
-        if value <= datetime.now():
-            raise ValueError("تاريخ انتهاء الجلسة يجب أن يكون في المستقبل")
-        return value
+        return _future_expiration(value=value)
 
     # ==============================================
     # VALIDATE SESSION TOKEN

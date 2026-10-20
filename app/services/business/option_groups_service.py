@@ -32,6 +32,7 @@ from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان
 from app.core.security import sanitize_input
+from app.core.security.tenant_scope import bind_owner_scope
 from app.models.option_group import OptionGroup
 from app.repositories.option_groups_repo import OptionGroupsRepository
 from app.repositories.product_option_repo import ProductOptionRepository
@@ -89,7 +90,9 @@ class OptionGroupsService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
+        owner_id: int,
     ) -> None:
         """
         تهيئة خدمة مجموعات الخيارات.
@@ -97,6 +100,8 @@ class OptionGroupsService:
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
+        bind_owner_scope(session=session, owner_id=owner_id)
+        self.owner_id = owner_id
         self.session = session
         self.repo = OptionGroupsRepository(session)
         self.product_repo = ProductRepository(session)

@@ -29,6 +29,7 @@ from fastapi import (
     Query,
     status,
 )
+from pydantic import ValidationError as SchemaValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.auth import require_admin_permission
@@ -210,8 +211,12 @@ async def get_admin_log_by_id(
 async def get_admin_logs_by_admin(
     *,
     admin_id: int = Path(..., ge=1, description="معرف المدير"),
-    action: Optional[str] = Query(None, description="تصفية حسب نوع الإجراء"),
-    resource: Optional[str] = Query(None, description="تصفية حسب نوع المورد"),
+    action: Optional[str] = Query(
+        None, max_length=50, description="تصفية حسب نوع الإجراء"
+    ),
+    resource: Optional[str] = Query(
+        None, max_length=50, description="تصفية حسب نوع المورد"
+    ),
     skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
     limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
     service: AdminLogService = Depends(get_admin_log_service),
@@ -243,6 +248,13 @@ async def get_admin_logs_by_admin(
             action=action,
             resource=resource,
         )
+    except SchemaValidationError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=error.errors(include_url=False, include_context=False),
+        ) from error
+
+    try:
         return await service.get_logs_by_admin(
             admin_id=admin_id,
             filters=filters,

@@ -160,6 +160,44 @@ async def create_admin(
 
 
 # ==============================================
+# GET ADMIN STATISTICS
+# ==============================================
+
+
+@router.get(
+    "/statistics",
+    response_model=AdminStatistics,
+    summary="إحصائيات المديرين",
+    description="الحصول على إحصائيات المديرين",
+)
+async def get_admin_statistics(
+    *,
+    service: AdminService = Depends(get_admin_service),
+) -> AdminStatistics:
+    """Return administrator statistics before matching dynamic identifier routes."""
+    logger.info("api_get_admin_statistics")
+
+    try:
+        stats = await service.get_admin_statistics()
+        return AdminStatistics(
+            total=stats["total"],
+            active=stats["active"],
+            inactive=stats["inactive"],
+            roles=stats["roles"],
+        )
+
+    except Exception as e:
+        logger.exception(
+            "api_get_admin_statistics_error",
+            extra={"error": str(e)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="حدث خطأ أثناء جلب إحصائيات المديرين",
+        )
+
+
+# ==============================================
 # GET ADMIN BY ID
 # ==============================================
 
@@ -783,46 +821,3 @@ async def delete_admin(
             "permanent": permanent,
         },
     )
-
-
-# ==============================================
-# GET ADMIN STATISTICS
-# ==============================================
-
-
-@router.get(
-    "/statistics",
-    response_model=AdminStatistics,
-    summary="إحصائيات المديرين",
-    description="الحصول على إحصائيات المديرين",
-)
-async def get_admin_statistics(
-    *,
-    service: AdminService = Depends(get_admin_service),
-) -> AdminStatistics:
-    """
-    الحصول على إحصائيات المديرين.
-
-    Returns:
-        AdminStatistics: إحصائيات المديرين
-    """
-    logger.info("api_get_admin_statistics")
-
-    try:
-        stats = await service.get_admin_statistics()
-        return AdminStatistics(
-            total=stats["total"],
-            active=stats["active"],
-            inactive=stats["inactive"],
-            roles=stats["roles"],
-        )
-
-    except Exception as e:
-        logger.exception(
-            "api_get_admin_statistics_error",
-            extra={"error": str(e)},
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء جلب إحصائيات المديرين",
-        )

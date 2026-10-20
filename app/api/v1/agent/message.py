@@ -16,7 +16,12 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from typing import Optional, Any, Dict, List
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+)
 
 from fastapi import (
     APIRouter,
@@ -28,7 +33,11 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    get_owner_tenant_db,
+)
 from app.core.logger import logger
 from app.core.exceptions import (
     NotFoundError,
@@ -48,6 +57,7 @@ from app.services.business.agent.message_service import MessageService
 
 router = APIRouter(
     prefix="/messages",
+    dependencies=[Depends(get_current_owner)],
     tags=["💬 Messages"],
 )
 
@@ -58,7 +68,9 @@ router = APIRouter(
 
 
 async def get_message_service(
-    session: AsyncSession = Depends(get_db),
+    *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
+    session: AsyncSession = Depends(get_owner_tenant_db),
 ) -> MessageService:
     """
     الحصول على خدمة الرسائل.
@@ -69,12 +81,83 @@ async def get_message_service(
     Returns:
         MessageService: مثيل من MessageService
     """
-    return MessageService(session)
+    return MessageService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
 # 📋 ENDPOINTS
 # ==============================================
+
+# ==============================================
+# SEARCH MESSAGES
+# ==============================================
+
+
+@router.get(
+    "/search",
+    response_model=MessageListResponse,
+    summary="البحث عن الرسائل",
+    description="البحث عن الرسائل باستخدام كلمات مفتاحية",
+)
+async def search_messages(
+    *,
+    query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
+    conversation_id: Optional[int] = Query(
+        None, ge=1, description="معرف المحادثة (اختياري)"
+    ),
+    role: Optional[str] = Query(None, description="دور المرسل (اختياري)"),
+    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
+    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
+    service: MessageService = Depends(get_message_service),
+) -> MessageListResponse:
+    """
+    البحث عن الرسائل.
+
+    Args:
+        query: نص البحث
+        conversation_id: معرف المحادثة (اختياري)
+        role: دور المرسل (اختياري)
+        skip: عدد السجلات للتخطي
+        limit: الحد الأقصى للسجلات
+
+    Returns:
+        MessageListResponse: قائمة الرسائل مع الإحصائيات
+    """
+    logger.info(
+        "api_search_messages",
+        extra={
+            "query": query,
+            "conversation_id": conversation_id,
+            "role": role,
+        },
+    )
+
+    try:
+        return await service.search(
+            query=query,
+            conversation_id=conversation_id,
+            role=role,
+            skip=skip,
+            limit=limit,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(
+            "api_search_messages_error",
+            extra={
+                "query": query,
+                "conversation_id": conversation_id,
+                "role": role,
+                "error": str(e),
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="حدث خطأ أثناء البحث عن الرسائل",
+        )
+
 
 # ==============================================
 # CREATE MESSAGE
@@ -141,6 +224,8 @@ async def create_message(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_message_error",
@@ -230,6 +315,8 @@ async def create_user_message(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_user_message_error",
@@ -319,6 +406,8 @@ async def create_assistant_message(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_assistant_message_error",
@@ -405,6 +494,8 @@ async def create_system_message(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_system_message_error",
@@ -486,6 +577,8 @@ async def bulk_create_messages(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_bulk_create_messages_error",
@@ -549,6 +642,8 @@ async def get_message_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_message_by_id_error",
@@ -620,6 +715,8 @@ async def list_messages_by_conversation(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_messages_by_conversation_error",
@@ -696,6 +793,8 @@ async def list_messages_by_role(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_messages_by_role_error",
@@ -775,6 +874,8 @@ async def list_messages_by_content_type(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_messages_by_content_type_error",
@@ -825,6 +926,8 @@ async def get_last_message(
             conversation_id=conversation_id,
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_last_message_error",
@@ -874,6 +977,8 @@ async def get_first_message(
             conversation_id=conversation_id,
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_first_message_error",
@@ -885,75 +990,6 @@ async def get_first_message(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب أول رسالة",
-        )
-
-
-# ==============================================
-# SEARCH MESSAGES
-# ==============================================
-
-
-@router.get(
-    "/search",
-    response_model=MessageListResponse,
-    summary="البحث عن الرسائل",
-    description="البحث عن الرسائل باستخدام كلمات مفتاحية",
-)
-async def search_messages(
-    *,
-    query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
-    conversation_id: Optional[int] = Query(
-        None, ge=1, description="معرف المحادثة (اختياري)"
-    ),
-    role: Optional[str] = Query(None, description="دور المرسل (اختياري)"),
-    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
-    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
-    service: MessageService = Depends(get_message_service),
-) -> MessageListResponse:
-    """
-    البحث عن الرسائل.
-
-    Args:
-        query: نص البحث
-        conversation_id: معرف المحادثة (اختياري)
-        role: دور المرسل (اختياري)
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        MessageListResponse: قائمة الرسائل مع الإحصائيات
-    """
-    logger.info(
-        "api_search_messages",
-        extra={
-            "query": query,
-            "conversation_id": conversation_id,
-            "role": role,
-        },
-    )
-
-    try:
-        return await service.search(
-            query=query,
-            conversation_id=conversation_id,
-            role=role,
-            skip=skip,
-            limit=limit,
-        )
-
-    except Exception as e:
-        logger.exception(
-            "api_search_messages_error",
-            extra={
-                "query": query,
-                "conversation_id": conversation_id,
-                "role": role,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء البحث عن الرسائل",
         )
 
 
@@ -1026,6 +1062,8 @@ async def update_message(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_message_error",
@@ -1085,6 +1123,8 @@ async def delete_message(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_message_error",
@@ -1158,6 +1198,8 @@ async def delete_messages_by_conversation(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_messages_by_conversation_error",
@@ -1233,6 +1275,8 @@ async def delete_old_messages(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_old_messages_error",
@@ -1294,6 +1338,8 @@ async def get_message_statistics(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_message_statistics_error",

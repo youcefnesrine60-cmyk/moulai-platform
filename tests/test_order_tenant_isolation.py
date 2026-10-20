@@ -1,4 +1,4 @@
-﻿# ==============================================
+# ==============================================
 # MoulAI™ Platform - Agent-as-a-Service
 # Author: Youcef Nesrine
 # License: CC BY-NC-ND 4.0
@@ -19,9 +19,20 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
-from fastapi import FastAPI, HTTPException
-from fastapi.testclient import TestClient
-from sqlalchemy import Column, MetaData, Table, create_engine
+from fastapi import (
+    FastAPI,
+    HTTPException,
+)
+from httpx import (
+    ASGITransport,
+    AsyncClient,
+)
+from sqlalchemy import (
+    Column,
+    MetaData,
+    Table,
+    create_engine,
+)
 from sqlalchemy.pool import StaticPool
 
 from app.api import auth
@@ -212,6 +223,7 @@ async def test_order_owner_isolation_executes_sql(
 # ==============================================
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "method,path,payload",
     [
@@ -226,9 +238,10 @@ async def test_order_owner_isolation_executes_sql(
         ("get", "/orders/stats/summary?restaurant_id=10", None),
     ],
 )
-def test_cross_tenant_http_operations_denied_before_service(
+async def test_cross_tenant_http_operations_denied_before_service(
     isolated_session, method, path, payload
-):
+) -> None:
+    """Deny cross-tenant HTTP operations without invoking a mutation service."""
     app = FastAPI()
     app.include_router(orders.router)
     service = SimpleNamespace(session=isolated_session)
@@ -236,8 +249,11 @@ def test_cross_tenant_http_operations_denied_before_service(
     app.dependency_overrides[orders.get_order_service] = lambda: service
     app.dependency_overrides[orders.get_order_items_service] = lambda: service
     # No service methods exist: calling one would produce 500 instead of 404.
-    with TestClient(app) as client:
-        response = client.request(method, path, json=payload)
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.request(method, path, json=payload)
     assert response.status_code == 404
     assert isolated_session.added == []
     isolated_session.flush.assert_not_awaited()

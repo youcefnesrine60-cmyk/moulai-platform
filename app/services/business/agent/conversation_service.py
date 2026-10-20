@@ -28,6 +28,7 @@ from app.core.exceptions import (
     ValidationError,
 )
 from app.core.logger import logger
+from app.core.security.tenant_scope import bind_owner_scope
 from app.repositories.agent.conversation_repo import ConversationRepository
 from app.repositories.agent.agent_repo import AgentRepository
 from app.repositories.agent.channel_repo import ChannelRepository
@@ -74,7 +75,9 @@ class ConversationService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
+        owner_id: int,
     ) -> None:
         """
         تهيئة خدمة المحادثات.
@@ -82,6 +85,7 @@ class ConversationService:
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
+        bind_owner_scope(session=session, owner_id=owner_id)
         self.session = session
         self.repo = ConversationRepository(session)
         self.agent_repo = AgentRepository(session)
@@ -326,7 +330,7 @@ class ConversationService:
         total = await self.repo.count_by_status(
             agent_id=agent_id,
             status=status,
-            only_active=True,
+            only_active=False,
         )
 
         return ConversationListResponse(
@@ -440,6 +444,13 @@ class ConversationService:
                 message=f"القناة بـ ID '{conversation_data.channel_id}' غير موجودة",
             )
 
+        # A visible channel must still belong to this exact agent. Ownership
+        # alone does not permit linking conversations across different agents.
+        if channel.agent_id != conversation_data.agent_id:
+            raise ValidationError(
+                message="Channel does not belong to the selected agent",
+            )
+
         # التحقق من عدم وجود محادثة نشطة لنفس المستخدم والوكيل
         existing = await self.repo.get_by_user_id(
             agent_id=conversation_data.agent_id,
@@ -464,8 +475,8 @@ class ConversationService:
             "channel_id": conversation_data.channel_id,
             "user_id": conversation_data.user_id,
             "user_name": conversation_data.user_name,
-            "is_active": True,
-            "status": "active",
+            "is_active": conversation_data.status == "active",
+            "status": conversation_data.status,
             "context": conversation_data.context or {},
         }
 
@@ -524,6 +535,15 @@ class ConversationService:
 
         # تحضير بيانات التحديث
         updates = update_data.model_dump(exclude_unset=True)
+
+        if updates.get("status") is not None and updates.get("is_active") is not None:
+            if updates["is_active"] != (updates["status"] == "active"):
+                raise ValidationError(
+                    message="Conversation status and activity must be consistent",
+                )
+            # The status setter also applies activity; do not overwrite a
+            # suspended status through a redundant is_active=False assignment.
+            updates.pop("is_active")
 
         # تحديث المحادثة
         updated = await self.repo.update(
@@ -586,7 +606,7 @@ class ConversationService:
             )
 
         # دمج السياق الجديد مع السياق الحالي
-        current_context = conversation.context or {}
+        current_context = dict(conversation.context or {})
         current_context.update(context)
 
         updated = await self.repo.update_context(

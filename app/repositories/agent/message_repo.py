@@ -543,11 +543,8 @@ class MessageRepository(BaseRepository[Message, MessageData, MessageUpdateData])
             MessageList: قائمة الرسائل المنشأة
         """
         try:
-            created_messages = []
-
-            for data in messages_data:
-                message = await self.create(data=data)
-                created_messages.append(message)
+            # One flush validates every row before any per-row commit can occur.
+            created_messages = await self.create_many(data_list=messages_data)
 
             logger.info(
                 "message_bulk_create_successful",

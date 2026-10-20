@@ -29,6 +29,7 @@ from app.core.exceptions import (
     NotFoundError,
 )
 from app.core.logger import logger
+from app.core.security.tenant_scope import bind_owner_scope
 from app.repositories.agent.agent_repo import AgentRepository
 from app.schemas.agent.agent import (
     AgentCreate,
@@ -72,7 +73,9 @@ class AgentService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
+        owner_id: int,
     ) -> None:
         """
         تهيئة خدمة الوكيل.
@@ -80,6 +83,7 @@ class AgentService:
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
+        bind_owner_scope(session=session, owner_id=owner_id)
         self.session = session
         self.repo = AgentRepository(session)
 

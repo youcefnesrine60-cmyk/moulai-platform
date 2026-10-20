@@ -27,6 +27,8 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.auth import require_admin_permission
+
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
     ConflictError,
@@ -55,6 +57,7 @@ from app.services.business.user_service import UserService
 router = APIRouter(
     prefix="/users",
     tags=["Users"],
+    dependencies=[Depends(require_admin_permission("admins.manage"))],
 )
 
 
@@ -64,6 +67,7 @@ router = APIRouter(
 
 
 async def get_user_service(
+    *,
     session: AsyncSession = Depends(get_db),
 ) -> UserService:
     """

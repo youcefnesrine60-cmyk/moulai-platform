@@ -29,9 +29,12 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
+    TypeAlias,
 )
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import Select
 
 from app.core.exceptions import (
     ConflictError,
@@ -40,7 +43,9 @@ from app.core.exceptions import (
 )
 from app.core.logger import logger
 from app.core.security import sanitize_input
+from app.core.security.tenant_scope import bind_owner_scope
 from app.models.category import Category
+from app.models.restaurant import Restaurant
 from app.repositories.categories_repo import CategoriesRepository
 from app.repositories.features_repo import FeatureRepository
 from app.repositories.products_repo import ProductRepository
@@ -70,8 +75,19 @@ MAX_CATEGORIES_PER_RESTAURANT = 20
 # ðŸ§© TYPES
 # ==============================================
 
-CategoryData = dict[str, Any]
-CategoryList = list[Category]
+CategoryData: TypeAlias = dict[str, Any]
+CategoryList: TypeAlias = list[Category]
+
+
+# ==============================================
+# BASE SELECT
+# ==============================================
+
+
+def _base_category_restaurant_select() -> Select[tuple[int]]:
+    """Resolve the owner-controlled parent before creating catalog categories."""
+    return select(Restaurant.id)
+
 
 # ==============================================
 # ðŸ“‚ CATEGORY SERVICE
@@ -101,7 +117,9 @@ class CategoryService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
+        owner_id: int,
     ) -> None:
         """
         ØªÙ‡ÙŠØ¦Ø© Ø®Ø¯Ù…Ø© Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª.
@@ -109,6 +127,8 @@ class CategoryService:
         Args:
             session: Ø¬Ù„Ø³Ø© Ù‚Ø§Ø¹Ø¯Ø© Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ØºÙŠØ± Ø§Ù„Ù…ØªØ²Ø§Ù…Ù†Ø©
         """
+        bind_owner_scope(session=session, owner_id=owner_id)
+        self.owner_id = owner_id
         self.session = session
         self.repo = CategoriesRepository(session)
         self.product_repo = ProductRepository(session)
@@ -118,6 +138,21 @@ class CategoryService:
     # ==========================================
     # ðŸ› ï¸ PRIVATE HELPERS
     # ==========================================
+
+    # ==============================================
+    # REQUIRE OWNED RESTAURANT
+    # ==============================================
+
+    async def _require_restaurant(self, *, restaurant_id: int) -> None:
+        """Reject a foreign or absent restaurant before category mutations."""
+        result = await self.session.execute(
+            _base_category_restaurant_select().where(
+                Restaurant.id == restaurant_id,
+                Restaurant.owner_id == self.owner_id,
+            )
+        )
+        if result.scalar_one_or_none() is None:
+            raise NotFoundError(message="Restaurant not found")
 
     # ==============================================
     # RESOLVE CATEGORY FEATURE
@@ -444,6 +479,7 @@ class CategoryService:
             ConflictError: Ø¥Ø°Ø§ ÙƒØ§Ù† Ø§Ù„Ø§Ø³Ù… Ù…ÙˆØ¬ÙˆØ¯Ø§Ù‹ Ù…Ø³Ø¨Ù‚Ø§Ù‹
             ValidationError: Ø¥Ø°Ø§ ÙƒØ§Ù†Øª Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª ØºÙŠØ± ØµØ­ÙŠØ­Ø©
         """
+        await self._require_restaurant(restaurant_id=restaurant_id)
         name = sanitize_input(category_data.name)
 
         logger.info(
@@ -712,7 +748,8 @@ class CategoryService:
                 message="Ù‚Ø§Ø¦Ù…Ø© ØªØ±ØªÙŠØ¨ Ø§Ù„ØªØµÙ†ÙŠÙØ§Øª ØªØ­ØªÙˆÙŠ Ø¹Ù„Ù‰ Ù…Ø¹Ø±ÙØ§Øª Ù…ÙƒØ±Ø±Ø©",
             )
 
-        for index, category_id in enumerate(category_order):
+        # Validate the complete membership set before changing the first row.
+        for category_id in category_order:
             category = await self.repo.get_by_id(id=category_id)
 
             if not category:
@@ -725,6 +762,7 @@ class CategoryService:
                     message=f"Ø§Ù„ØªØµÙ†ÙŠÙ '{category_id}' Ù„Ø§ ÙŠÙ†ØªÙ…ÙŠ Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø·Ø¹Ù…",
                 )
 
+        for index, category_id in enumerate(category_order):
             await self.repo.update(
                 id=category_id,
                 data={"sort_order": index},

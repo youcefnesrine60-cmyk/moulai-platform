@@ -18,6 +18,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 from datetime import datetime
 from typing import (
     Any,
+    ClassVar,
 )
 
 from sqlalchemy import (
@@ -64,6 +65,8 @@ class AdminSessionsRepository(
         model: نموذج AdminSession
         session: جلسة قاعدة البيانات غير المتزامنة
     """
+
+    redact_storage_errors: ClassVar[bool] = True
 
     # ==============================================
     #   INIT
@@ -161,7 +164,7 @@ class AdminSessionsRepository(
         """
         try:
             result = await self.session.execute(
-                select(self.model)
+                self._select()
                 .where(self.model.session_token == session_token)
                 .limit(1),
             )
@@ -169,12 +172,9 @@ class AdminSessionsRepository(
             return result.scalar_one_or_none()
 
         except Exception as e:
-            logger.exception(
+            logger.error(
                 "admin_sessions_repo_get_by_token_failed",
-                extra={
-                    "session_token": session_token,
-                    "error": str(e),
-                },
+                extra={"error_type": type(e).__name__},
             )
             raise
 
@@ -198,7 +198,7 @@ class AdminSessionsRepository(
         """
         try:
             result = await self.session.execute(
-                select(self.model)
+                self._select()
                 .where(
                     and_(
                         self.model.session_token == session_token,
@@ -212,12 +212,9 @@ class AdminSessionsRepository(
             return result.scalar_one_or_none()
 
         except Exception as e:
-            logger.exception(
+            logger.error(
                 "admin_sessions_repo_get_active_session_failed",
-                extra={
-                    "session_token": session_token,
-                    "error": str(e),
-                },
+                extra={"error_type": type(e).__name__},
             )
             raise
 
@@ -524,7 +521,6 @@ class AdminSessionsRepository(
         """
         logger.info(
             "admin_sessions_repo_update_activity",
-            extra={"session_token": session_token},
         )
 
         session_obj = await self.get_by_session_token(
@@ -534,7 +530,6 @@ class AdminSessionsRepository(
         if not session_obj:
             logger.warning(
                 "admin_session_not_found_for_activity",
-                extra={"session_token": session_token},
             )
             return None
 
@@ -546,7 +541,6 @@ class AdminSessionsRepository(
             "admin_session_activity_updated",
             extra={
                 "session_id": session_obj.id,
-                "session_token": session_token,
             },
         )
 
@@ -572,7 +566,6 @@ class AdminSessionsRepository(
         """
         logger.info(
             "admin_sessions_repo_deactivate",
-            extra={"session_token": session_token},
         )
 
         session_obj = await self.get_by_session_token(
@@ -582,7 +575,6 @@ class AdminSessionsRepository(
         if not session_obj:
             logger.warning(
                 "admin_session_not_found_for_deactivate",
-                extra={"session_token": session_token},
             )
             return None
 
@@ -594,7 +586,6 @@ class AdminSessionsRepository(
             "admin_session_deactivated_successfully",
             extra={
                 "session_id": session_obj.id,
-                "session_token": session_token,
             },
         )
 
@@ -608,12 +599,14 @@ class AdminSessionsRepository(
         self,
         *,
         admin_id: int,
+        except_session_token: str | None = None,
     ) -> int:
         """
         إلغاء تنشيط جميع جلسات مدير معين.
 
         Args:
             admin_id: معرف المدير
+            except_session_token: Optional credential to preserve without logging it.
 
         Returns:
             عدد الجلسات التي تم إلغاء تنشيطها
@@ -623,10 +616,14 @@ class AdminSessionsRepository(
             extra={"admin_id": admin_id},
         )
 
-        sessions = await self.get_by_admin_id(
-            admin_id=admin_id,
-            only_active=True,
+        query = self._select().where(
+            self.model.admin_id == admin_id,
+            self.model.is_active.is_(True),
         )
+        if except_session_token is not None:
+            query = query.where(self.model.session_token != except_session_token)
+        result = await self.session.execute(query)
+        sessions = result.scalars().all()
 
         count = 0
 
@@ -669,7 +666,6 @@ class AdminSessionsRepository(
         logger.info(
             "admin_sessions_repo_extend",
             extra={
-                "session_token": session_token,
                 "expires_at": expires_at,
             },
         )
@@ -681,7 +677,6 @@ class AdminSessionsRepository(
         if not session_obj:
             logger.warning(
                 "admin_session_not_found_for_extend",
-                extra={"session_token": session_token},
             )
             return None
 
@@ -694,7 +689,6 @@ class AdminSessionsRepository(
             "admin_session_extended_successfully",
             extra={
                 "session_id": session_obj.id,
-                "session_token": session_token,
                 "expires_at": expires_at,
             },
         )

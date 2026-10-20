@@ -28,7 +28,11 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    get_owner_tenant_db,
+)
 from app.core.logger import logger
 from app.core.exceptions import (
     ConflictError,
@@ -51,6 +55,7 @@ from app.services.business.agent.agent_service import AgentService
 
 router = APIRouter(
     prefix="/agents",
+    dependencies=[Depends(get_current_owner)],
     tags=["🤖 Agents"],
 )
 
@@ -61,7 +66,9 @@ router = APIRouter(
 
 
 async def get_agent_service(
-    session: AsyncSession = Depends(get_db),
+    *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
+    session: AsyncSession = Depends(get_owner_tenant_db),
 ) -> AgentService:
     """
     الحصول على خدمة الوكلاء.
@@ -72,12 +79,206 @@ async def get_agent_service(
     Returns:
         AgentService: مثيل من AgentService
     """
-    return AgentService(session)
+    return AgentService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
 # 📋 ENDPOINTS
 # ==============================================
+
+# ==============================================
+# LIST AGENTS BY STATUS
+# ==============================================
+
+
+@router.get(
+    "/status",
+    response_model=AgentListResponse,
+    summary="قائمة الوكلاء حسب الحالة",
+    description="الحصول على قائمة الوكلاء حسب حالة النشاط",
+)
+async def list_agents_by_status(
+    *,
+    restaurant_id: Optional[int] = Query(None, description="معرف المطعم (اختياري)"),
+    is_active: bool = Query(True, description="حالة الوكيل"),
+    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
+    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
+    service: AgentService = Depends(get_agent_service),
+) -> AgentListResponse:
+    """
+    الحصول على قائمة الوكلاء حسب الحالة.
+
+    Args:
+        restaurant_id: معرف المطعم (اختياري)
+        is_active: حالة الوكيل
+        skip: عدد السجلات للتخطي
+        limit: الحد الأقصى للسجلات
+
+    Returns:
+        AgentListResponse: قائمة الوكلاء مع الإحصائيات
+    """
+    logger.info(
+        "api_list_agents_by_status",
+        extra={
+            "restaurant_id": restaurant_id,
+            "is_active": is_active,
+            "skip": skip,
+            "limit": limit,
+        },
+    )
+
+    try:
+        return await service.get_by_status(
+            restaurant_id=restaurant_id,
+            is_active=is_active,
+            skip=skip,
+            limit=limit,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(
+            "api_list_agents_by_status_error",
+            extra={
+                "restaurant_id": restaurant_id,
+                "error": str(e),
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="حدث خطأ أثناء جلب قائمة الوكلاء حسب الحالة",
+        )
+
+
+# ==============================================
+# SEARCH AGENTS
+# ==============================================
+
+
+@router.get(
+    "/search",
+    response_model=AgentListResponse,
+    summary="البحث عن الوكلاء",
+    description="البحث عن الوكلاء باستخدام كلمات مفتاحية",
+)
+async def search_agents(
+    *,
+    query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
+    restaurant_id: Optional[int] = Query(None, description="معرف المطعم (اختياري)"),
+    only_active: bool = Query(True, description="جلب الوكلاء النشطين فقط"),
+    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
+    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
+    service: AgentService = Depends(get_agent_service),
+) -> AgentListResponse:
+    """
+    البحث عن الوكلاء.
+
+    Args:
+        query: نص البحث
+        restaurant_id: معرف المطعم (اختياري)
+        only_active: جلب الوكلاء النشطين فقط
+        skip: عدد السجلات للتخطي
+        limit: الحد الأقصى للسجلات
+
+    Returns:
+        AgentListResponse: قائمة الوكلاء مع الإحصائيات
+    """
+    logger.info(
+        "api_search_agents",
+        extra={
+            "query": query,
+            "restaurant_id": restaurant_id,
+            "only_active": only_active,
+        },
+    )
+
+    try:
+        return await service.search(
+            query=query,
+            restaurant_id=restaurant_id,
+            only_active=only_active,
+            skip=skip,
+            limit=limit,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(
+            "api_search_agents_error",
+            extra={
+                "query": query,
+                "restaurant_id": restaurant_id,
+                "error": str(e),
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="حدث خطأ أثناء البحث عن الوكلاء",
+        )
+
+
+# ==============================================
+# BULK TOGGLE AGENTS STATUS
+# ==============================================
+
+
+@router.patch(
+    "/bulk/toggle-status",
+    response_model=dict,
+    summary="تبديل حالة مجموعة وكلاء",
+    description="تفعيل أو إلغاء تنشيط مجموعة من الوكلاء دفعة واحدة",
+)
+async def bulk_toggle_agents_status(
+    *,
+    agent_ids: list[int] = Query(..., description="قائمة معرفات الوكلاء"),
+    is_active: bool = Query(..., description="الحالة الجديدة"),
+    service: AgentService = Depends(get_agent_service),
+) -> dict:
+    """
+    تبديل حالة مجموعة من الوكلاء.
+
+    Args:
+        agent_ids: قائمة معرفات الوكلاء
+        is_active: الحالة الجديدة
+
+    Returns:
+        dict: عدد الوكلاء المحدثين
+    """
+    logger.info(
+        "api_bulk_toggle_agents_status",
+        extra={
+            "agent_ids": agent_ids,
+            "is_active": is_active,
+        },
+    )
+
+    try:
+        count = await service.bulk_toggle_active(
+            agent_ids=agent_ids,
+            is_active=is_active,
+        )
+        return {
+            "updated_count": count,
+            "is_active": is_active,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(
+            "api_bulk_toggle_agents_status_error",
+            extra={
+                "agent_ids": agent_ids,
+                "error": str(e),
+            },
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="حدث خطأ أثناء تبديل حالة الوكلاء",
+        )
+
 
 # ==============================================
 # CREATE AGENT
@@ -146,6 +347,8 @@ async def create_agent(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_agent_error",
@@ -218,6 +421,8 @@ async def get_agent_by_id(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_agent_by_id_error",
@@ -289,6 +494,8 @@ async def get_agent_with_channels(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_agent_with_channels_error",
@@ -352,6 +559,8 @@ async def list_agents_by_restaurant(
             limit=limit,
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_agents_by_restaurant_error",
@@ -363,135 +572,6 @@ async def list_agents_by_restaurant(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب قائمة الوكلاء",
-        )
-
-
-# ==============================================
-# LIST AGENTS BY STATUS
-# ==============================================
-
-
-@router.get(
-    "/status",
-    response_model=AgentListResponse,
-    summary="قائمة الوكلاء حسب الحالة",
-    description="الحصول على قائمة الوكلاء حسب حالة النشاط",
-)
-async def list_agents_by_status(
-    *,
-    restaurant_id: Optional[int] = Query(None, description="معرف المطعم (اختياري)"),
-    is_active: bool = Query(True, description="حالة الوكيل"),
-    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
-    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
-    service: AgentService = Depends(get_agent_service),
-) -> AgentListResponse:
-    """
-    الحصول على قائمة الوكلاء حسب الحالة.
-
-    Args:
-        restaurant_id: معرف المطعم (اختياري)
-        is_active: حالة الوكيل
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        AgentListResponse: قائمة الوكلاء مع الإحصائيات
-    """
-    logger.info(
-        "api_list_agents_by_status",
-        extra={
-            "restaurant_id": restaurant_id,
-            "is_active": is_active,
-            "skip": skip,
-            "limit": limit,
-        },
-    )
-
-    try:
-        return await service.get_by_status(
-            restaurant_id=restaurant_id,
-            is_active=is_active,
-            skip=skip,
-            limit=limit,
-        )
-
-    except Exception as e:
-        logger.exception(
-            "api_list_agents_by_status_error",
-            extra={
-                "restaurant_id": restaurant_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء جلب قائمة الوكلاء حسب الحالة",
-        )
-
-
-# ==============================================
-# SEARCH AGENTS
-# ==============================================
-
-
-@router.get(
-    "/search",
-    response_model=AgentListResponse,
-    summary="البحث عن الوكلاء",
-    description="البحث عن الوكلاء باستخدام كلمات مفتاحية",
-)
-async def search_agents(
-    *,
-    query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
-    restaurant_id: Optional[int] = Query(None, description="معرف المطعم (اختياري)"),
-    only_active: bool = Query(True, description="جلب الوكلاء النشطين فقط"),
-    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
-    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
-    service: AgentService = Depends(get_agent_service),
-) -> AgentListResponse:
-    """
-    البحث عن الوكلاء.
-
-    Args:
-        query: نص البحث
-        restaurant_id: معرف المطعم (اختياري)
-        only_active: جلب الوكلاء النشطين فقط
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        AgentListResponse: قائمة الوكلاء مع الإحصائيات
-    """
-    logger.info(
-        "api_search_agents",
-        extra={
-            "query": query,
-            "restaurant_id": restaurant_id,
-            "only_active": only_active,
-        },
-    )
-
-    try:
-        return await service.search(
-            query=query,
-            restaurant_id=restaurant_id,
-            only_active=only_active,
-            skip=skip,
-            limit=limit,
-        )
-
-    except Exception as e:
-        logger.exception(
-            "api_search_agents_error",
-            extra={
-                "query": query,
-                "restaurant_id": restaurant_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء البحث عن الوكلاء",
         )
 
 
@@ -576,6 +656,8 @@ async def update_agent(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_agent_error",
@@ -646,6 +728,8 @@ async def update_agent_config(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_agent_config_error",
@@ -709,6 +793,8 @@ async def toggle_agent_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_toggle_agent_status_error",
@@ -720,65 +806,6 @@ async def toggle_agent_status(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء تبديل حالة الوكيل",
-        )
-
-
-# ==============================================
-# BULK TOGGLE AGENTS STATUS
-# ==============================================
-
-
-@router.patch(
-    "/bulk/toggle-status",
-    response_model=dict,
-    summary="تبديل حالة مجموعة وكلاء",
-    description="تفعيل أو إلغاء تنشيط مجموعة من الوكلاء دفعة واحدة",
-)
-async def bulk_toggle_agents_status(
-    *,
-    agent_ids: list[int] = Query(..., description="قائمة معرفات الوكلاء"),
-    is_active: bool = Query(..., description="الحالة الجديدة"),
-    service: AgentService = Depends(get_agent_service),
-) -> dict:
-    """
-    تبديل حالة مجموعة من الوكلاء.
-
-    Args:
-        agent_ids: قائمة معرفات الوكلاء
-        is_active: الحالة الجديدة
-
-    Returns:
-        dict: عدد الوكلاء المحدثين
-    """
-    logger.info(
-        "api_bulk_toggle_agents_status",
-        extra={
-            "agent_ids": agent_ids,
-            "is_active": is_active,
-        },
-    )
-
-    try:
-        count = await service.bulk_toggle_active(
-            agent_ids=agent_ids,
-            is_active=is_active,
-        )
-        return {
-            "updated_count": count,
-            "is_active": is_active,
-        }
-
-    except Exception as e:
-        logger.exception(
-            "api_bulk_toggle_agents_status_error",
-            extra={
-                "agent_ids": agent_ids,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء تبديل حالة الوكلاء",
         )
 
 
@@ -847,6 +874,8 @@ async def delete_agent(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_agent_error",
@@ -909,6 +938,8 @@ async def get_agent_statistics(
             tone_distribution=stats["tone_distribution"],
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_agent_statistics_error",

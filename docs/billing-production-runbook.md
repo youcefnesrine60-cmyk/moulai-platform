@@ -37,7 +37,7 @@ The previously inspected production schema compatibility contributes to the revi
 
 ### Approved Target and Connection Guard
 
-The Neon project is `moulai-db` (`shiny-lab-60817779`) in Frankfurt. The protected `production` branch is `br-plain-firefly-as17li6w`; the permanent working `development` branch is `br-lively-truth-asga1dtk`. The only test target is `development → neondb_test`, not the database named `neondb_test` on the old production branch.
+The Neon project is `moulai-db` (`shiny-lab-60817779`) in Frankfurt. The protected `production` branch is `br-plain-firefly-as17il6w`; the permanent working `development` branch is `br-lively-truth-asga1dtk`. The only test target is `development → neondb_test`, not the database named `neondb_test` on the old production branch.
 
 Configure these settings locally without sending connection values to the chat: `TEST_DATABASE_URL` using `postgresql+asyncpg`, `TEST_DATABASE_ENDPOINT_ID` with the actual development endpoint ID, and `PROTECTED_DATABASE_ENDPOINT_ID` with the excluded production endpoint ID. The guard accepts the direct endpoint or its pooler and rejects query options that reroute the connection. The user confirmed the association between `ep-quiet-rain-assrs0gv` and `br-lively-truth-asga1dtk` in project `shiny-lab-60817779`; a database name alone does not identify its branch.
 

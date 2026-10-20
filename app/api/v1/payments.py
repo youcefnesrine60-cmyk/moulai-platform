@@ -23,7 +23,7 @@ from fastapi import (
     HTTPException,
     Query,
     Path,
-    status,
+    status as http_status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -169,7 +169,7 @@ async def list_payments(
     """
     if owner_id is not None and owner_id != owner.owner_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=http_status.HTTP_403_FORBIDDEN,
             detail="Cannot access another owner's payments",
         )
     if restaurant_id is not None:
@@ -218,7 +218,7 @@ async def list_payments(
             extra={"error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=http_status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
     except Exception as e:
@@ -227,7 +227,7 @@ async def list_payments(
             extra={"error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب قائمة المدفوعات",
         )
 
@@ -286,7 +286,7 @@ async def get_payment(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except Exception as e:
@@ -298,7 +298,7 @@ async def get_payment(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب الدفع",
         )
 
@@ -367,7 +367,7 @@ async def get_payment_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except Exception as e:
@@ -379,7 +379,7 @@ async def get_payment_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب حالة الدفع",
         )
 
@@ -392,7 +392,7 @@ async def get_payment_status(
 @router.post(
     "/",
     response_model=PaymentResponse,
-    status_code=status.HTTP_201_CREATED,
+    status_code=http_status.HTTP_201_CREATED,
     summary="إنشاء دفع",
     description="إنشاء طلب دفع جديد",
 )
@@ -426,7 +426,7 @@ async def create_payment(
 
     if data.owner_id != owner.owner_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=http_status.HTTP_403_FORBIDDEN,
             detail="Cannot create a payment for another owner",
         )
     await require_owned_restaurant(
@@ -456,7 +456,7 @@ async def create_payment(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except ConflictError as e:
@@ -468,7 +468,7 @@ async def create_payment(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
+            status_code=http_status.HTTP_409_CONFLICT,
             detail=str(e),
         )
     except ValidationError as e:
@@ -480,7 +480,7 @@ async def create_payment(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=http_status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
     except Exception as e:
@@ -492,7 +492,7 @@ async def create_payment(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء إنشاء الدفع",
         )
 
@@ -662,7 +662,7 @@ async def refund_payment(
 
 @router.delete(
     "/{payment_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=http_status.HTTP_204_NO_CONTENT,
     summary="حذف دفع",
     description="حذف دفع موجود",
 )
@@ -728,7 +728,7 @@ async def get_payment_summary(
 
     if owner_id is not None and owner_id != owner.owner_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=http_status.HTTP_403_FORBIDDEN,
             detail="Cannot access another owner's payment summary",
         )
     if restaurant_id is not None:
@@ -751,7 +751,7 @@ async def get_payment_summary(
             extra={"error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب ملخص المدفوعات",
         )
 
@@ -836,6 +836,6 @@ async def get_subscription_payments(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب مدفوعات الاشتراك",
         )

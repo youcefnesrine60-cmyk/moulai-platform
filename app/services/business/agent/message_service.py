@@ -22,6 +22,7 @@ from typing import (
     Optional,
 )
 
+from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import (
@@ -29,6 +30,7 @@ from app.core.exceptions import (
     ValidationError,
 )
 from app.core.logger import logger
+from app.core.security.tenant_scope import bind_owner_scope
 from app.repositories.agent.message_repo import MessageRepository
 from app.repositories.agent.conversation_repo import ConversationRepository
 from app.schemas.agent.message import (
@@ -73,7 +75,9 @@ class MessageService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
+        owner_id: int,
     ) -> None:
         """
         تهيئة خدمة الرسائل.
@@ -81,6 +85,7 @@ class MessageService:
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
+        bind_owner_scope(session=session, owner_id=owner_id)
         self.session = session
         self.repo = MessageRepository(session)
         self.conversation_repo = ConversationRepository(session)
@@ -641,18 +646,25 @@ class MessageService:
                 message=f"المحادثة بـ ID '{conversation_id}' غير موجودة",
             )
 
-        # إضافة conversation_id إلى كل رسالة
-        for msg in messages:
-            msg["conversation_id"] = conversation_id
-            if "content_type" not in msg:
-                msg["content_type"] = "text"
-            if "entities" not in msg:
-                msg["entities"] = {}
-            if "meta_data" not in msg:
-                msg["meta_data"] = {}
+        if not conversation.is_active:
+            raise ValidationError(
+                message="Cannot add messages to an inactive conversation",
+            )
+
+        # Validate the complete batch before persistence. The explicit parent
+        # overrides untrusted row parents, and schema fields exclude raw IDs.
+        try:
+            normalized_messages = [
+                MessageCreate.model_validate(
+                    {**message, "conversation_id": conversation_id},
+                ).model_dump()
+                for message in messages
+            ]
+        except PydanticValidationError as error:
+            raise ValidationError(message="Invalid message data") from error
 
         created_messages = await self.repo.bulk_create_messages(
-            messages_data=messages,
+            messages_data=normalized_messages,
         )
         await self.session.commit()
 

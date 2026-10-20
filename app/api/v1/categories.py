@@ -37,7 +37,11 @@ from app.core.exceptions import (
     ValidationError,
 )
 
-from app.core.database import get_db
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    get_owner_tenant_db,
+)
 from app.core.logger import logger
 from app.schemas.categories import (
     CategoryCreate,
@@ -65,6 +69,7 @@ CategoryList = List[CategoryResponse]
 
 router = APIRouter(
     prefix="/categories",
+    dependencies=[Depends(get_current_owner)],
     tags=["Categories"],
 )
 
@@ -75,7 +80,8 @@ router = APIRouter(
 
 
 async def get_category_service(
-    session: AsyncSession = Depends(get_db),
+    owner: OwnerPrincipal = Depends(get_current_owner),
+    session: AsyncSession = Depends(get_owner_tenant_db),
 ) -> CategoryService:
     """
     الحصول على خدمة التصنيفات.
@@ -86,7 +92,7 @@ async def get_category_service(
     Returns:
         CategoryService: مثيل من CategoryService
     """
-    return CategoryService(session)
+    return CategoryService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
@@ -95,7 +101,8 @@ async def get_category_service(
 
 
 async def get_product_service(
-    session: AsyncSession = Depends(get_db),
+    owner: OwnerPrincipal = Depends(get_current_owner),
+    session: AsyncSession = Depends(get_owner_tenant_db),
 ) -> ProductService:
     """
     الحصول على خدمة المنتجات.
@@ -106,7 +113,7 @@ async def get_product_service(
     Returns:
         ProductService: مثيل من ProductService
     """
-    return ProductService(session)
+    return ProductService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
@@ -206,6 +213,8 @@ async def list_categories(
 
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_categories_error",
@@ -267,6 +276,8 @@ async def get_category(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_category_error",
@@ -332,6 +343,11 @@ async def create_category(
         )
         return category
 
+    except NotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(error),
+        ) from error
     except ConflictError as e:
         logger.warning(
             "api_create_category_conflict",
@@ -357,6 +373,8 @@ async def create_category(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_category_error",
@@ -453,6 +471,8 @@ async def update_category(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_category_error",
@@ -540,6 +560,8 @@ async def reorder_categories(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_reorder_categories_error",
@@ -612,6 +634,8 @@ async def delete_category(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_category_error",
@@ -686,6 +710,8 @@ async def get_category_summary(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_category_summary_error",
@@ -756,6 +782,8 @@ async def get_restaurant_categories(
         )
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_restaurant_categories_error",
@@ -854,6 +882,8 @@ async def get_category_products(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_category_products_error",

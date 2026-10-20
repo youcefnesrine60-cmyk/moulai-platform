@@ -27,7 +27,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 # 📦 IMPORT MODELS
 # ==============================================
 
-from app.core.config import settings
+from app.core.config import (
+    Settings,
+    settings,
+)
 from app.core.test_database import (
     isolated_connection_arguments,
     read_test_database_identity,
@@ -35,12 +38,21 @@ from app.core.test_database import (
     validated_test_database_url,
 )
 from app.models import Base
+from migration_support.tenant_e1 import build_target_metadata
 
 # ==============================================
 # 🔧 ALEMBIC CONFIG
 # ==============================================
 
 config = context.config
+
+# A reviewed launcher can supply its central Settings and pinned connection.
+# Generic test-history execution retains the original configuration path.
+if config.attributes.get("connection") is not None:
+    supplied_settings = config.attributes.get("moulai_rehearsal_settings")
+    if not isinstance(supplied_settings, Settings):
+        raise RuntimeError("Pinned test migrations require explicit central Settings")
+    settings = supplied_settings
 
 # ==============================================
 # 🗂️ SET ISOLATED TEST DATABASE URL
@@ -81,7 +93,8 @@ if config.config_file_name is not None:
 # 🎯 TARGET METADATA
 # ==============================================
 
-target_metadata = Base.metadata
+# Copy complete legacy tables; retain all test-isolation preflight protections.
+target_metadata = build_target_metadata(legacy_metadata=Base.metadata)
 
 
 # ==============================================
@@ -157,7 +170,15 @@ async def run_async_migrations() -> None:
 
 def run_migrations_online() -> None:
     """تشغيل الترحيلات في وضع Online (الواجهة العامة)"""
-    asyncio.run(run_async_migrations())
+    supplied_connection = config.attributes.get("connection")
+    if supplied_connection is not None:
+        admission = config.attributes.get("moulai_rehearsal_admission")
+        if not isinstance(supplied_connection, Connection) or not callable(admission):
+            raise RuntimeError("Pinned test migrations require connection admission")
+        admission(supplied_connection)
+        do_run_migrations(supplied_connection)
+    else:
+        asyncio.run(run_async_migrations())
 
 
 # ==============================================

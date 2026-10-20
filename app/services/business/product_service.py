@@ -31,6 +31,7 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
+    TypeAlias,
 )
 
 from sqlalchemy import (
@@ -38,6 +39,7 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import Select
 
 from app.core.exceptions import (
     ConflictError,
@@ -46,8 +48,11 @@ from app.core.exceptions import (
 )
 from app.core.logger import logger
 from app.core.security import sanitize_input
+from app.core.security.tenant_scope import bind_owner_scope
+from app.models.category import Category
 from app.models.order_item import OrderItem
 from app.models.product import Product
+from app.models.restaurant import Restaurant
 from app.repositories.products_repo import ProductRepository
 from app.repositories.restaurant.restaurant_metrics_repo import (
     RestaurantMetricsRepository,
@@ -77,8 +82,19 @@ MAX_PRODUCT_PRICE = 10000000.0  # 10,000,000 DZD
 # 🧩 TYPES
 # ==============================================
 
-ProductData = dict[str, Any]
-ProductList = list[Product]
+ProductData: TypeAlias = dict[str, Any]
+ProductList: TypeAlias = list[Product]
+
+
+# ==============================================
+# BASE SELECT
+# ==============================================
+
+
+def _base_product_category_select() -> Select[tuple[int]]:
+    """Resolve a category through its restaurant before product mutations."""
+    return select(Category.id).join(Restaurant, Category.restaurant_id == Restaurant.id)
+
 
 # ==============================================
 # 🍔 PRODUCT SERVICE
@@ -107,7 +123,9 @@ class ProductService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
+        owner_id: int,
     ) -> None:
         """
         تهيئة خدمة المنتجات.
@@ -115,6 +133,8 @@ class ProductService:
         Args:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
+        bind_owner_scope(session=session, owner_id=owner_id)
+        self.owner_id = owner_id
         self.session = session
         self.repo = ProductRepository(session)
         self.metrics_repo = RestaurantMetricsRepository(session)
@@ -122,6 +142,27 @@ class ProductService:
     # ==========================================
     # 🛠️ PRIVATE HELPERS
     # ==========================================
+
+    # ==============================================
+    # REQUIRE PRODUCT CATEGORY RESTAURANT
+    # ==============================================
+
+    async def _require_category_restaurant(
+        self,
+        *,
+        category_id: int,
+        restaurant_id: int,
+    ) -> None:
+        """Reject a category outside the product restaurant before any mutation."""
+        result = await self.session.execute(
+            _base_product_category_select().where(
+                Category.id == category_id,
+                Category.restaurant_id == restaurant_id,
+                Restaurant.owner_id == self.owner_id,
+            )
+        )
+        if result.scalar_one_or_none() is None:
+            raise NotFoundError(message="Category not found in this restaurant")
 
     # ==============================================
     # COUNT ORDERS BY PRODUCT
@@ -521,6 +562,10 @@ class ProductService:
             ConflictError: إذا كان الاسم مكرراً للمطعم
             ValidationError: إذا كانت البيانات غير صالحة
         """
+        await self._require_category_restaurant(
+            category_id=product_data.category_id,
+            restaurant_id=restaurant_id,
+        )
         name = sanitize_input(product_data.name)
         description = (
             sanitize_input(product_data.description)
@@ -661,6 +706,11 @@ class ProductService:
 
         # 2️⃣ تحضير بيانات التحديث
         updates = update_data.model_dump(exclude_unset=True)
+        if "category_id" in updates:
+            await self._require_category_restaurant(
+                category_id=updates["category_id"],
+                restaurant_id=existing_product.restaurant_id,
+            )
 
         # 3️⃣ تنظيف البيانات
         if "name" in updates:

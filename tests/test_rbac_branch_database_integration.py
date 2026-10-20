@@ -176,7 +176,9 @@ async def test_branch_creation_persists_branch_and_increments_usage(
         suffix="allow",
     )
 
-    response = await BranchService(db_session).create_branch(
+    response = await BranchService(
+        session=db_session, owner_id=restaurant.owner_id
+    ).create_branch(
         restaurant_id=restaurant.id,
         branch_data=BranchCreate(name="Integration branch"),
     )
@@ -196,7 +198,13 @@ async def test_branch_creation_persists_branch_and_increments_usage(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("include_subscription", "include_feature", "monthly_limit", "usage_count", "error_code"),
+    (
+        "include_subscription",
+        "include_feature",
+        "monthly_limit",
+        "usage_count",
+        "error_code",
+    ),
     [
         (False, True, 2, 0, "no_active_subscription"),
         (True, False, 2, 0, "feature_not_available"),
@@ -222,7 +230,9 @@ async def test_branch_feature_guard_rejects_persisted_invalid_states(
     )
 
     with pytest.raises(ForbiddenError) as captured:
-        await BranchService(db_session).create_branch(
+        await BranchService(
+            session=db_session, owner_id=restaurant.owner_id
+        ).create_branch(
             restaurant_id=restaurant.id,
             branch_data=BranchCreate(name=f"Denied {error_code}"),
         )

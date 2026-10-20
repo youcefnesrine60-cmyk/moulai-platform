@@ -19,6 +19,10 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
+from sqlalchemy import (
+    Select,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import SessionTransactionOrigin
 
@@ -32,11 +36,11 @@ from app.core.exceptions import (
 from app.core.logger import logger
 
 # ✅ استيراد دوال الأمان (للتحقق من الصلاحيات)
-from app.core.security import (
-    sanitize_input,
-)
+from app.core.security import sanitize_input
+from app.core.security.tenant_scope import bind_owner_scope
 from app.guards.feature_guard import require_feature
 from app.models.branch import Branch
+from app.models.restaurant import Restaurant
 from app.repositories.branch_pricing_repo import BranchPricingRepository
 from app.repositories.branches_repo import BranchesRepository
 
@@ -68,6 +72,12 @@ MAX_BRANCHES_PER_RESTAURANT = 10
 
 BranchData = dict[str, Any]
 BranchList = list[Branch]
+
+
+def _base_restaurant_select() -> Select[tuple[int]]:
+    """Select restaurant identifiers before applying authenticated owner scope."""
+    return select(Restaurant.id)
+
 
 # ==============================================
 # 🔒 BRANCH TRANSACTION BOUNDARY
@@ -130,7 +140,9 @@ class BranchService:
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
+        owner_id: int,
     ) -> None:
         """
         تهيئة خدمة الفروع.
@@ -139,8 +151,73 @@ class BranchService:
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         self.session = session
+        self.owner_id = owner_id
+        bind_owner_scope(session=session, owner_id=owner_id)
         self.repo = BranchesRepository(session)
         self.pricing_repo = BranchPricingRepository(session)
+
+    # ==============================================
+    # AUTHENTICATED RESTAURANT OWNERSHIP
+    # ==============================================
+
+    async def _require_owned_restaurant(
+        self, *, restaurant_id: int, for_update: bool = False
+    ) -> None:
+        """Reject inaccessible parents before feature checks or branch operations."""
+        statement = _base_restaurant_select().where(
+            Restaurant.id == restaurant_id,
+            Restaurant.owner_id == self.owner_id,
+        )
+        if for_update:
+            statement = statement.with_for_update()
+        restaurant = await self.session.scalar(statement)
+        if restaurant is None:
+            raise NotFoundError(message="Restaurant not found")
+
+    async def _get_locked_branch(self, *, branch_id: int) -> Branch:
+        """Lock the owned parent first, then its branch, before counter changes."""
+        restaurant_id = await self.session.scalar(
+            select(Branch.restaurant_id).where(Branch.id == branch_id)
+        )
+        if restaurant_id is None:
+            raise NotFoundError(message="Branch not found")
+        await self._require_owned_restaurant(
+            restaurant_id=restaurant_id, for_update=True
+        )
+        branch = await self.repo.get_for_update(branch_id=branch_id)
+        if branch is None or branch.restaurant_id != restaurant_id:
+            raise NotFoundError(message="Branch not found")
+        return branch
+
+    async def _require_branch_entitlement(self, *, restaurant_id: int) -> None:
+        """Check subscription access without treating a branch ID as permission."""
+        try:
+            await require_feature(
+                session=self.session,
+                restaurant_id=restaurant_id,
+                feature_id=BRANCH_FEATURE_ID,
+            )
+        except ValueError as error:
+            error_code = str(error)
+            if error_code not in {
+                "no_active_subscription",
+                "feature_not_available",
+                "feature_limit_reached",
+            }:
+                raise
+            raise ForbiddenError(message=error_code, error_code=error_code) from error
+
+    async def _require_branch_capacity(self, *, restaurant_id: int) -> None:
+        """Enforce the active-branch cap while holding the restaurant row lock."""
+        count = await self.count_by_restaurant(
+            restaurant_id=restaurant_id, only_active=True
+        )
+        if count >= MAX_BRANCHES_PER_RESTAURANT:
+            raise BranchLimitExceededError(
+                restaurant_id=restaurant_id,
+                max_branches=MAX_BRANCHES_PER_RESTAURANT,
+                message=f"Active branch capacity ({MAX_BRANCHES_PER_RESTAURANT}) exceeded",
+            )
 
     # ==========================================
     # 📖 QUERIES
@@ -217,6 +294,7 @@ class BranchService:
             },
         )
 
+        await self._require_owned_restaurant(restaurant_id=restaurant_id)
         branches = await self.repo.get_by_restaurant_id(
             restaurant_id=restaurant_id,
             skip=skip,
@@ -264,6 +342,7 @@ class BranchService:
             },
         )
 
+        await self._require_owned_restaurant(restaurant_id=restaurant_id)
         return await self.repo.count_by_restaurant(
             restaurant_id=restaurant_id,
             only_active=only_active,
@@ -293,6 +372,9 @@ class BranchService:
         Returns:
             BranchListResponse: قائمة الفروع مع الإحصائيات
         """
+        if restaurant_id is not None:
+            await self._require_owned_restaurant(restaurant_id=restaurant_id)
+
         # تنظيف النص
         clean_query = sanitize_input(query)
 
@@ -459,38 +541,12 @@ class BranchService:
         )
 
         async with branch_transaction(self.session):
-            if not skip_feature_check:
-                try:
-                    await require_feature(
-                        session=self.session,
-                        restaurant_id=restaurant_id,
-                        feature_id=BRANCH_FEATURE_ID,
-                    )
-                except ValueError as error:
-                    error_code = str(error)
-                    if error_code not in {
-                        "no_active_subscription",
-                        "feature_not_available",
-                        "feature_limit_reached",
-                    }:
-                        raise
-                    raise ForbiddenError(
-                        message=error_code,
-                        error_code=error_code,
-                    ) from error
-
-            current_count = await self.count_by_restaurant(
-                restaurant_id=restaurant_id,
-                only_active=True,
+            await self._require_owned_restaurant(
+                restaurant_id=restaurant_id, for_update=True
             )
-            if current_count >= MAX_BRANCHES_PER_RESTAURANT:
-                raise BranchLimitExceededError(
-                    restaurant_id=restaurant_id,
-                    max_branches=MAX_BRANCHES_PER_RESTAURANT,
-                    message=(
-                        "تجاوزت الحد الأقصى للفروع " f"({MAX_BRANCHES_PER_RESTAURANT})"
-                    ),
-                )
+            if not skip_feature_check:
+                await self._require_branch_entitlement(restaurant_id=restaurant_id)
+            await self._require_branch_capacity(restaurant_id=restaurant_id)
 
             existing = await self.repo.get_by_name(
                 restaurant_id=restaurant_id,
@@ -679,29 +735,19 @@ class BranchService:
             extra={"branch_id": branch_id},
         )
 
-        branch = await self.repo.get_by_id(id=branch_id)
-
-        if not branch:
-            raise NotFoundError(
-                message=f"الفرع بـ ID '{branch_id}' غير موجود",
+        async with branch_transaction(self.session):
+            branch = await self._get_locked_branch(branch_id=branch_id)
+            if not branch.is_active:
+                return branch
+            restaurant_id = branch.restaurant_id
+            updated = await self.repo.deactivate(branch_id=branch_id)
+            if updated is None:
+                raise NotFoundError(message="Branch not found")
+            await decrease_usage(
+                session=self.session,
+                restaurant_id=restaurant_id,
+                feature_id=BRANCH_FEATURE_ID,
             )
-
-        restaurant_id = branch.restaurant_id
-
-        # إلغاء تفعيل الفرع
-        updated = await self.repo.deactivate(branch_id=branch_id)
-
-        if not updated:
-            raise NotFoundError(
-                message=f"الفرع بـ ID '{branch_id}' غير موجود",
-            )
-
-        # تقليل عداد استخدام الميزة
-        await decrease_usage(
-            session=self.session,
-            restaurant_id=restaurant_id,
-            feature_id=BRANCH_FEATURE_ID,
-        )
 
         logger.info(
             "branch_deactivated_successfully",
@@ -739,28 +785,21 @@ class BranchService:
             extra={"branch_id": branch_id},
         )
 
-        branch = await self.repo.get_by_id(id=branch_id)
-
-        if not branch:
-            raise NotFoundError(
-                message=f"الفرع بـ ID '{branch_id}' غير موجود",
+        async with branch_transaction(self.session):
+            branch = await self._get_locked_branch(branch_id=branch_id)
+            if branch.is_active:
+                return branch
+            restaurant_id = branch.restaurant_id
+            await self._require_branch_entitlement(restaurant_id=restaurant_id)
+            await self._require_branch_capacity(restaurant_id=restaurant_id)
+            updated = await self.repo.activate(branch_id=branch_id)
+            if updated is None:
+                raise NotFoundError(message="Branch not found")
+            await increase_usage(
+                session=self.session,
+                restaurant_id=restaurant_id,
+                feature_id=BRANCH_FEATURE_ID,
             )
-
-        restaurant_id = branch.restaurant_id
-
-        # تفعيل الفرع
-        updated = await self.repo.activate(branch_id=branch_id)
-
-        if not updated:
-            raise NotFoundError(
-                message=f"الفرع بـ ID '{branch_id}' غير موجود",
-            )
-
-        # زيادة عداد استخدام الميزة
-        await increase_usage(
-            restaurant_id=restaurant_id,
-            feature_id=BRANCH_FEATURE_ID,
-        )
 
         logger.info(
             "branch_activated_successfully",
@@ -800,28 +839,22 @@ class BranchService:
             },
         )
 
-        branch = await self.repo.get_by_id(id=branch_id)
-
-        if not branch:
-            raise NotFoundError(
-                message=f"الفرع بـ ID '{branch_id}' غير موجود",
-            )
-
-        restaurant_id = branch.restaurant_id
-
-        if permanent:
-            # حذف فعلي
-            await self.repo.delete(id=branch_id)
-        else:
-            # حذف منطقي (تعيين is_active = False)
-            await self.repo.deactivate(branch_id=branch_id)
-
-        # تقليل عداد استخدام الميزة
-        await decrease_usage(
-            session=self.session,
-            restaurant_id=restaurant_id,
-            feature_id=BRANCH_FEATURE_ID,
-        )
+        async with branch_transaction(self.session):
+            branch = await self._get_locked_branch(branch_id=branch_id)
+            restaurant_id = branch.restaurant_id
+            was_active = branch.is_active
+            if permanent:
+                await self.repo.delete(id=branch_id)
+            elif was_active:
+                await self.repo.deactivate(branch_id=branch_id)
+            else:
+                return
+            if was_active:
+                await decrease_usage(
+                    session=self.session,
+                    restaurant_id=restaurant_id,
+                    feature_id=BRANCH_FEATURE_ID,
+                )
 
         logger.info(
             "branch_deleted_successfully",

@@ -15,16 +15,26 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import (
+    datetime,
+    timedelta,
+    timezone,
+)
 from types import SimpleNamespace
 
 from cryptography.hazmat.primitives.asymmetric import rsa
 import jwt
 import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import (
+    FastAPI,
+    HTTPException,
+)
 from fastapi.routing import APIRoute
 from fastapi.security import HTTPAuthorizationCredentials
-from fastapi.testclient import TestClient
+from httpx import (
+    ASGITransport,
+    AsyncClient,
+)
 
 from app.api import auth
 from app.api.v1 import orders
@@ -356,11 +366,17 @@ def test_every_orders_route_requires_authenticated_owner():
 # ==============================================
 
 
-def test_orders_http_endpoint_rejects_requests_without_bearer_token():
+@pytest.mark.asyncio
+async def test_orders_http_endpoint_rejects_requests_without_bearer_token() -> None:
+    """Reject missing credentials through the asynchronous ASGI transport."""
     app = FastAPI()
     app.include_router(orders.router)
 
-    response = TestClient(app).get("/orders/", params={"restaurant_id": 18})
+    async with AsyncClient(
+        transport=ASGITransport(app=app),
+        base_url="http://testserver",
+    ) as client:
+        response = await client.get("/orders/", params={"restaurant_id": 18})
 
     assert response.status_code == 401
     assert response.headers["www-authenticate"] == "Bearer"

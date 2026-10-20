@@ -14,7 +14,12 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from fastapi import APIRouter
+from fastapi import (
+    APIRouter,
+    Depends,
+)
+
+from app.api.auth import require_admin_permission
 
 # ==============================================
 # 📦 IMPORT SUB-ROUTERS
@@ -42,7 +47,12 @@ from app.api.v1.restaurant.branches import router as branches_router
 # 📋 MAIN ROUTER
 # ==============================================
 
-router = APIRouter()
+# This aggregate exposes global owner selection, operational counters, and
+# payment configuration. It is an administrative API, not owner self-service.
+require_restaurant_administration = require_admin_permission("restaurants.manage")
+router = APIRouter(
+    dependencies=[Depends(require_restaurant_administration)],
+)
 
 router.include_router(restaurants_router)
 router.include_router(metrics_router)

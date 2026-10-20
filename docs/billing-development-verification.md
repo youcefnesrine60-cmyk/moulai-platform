@@ -2,6 +2,34 @@
 
 Report date: 2026-10-15. The production migration remains deferred; renewed authorization is not being requested at this stage.
 
+## Approved environment organization — 2026-10-20
+
+The user confirmed the following permanent separation. This section records
+the decision; the dated verification results below retain their original scope.
+
+| Configuration / environment | Purpose | Required protection |
+| --- | --- | --- |
+| `DATABASE_URL` — production Neon | Production database connection. | Changes require explicit approval. Preserve production exclusions and identity checks. |
+| `TEST_DATABASE_URL` — development Neon / `neondb_test` | Official development and controlled PostgreSQL validation environment. | Preserve verified project/branch/endpoint identity, TLS and revision checks. No uncontrolled truncation, reset or migration. |
+| Isolated local PostgreSQL / `LOCAL_POSTGRES_TEST_*` | Automated tests requiring resets, committed transactions and independent sessions. | Use the dedicated launcher, exact loopback/database/role allowlist and instance attestation; never fall back to either Neon URL. |
+
+The local PostgreSQL 18.3 campaign is **accepted: 110 executed, 110 passed,
+zero failures and zero skips**. The issue of the 110 skipped tests is
+**RESOLVED**. Results were observed on 2026-10-19 and accepted on 2026-10-20;
+acceptance does not constitute another execution. Code and evidence are retained.
+
+Use the [local PostgreSQL launcher](local-postgres-tests.md) for this resettable
+selection. Do not repeat it on Neon without an identified technical need and
+a reviewed operation scope. Neon remains the official development/validation
+environment; the local test profile does not replace it or authorize remote DDL.
+Keep DEBUG/DB_ECHO and both OIDC diagnostic flags false. This documentation update
+changes no settings, databases or protection logic.
+
+The approved delivery order is **K10 — Authorization MoulAI™ → Frontend →
+Business integration → K11 — Production Security → Pilot**.
+[K10 is now closed for its validated scope](keycloak-k10-validation.md);
+Frontend is next. Existing business-route integration remains a separate step.
+
 ## Work Completed Locally
 
 - The tools verified the working directory `D:\MoulAI` and connection target without displaying passwords or a DSN. During the first check on 2026-10-15, the test URL still used the old production endpoint, so execution stopped before connecting. This condition has been **resolved**: the user confirmed the development endpoint and configured the connection locally, after which the actual read-only verification documented below succeeded.

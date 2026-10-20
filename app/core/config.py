@@ -248,7 +248,15 @@ class Settings(BaseSettings):
     )
     OIDC_JWKS_URL: str | None = Field(
         default=None,
-        description="HTTPS URL of the trusted provider's JWKS endpoint",
+        description="Trusted provider JWKS URL; HTTPS required for business access",
+    )
+    OIDC_DIAGNOSTICS_ENABLED: bool = Field(
+        default=False,
+        description="Enable protected OIDC diagnostics in isolated local development",
+    )
+    OIDC_ALLOW_LOCAL_HTTP: bool = Field(
+        default=False,
+        description="Allow loopback HTTP Keycloak only for local OIDC diagnostics",
     )
 
     # ==========================================

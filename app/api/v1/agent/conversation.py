@@ -16,7 +16,11 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from typing import Optional, Any, Dict
+from typing import (
+    Any,
+    Dict,
+    Optional,
+)
 
 from fastapi import (
     APIRouter,
@@ -24,11 +28,15 @@ from fastapi import (
     HTTPException,
     Query,
     Path,
-    status,
+    status as http_status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    get_owner_tenant_db,
+)
 from app.core.logger import logger
 from app.core.exceptions import (
     NotFoundError,
@@ -49,6 +57,7 @@ from app.services.business.agent.conversation_service import ConversationService
 
 router = APIRouter(
     prefix="/conversations",
+    dependencies=[Depends(get_current_owner)],
     tags=["💬 Conversations"],
 )
 
@@ -59,7 +68,9 @@ router = APIRouter(
 
 
 async def get_conversation_service(
-    session: AsyncSession = Depends(get_db),
+    *,
+    owner: OwnerPrincipal = Depends(get_current_owner),
+    session: AsyncSession = Depends(get_owner_tenant_db),
 ) -> ConversationService:
     """
     الحصول على خدمة المحادثات.
@@ -70,12 +81,142 @@ async def get_conversation_service(
     Returns:
         ConversationService: مثيل من ConversationService
     """
-    return ConversationService(session)
+    return ConversationService(session=session, owner_id=owner.owner_id)
 
 
 # ==============================================
 # 📋 ENDPOINTS
 # ==============================================
+
+# ==============================================
+# GET CONVERSATION BY USER
+# ==============================================
+
+
+@router.get(
+    "/user",
+    response_model=Optional[ConversationResponse],
+    summary="الحصول على محادثة حسب المستخدم",
+    description="الحصول على محادثة محددة حسب معرف المستخدم",
+)
+async def get_conversation_by_user(
+    *,
+    agent_id: int = Query(..., ge=1, description="معرف الوكيل"),
+    user_id: str = Query(..., description="معرف المستخدم"),
+    only_active: bool = Query(True, description="جلب المحادثة النشطة فقط"),
+    service: ConversationService = Depends(get_conversation_service),
+) -> Optional[ConversationResponse]:
+    """
+    الحصول على محادثة حسب معرف المستخدم.
+
+    Args:
+        agent_id: معرف الوكيل
+        user_id: معرف المستخدم
+        only_active: جلب المحادثة النشطة فقط
+
+    Returns:
+        Optional[ConversationResponse]: المحادثة المطلوبة أو None
+    """
+    logger.info(
+        "api_get_conversation_by_user",
+        extra={
+            "agent_id": agent_id,
+            "user_id": user_id,
+            "only_active": only_active,
+        },
+    )
+
+    try:
+        return await service.get_by_user(
+            agent_id=agent_id,
+            user_id=user_id,
+            only_active=only_active,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(
+            "api_get_conversation_by_user_error",
+            extra={
+                "agent_id": agent_id,
+                "user_id": user_id,
+                "error": str(e),
+            },
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="حدث خطأ أثناء جلب المحادثة حسب المستخدم",
+        )
+
+
+# ==============================================
+# SEARCH CONVERSATIONS
+# ==============================================
+
+
+@router.get(
+    "/search",
+    response_model=ConversationListResponse,
+    summary="البحث عن المحادثات",
+    description="البحث عن المحادثات باستخدام كلمات مفتاحية",
+)
+async def search_conversations(
+    *,
+    query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
+    agent_id: Optional[int] = Query(None, ge=1, description="معرف الوكيل (اختياري)"),
+    only_active: bool = Query(True, description="جلب المحادثات النشطة فقط"),
+    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
+    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
+    service: ConversationService = Depends(get_conversation_service),
+) -> ConversationListResponse:
+    """
+    البحث عن المحادثات.
+
+    Args:
+        query: نص البحث
+        agent_id: معرف الوكيل (اختياري)
+        only_active: جلب المحادثات النشطة فقط
+        skip: عدد السجلات للتخطي
+        limit: الحد الأقصى للسجلات
+
+    Returns:
+        ConversationListResponse: قائمة المحادثات مع الإحصائيات
+    """
+    logger.info(
+        "api_search_conversations",
+        extra={
+            "query": query,
+            "agent_id": agent_id,
+            "only_active": only_active,
+        },
+    )
+
+    try:
+        return await service.search(
+            query=query,
+            agent_id=agent_id,
+            only_active=only_active,
+            skip=skip,
+            limit=limit,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(
+            "api_search_conversations_error",
+            extra={
+                "query": query,
+                "agent_id": agent_id,
+                "error": str(e),
+            },
+        )
+        raise HTTPException(
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="حدث خطأ أثناء البحث عن المحادثات",
+        )
+
 
 # ==============================================
 # CREATE CONVERSATION
@@ -85,7 +226,7 @@ async def get_conversation_service(
 @router.post(
     "/",
     response_model=ConversationResponse,
-    status_code=status.HTTP_201_CREATED,
+    status_code=http_status.HTTP_201_CREATED,
     summary="إنشاء محادثة جديدة",
     description="إنشاء محادثة جديدة في النظام",
 )
@@ -128,7 +269,7 @@ async def create_conversation(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except ValidationError as e:
@@ -141,9 +282,11 @@ async def create_conversation(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=http_status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_create_conversation_error",
@@ -154,7 +297,7 @@ async def create_conversation(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء إنشاء المحادثة",
         )
 
@@ -213,9 +356,11 @@ async def get_conversation_by_id(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_conversation_by_id_error",
@@ -225,7 +370,7 @@ async def get_conversation_by_id(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب المحادثة",
         )
 
@@ -284,9 +429,11 @@ async def get_conversation_with_messages(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_conversation_with_messages_error",
@@ -296,68 +443,8 @@ async def get_conversation_with_messages(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب المحادثة مع الرسائل",
-        )
-
-
-# ==============================================
-# GET CONVERSATION BY USER
-# ==============================================
-
-
-@router.get(
-    "/user",
-    response_model=Optional[ConversationResponse],
-    summary="الحصول على محادثة حسب المستخدم",
-    description="الحصول على محادثة محددة حسب معرف المستخدم",
-)
-async def get_conversation_by_user(
-    *,
-    agent_id: int = Query(..., ge=1, description="معرف الوكيل"),
-    user_id: str = Query(..., description="معرف المستخدم"),
-    only_active: bool = Query(True, description="جلب المحادثة النشطة فقط"),
-    service: ConversationService = Depends(get_conversation_service),
-) -> Optional[ConversationResponse]:
-    """
-    الحصول على محادثة حسب معرف المستخدم.
-
-    Args:
-        agent_id: معرف الوكيل
-        user_id: معرف المستخدم
-        only_active: جلب المحادثة النشطة فقط
-
-    Returns:
-        Optional[ConversationResponse]: المحادثة المطلوبة أو None
-    """
-    logger.info(
-        "api_get_conversation_by_user",
-        extra={
-            "agent_id": agent_id,
-            "user_id": user_id,
-            "only_active": only_active,
-        },
-    )
-
-    try:
-        return await service.get_by_user(
-            agent_id=agent_id,
-            user_id=user_id,
-            only_active=only_active,
-        )
-
-    except Exception as e:
-        logger.exception(
-            "api_get_conversation_by_user_error",
-            extra={
-                "agent_id": agent_id,
-                "user_id": user_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء جلب المحادثة حسب المستخدم",
         )
 
 
@@ -419,9 +506,11 @@ async def list_conversations_by_agent(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_conversations_by_agent_error",
@@ -431,7 +520,7 @@ async def list_conversations_by_agent(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب قائمة المحادثات",
         )
 
@@ -495,9 +584,11 @@ async def list_conversations_by_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=http_status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_list_conversations_by_status_error",
@@ -508,74 +599,8 @@ async def list_conversations_by_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب قائمة المحادثات حسب الحالة",
-        )
-
-
-# ==============================================
-# SEARCH CONVERSATIONS
-# ==============================================
-
-
-@router.get(
-    "/search",
-    response_model=ConversationListResponse,
-    summary="البحث عن المحادثات",
-    description="البحث عن المحادثات باستخدام كلمات مفتاحية",
-)
-async def search_conversations(
-    *,
-    query: str = Query(..., min_length=1, max_length=100, description="نص البحث"),
-    agent_id: Optional[int] = Query(None, ge=1, description="معرف الوكيل (اختياري)"),
-    only_active: bool = Query(True, description="جلب المحادثات النشطة فقط"),
-    skip: int = Query(0, ge=0, description="عدد السجلات للتخطي"),
-    limit: int = Query(100, ge=1, le=200, description="الحد الأقصى للسجلات"),
-    service: ConversationService = Depends(get_conversation_service),
-) -> ConversationListResponse:
-    """
-    البحث عن المحادثات.
-
-    Args:
-        query: نص البحث
-        agent_id: معرف الوكيل (اختياري)
-        only_active: جلب المحادثات النشطة فقط
-        skip: عدد السجلات للتخطي
-        limit: الحد الأقصى للسجلات
-
-    Returns:
-        ConversationListResponse: قائمة المحادثات مع الإحصائيات
-    """
-    logger.info(
-        "api_search_conversations",
-        extra={
-            "query": query,
-            "agent_id": agent_id,
-            "only_active": only_active,
-        },
-    )
-
-    try:
-        return await service.search(
-            query=query,
-            agent_id=agent_id,
-            only_active=only_active,
-            skip=skip,
-            limit=limit,
-        )
-
-    except Exception as e:
-        logger.exception(
-            "api_search_conversations_error",
-            extra={
-                "query": query,
-                "agent_id": agent_id,
-                "error": str(e),
-            },
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="حدث خطأ أثناء البحث عن المحادثات",
         )
 
 
@@ -633,7 +658,7 @@ async def update_conversation(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except ValidationError as e:
@@ -645,9 +670,11 @@ async def update_conversation(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=http_status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_conversation_error",
@@ -657,7 +684,7 @@ async def update_conversation(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء تحديث المحادثة",
         )
 
@@ -715,9 +742,11 @@ async def update_conversation_context(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_conversation_context_error",
@@ -727,7 +756,7 @@ async def update_conversation_context(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء تحديث سياق المحادثة",
         )
 
@@ -786,7 +815,7 @@ async def update_conversation_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except ValidationError as e:
@@ -799,9 +828,11 @@ async def update_conversation_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=http_status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_update_conversation_status_error",
@@ -812,7 +843,7 @@ async def update_conversation_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء تحديث حالة المحادثة",
         )
 
@@ -865,9 +896,11 @@ async def toggle_conversation_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_toggle_conversation_status_error",
@@ -877,7 +910,7 @@ async def toggle_conversation_status(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء تبديل حالة المحادثة",
         )
 
@@ -889,7 +922,7 @@ async def toggle_conversation_status(
 
 @router.delete(
     "/{conversation_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=http_status.HTTP_204_NO_CONTENT,
     summary="حذف محادثة",
     description="حذف محادثة موجودة",
 )
@@ -932,7 +965,7 @@ async def delete_conversation(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
     except ValidationError as e:
@@ -944,9 +977,11 @@ async def delete_conversation(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=http_status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_delete_conversation_error",
@@ -956,7 +991,7 @@ async def delete_conversation(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء حذف المحادثة",
         )
 
@@ -1017,9 +1052,11 @@ async def get_conversation_statistics(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=http_status.HTTP_404_NOT_FOUND,
             detail=str(e),
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(
             "api_get_conversation_statistics_error",
@@ -1029,6 +1066,6 @@ async def get_conversation_statistics(
             },
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            status_code=http_status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="حدث خطأ أثناء جلب إحصائيات المحادثات",
         )

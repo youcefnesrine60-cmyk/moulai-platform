@@ -13,11 +13,18 @@
 """Unit tests for fail-closed branch feature access and its unit of work."""
 
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import (
+    datetime,
+    timezone,
+)
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import (
+    AsyncMock,
+    MagicMock,
+)
 
 import pytest
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ForbiddenError
 from app.schemas.branch import BranchCreate
@@ -54,7 +61,9 @@ def build_branch() -> SimpleNamespace:
 
 def build_service() -> BranchService:
     """Build a service with an isolated repository and session."""
-    service = BranchService(session=MagicMock())
+    service = BranchService(session=AsyncSession(), owner_id=7)
+    service._require_owned_restaurant = AsyncMock()
+    service._get_locked_branch = AsyncMock(return_value=build_branch())
     service.repo = MagicMock()
     service.repo.get_by_name = AsyncMock(return_value=None)
     service.repo.create = AsyncMock(return_value=build_branch())

@@ -32,7 +32,10 @@ from sqlalchemy import (
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import raiseload, selectinload
+from sqlalchemy.orm import (
+    raiseload,
+    selectinload,
+)
 
 from app.core.logger import logger
 from app.models.product import Product
@@ -101,6 +104,28 @@ class ProductRepository(BaseRepository[Product, dict, dict]):
     # ==========================================
     # 📖 QUERIES
     # ==========================================
+
+    # ==============================================
+    # GET BY RESTAURANT AND NAME
+    # ==============================================
+
+    async def get_by_name(
+        self,
+        *,
+        restaurant_id: int,
+        name: str,
+    ) -> Product | None:
+        """Resolve a duplicate name inside the selected restaurant and owner scope."""
+        result = await self.session.execute(
+            self._select()
+            .options(raiseload("*"))
+            .where(
+                self.model.restaurant_id == restaurant_id,
+                self.model.name == name,
+            )
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
 
     # ==============================================
     # GET BY RESTAURANT ID

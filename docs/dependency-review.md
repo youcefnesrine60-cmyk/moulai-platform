@@ -98,10 +98,12 @@ selection; they are not additional distinct tests. It exercised pytest-cov
 Version 7 changed subprocess coverage behavior, as documented in the
 [pytest-cov changelog](https://pytest-cov.readthedocs.io/en/latest/changelog.html).
 
-The 322-case run retains one `StarletteDeprecationWarning`: Starlette's test
-client deprecates its HTTPX backend in favor of httpx2. No warning filter or
-extra HTTP client was added. The existing application HTTPX transport remains
-unchanged; migration of the optional test-client backend is separate work.
+The historical 322-case run recorded one `StarletteDeprecationWarning` from
+Starlette's legacy TestClient HTTPX backend. The subsequent API authorization
+review replaced both remaining TestClient regressions with HTTPX
+`ASGITransport`. No warning suppression or additional HTTP client was added.
+The offline runner now treats warnings as errors. See the dated execution in
+[API testing](api-testing.md) for the current complete-suite result.
 
 An initial guarded run detected and blocked an import-side Redis lookup.
 That result was retained separately before the corrected process configuration

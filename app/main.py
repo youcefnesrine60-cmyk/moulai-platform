@@ -22,6 +22,9 @@ from fastapi.middleware.cors import CORSMiddleware
 # 📦 IMPORT ROUTERS
 # ==============================================
 
+# ---------- Authentication ----------
+from app.api.auth import oidc_diagnostics_available
+
 # ---------- Admin ----------
 from app.api.v1.admin import (
     admin_log_router,
@@ -40,6 +43,7 @@ from app.api.v1.agent import (
 # ---------- Standalone API v1 ----------
 from app.api.v1.branches import router as branches_router
 from app.api.v1.categories import router as categories_router
+from app.api.v1.oidc_diagnostics import router as oidc_diagnostics_router
 from app.api.v1.option_group import router as option_groups_router
 from app.api.v1.order_item import router as order_items_router
 from app.api.v1.orders import router as orders_router
@@ -156,6 +160,10 @@ app.add_middleware(
 # ==============================================
 # 📋 INCLUDE ROUTERS - /api/v1
 # ==============================================
+
+# Local diagnostics are absent by default and recheck the profile per request.
+if oidc_diagnostics_available():
+    app.include_router(oidc_diagnostics_router, prefix="/api/v1")
 
 # ---------- Admin Services ----------
 app.include_router(

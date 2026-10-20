@@ -29,6 +29,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from app.core.config import settings
 from app.models import Base
+from migration_support.tenant_e1 import build_target_metadata
 
 # ==============================================
 # 🔧 ALEMBIC CONFIG
@@ -53,7 +54,8 @@ if config.config_file_name is not None:
 # 🎯 TARGET METADATA
 # ==============================================
 
-target_metadata = Base.metadata
+# Copy complete legacy tables; never concatenate the partial B1 FK references.
+target_metadata = build_target_metadata(legacy_metadata=Base.metadata)
 
 
 # ==============================================

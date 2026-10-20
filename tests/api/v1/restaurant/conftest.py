@@ -15,12 +15,45 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
+from collections.abc import AsyncIterator
 from typing import (
     Any,
     Dict,
 )
 
 import pytest
+from httpx import AsyncClient
+
+from app.api.auth import AdminPrincipal
+from app.api.v1.restaurant import require_restaurant_administration
+from app.main import app
+
+# ==============================================
+# AUTHORIZED RESTAURANT BUSINESS CONTRACT CLIENT
+# ==============================================
+
+
+@pytest.fixture
+async def client(client: AsyncClient) -> AsyncIterator[AsyncClient]:
+    """Keep legacy database cases focused on authorized business behavior.
+
+    The parent fixture still owns guarded database selection and cleanup.
+    Only this directory's business tests substitute the administrative boundary;
+    offline security tests separately exercise real identity and RBAC denials.
+    No administrator or permission is inserted into any database.
+    """
+    previous = app.dependency_overrides.get(require_restaurant_administration)
+    app.dependency_overrides[require_restaurant_administration] = (
+        lambda: AdminPrincipal(admin_id=7)
+    )
+    try:
+        yield client
+    finally:
+        if previous is None:
+            app.dependency_overrides.pop(require_restaurant_administration, None)
+        else:
+            app.dependency_overrides[require_restaurant_administration] = previous
+
 
 # ==============================================
 # 📦 DATA FACTORIES - ✅ بدون is_active للمجموعة

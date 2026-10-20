@@ -693,6 +693,10 @@ cleanup changes; it is not a claim that every legacy module has been restyled in
 this review. The remaining catalog-options tenant/authentication boundary is
 documented separately in [the catalog finding](catalog-options-isolation-finding.md).
 
+Update dated 2026-10-16: that catalog finding now records implemented owner
+authentication, SQLAlchemy tenant scope, and relational HTTP regression checks.
+The preceding counts and findings describe the historical 2026-10-13 review.
+
 ## Development branch isolation update — 2026-10-15
 
 The user deferred production migration and authorized only the permanent Neon
@@ -840,3 +844,43 @@ Archive extraction alone does not apply the recorded file deletions.
 The catalog-options isolation finding remains open. Billing verification and
 transaction rollback evidence do not certify the entire legacy platform as
 production ready or replace a completed backup/PITR restoration drill.
+
+Update dated 2026-10-16: the catalog authorization and tenant-isolation finding
+above has been superseded by the implemented controls and verification described
+in [the updated catalog review](catalog-options-isolation-finding.md). This does
+not alter the historical billing results or the independent deployment limits.
+
+## API authorization follow-up - 2026-10-17
+
+The subsequent API review adds verified-owner SQLAlchemy scopes for catalog,
+agent, and standalone branch services. Global user administration requires the
+existing `admins.manage` permission. The restaurant administration aggregate,
+including global groups, metrics, counters, and payment configuration, requires
+`restaurants.manage`; synthetic metric simulation is no longer published.
+Administrative session credentials use headers on static paths, with no legacy
+URL aliases. Agent state persists through validated existing JSON fields, and
+branch state/usage transitions share an atomic transaction.
+
+See [API authorization](api-authorization.md),
+[session client migration](admin-session-api.md), and
+[API testing](api-testing.md) for contracts, dated verification, and limits.
+These local code changes do not configure real identities, grant production
+permissions, authorize a migration, or verify a new deployment.
+
+### Category and branch integration correction - 2026-10-17
+
+The reported seven PostgreSQL failures exposed a verification-scope gap in the
+initial offline review. Category integration fixtures now explicitly supply a
+seeded owner for authorized business cases, alongside anonymous and foreign-owner
+regressions. Owner-scope construction no longer executes synchronous validation
+SQL outside the AsyncSession greenlet: it detaches clean cached tenant entities
+and refuses initial binding with pending changes. Scoped primary-key reloads
+and filtered counts preserve SQLAlchemy's mapped provenance without accepting
+raw protected Core projections.
+
+Both affected integration modules passed all 10 cases on the verified isolated
+development database. The full offline selection passed 2,248 collected cases
+and 128 separate subtests, with no warnings. App coverage is 57.61%; API coverage
+is 81.34%, with no source exclusions. See [API testing](api-testing.md) for exact
+environments, evidence, and limits. Production, migrations, real identities,
+Telegram configuration, and Render were not changed.

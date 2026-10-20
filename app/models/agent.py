@@ -16,7 +16,10 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from typing import Any, Dict
+from typing import (
+    Any,
+    Dict,
+)
 
 from sqlalchemy import (
     Boolean,
@@ -27,8 +30,14 @@ from sqlalchemy import (
     JSON,
     String,
     Text,
+    case,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import (
+    relationship,
+    validates,
+)
+from sqlalchemy.sql.elements import ColumnElement
 
 from .base import BaseModel
 
@@ -37,6 +46,10 @@ from .base import BaseModel
 # ==============================================
 
 JSONDict = Dict[str, Any]
+CONVERSATION_STATUS_KEY = "_moulai_status"
+MESSAGE_CONTENT_TYPE_KEY = "_moulai_content_type"
+_CONVERSATION_STATUSES = frozenset({"active", "closed", "suspended"})
+_MESSAGE_CONTENT_TYPES = frozenset({"text", "image", "audio", "video", "file"})
 
 # ==============================================
 # 🤖 AGENT
@@ -298,6 +311,11 @@ class Conversation(BaseModel):
 
     __tablename__ = "conversations"
 
+    def __init__(self, *, status: str | None = None, **values: Any) -> None:
+        """Apply explicit status after context, regardless of constructor ordering."""
+        super().__init__(**values)
+        self.status = status or ("closed" if self.is_active is False else "active")
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
@@ -344,6 +362,53 @@ class Conversation(BaseModel):
         },
         comment="سياق المحادثة",
     )
+
+    # ==============================================
+    # SCHEMA-PRESERVING CONVERSATION STATE
+    # ==============================================
+
+    @hybrid_property
+    def status(self) -> str:
+        """Read persisted JSON state, deriving historical rows from activity."""
+        stored = (self.context or {}).get(CONVERSATION_STATUS_KEY)
+        if isinstance(stored, str) and stored in _CONVERSATION_STATUSES:
+            return stored
+        return "closed" if self.is_active is False else "active"
+
+    @status.inplace.setter
+    def _set_status(self, value: str) -> None:
+        """Persist valid state and keep message eligibility consistent with it."""
+        if value not in _CONVERSATION_STATUSES:
+            raise ValueError("Invalid conversation status")
+        self._writing_status = True
+        try:
+            self.context = {**(self.context or {}), CONVERSATION_STATUS_KEY: value}
+            self.is_active = value == "active"
+        finally:
+            self._writing_status = False
+
+    @status.inplace.expression
+    @classmethod
+    def _status_expression(cls) -> ColumnElement[str]:
+        """Use portable JSON extraction for filtering, counts, and grouping."""
+        stored = cls.context[CONVERSATION_STATUS_KEY].as_string()
+        historical = case((cls.is_active.is_(False), "closed"), else_="active")
+        return case((stored.in_(_CONVERSATION_STATUSES), stored), else_=historical)
+
+    @validates("context")
+    def _preserve_status_in_context(self, key: str, value: JSONDict | None) -> JSONDict:
+        """Context replacement cannot erase or forge the explicit status field."""
+        context = dict(value or {})
+        if not getattr(self, "_writing_status", False):
+            context[CONVERSATION_STATUS_KEY] = self.status
+        return context
+
+    @validates("is_active")
+    def _align_activity_with_status(self, key: str, value: bool) -> bool:
+        """Explicit activation/deactivation also persists an unambiguous state."""
+        if not getattr(self, "_writing_status", False):
+            self.status = "active" if value else "closed"
+        return value
 
     # ==========================================
     # 🔗 RELATIONSHIPS
@@ -411,6 +476,11 @@ class Message(BaseModel):
 
     __tablename__ = "messages"
 
+    def __init__(self, *, content_type: str = "text", **values: Any) -> None:
+        """Apply type after metadata so construction never discards media state."""
+        super().__init__(**values)
+        self.content_type = content_type
+
     # ==========================================
     # 🗂️ COLUMNS
     # ==========================================
@@ -456,9 +526,49 @@ class Message(BaseModel):
 
     meta_data = Column(
         JSON,
-        default={},
+        default=dict,
         comment="بيانات وصفية",
     )
+
+    # ==============================================
+    # SCHEMA-PRESERVING MESSAGE CONTENT TYPE
+    # ==============================================
+
+    @hybrid_property
+    def content_type(self) -> str:
+        """Read persisted media type while historical messages remain text."""
+        stored = (self.meta_data or {}).get(MESSAGE_CONTENT_TYPE_KEY)
+        return (
+            stored
+            if isinstance(stored, str) and stored in _MESSAGE_CONTENT_TYPES
+            else "text"
+        )
+
+    @content_type.inplace.setter
+    def _set_content_type(self, value: str) -> None:
+        """Persist a validated content type without mutating a shared JSON value."""
+        if value not in _MESSAGE_CONTENT_TYPES:
+            raise ValueError("Invalid message content type")
+        self._writing_content_type = True
+        try:
+            self.meta_data = {**(self.meta_data or {}), MESSAGE_CONTENT_TYPE_KEY: value}
+        finally:
+            self._writing_content_type = False
+
+    @content_type.inplace.expression
+    @classmethod
+    def _content_type_expression(cls) -> ColumnElement[str]:
+        """Filter historical and current rows with SQLite/PostgreSQL JSON SQL."""
+        stored = cls.meta_data[MESSAGE_CONTENT_TYPE_KEY].as_string()
+        return case((stored.in_(_MESSAGE_CONTENT_TYPES), stored), else_="text")
+
+    @validates("meta_data")
+    def _preserve_type_in_metadata(self, key: str, value: JSONDict | None) -> JSONDict:
+        """Metadata replacement cannot erase or forge the content-type field."""
+        metadata = dict(value or {})
+        if not getattr(self, "_writing_content_type", False):
+            metadata[MESSAGE_CONTENT_TYPE_KEY] = self.content_type
+        return metadata
 
     # ==========================================
     # 🔗 RELATIONSHIPS
