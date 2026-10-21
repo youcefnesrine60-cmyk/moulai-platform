@@ -3,11 +3,18 @@
 Date: **2026-10-20**. Branch: **fix/render-health-only**. Publication,
 Render configuration and deployment are **not authorized by this document**.
 
+**Follow-up, 2026-10-21:** the operator reports successful publication and Render
+deployment of correction `29367d74e41fa7b29fc9252c209ff48604608d13` on this branch.
+The preparation and deployment instructions below are historical; this follow-up
+does not recheck or change the running service. The next local commit contains
+documentation only, including the inline-code correction for the package path.
+No additional deployment, configuration change or branch merge is proposed.
+
 ## Exact base and scope
 
 This branch starts directly at **7a667633f593afbabc9949cef12f603535eba94e**, the
-reported deployed main commit. It contains one local correction commit. Its exact
-SHA is obtained with `git rev-parse HEAD` and recorded in the delivery evidence.
+reported deployed main commit. The initial delivery contained one correction
+commit, whose SHA is recorded above and in the local delivery evidence.
 No merge from the later feature branch is involved. Main and that branch's
 uncommitted work remain unchanged.
 
@@ -31,7 +38,7 @@ introduced. No data migration is needed by this correction.
 | tests/test_health_only_local_safety.py | Local destination, identity and network admission regressions. |
 | test_support/health_only_safety.py | Reuse the existing socket policy/result accounting with synthetic test settings. |
 | test_support/local_postgres.py | Strict owned-loopback database admission; compatibility profile only. |
-| test_support/__init__.py | Test-support package. |
+| `test_support/__init__.py` | Test-support package. |
 | scripts/run_health_only_tests.py | Network-denied, explicitly selected offline tests without shared conftest. |
 | scripts/run_health_only_postgres_tests.py | Own a new local instance and run only the 14 Health-Only proofs. |
 | alembic_local_test/env.py | Test-only pinned connection at exactly dce91870b4a2; no new revision. |
