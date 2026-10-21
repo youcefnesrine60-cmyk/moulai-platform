@@ -39,6 +39,7 @@ OUTPUT_DIRECTORY = PROJECT_ROOT / "artifacts" / "api-test-review"
 INTEGRATION_FILES = frozenset(
     {
         "test_k10_postgres.py",
+        "test_health_only_postgres.py",
         "test_manual_payment_workflow.py",
         "test_admin_rbac_refresh.py",
         "test_order_postgres_transactions.py",

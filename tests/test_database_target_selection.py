@@ -83,6 +83,7 @@ def load_source(*, name: str, relative_path: str) -> ModuleType:
 def declared_configuration(*, target: str = "primary") -> SimpleNamespace:
     """Return synthetic target metadata without any real credential or endpoint."""
     return SimpleNamespace(
+        HEALTH_ONLY_MODE=False,
         DATABASE_TARGET=target,
         APP_ENV="development",
         DATABASE_URL=PRIMARY_URL,
@@ -122,6 +123,29 @@ def offline_packages() -> dict[str, ModuleType]:
     }
 
 
+# ==============================================
+# EXPLICIT SECURITY CONTRACTS FOR EACH ISOLATED MODULE GRAPH
+# ==============================================
+
+
+def load_health_only_contract() -> None:
+    """Load real pure guards under the same temporary packages as the database.
+
+    Reusing a module cached by another test would bind the health policy to a
+    different identity verifier and make results depend on collection order.
+    Neither of these source modules creates an engine or opens a connection.
+    """
+    load_source(
+        name="app.core.test_database", relative_path="app/core/test_database.py"
+    )
+    load_source(name="app.core.health_only", relative_path="app/core/health_only.py")
+
+
+# ==============================================
+# CENTRAL SETTINGS WITHOUT ENVIRONMENT OR PACKAGE SIDE EFFECTS
+# ==============================================
+
+
 @contextmanager
 def offline_settings_model() -> Iterator[ModuleType]:
     """Use the real Literal field while disabling every .env source."""
@@ -140,7 +164,13 @@ def offline_settings_model() -> Iterator[ModuleType]:
         patch("dotenv.load_dotenv"),
         patch.object(BaseSettings, "__init__", initialize_without_dotenv),
     ):
+        load_health_only_contract()
         yield load_source(name="app.core.config", relative_path="app/core/config.py")
+
+
+# ==============================================
+# NONCONNECTING ORM MODULE AND ENGINE FACTORIES
+# ==============================================
 
 
 @contextmanager
@@ -161,9 +191,7 @@ def offline_database(
         patch("sqlalchemy.ext.asyncio.async_sessionmaker") as create_sessions,
     ):
         create_engine.return_value = MagicMock(spec=AsyncEngine)
-        load_source(
-            name="app.core.test_database", relative_path="app/core/test_database.py"
-        )
+        load_health_only_contract()
 
         def load_database() -> ModuleType:
             """Resolve the selected target while engine construction stays mocked."""
@@ -186,6 +214,7 @@ class TestDatabaseTargetSettings(unittest.TestCase):
         """Creating the real settings model never opts into development by default."""
         with offline_settings_model() as config:
             self.assertEqual(config.settings.DATABASE_TARGET, "primary")
+            self.assertIs(config.settings.HEALTH_ONLY_MODE, False)
 
     def test_only_declared_targets_are_accepted(self) -> None:
         """Validate both supported Literal values without reading operator values."""

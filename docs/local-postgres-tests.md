@@ -100,6 +100,20 @@ launcher above to execute this PostgreSQL selection with zero skips. A bare
 `--local-postgres-tests` without its local configuration fails once before
 collection; it cannot fall back to Neon.
 
+## Health-Only cases in the default local campaign
+
+The default legacy campaign now includes the 14 Health-Only PostgreSQL cases,
+for **124 cases** including the original 110. On 2026-10-20, the combined native
+PostgreSQL 18.3 run passed **124/124**, without failures, setup errors, skips or
+warnings; the owned server was stopped. See the
+[Health-Only correction](render-health-only-validation.md#combined-postgresql-fixture-isolation-correction).
+
+The Health-Only fixture removes only its own newly created probe table and owned
+sequence after local re-attestation. It also restores the original application
+object after lifespan testing. The strict shared public-table cleanup allowlist
+remains unchanged. The standalone selection is still available with
+`--suite health-only`; the same cases are also included in the default command.
+
 ## K10 authorization profile — local E1
 
 The independent `k10` profile creates another fresh local instance and applies

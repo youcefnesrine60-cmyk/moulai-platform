@@ -215,7 +215,9 @@ async def provision_database(
 # ==============================================
 
 
-def execute_tests(*, output: Path, profile: str = "legacy") -> dict[str, Any]:
+def execute_tests(
+    *, output: Path, profile: str = "legacy", suite: str = "profile"
+) -> dict[str, Any]:
     """Capture actual outcomes and keep test console output outside the root."""
     import pytest
 
@@ -230,6 +232,8 @@ def execute_tests(*, output: Path, profile: str = "legacy") -> dict[str, Any]:
             if profile == "k10"
             else ["-m", "database"]
         )
+        if suite == "health-only":
+            selection = ["tests/test_health_only_postgres.py", "--maxfail=1"]
         code = int(
             pytest.main(
                 [
@@ -273,7 +277,12 @@ def main() -> int:
     )
     parser.add_argument("--postgres-bin", type=Path)
     parser.add_argument("--profile", choices=("legacy", "k10"), default="legacy")
+    parser.add_argument(
+        "--suite", choices=("profile", "health-only"), default="profile"
+    )
     options = parser.parse_args()
+    if options.suite == "health-only" and options.profile != "legacy":
+        parser.error("The health-only suite uses the isolated legacy schema only")
     os.chdir(ROOT)
     instance_id = uuid4().hex
     output = ROOT / "artifacts/postgres-local-tests" / instance_id
@@ -331,6 +340,7 @@ def main() -> int:
         "instance_id": instance_id,
         "backend": backend,
         "profile": configuration.PROFILE,
+        "suite": options.suite,
     }
     try:
         if backend == "docker":
@@ -387,7 +397,11 @@ def main() -> int:
             )
         )
         print("Local schema ready; running PostgreSQL fixtures.", flush=True)
-        summary.update(execute_tests(output=output, profile=configuration.PROFILE))
+        summary.update(
+            execute_tests(
+                output=output, profile=configuration.PROFILE, suite=options.suite
+            )
+        )
         summary["network_denied_categories"] = dict(guard.denied)
     except (
         OSError,

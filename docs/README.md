@@ -11,6 +11,9 @@ report does not rerun its checks or authorize an operational action.
 
 ## Document index
 
+- [Final Git synchronization preparation](github-final-sync-preparation.md):
+  remaining validated files, separate branch commits, exclusions and publication
+  commands pending approval.
 - [GitHub backup preparation](github-k10-backup-preparation.md): reviewed K8/K9/K10
   source inventory, local feature-branch commit, secret checks and the separate
   approval required before publication.
@@ -59,6 +62,13 @@ report does not rerun its checks or authorize an operational action.
   static lookup URLs, and client migration.
 - [Agent API security](agent-api-security.md): owner boundaries and persisted
   conversation state and message content types.
+- [Render Health-Only validation](render-health-only-validation.md): default-off
+  HTTP admission, transaction read-only guarantees and previously observed local
+  test results; separate standalone rollout reported by the operator.
+- [Render startup diagnostic](render-startup-diagnostic-2026-10-20.md): historical
+  schema mismatch on the old primary-target build and migration boundaries.
+- [Render development preparation](render-development-configuration.md): dated
+  read-only compatibility checks and the superseded pre-Health-Only proposal.
 
 ## Reading the evidence
 
