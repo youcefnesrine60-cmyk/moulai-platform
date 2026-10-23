@@ -46,6 +46,7 @@ from app.schemas.product_option import (
     ProductOptionSummary,
     ProductOptionUpdate,
 )
+from app.services.business.catalog_transaction import catalog_transaction
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -380,40 +381,40 @@ class ProductOptionService:
             extra={"group_id": group_id},
         )
 
-        total = await self.count_by_group(
-            group_id=group_id,
-            only_available=False,
-        )
-
-        available = await self.count_available_by_group(
-            group_id=group_id,
-        )
-
-        # الحصول على الخيارات
-        options = await self.repo.get_by_group_id(
-            group_id=group_id,
-            limit=1000,
-            only_available=False,
-        )
-
-        # حساب متوسط السعر الإضافي
-        total_extra_price = 0.0
-
-        for option in options:
-            total_extra_price += option.extra_price
-
-        average_extra_price = total_extra_price / len(options) if options else 0.0
-
+        statistics = await self.repo.get_statistics(group_id=group_id)
         return ProductOptionSummary(
-            total_options=total,
-            available_options=available,
-            unavailable_options=total - available,
-            average_extra_price=average_extra_price,
+            group_id=group_id,
+            total_options=statistics.total_options,
+            available_options=statistics.available_options,
+            unavailable_options=(
+                statistics.total_options - statistics.available_options
+            ),
+            total_extra_price=statistics.total_extra_price,
+            avg_extra_price=statistics.avg_extra_price,
+            min_extra_price=statistics.min_extra_price,
+            max_extra_price=statistics.max_extra_price,
         )
 
     # ==========================================
     # ✏️ MUTATIONS
     # ==========================================
+
+    # ==============================================
+    # CREATE AN ATOMIC OPTION BATCH
+    # ==============================================
+
+    async def create_options_bulk(
+        self, *, group_id: int, options: list[ProductOptionCreate]
+    ) -> list[ProductOptionResponse]:
+        """Reuse single-option rules while committing the complete batch once."""
+        if not options:
+            raise ValidationError(message="The option batch cannot be empty")
+        async with catalog_transaction(session=self.session):
+            created = [
+                await self.create_option(group_id=group_id, option_data=option)
+                for option in options
+            ]
+        return created
 
     # ==============================================
     # CREATE OPTION
@@ -945,9 +946,8 @@ class ProductOptionService:
             )
 
         # حذف الخيارات
-        count = await self.repo.delete_by_group(
-            group_id=group_id,
-        )
+        async with catalog_transaction(session=self.session):
+            count = await self.repo.delete_by_group(group_id=group_id)
 
         logger.info(
             "product_options_deleted_by_group_successfully",
@@ -1023,11 +1023,12 @@ class ProductOptionService:
                     message=f"الخيار '{option_id}' لا ينتمي لهذه المجموعة",
                 )
 
-        for index, option_id in enumerate(option_order):
-            await self.repo.update_sort_order(
-                option_id=option_id,
-                sort_order=index,
-            )
+        async with catalog_transaction(session=self.session):
+            for index, option_id in enumerate(option_order):
+                await self.repo.update_sort_order(
+                    option_id=option_id,
+                    sort_order=index,
+                )
 
         logger.info(
             "product_options_reordered_successfully",

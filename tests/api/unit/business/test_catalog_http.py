@@ -497,8 +497,10 @@ async def test_product_option_creation_keeps_group_context_outside_option_payloa
 ) -> None:
     """Preserve the advertised payload while forwarding its validated group ID."""
     module = api_module(name="product_option")
-    service = catalog_service(module=module, methods=("create_option",))
-    service.create_option.return_value = OPTION
+    method_name = "create_options_bulk" if bulk else "create_option"
+    service = catalog_service(module=module, methods=(method_name,))
+    method = getattr(service, method_name)
+    method.return_value = [OPTION] if bulk else OPTION
     app = make_app(
         module=module, dependencies={module.get_product_option_service: service}
     )
@@ -508,7 +510,12 @@ async def test_product_option_creation_keeps_group_context_outside_option_payloa
     response = await request(app=app, method="POST", url=url, body=body)
     assert response.status_code == 201, response.text
     assert_call_fields(
-        method=service.create_option, expected={"group_id": 41, "option_data": option}
+        method=method,
+        expected=(
+            {"group_id": 41, "options": [option]}
+            if bulk
+            else {"group_id": 41, "option_data": option}
+        ),
     )
     result = response.json()["items"][0] if bulk else response.json()
     assert result["group_id"] == 41

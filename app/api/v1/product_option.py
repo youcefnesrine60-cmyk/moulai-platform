@@ -24,11 +24,17 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
-    Query,
     Path,
+    Query,
     status,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.auth import (
+    OwnerPrincipal,
+    get_current_owner,
+    get_owner_tenant_db,
+)
 
 # ✅ استيراد الاستثناءات
 from app.core.exceptions import (
@@ -36,21 +42,15 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
-
-from app.api.auth import (
-    OwnerPrincipal,
-    get_current_owner,
-    get_owner_tenant_db,
-)
 from app.core.logger import logger
 from app.schemas.product_option import (
     ProductOptionAvailabilityUpdate,
     ProductOptionBulkCreate,
     ProductOptionCreate,
+    ProductOptionListResponse,
     ProductOptionResponse,
     ProductOptionSummary,
     ProductOptionUpdate,
-    ProductOptionListResponse,
 )
 from app.services.business.option_groups_service import OptionGroupsService
 from app.services.business.product_option_service import ProductOptionService
@@ -524,15 +524,10 @@ async def create_product_options_bulk(
         },
     )
 
-    created_options = []
-
     try:
-        for option_data in data.options:
-            option = await service.create_option(
-                group_id=data.group_id,
-                option_data=option_data,
-            )
-            created_options.append(option)
+        created_options = await service.create_options_bulk(
+            group_id=data.group_id, options=data.options
+        )
 
         return ProductOptionListResponse(
             items=[ProductOptionResponse.model_validate(o) for o in created_options],

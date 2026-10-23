@@ -38,6 +38,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIRECTORY = PROJECT_ROOT / "artifacts" / "api-test-review"
 INTEGRATION_FILES = frozenset(
     {
+        "test_catalog_postgres_transactions.py",
         "test_k10_postgres.py",
         "test_health_only_postgres.py",
         "test_manual_payment_workflow.py",

@@ -17,12 +17,20 @@ Part of MoulAI Platform - Agent-as-a-Service.
 
 from typing import (
     Any,
+    NamedTuple,
+    TypeAlias,
 )
 
-from sqlalchemy import select
+from sqlalchemy import (
+    case,
+    func,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import Select
 
 from app.core.logger import logger
+from app.models.option_group import OptionGroup
 from app.models.product_option import ProductOption
 from app.repositories.base import BaseRepository
 
@@ -30,9 +38,52 @@ from app.repositories.base import BaseRepository
 # 🧩 TYPES
 # ==============================================
 
-ProductOptionData = dict[str, Any]
-ProductOptionUpdateData = dict[str, Any]
-ProductOptionList = list[ProductOption]
+ProductOptionData: TypeAlias = dict[str, Any]
+ProductOptionUpdateData: TypeAlias = dict[str, Any]
+ProductOptionList: TypeAlias = list[ProductOption]
+
+
+class ProductOptionStatistics(NamedTuple):
+    """Typed aggregate values without loading or paginating option rows."""
+
+    total_options: int
+    available_options: int
+    total_extra_price: float
+    avg_extra_price: float
+    min_extra_price: float
+    max_extra_price: float
+
+
+# ==============================================
+# BASE SELECT FOR SCOPED PRICE STATISTICS
+# ==============================================
+
+
+def _base_option_statistics_select() -> (
+    Select[tuple[int, int, float, float, float, float]]
+):
+    """Keep aggregate projections mapped so owner criteria remain effective."""
+    return select(
+        func.count(ProductOption.id),
+        func.coalesce(
+            func.sum(case((ProductOption.is_available.is_(True), 1), else_=0)), 0
+        ),
+        func.coalesce(func.sum(ProductOption.extra_price), 0.0),
+        func.coalesce(func.avg(ProductOption.extra_price), 0.0),
+        func.coalesce(func.min(ProductOption.extra_price), 0.0),
+        func.coalesce(func.max(ProductOption.extra_price), 0.0),
+    )
+
+
+# ==============================================
+# BASE SELECT FOR SCOPED OPTION COUNTS
+# ==============================================
+
+
+def _base_option_count_select() -> Select[tuple[int]]:
+    """Count mapped option entities without bypassing session authorization."""
+    return select(func.count(ProductOption.id))
+
 
 # ==============================================
 # 🎯 PRODUCT OPTION REPOSITORY
@@ -74,6 +125,38 @@ class ProductOptionRepository(
             session: جلسة قاعدة البيانات غير المتزامنة
         """
         super().__init__(ProductOption, session)
+
+    # ==============================================
+    # GET COMPLETE GROUP STATISTICS
+    # ==============================================
+
+    async def get_statistics(self, *, group_id: int) -> ProductOptionStatistics:
+        """Aggregate every visible option, returning zeroes for an empty group."""
+        result = await self.session.execute(
+            _base_option_statistics_select().where(ProductOption.group_id == group_id)
+        )
+        row = result.one()
+        return ProductOptionStatistics(
+            total_options=int(row[0]),
+            available_options=int(row[1]),
+            total_extra_price=float(row[2]),
+            avg_extra_price=float(row[3]),
+            min_extra_price=float(row[4]),
+            max_extra_price=float(row[5]),
+        )
+
+    # ==============================================
+    # COUNT OPTIONS ACROSS A PRODUCT'S GROUPS
+    # ==============================================
+
+    async def count_by_product(self, *, product_id: int) -> int:
+        """Count through the mapped group/product chain under the owner scope."""
+        result = await self.session.execute(
+            _base_option_count_select()
+            .join(OptionGroup, OptionGroup.id == ProductOption.group_id)
+            .where(OptionGroup.product_id == product_id)
+        )
+        return int(result.scalar_one())
 
     # ==========================================
     # 📖 QUERIES

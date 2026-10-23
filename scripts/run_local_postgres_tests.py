@@ -234,6 +234,8 @@ def execute_tests(
         )
         if suite == "health-only":
             selection = ["tests/test_health_only_postgres.py", "--maxfail=1"]
+        if suite == "catalog":
+            selection = ["tests/test_catalog_postgres_transactions.py", "--maxfail=1"]
         code = int(
             pytest.main(
                 [
@@ -278,11 +280,13 @@ def main() -> int:
     parser.add_argument("--postgres-bin", type=Path)
     parser.add_argument("--profile", choices=("legacy", "k10"), default="legacy")
     parser.add_argument(
-        "--suite", choices=("profile", "health-only"), default="profile"
+        "--suite", choices=("profile", "health-only", "catalog"), default="profile"
     )
     options = parser.parse_args()
     if options.suite == "health-only" and options.profile != "legacy":
         parser.error("The health-only suite uses the isolated legacy schema only")
+    if options.suite == "catalog" and options.profile != "legacy":
+        parser.error("The catalog suite uses the isolated legacy schema only")
     os.chdir(ROOT)
     instance_id = uuid4().hex
     output = ROOT / "artifacts/postgres-local-tests" / instance_id

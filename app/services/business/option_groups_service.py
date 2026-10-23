@@ -46,6 +46,7 @@ from app.schemas.option_group import (
     OptionGroupUpdate,
     OptionGroupWithOptionsResponse,
 )
+from app.services.business.catalog_transaction import catalog_transaction
 
 # ==============================================
 # 🧩 CONSTANTS
@@ -379,9 +380,13 @@ class OptionGroupsService:
         )
 
         return OptionGroupSummary(
+            product_id=product_id,
             total_groups=total,
             required_groups=required,
             optional_groups=total - required,
+            total_options=await self.option_repo.count_by_product(
+                product_id=product_id
+            ),
         )
 
     # ==========================================
@@ -804,9 +809,8 @@ class OptionGroupsService:
             )
 
         # حذف المجموعات
-        count = await self.repo.delete_by_product(
-            product_id=product_id,
-        )
+        async with catalog_transaction(session=self.session):
+            count = await self.repo.delete_by_product(product_id=product_id)
 
         logger.info(
             "option_groups_deleted_by_product_successfully",
@@ -873,11 +877,12 @@ class OptionGroupsService:
                 )
 
         # Update only groups proven to belong to the requested product.
-        for index, group_id in enumerate(group_order):
-            await self.repo.update_sort_order(
-                group_id=group_id,
-                sort_order=index,
-            )
+        async with catalog_transaction(session=self.session):
+            for index, group_id in enumerate(group_order):
+                await self.repo.update_sort_order(
+                    group_id=group_id,
+                    sort_order=index,
+                )
 
         logger.info(
             "option_groups_reordered_successfully",

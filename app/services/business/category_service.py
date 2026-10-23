@@ -59,6 +59,7 @@ from app.schemas.categories import (
     CategorySummary,
     CategoryUpdate,
 )
+from app.services.business.catalog_transaction import catalog_transaction
 from app.services.business.feature_usage_counter_engine import (
     decrease_usage,
     increase_usage,
@@ -762,11 +763,12 @@ class CategoryService:
                     message=f"Ø§Ù„ØªØµÙ†ÙŠÙ '{category_id}' Ù„Ø§ ÙŠÙ†ØªÙ…ÙŠ Ù„Ù‡Ø°Ø§ Ø§Ù„Ù…Ø·Ø¹Ù…",
                 )
 
-        for index, category_id in enumerate(category_order):
-            await self.repo.update(
-                id=category_id,
-                data={"sort_order": index},
-            )
+        async with catalog_transaction(session=self.session):
+            for index, category_id in enumerate(category_order):
+                await self.repo.update(
+                    id=category_id,
+                    data={"sort_order": index},
+                )
 
         logger.info(
             "categories_reordered_successfully",
