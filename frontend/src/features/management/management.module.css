@@ -1,0 +1,531 @@
+/* ==============================================
+ * MoulAI™ Platform - Agent-as-a-Service
+ * Author: Youcef Nesrine
+ * License: CC BY-NC-ND 4.0
+ * Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+ * ============================================== */
+
+.context {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  margin-block-end: 20px;
+}
+.contextNames {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+.contextNames span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.textLink {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  font-size: 12px;
+}
+.tabs {
+  display: flex;
+  gap: 24px;
+  border-block-end: 1px solid var(--border);
+  margin-block-end: 32px;
+  flex-wrap: wrap;
+}
+.tabs a {
+  min-block-size: 46px;
+  display: flex;
+  align-items: center;
+  padding-block: 10px;
+  color: var(--text-secondary);
+  border-block-end: 2px solid transparent;
+}
+.tabs a[aria-current='page'] {
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: var(--weight-semibold);
+}
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-block-end: 28px;
+  flex-wrap: wrap;
+}
+.intro {
+  color: var(--text-secondary);
+  max-inline-size: 650px;
+  margin-block-end: 0;
+}
+.integrationNote {
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding-block: 24px;
+  border-block-start: 1px solid var(--border);
+  margin-block-start: 32px;
+}
+.panel {
+  overflow-wrap: anywhere;
+  padding: 24px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-inline-size: 0;
+}
+.panel h2 {
+  margin-block-end: 16px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 20px;
+}
+.products {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 18px;
+}
+.productVisual {
+  background: var(--surface-muted);
+  padding: 26px;
+  border-radius: var(--radius-sm);
+  margin-block-end: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--accent);
+}
+.productTitle {
+  font-size: 17px;
+  margin-block-end: 8px;
+  overflow-wrap: anywhere;
+}
+.muted {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.cardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-block-start: 20px;
+  flex-wrap: wrap;
+}
+.price {
+  font-size: 18px;
+  font-weight: var(--weight-semibold);
+}
+.toolbar {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 18px;
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-block-end: 24px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: var(--weight-medium);
+  min-inline-size: 0;
+  flex: 1;
+}
+.field input,
+.field select,
+.field textarea {
+  inline-size: 100%;
+  min-block-size: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 14px;
+}
+.field textarea {
+  resize: vertical;
+  min-block-size: 100px;
+}
+.field input[aria-invalid='true'],
+.field select[aria-invalid='true'],
+.field textarea[aria-invalid='true'] {
+  border: 2px solid var(--error-text);
+}
+.fieldError {
+  color: var(--error-text);
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+}
+.fieldHelp {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: var(--weight-body);
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-block-size: 44px;
+  font-size: 14px;
+}
+.check input {
+  inline-size: 18px;
+  block-size: 18px;
+  accent-color: var(--accent);
+}
+.empty {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--surface-card);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+}
+.empty svg {
+  color: var(--accent);
+  margin-block-end: 16px;
+}
+.empty p {
+  color: var(--text-secondary);
+}
+.subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block-end: 20px;
+}
+.subnav button {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  min-block-size: 44px;
+  padding: 10px 18px;
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font: inherit;
+}
+.subnav button[aria-pressed='true'] {
+  background: var(--gradient-action);
+  color: var(--on-action);
+  border-color: var(--accent);
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-block: 16px;
+  border-block-end: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.row:last-child {
+  border-block-end: 0;
+}
+.row p {
+  margin: 0;
+}
+.notice {
+  color: var(--review-text);
+  background: var(--review-bg);
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  margin-block-end: 20px;
+}
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  padding: 4px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  background: var(--surface-muted);
+}
+.status::before {
+  content: '';
+  inline-size: 6px;
+  block-size: 6px;
+  background: currentColor;
+  border-radius: 50%;
+}
+.status[data-status='pending'],
+.status[data-status='preparing'] {
+  color: var(--status-progress-text);
+  background: var(--status-progress-bg);
+  border-color: var(--border-strong);
+}
+.status[data-status='completed'],
+.status[data-status='ready'],
+.status[data-status='delivered'] {
+  color: var(--status-complete-text);
+  background: var(--status-complete-bg);
+  border-color: var(--border-strong);
+}
+.status[data-status='cancelled'] {
+  border-style: dashed;
+  color: var(--status-text);
+  background: var(--status-bg);
+  border-color: var(--border-strong);
+}
+.orderList {
+  display: grid;
+  gap: 12px;
+}
+.orderRow {
+  display: grid;
+  grid-template-columns:
+    minmax(130px, 1.3fr) minmax(100px, 1fr) minmax(110px, 1fr)
+    minmax(90px, 0.8fr) auto;
+  gap: 18px;
+  align-items: center;
+  padding: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface-card);
+  border-radius: var(--radius-md);
+}
+.orderRow:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-card);
+}
+.orderRow small {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-block-end: 4px;
+}
+.orderRow strong {
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+.orderRow span {
+  min-inline-size: 0;
+}
+.detailGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.stack {
+  display: grid;
+  gap: 24px;
+}
+.definition {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: 12px;
+  margin: 0;
+}
+.definition dt {
+  color: var(--text-secondary);
+}
+.definition dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: end;
+}
+.definition .total {
+  padding-block-start: 16px;
+  border-block-start: 1px solid var(--border);
+  font-weight: var(--weight-semibold);
+}
+.timeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.timeline li {
+  padding: 12px 0 12px 20px;
+  border-inline-start: 2px solid var(--border);
+  padding-inline-start: 20px;
+}
+.timeline time {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-block-start: 4px;
+}
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-block-start: 20px;
+}
+.pagination p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 100;
+}
+.dialog {
+  position: fixed;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  inline-size: min(600px, calc(100vw - 32px));
+  max-block-size: calc(100dvh - 40px);
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-raised);
+  z-index: 101;
+}
+:global([dir='rtl']) .dialog {
+  transform: translate(50%, -50%);
+}
+.dialog h2 {
+  font-size: 22px;
+  padding-inline-end: 32px;
+}
+.dialogDescription {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-block-end: 20px;
+}
+.dialogPreferences {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: 20px;
+}
+.dialogClose {
+  position: absolute;
+  inset-inline-end: 16px;
+  inset-block-start: 16px;
+  border: 0;
+  background: transparent;
+  inline-size: 44px;
+  block-size: 44px;
+  color: var(--text-secondary);
+}
+.form {
+  display: grid;
+  gap: 16px;
+}
+.formActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-block-start: 12px;
+}
+.confirmation {
+  background: var(--surface-muted);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-block-end: 20px;
+}
+.confirmation dt,
+.confirmation dd {
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+.success {
+  color: var(--accent);
+  padding: 12px 0;
+  font-size: 12px;
+}
+@media (max-width: 1200px) {
+  .products {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .orderRow {
+    grid-template-columns: 1.2fr 1fr 1fr;
+  }
+  .detailGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 580px) {
+  .grid,
+  .products {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .toolbar {
+    align-items: stretch;
+  }
+  .toolbar .field {
+    flex-basis: 100%;
+  }
+  .orderRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    padding: 18px;
+  }
+  .orderRow > span:last-child {
+    grid-column: 1/-1;
+  }
+  .context {
+    padding: 14px;
+  }
+  .contextNames {
+    gap: 10px;
+    flex-direction: column;
+  }
+  .tabs {
+    gap: 18px;
+    font-size: 12px;
+    margin-block-end: 24px;
+  }
+  .dialog {
+    padding: 24px 18px;
+  }
+  .panel {
+    padding: 20px;
+  }
+}
+
+/* Page cards share the DAS modular grid; field layouts remain content-driven. */
+.grid > * {
+  grid-column: span 6;
+}
+.products > * {
+  grid-column: span 4;
+}
+@media (max-width: 1200px) {
+  .products > * {
+    grid-column: span 6;
+  }
+}
+@media (max-width: 580px) {
+  .grid,
+  .products {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  .grid > *,
+  .products > * {
+    grid-column: span 12;
+  }
+}

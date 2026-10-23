@@ -1,0 +1,285 @@
+/* ==============================================
+ * MoulAI™ Platform - Agent-as-a-Service
+ * Author: Youcef Nesrine
+ * License: CC BY-NC-ND 4.0
+ * Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+ * ============================================== */
+
+.frame {
+  min-block-size: 100dvh;
+  display: flex;
+}
+.desktopSidebar {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 248px;
+  z-index: 20;
+  background: var(--surface-sidebar);
+}
+.sidebarInterior {
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  padding: 34px 22px 20px;
+  color: var(--sidebar-text);
+  overflow-y: auto;
+}
+.areaLabel {
+  font-size: 12px;
+  border-top: 1px solid var(--sidebar-border);
+  margin-block-start: 27px;
+  padding-block-start: 22px;
+}
+.sidebarInterior nav {
+  margin-block-start: 30px;
+}
+.sectionLabel {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  font-weight: var(--weight-medium);
+  color: var(--sidebar-muted);
+  margin-block: 24px 12px;
+  padding-inline: 10px;
+}
+.sectionLabel:first-child {
+  margin-block-start: 0;
+}
+.navLink {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  font-size: 12px;
+  min-block-size: 46px;
+  border-radius: 8px;
+  padding: 12px;
+  margin-block-end: 4px;
+}
+.navLink:hover {
+  background: var(--sidebar-hover);
+}
+.navActive {
+  background: var(--sidebar-active);
+  color: var(--text-inverse);
+  box-shadow: inset 3px 0 var(--focus-on-dark);
+}
+:global([dir='rtl']) .navActive {
+  box-shadow: inset -3px 0 var(--focus-on-dark);
+}
+.unavailableItem {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  font-size: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.unavailableItem small {
+  color: var(--sidebar-muted);
+  font-size: 12px;
+  margin-inline-start: auto;
+}
+.sidebarBottom {
+  margin-block-start: auto;
+  padding-block-start: 40px;
+}
+.scopeNote {
+  display: flex;
+  gap: 10px;
+  color: var(--sidebar-muted);
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 12px;
+}
+.signout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: 0;
+  color: var(--sidebar-text);
+  font-size: 12px;
+  padding: 13px;
+  inline-size: 100%;
+  min-block-size: 44px;
+  border-top: 1px solid var(--sidebar-border);
+}
+.body {
+  margin-inline-start: 248px;
+  flex: 1;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+}
+.reviewBanner {
+  min-block-size: 29px;
+  padding: 5px 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--review-text);
+  background: var(--review-bg);
+}
+.header {
+  flex-wrap: wrap;
+  min-block-size: 77px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border);
+  padding: 13px 38px;
+}
+.breadcrumb {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  min-inline-size: 0;
+  flex-wrap: wrap;
+}
+.breadcrumb > span {
+  color: var(--text-primary);
+}
+.headerActions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.sidebarInterior :focus-visible,
+.closeButton:focus-visible {
+  outline-color: var(--focus-on-dark);
+}
+.accountIcon {
+  inline-size: 35px;
+  block-size: 35px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.content {
+  padding: 48px 48px 60px;
+  max-inline-size: 1280px;
+  inline-size: 100%;
+  margin-inline: auto;
+  outline: none;
+}
+.footer {
+  padding: 18px 48px;
+  margin-block-start: auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.footer > span:first-child {
+  font-weight: var(--weight-semibold);
+}
+.menuButton {
+  display: none;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 8px;
+  border: none;
+  min-block-size: 44px;
+  min-inline-size: 44px;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 40;
+}
+.drawer {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: min(300px, 87vw);
+  z-index: 41;
+  background: var(--surface-sidebar);
+  outline: none;
+}
+.closeButton {
+  position: absolute;
+  inset-inline-end: 10px;
+  inset-block-start: 10px;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  border: 0;
+  color: var(--text-inverse);
+  background: transparent;
+}
+.skip {
+  position: fixed;
+  inset-block-start: -100px;
+  inset-inline-start: 20px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  padding: 12px;
+  border: 2px solid var(--focus);
+  z-index: 60;
+}
+.skip:focus {
+  inset-block-start: 8px;
+}
+@media (max-width: 1000px) {
+  .content {
+    padding: 36px 28px 48px;
+  }
+  .header {
+    padding-inline: 24px;
+  }
+  .desktopSidebar {
+    inline-size: 224px;
+  }
+  .body {
+    margin-inline-start: 224px;
+  }
+}
+@media (max-width: 760px) {
+  .desktopSidebar {
+    display: none;
+  }
+  .body {
+    margin-inline-start: 0;
+  }
+  .menuButton {
+    display: inline-grid;
+    place-items: center;
+  }
+  .header {
+    padding: 8px 12px;
+    min-block-size: 68px;
+  }
+  .breadcrumb {
+    gap: 5px;
+    font-size: 12px;
+  }
+  .breadcrumb > svg {
+    display: none;
+  }
+  .headerActions {
+    gap: 4px;
+  }
+  .accountIcon {
+    display: none;
+  }
+  .content {
+    padding: 30px 20px 44px;
+  }
+  .reviewBanner {
+    font-size: 12px;
+    padding-inline: 10px;
+  }
+  .footer {
+    padding: 18px 20px;
+    font-size: 12px;
+  }
+}

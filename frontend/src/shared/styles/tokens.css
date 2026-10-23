@@ -1,0 +1,118 @@
+/* ==============================================
+ * MoulAI™ Platform - Agent-as-a-Service
+ * Author: Youcef Nesrine
+ * License: CC BY-NC-ND 4.0
+ * Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+ * ============================================== */
+
+/* Approved brand anchors; UI shades are semantic adaptations, not logo recolors. */
+:root {
+  --brand-navy: #0b1324;
+  --brand-mint: #e6f6e3;
+  --brand-teal: #006e5f;
+  /* A constant light backing protects the original logo in either UI theme. */
+  --brand-artwork-surface: #ffffff;
+  --surface-page: var(--brand-mint);
+  --surface-card: #ffffff;
+  --surface-muted: #d9eee4;
+  --surface-sidebar: var(--brand-navy);
+  --text-primary: var(--brand-navy);
+  --text-secondary: #304d53;
+  --text-muted: #3f5e61;
+  --text-inverse: var(--brand-mint);
+  --accent: var(--brand-teal);
+  --accent-hover: #005448;
+  --accent-tint: #d4ebe1;
+  --action-end: #005448;
+  --action-hover-start: #005448;
+  --action-hover-end: #004238;
+  --on-action: #ffffff;
+  --border: #9ebbb1;
+  --border-strong: #557c72;
+  --review-bg: #d4ebe1;
+  --review-text: #164e47;
+  --focus: var(--brand-teal);
+  --focus-on-dark: #96e3cd;
+  --disabled-bg: #c5ddd2;
+  --disabled-text: #344c50;
+  --neutral-bg: #ddece5;
+  --neutral-text: #274d49;
+  --positive-bg: #cfebdd;
+  --positive-text: #075a4e;
+  --error-text: var(--text-primary);
+  --status-bg: var(--surface-muted);
+  --status-text: var(--text-primary);
+  --status-progress-bg: var(--accent-tint);
+  --status-progress-text: var(--accent);
+  --status-complete-bg: var(--positive-bg);
+  --status-complete-text: var(--positive-text);
+  --sidebar-text: #d2efe4;
+  --sidebar-muted: #b8d9cf;
+  --sidebar-active: #173f41;
+  --sidebar-hover: #132f37;
+  --sidebar-border: #3b5d63;
+  --overlay: #0b1324b8;
+  --shadow-card: 0 6px 22px #0b132414;
+  --shadow-raised: 0 10px 30px #0b13242b;
+  --gradient-action: linear-gradient(
+    115deg,
+    var(--brand-teal),
+    var(--action-end)
+  );
+  --gradient-action-hover: linear-gradient(
+    115deg,
+    var(--action-hover-start),
+    var(--action-hover-end)
+  );
+  --gradient-visual: linear-gradient(
+    115deg,
+    var(--surface-muted),
+    var(--accent-tint)
+  );
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --weight-body: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --icon-stroke: 1.5;
+  --font-body: 'Sora Variable', 'Tajawal', sans-serif;
+  color-scheme: light;
+  background: var(--surface-page);
+  color: var(--text-primary);
+}
+:root[data-theme='dark'] {
+  --surface-page: var(--brand-navy);
+  --surface-card: #122238;
+  --surface-muted: #1a3144;
+  --text-primary: var(--brand-mint);
+  --text-secondary: #b6dad0;
+  --text-muted: #a0bfc0;
+  --accent: #88ddc3;
+  --accent-hover: #bcefd9;
+  --accent-tint: #183e3f;
+  --border: #406168;
+  --border-strong: #6c989a;
+  --review-bg: #173c3c;
+  --review-text: #c4f0dd;
+  --focus: #96e3cd;
+  --disabled-bg: #233d4c;
+  --disabled-text: #b7cbc7;
+  --neutral-bg: #1d3745;
+  --neutral-text: #c4e8db;
+  --positive-bg: #16453d;
+  --positive-text: #b8f1d5;
+  color-scheme: dark;
+}
+html[lang='ar'] {
+  --weight-semibold: 700;
+  --font-body: 'Tajawal', 'Sora Variable', sans-serif;
+}
