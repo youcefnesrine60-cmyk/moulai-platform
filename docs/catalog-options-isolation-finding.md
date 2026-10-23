@@ -63,3 +63,15 @@ changes no administrator permission, and performs no production migration.
 This catalog remediation does not certify the entire application or replace
 the independent manual-payment review and deployment safeguards. Current test
 execution and coverage results are documented in [API testing](api-testing.md).
+
+## A2 + A5 follow-up — 2026-10-22
+
+The [targeted follow-up](catalog-a2-a5-validation.md) confirms the tested historical
+authentication and owner-isolation fixes. It separately reproduces partial
+commits in bulk creation/reordering and two failing summary response contracts.
+Its initial result was FAIL pending reviewed corrections; the earlier
+authentication finding was not reopened. Following authorization, the targeted
+correction passed **505 offline cases and 21 disposable local PostgreSQL cases**,
+with zero failures or skips. The current focused result is **PASS**. The report
+retains the original reproductions and limits; no Neon or production operation
+was performed.

@@ -11,6 +11,16 @@ report does not rerun its checks or authorize an operational action.
 
 ## Document index
 
+- [Frontend inventory and architecture](frontend-architecture.md): existing UI,
+  exact API families and approved responsive French/Arabic architecture.
+- [Frontend workspace](../frontend/README.md): local access/selection screens,
+  isolated fixtures, brand-asset boundary and build/browser verification commands.
+- [First frontend delivery](frontend-first-delivery.md): implemented screens,
+  exact local test results, source inventory and remaining integration limits.
+- [Restaurant, catalogue and order interfaces](frontend-management-delivery.md):
+  scoped review forms, responsive order views, targeted tests and integration limits.
+- [Frontend languages, themes and DAS](frontend-identity-and-das.md): FR/EN/AR,
+  official palette, source-based DAS-01–DAS-11 adaptation and targeted validation.
 - [Final Git synchronization preparation](github-final-sync-preparation.md):
   remaining validated files, separate branch commits, exclusions and publication
   commands pending approval.
@@ -48,6 +58,8 @@ report does not rerun its checks or authorize an operational action.
   migration, and recovery procedures with approval limits.
 - [Catalog isolation finding](catalog-options-isolation-finding.md): corrected
   authentication and tenant boundaries, with relational verification scope.
+- [A2 + A5 catalog validation](catalog-a2-a5-validation.md): confirmed historical
+  owner boundaries, corrected batch/summary failures and targeted local SQL proofs.
 - [Dependency review](dependency-review.md): reviewed package versions,
   compatibility decisions, and isolated checks.
 - [PowerShell standards](powershell-standards.md): script conventions, process

@@ -20,15 +20,15 @@ reason; inspection found no additional conditional skip in these test files.
 The exact node IDs, original reasons and subsequent outcomes are retained in
 [the case inventory](../artifacts/postgres-local-tests/case-inventory.json).
 
-| Test group | Cases | Required behavior |
-| --- | --- | --- |
-| Restaurant APIs | 52 | Persisted CRUD, constraints, authorization and per-test data reset. |
-| Administrative permission refresh | 3 | Independent commits and authorization re-reading. |
-| Manual payment review | 15 | Receipt uniqueness, real settlement rollback and concurrent review. |
-| Order transactions | 18 | Real commits/rollback, separate readers and atomic order/payment changes. |
-| Payment/subscription transactions | 16 | Idempotency, concurrent settlement and atomic activation. |
-| Persisted pricing | 1 | Database-backed discount rules. |
-| RBAC and branch features | 5 | Stored permissions, subscription limits and usage counters. |
+| Test group                        | Cases | Required behavior                                                         |
+| --------------------------------- | ----- | ------------------------------------------------------------------------- |
+| Restaurant APIs                   | 52    | Persisted CRUD, constraints, authorization and per-test data reset.       |
+| Administrative permission refresh | 3     | Independent commits and authorization re-reading.                         |
+| Manual payment review             | 15    | Receipt uniqueness, real settlement rollback and concurrent review.       |
+| Order transactions                | 18    | Real commits/rollback, separate readers and atomic order/payment changes. |
+| Payment/subscription transactions | 16    | Idempotency, concurrent settlement and atomic activation.                 |
+| Persisted pricing                 | 1     | Database-backed discount rules.                                           |
+| RBAC and branch features          | 5     | Stored permissions, subscription limits and usage counters.               |
 
 Some CRUD assertions are portable SQLAlchemy contracts rather than intrinsically
 PostgreSQL-specific SQL. They still require a real, resettable relational fixture
@@ -127,8 +127,9 @@ including the nine tenant tables, five expansions, 28 triggers, three roles and
 
 Observed on 2026-10-20: **26 passed, zero failures, skips or warnings** on
 PostgreSQL 18.3. See the [K10 delivery](keycloak-k10-validation.md).
-The default command still selects the original 110-test compatibility profile;
-those accepted tests were not repeated for K10.
+Those original compatibility cases were not repeated for the K10 delivery.
+The default legacy selection also includes the later Health-Only and catalog
+database cases; dedicated suite selectors avoid repeating unrelated campaigns.
 
 K10 uses explicit synthetic identity links, real committed E1 records and
 independent SQLAlchemy sessions. It never invokes the legacy truncate fixtures
@@ -140,6 +141,28 @@ when the remote database-test option is supplied. The offline runner excludes
 this file. Neither profile reads a Neon URL or permits remote execution.
 
 ## Observed validation and retained evidence
+
+### Targeted catalog correction — 2026-10-22
+
+```powershell
+$env:DEBUG = 'false'
+.\.venv\Scripts\python.exe scripts/run_local_postgres_tests.py --backend native --suite catalog
+```
+
+This selection runs only `tests/test_catalog_postgres_transactions.py` on a new
+attested local legacy cluster. It rejects the `k10` profile, retains the existing
+URL/role/port/instance allowlist and never reads a Neon URL. Observed result:
+**21 passed, zero failures, skips or warnings**, PostgreSQL **18.3**, revision
+`dce91870b4a2`, 47 public tables; the owned server was stopped. It covers catalog
+HTTP batch rollback, explicit caller transactions, parent deletions and scoped
+SQL summaries. See [A2 + A5](catalog-a2-a5-validation.md) for source scope and
+the retained run ID. No migration revision was created or modified.
+
+The new file remains opt-in in ordinary Pytest runs and is excluded by the
+offline runner. The accepted broad PostgreSQL and K9/K10 campaigns were not
+restarted for this targeted correction.
+
+### Previously accepted evidence
 
 - [Successful PostgreSQL run](../artifacts/postgres-local-tests/5f17a39659264a61be7f3e91c5fbf46a/validation.json),
   [JUnit cases](../artifacts/postgres-local-tests/5f17a39659264a61be7f3e91c5fbf46a/postgres-results.xml)
