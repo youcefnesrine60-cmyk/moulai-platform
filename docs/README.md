@@ -11,6 +11,14 @@ report does not rerun its checks or authorize an operational action.
 
 ## Document index
 
+- [Targeted Reports/Billing finishing pass](frontend-business-polish.md):
+  correct shares, readable missing values, compact tenant payment history and
+  before/after local evidence; Platform Administration unchanged.
+- [AI experiment closure](ai-generation-test-closure.md): accepted inconclusive
+  DeepSeek HTTP 402 result, retained evidence and deferred fallback-language defect.
+- [Reports, manual billing and platform screens](frontend-office-delivery.md):
+  isolated reports/charts, subscription and nonpayable transfer previews,
+  hypothetical bank verification and separate administration; zero external spend.
 - [Frontend inventory and architecture](frontend-architecture.md): existing UI,
   exact API families and approved responsive French/Arabic architecture.
 - [Frontend workspace](../frontend/README.md): local access/selection screens,
@@ -19,8 +27,19 @@ report does not rerun its checks or authorize an operational action.
   exact local test results, source inventory and remaining integration limits.
 - [Restaurant, catalogue and order interfaces](frontend-management-delivery.md):
   scoped review forms, responsive order views, targeted tests and integration limits.
+- [Agents, Channels and Conversations](frontend-intelligence-delivery.md): scoped
+  local review screens, safe descriptive configuration, message timelines,
+  permission boundaries and targeted frontend evidence.
 - [Frontend languages, themes and DAS](frontend-identity-and-das.md): FR/EN/AR,
   official palette, source-based DAS-01–DAS-11 adaptation and targeted validation.
+- [Approved frontend logos and brand signature](frontend-brand-signature-validation.md):
+  exact theme assets, localized signature, planned Agent-as-a-Service presentation
+  and targeted local visual evidence.
+- [Frontend 01 logos and capability presentation](frontend-presentation-01-validation.md):
+  approved replacement assets, larger unframed slogan and four localized icon labels.
+- [Final targeted frontend UI/UX polish](frontend-ux-polish-validation.md):
+  balanced editorial content, compact business headers, local reading surfaces
+  and mobile access visibility.
 - [Final Git synchronization preparation](github-final-sync-preparation.md):
   remaining validated files, separate branch commits, exclusions and publication
   commands pending approval.
