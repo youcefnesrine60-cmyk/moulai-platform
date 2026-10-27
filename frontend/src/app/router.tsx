@@ -74,6 +74,22 @@ export const routes: RouteObject[] = [
                 }),
                 children: [
                   {
+                    path: 'reports',
+                    lazy: async () => ({
+                      Component: (
+                        await import('../features/office/OfficePages')
+                      ).ReportsPage,
+                    }),
+                  },
+                  {
+                    path: 'billing',
+                    lazy: async () => ({
+                      Component: (
+                        await import('../features/office/OfficePages')
+                      ).BillingPage,
+                    }),
+                  },
+                  {
                     index: true,
                     lazy: async () => ({
                       Component: (
@@ -105,6 +121,63 @@ export const routes: RouteObject[] = [
                       ).OrderDetailPage,
                     }),
                   },
+                  {
+                    lazy: async () => ({
+                      Component: (
+                        await import('../features/intelligence/scope')
+                      ).IntelligenceFrame,
+                    }),
+                    children: [
+                      {
+                        path: 'agents',
+                        lazy: async () => ({
+                          Component: (
+                            await import('../features/intelligence/IntelligencePages')
+                          ).AgentsPage,
+                        }),
+                      },
+                      {
+                        path: 'agents/:agentId',
+                        lazy: async () => ({
+                          Component: (
+                            await import('../features/intelligence/IntelligencePages')
+                          ).AgentDetailPage,
+                        }),
+                      },
+                      {
+                        path: 'channels',
+                        lazy: async () => ({
+                          Component: (
+                            await import('../features/intelligence/IntelligencePages')
+                          ).ChannelsPage,
+                        }),
+                      },
+                      {
+                        path: 'channels/:channelId',
+                        lazy: async () => ({
+                          Component: (
+                            await import('../features/intelligence/IntelligencePages')
+                          ).ChannelDetailPage,
+                        }),
+                      },
+                      {
+                        path: 'conversations',
+                        lazy: async () => ({
+                          Component: (
+                            await import('../features/intelligence/IntelligencePages')
+                          ).ConversationsPage,
+                        }),
+                      },
+                      {
+                        path: 'conversations/:conversationId',
+                        lazy: async () => ({
+                          Component: (
+                            await import('../features/intelligence/IntelligencePages')
+                          ).ConversationDetailPage,
+                        }),
+                      },
+                    ],
+                  },
                 ],
               },
             ],
@@ -117,6 +190,30 @@ export const routes: RouteObject[] = [
           {
             element: <Shell platform />,
             children: [
+              {
+                path: '/platform/requests',
+                lazy: async () => ({
+                  Component: (
+                    await import('../features/platform/PlatformRecordsPage')
+                  ).RequestsPage,
+                }),
+              },
+              {
+                path: '/platform/receipts',
+                lazy: async () => ({
+                  Component: (
+                    await import('../features/platform/PlatformRecordsPage')
+                  ).ReceiptsPage,
+                }),
+              },
+              {
+                path: '/platform/audit',
+                lazy: async () => ({
+                  Component: (
+                    await import('../features/platform/PlatformRecordsPage')
+                  ).AuditPage,
+                }),
+              },
               {
                 path: '/platform',
                 lazy: async () => ({

@@ -10,6 +10,21 @@ import { AccessError, type AccessAdapter } from './contracts';
 /** Intentional fail-closed deployment state until Business Integration is approved. */
 export const disconnectedAdapter: AccessAdapter = {
   mode: 'disconnected',
+  async reportBreakdown() {
+    throw new AccessError('notConnected');
+  },
+  async billingWorkspace() {
+    throw new AccessError('notConnected');
+  },
+  async report() {
+    throw new AccessError('notConnected');
+  },
+  async payments() {
+    throw new AccessError('notConnected');
+  },
+  async platformRecords() {
+    throw new AccessError('notConnected');
+  },
   async getSession() {
     return null;
   },
@@ -33,5 +48,23 @@ export const disconnectedAdapter: AccessAdapter = {
   },
   async saveReview() {
     throw new AccessError('notConnected');
+  },
+  async agentWorkspace() {
+    throw new AccessError('notConnected');
+  },
+  async conversations() {
+    throw new AccessError('notConnected');
+  },
+  async conversation() {
+    throw new AccessError('notConnected');
+  },
+  async messages() {
+    throw new AccessError('notConnected');
+  },
+  async saveAgentReview() {
+    throw new AccessError('notConnected');
+  },
+  releaseAgentScope() {
+    /* No transient or remote data exists in disconnected mode. */
   },
 };

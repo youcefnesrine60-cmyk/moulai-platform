@@ -271,7 +271,12 @@ for (const locale of ['fr', 'en', 'ar'] as const)
       ).toBeVisible();
       await check(page, 'invalid-form', info);
       if (locale === 'en' && theme === 'dark') {
-        await dialog.getByRole('button', { name: 'العربية' }).click();
+        await dialog
+          .getByRole('combobox', {
+            name: /Langue de l.interface|Interface language|لغة الواجهة/,
+          })
+          .click();
+        await page.getByRole('option', { name: 'العربية — AR' }).click();
         await chooseTheme(page, 'ar', 'light', true);
         await expect(
           dialog.getByRole('textbox', {
@@ -282,7 +287,12 @@ for (const locale of ['fr', 'en', 'ar'] as const)
         await expect(
           dialog.getByRole('textbox', { name: copy('ar', 'business.price') }),
         ).toHaveValue('0');
-        await dialog.getByRole('button', { name: 'EN' }).click();
+        await dialog
+          .getByRole('combobox', {
+            name: /Langue de l.interface|Interface language|لغة الواجهة/,
+          })
+          .click();
+        await page.getByRole('option', { name: 'English — EN' }).click();
         await chooseTheme(page, 'en', 'dark', true);
         await expect(page).toHaveURL(new RegExp(`${base}/catalogue$`));
       }
@@ -448,7 +458,12 @@ test('blocked storage preserves system theme and working language/theme controls
   await page.goto('/access');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await chooseTheme(page, 'fr', 'light');
-  await page.getByRole('button', { name: 'EN' }).click();
+  await page
+    .getByRole('combobox', {
+      name: /Langue de l.interface|Interface language|لغة الواجهة/,
+    })
+    .click();
+  await page.getByRole('option', { name: 'English — EN' }).click();
   await expect(
     page.getByRole('heading', { name: 'Welcome to your workspace.' }),
   ).toBeVisible();

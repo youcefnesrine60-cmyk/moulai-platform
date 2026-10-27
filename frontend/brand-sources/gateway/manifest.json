@@ -1,0 +1,68 @@
+{
+  "sources": [
+    {
+      "theme": "dark",
+      "original": "moulai-fond-dark.png",
+      "originalSha256": "672001c4347c9056139d05aa3113a45a56d0922579fc96ee0c3733ca59fd40e4",
+      "originalBytes": 1869748,
+      "width": 1672,
+      "height": 941,
+      "encoding": "WebP quality 0.92; full-frame proportional resize",
+      "variants": [
+        {
+          "file": "dark-640.webp",
+          "width": 640,
+          "height": 360,
+          "bytes": 34182,
+          "sha256": "17efe703368551104cd4a015ec8d999a8d4b2725477c8e9550d2f74e1f8c91b3"
+        },
+        {
+          "file": "dark-1024.webp",
+          "width": 1024,
+          "height": 576,
+          "bytes": 71298,
+          "sha256": "f37d4094a8f92b13ce73a28d50fcdcb02ecfd76741c4cd7d61a17722970936fd"
+        },
+        {
+          "file": "dark-1672.webp",
+          "width": 1672,
+          "height": 941,
+          "bytes": 165744,
+          "sha256": "de6e640e5969ad2b6f657afbe754075fc4ebefe2d974173b9b1d10ed7375903c"
+        }
+      ]
+    },
+    {
+      "theme": "light",
+      "original": "moulai-fond-Leight.png",
+      "originalSha256": "3ccd82e3c7d3411cdd0ec6fe0ed41d5bdfe99911f6955d4defd43023bd19d8d5",
+      "originalBytes": 1751546,
+      "width": 1672,
+      "height": 941,
+      "encoding": "WebP quality 0.92; full-frame proportional resize",
+      "variants": [
+        {
+          "file": "light-640.webp",
+          "width": 640,
+          "height": 360,
+          "bytes": 27686,
+          "sha256": "2f3d0d83dc2d0c249eb1a4a5ef7486abc69c1a650c581f0b4f3312448711421e"
+        },
+        {
+          "file": "light-1024.webp",
+          "width": 1024,
+          "height": 576,
+          "bytes": 56034,
+          "sha256": "c5a83dce1f5103f855c28bbd81a7bd28c2a1eee3905a3053fc63ca708ef08da6"
+        },
+        {
+          "file": "light-1672.webp",
+          "width": 1672,
+          "height": 941,
+          "bytes": 125582,
+          "sha256": "41930d5004ba3d7d14d68d5d46251ab5c1695ef6dd250a899199f37d8b45fbdc"
+        }
+      ]
+    }
+  ]
+}

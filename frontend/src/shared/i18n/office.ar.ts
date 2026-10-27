@@ -1,0 +1,121 @@
+import type { officeFr } from './office.fr';
+export const officeAr: Record<keyof typeof officeFr, string> = {
+  'office.activityIndicators': 'نشاط المطعم',
+  'office.additionalIndicators': 'مؤشرات إضافية',
+  'office.recordRestaurant': 'المطعم المرتبط',
+  'office.evidenceBoundary':
+    'يبقى الإيصال دليلاً للمراجعة. حالته لا تعوّض التحقق المستقل من الأموال أو القرار المصرّح به بشأن الاشتراك.',
+  'office.orderChart': 'توزيع الطلبات حسب الحالة',
+  'office.categoryChart': 'المنتجات حسب الفئة',
+  'office.chartNote':
+    'توزيع البيانات المحلية المحملة. هذا الرسم لا يمثل إيرادات مستلمة أو اتجاهاً تاريخياً.',
+  'office.subscription': 'اشتراك المطعم',
+  'office.plan': 'العرض',
+  'office.cycle': 'دورة الفوترة',
+  'office.monthly': 'شهري',
+  'office.yearly': 'سنوي',
+  'office.active': 'نشط',
+  'office.trial': 'تجريبي',
+  'office.expired': 'منتهي',
+  'office.starts': 'البداية',
+  'office.expires': 'الانتهاء',
+  'office.noSubscription': 'لا يوجد اشتراك متاح',
+  'office.offerPreview': 'تحضير اشتراك · محاكاة',
+  'office.simulateCheckout': 'محاكاة الملخص',
+  'office.checkoutPreview': 'ملخص محاكى · لم تُنشأ فاتورة',
+  'office.syntheticPricing':
+    'مبالغ اختبار دون قيمة تجارية. السعر النهائي سيأتي من الخادم.',
+  'office.instructions': 'تعليمات التحويل · مثال غير قابل للدفع',
+  'office.beneficiary': 'المستفيد',
+  'office.destination': 'الحساب / RIP',
+  'office.accountKey': 'مفتاح CCP',
+  'office.noTransfer':
+    'لا تحوّل أي أموال. هذه البيانات وهمية عمداً وغير قابلة للدفع.',
+  'office.transferSteps':
+    'عند التكامل: تحقق من المستفيد والمبلغ لدى الخدمة، احتفظ بمرجع التحويل، ثم أودع إثباتاً. يبقى التحقق من الأموال مستقلاً.',
+  'office.instructionsUnavailable':
+    'التعليمات غير متاحة لهذه الوسيلة. لا يمكن اقتراح تحويل.',
+  'office.invalidCheckout': 'اختر عرضاً ودورة ووسيلة متاحة.',
+  'office.simulation': 'محاكاة محلية فقط',
+  'office.verification': 'محاكاة التحقق من الإثبات',
+  'office.decision': 'القرار المقترح',
+  'office.fundsHypothesis': 'فرضية اختبار: تم التحقق المستقل من الأموال',
+  'office.bankReference': 'مرجع بنكي للاختبار',
+  'office.receivedAmount': 'مبلغ متحقق منه للاختبار (دج)',
+  'office.currency': 'العملة',
+  'office.noCurrency': 'دون إقرار',
+  'office.note': 'ملاحظة التحقق',
+  'office.simulateReview': 'التحقق من المحاكاة',
+  'office.simulationApproved':
+    'محاكاة متسقة: اقتراح قبول دون استلام أموال أو تفعيل اشتراك.',
+  'office.simulationRejected': 'محاكاة متسقة: اقتراح رفض دون تسجيل قرار.',
+  'office.simulationError':
+    'رُفضت المحاكاة. تحقق من حالة الانتظار والملاحظة وأدلة الاختبار: مرجع مطابق ومبلغ دقيق ودينار جزائري وتأكيد مستقل. الرفض لا يجب أن يقر باستلام أموال.',
+  'office.previewNotSaved':
+    'لم يُعدّل أي دفع أو إثبات أو اشتراك أو سجل. تبقى فحوص معاملات الخادم إلزامية.',
+  'office.supervision': 'عناصر هذه القائمة المسموح بها',
+  'office.refreshList': 'تحديث هذه القائمة',
+  'office.resetSimulation': 'مسح المحاكاة',
+  'office.boundary':
+    'مراجعة محلية · بيانات اصطناعية. لا دفع أو إرسال أو تغيير فعلي.',
+  'office.reportsIntro': 'مؤشرات المطعم المحدد دون دمج بيانات مؤسسات أخرى.',
+  'office.billingIntro':
+    'متابعة المدفوعات اليدوية وإثباتاتها. الإيصال لا يثبت استلام الأموال.',
+  'office.orders': 'الطلبات المسجلة',
+  'office.products': 'المنتجات',
+  'office.categories': 'الفئات',
+  'office.average': 'متوسط قيمة الطلب',
+  'office.growth': 'النمو الشهري',
+  'office.unavailable': 'غير متاح',
+  'office.metricsNote':
+    'لا تُستنتج فترة أو اتجاه من هذه المجاميع. المؤشرات المالية المفقودة تبقى غير متاحة.',
+  'office.empty': 'لا توجد نتائج للعرض',
+  'office.emptyHelp': 'لا توجد سجلات متاحة في هذا السياق أو لهذا المرشح.',
+  'office.status': 'الحالة',
+  'office.all': 'جميع الحالات',
+  'office.pending': 'قيد الانتظار',
+  'office.paid': 'مدفوع',
+  'office.failed': 'فشل',
+  'office.cancelled': 'ملغى',
+  'office.refunded': 'مسترد',
+  'office.approved': 'مقبول',
+  'office.rejected': 'مرفوض',
+  'office.receipt_submitted': 'تم إيداع الإثبات',
+  'office.payment': 'الدفع',
+  'office.amount': 'المبلغ',
+  'office.method': 'وسيلة الدفع',
+  'office.created': 'التاريخ',
+  'office.receipt': 'الإثبات',
+  'office.noReceipt': 'لا يوجد إثبات',
+  'office.receiptStatus': 'حالة الإثبات',
+  'office.reference': 'مرجع المعاملة',
+  'office.localDraft': 'تحضير إثبات · معاينة محلية',
+  'office.file': 'ملف PNG أو JPEG أو PDF (بحد أقصى 2 ميبيبايت)',
+  'office.fileNote':
+    'اختر ملف اختبار فقط. لا يُقرأ محتواه ولا يُرسل. يبقى التحقق من الخادم إلزامياً.',
+  'office.preview': 'التحقق من المعاينة المحلية',
+  'office.invalid':
+    'تحقق من المرجع (3 إلى 120 حرفاً) والملف (نوع مسموح، غير فارغ، بحد أقصى 2 ميبيبايت).',
+  'office.previewReady': 'المعاينة جاهزة · لم يُرسل أي إثبات',
+  'office.edit': 'تعديل المسودة',
+  'office.integrationRequired':
+    'ستتاح هذه العملية بعد التكامل الوظيفي والتحقق من الصلاحيات على الخادم.',
+  'office.send': 'إرسال الإثبات',
+  'office.checkout': 'إنشاء دفعة اشتراك',
+  'office.checkoutNote':
+    'يجب ربط العروض وتعليمات التحويل وأسعار الخادم المعتمدة قبل أي شراء.',
+  'office.details': 'عرض التفاصيل',
+  'office.platformIntro':
+    'الإدارة منفصلة عن الوصول للمؤسسات. كل قسم يتطلب صلاحية المنصة الخاصة به.',
+  'office.requestsHelp':
+    'طلبات التسجيل القديمة. الموافقة لا تنشئ ربط هوية أو عضوية K9.',
+  'office.receiptsHelp':
+    'تحقق من استلام الأموال بشكل مستقل قبل الموافقة على الإثبات. لا يُنفذ أي قرار مالي هنا.',
+  'office.auditHelp':
+    'سجل إداري للقراءة فقط. لا تُعرض بيانات خام حساسة أو رموز أو ملفات إثبات.',
+  'office.approve': 'الموافقة',
+  'office.reject': 'الرفض',
+  'office.identifier': 'المعرف',
+  'office.ccp': 'CCP',
+  'office.baridimob': 'بريدي موب',
+};

@@ -15,31 +15,41 @@ import {
   Sun,
   Moon,
   Check,
+  ChevronDown,
 } from 'lucide-react';
 import * as Select from '@radix-ui/react-select';
 import { AccessError } from '../access/contracts';
 import { useTheme } from '../theme';
 import styles from './ui.module.css';
 
-/** Display the approved original artwork unchanged on its readable light surface. */
+/** Use the supplied transparent theme-specific artwork without altering its pixels. */
 export function Brand({
   inverse = false,
+  prominent = false,
 }: {
   inverse?: boolean;
+  prominent?: boolean;
 }): ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { theme } = useTheme();
   return (
-    <div className={`${styles.brand} ${inverse ? styles.inverse : ''}`}>
+    <div
+      className={`${styles.brand} ${inverse ? styles.inverse : ''} ${prominent ? styles.prominent : ''}`}
+      data-brand-size={prominent ? 'prominent' : 'compact'}
+    >
       <span className={styles.brandArtwork} dir="ltr">
         <img
           className={styles.brandLogo}
-          src="/brand/moulai-logo.png"
+          key={theme}
+          src={`/brand/moulai-logo-${theme}01.png`}
           alt="MoulAI™"
-          width={1265}
-          height={331}
+          width={2172}
+          height={724}
         />
       </span>
-      <span className={styles.brandTagline}>{t('brand.tagline')}</span>
+      <span className={styles.brandTagline} dir={i18n.dir()}>
+        {t('brand.tagline')}
+      </span>
     </div>
   );
 }
@@ -68,38 +78,63 @@ export function ForwardArrow(): ReactElement {
   return <ArrowRight className="directional" size={17} aria-hidden="true" />;
 }
 
+/** Reuse i18next preferences through the same accessible selector family as themes. */
 export function LanguageControl(): ReactElement {
   const { t, i18n } = useTranslation();
+  const locale =
+    i18n.language === 'ar' || i18n.language === 'en' ? i18n.language : 'fr';
   return (
-    <div
-      className={styles.languages}
-      role="group"
-      aria-label={t('preferences.language')}
+    <Select.Root
+      value={locale}
+      onValueChange={(value) => {
+        if (value === 'fr' || value === 'en' || value === 'ar')
+          void i18n.changeLanguage(value);
+      }}
     >
-      <button
-        lang="fr"
-        aria-pressed={i18n.language === 'fr'}
-        onClick={() => void i18n.changeLanguage('fr')}
+      <Select.Trigger
+        className={`${styles.themeTrigger} ${styles.languageTrigger}`}
+        aria-label={t('preferences.language')}
       >
-        FR
-      </button>
-      <span aria-hidden="true">/</span>
-      <button
-        lang="en"
-        aria-pressed={i18n.language === 'en'}
-        onClick={() => void i18n.changeLanguage('en')}
-      >
-        EN
-      </button>
-      <span aria-hidden="true">/</span>
-      <button
-        lang="ar"
-        aria-pressed={i18n.language === 'ar'}
-        onClick={() => void i18n.changeLanguage('ar')}
-      >
-        العربية
-      </button>
-    </div>
+        <Select.Value>
+          <span dir="ltr">{locale.toUpperCase()}</span>
+        </Select.Value>
+        <Select.Icon>
+          <ChevronDown size={14} aria-hidden="true" />
+        </Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Content
+          className={styles.themeMenu}
+          position="popper"
+          sideOffset={6}
+        >
+          <Select.Viewport>
+            {(
+              [
+                ['fr', 'Français — FR'],
+                ['en', 'English — EN'],
+                ['ar', 'العربية — AR'],
+              ] as const
+            ).map(([value, label]) => (
+              <Select.Item
+                key={value}
+                value={value}
+                className={styles.themeItem}
+              >
+                <Select.ItemText>
+                  <span lang={value} dir={value === 'ar' ? 'rtl' : 'ltr'}>
+                    {label}
+                  </span>
+                </Select.ItemText>
+                <Select.ItemIndicator>
+                  <Check size={16} aria-hidden="true" />
+                </Select.ItemIndicator>
+              </Select.Item>
+            ))}
+          </Select.Viewport>
+        </Select.Content>
+      </Select.Portal>
+    </Select.Root>
   );
 }
 

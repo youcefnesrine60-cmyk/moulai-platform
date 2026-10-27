@@ -8,6 +8,7 @@
 import type { ReactElement } from 'react';
 import { ClipboardCheck, CreditCard, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { useSession } from '../../app/access';
 import { Badge } from '../../shared/ui/primitives';
 import styles from '../workspace/workspace.module.css';
@@ -26,6 +27,7 @@ export function PlatformPage(): ReactElement {
       <p className="eyebrow">{t('platform.eyebrow')}</p>
       <h1>{t('platform.title')}</h1>
       <p className={styles.intro}>{t('platform.description')}</p>
+      <p className={styles.intro}>{t('office.platformIntro')}</p>
       <div className={styles.sectionHeading}>
         <h2>{t('nav.platformArea')}</h2>
         <Badge tone="test">{t('review.badge')}</Badge>
@@ -40,7 +42,9 @@ export function PlatformPage(): ReactElement {
               <Icon size={26} strokeWidth={1.4} aria-hidden="true" />
               <h3>{t(title)}</h3>
               <p>{t(description)}</p>
-              <Badge>{t('common.soon')}</Badge>
+              <Link to={`/platform/${title.split('.')[1]}`}>
+                {t('office.details')}
+              </Link>
             </section>
           ))}
       </div>

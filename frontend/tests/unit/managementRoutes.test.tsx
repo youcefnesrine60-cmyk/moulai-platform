@@ -324,7 +324,10 @@ describe('restaurant catalogue and order composition', () => {
   it('shows Arabic catalogue fields and semantic RTL without changing resource IDs', async () => {
     await mount();
     await screen.findByRole('heading', { name: 'Votre carte, en détail.' });
-    await userEvent.click(screen.getByRole('button', { name: 'العربية' }));
+    await userEvent.click(
+      screen.getByRole('combobox', { name: i18n.t('preferences.language') }),
+    );
+    await userEvent.click(screen.getByRole('option', { name: 'العربية — AR' }));
     expect(
       screen.getByRole('heading', { name: 'قائمة مطعمك بالتفصيل.' }),
     ).toBeInTheDocument();

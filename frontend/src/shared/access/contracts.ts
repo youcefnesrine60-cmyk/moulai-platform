@@ -6,6 +6,8 @@
 // ==============================================
 
 import type { ManagementAdapter } from '../business/contracts';
+import type { IntelligenceAdapter } from '../intelligence/contracts';
+import type { OfficeAdapter } from '../office/contracts';
 
 /** View-adapter contracts, not a claim that matching public APIs exist. */
 export type TenantRole = 'owner' | 'manager' | 'employee';
@@ -55,7 +57,8 @@ export interface RestaurantView {
 }
 
 /** Future integration must obtain these projections through verified backend reads. */
-export interface AccessAdapter extends ManagementAdapter {
+export interface AccessAdapter
+  extends ManagementAdapter, IntelligenceAdapter, OfficeAdapter {
   readonly mode: 'disconnected' | 'synthetic';
   getSession(signal: AbortSignal): Promise<AccessSession | null>;
   openReview(profile: ReviewProfile): Promise<void>;

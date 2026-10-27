@@ -9,7 +9,16 @@ import type { fr } from './fr';
 
 /** Exact base-catalog parity is enforced at compile time. */
 export const en: Record<keyof typeof fr, string> = {
-  'brand.tagline': 'Your restaurant workspace',
+  'brand.tagline': 'For every business, its own MoulAI.',
+  'access.serviceTitle': 'Agent-as-a-Service',
+  'access.serviceLead': 'Intelligence that works for you.',
+  'access.serviceTeam': 'Not just software, but a new member of your team.',
+  'access.serviceCustomers': 'Responds to customers',
+  'access.serviceAppointments': 'Books appointments',
+  'access.serviceOrders': 'Tracks orders',
+  'access.serviceContinuous': 'Works around the clock',
+  'access.serviceVision':
+    'Product vision and planned capabilities. Business integrations are not all connected yet.',
   'review.banner': 'Local review · synthetic data · no connected service',
   'review.badge': 'Test data',
   'review.title': 'Explore a review journey',
@@ -45,7 +54,9 @@ export const en: Record<keyof typeof fr, string> = {
   'nav.restaurants': 'Restaurants',
   'nav.catalogue': 'Catalogue',
   'nav.orders': 'Orders',
-  'nav.agents': 'Agents & conversations',
+  'nav.agents': 'AI agents',
+  'nav.channels': 'Channels',
+  'nav.conversations': 'Conversations',
   'nav.reports': 'Reports',
   'nav.billing': 'Subscription & payments',
   'nav.management': 'MANAGEMENT',

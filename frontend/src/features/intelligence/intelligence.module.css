@@ -1,0 +1,131 @@
+/* ==============================================
+ * MoulAI™ Platform - Agent-as-a-Service
+ * Author: Youcef Nesrine
+ * License: CC BY-NC-ND 4.0
+ * Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+ * ============================================== */
+
+.notice {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-block-end: var(--space-5);
+}
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: var(--space-4);
+  margin-block: var(--space-5);
+}
+.list {
+  display: grid;
+  gap: var(--space-4);
+  margin-block: var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+.row {
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  min-inline-size: 0;
+}
+.row h2 {
+  margin-block-end: var(--space-2);
+}
+.row p {
+  color: var(--text-secondary);
+}
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-block-start: var(--space-4);
+}
+.link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  min-block-size: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin-block: var(--space-5);
+}
+.facts div {
+  min-inline-size: 0;
+}
+.facts dt {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.facts dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block: var(--space-5);
+}
+.messages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+.message {
+  padding: var(--space-5);
+  border-inline-start: 3px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  min-inline-size: 0;
+}
+.message[data-role='assistant'] {
+  border-inline-start-color: var(--accent);
+}
+.messageHeader {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.content {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+  margin-block: var(--space-4) 0;
+}
+.close {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-end: 12px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  min-inline-size: 44px;
+  min-block-size: 44px;
+}
+@media (max-width: 600px) {
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .row,
+  .message {
+    padding: var(--space-4);
+  }
+}

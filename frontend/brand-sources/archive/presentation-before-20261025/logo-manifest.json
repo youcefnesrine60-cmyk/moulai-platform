@@ -1,0 +1,22 @@
+{
+  "approval": "User-approved frontend display variants, 2026-10-24; historical DAS reference unchanged.",
+  "previousPresentationArchive": "archive/presentation-before-20261024/",
+  "sources": [
+    {
+      "theme": "dark",
+      "file": "moulai-logo-dark.png",
+      "width": 2172,
+      "height": 724,
+      "sha256": "99f0bd0ee1e7818ffb789e0ffbbc9d208812fa5675e1b66acc26ca03c504909f",
+      "transparent": true
+    },
+    {
+      "theme": "light",
+      "file": "moulai-logo-light.png",
+      "width": 2168,
+      "height": 725,
+      "sha256": "2d15af201b074dfd5dafe31bb341da785b0852f957452c6db0ac005449b7db80",
+      "transparent": true
+    }
+  ]
+}

@@ -15,6 +15,9 @@ import {
   type TenantRole,
 } from '../shared/access/contracts';
 import { createManagementAdapter } from './managementAdapter';
+import { createIntelligenceAdapter } from './intelligenceAdapter';
+import { createOfficeAdapter } from './officeAdapter';
+import type { RestaurantScope } from '../shared/business/contracts';
 
 // E1 seed projections for UI review only; never a runtime authorization policy.
 const permissions: Record<TenantRole, readonly string[]> = {
@@ -205,25 +208,48 @@ export function createSyntheticAdapter(latency = 350): AccessAdapter {
     );
   };
 
-  const management = createManagementAdapter(
-    (scope, permission) => {
-      const membership = ownOrganizations().find(
-        (row) => row.id === scope.organizationId,
-      );
-      if (
-        !membership ||
-        !scopedRestaurants(scope.organizationId).some(
-          (row) => row.id === scope.restaurantId,
-        )
+  const authorize = (scope: RestaurantScope, permission: string): void => {
+    const membership = ownOrganizations().find(
+      (row) => row.id === scope.organizationId,
+    );
+    if (
+      !membership ||
+      !scopedRestaurants(scope.organizationId).some(
+        (row) => row.id === scope.restaurantId,
       )
-        throw new AccessError('notFound');
-      if (!membership.permissions.includes(permission))
+    )
+      throw new AccessError('notFound');
+    if (!membership.permissions.includes(permission))
+      throw new AccessError('noAccess');
+  };
+  const management = createManagementAdapter(authorize, (signal) =>
+    pause(signal, latency),
+  );
+  const intelligence = createIntelligenceAdapter(authorize, (signal) =>
+    pause(signal, latency),
+  );
+  const office = createOfficeAdapter(
+    authorize,
+    (permission) => {
+      const current = session();
+      if (
+        current?.area !== 'platform' ||
+        !current.platformPermissions.includes(permission)
+      )
         throw new AccessError('noAccess');
     },
+    management.workspace,
     (signal) => pause(signal, latency),
   );
 
   return {
+    ...office,
+    agentWorkspace: intelligence.agentWorkspace,
+    conversations: intelligence.conversations,
+    conversation: intelligence.conversation,
+    messages: intelligence.messages,
+    saveAgentReview: intelligence.saveAgentReview,
+    releaseAgentScope: intelligence.releaseAgentScope,
     workspace: management.workspace,
     saveReview: management.saveReview,
     mode: 'synthetic',
@@ -233,11 +259,13 @@ export function createSyntheticAdapter(latency = 350): AccessAdapter {
     },
     async openReview(nextProfile) {
       management.reset();
+      intelligence.reset();
       profile = nextProfile;
       generation += 1;
     },
     async signOut() {
       management.reset();
+      intelligence.reset();
       profile = null;
       generation += 1;
     },

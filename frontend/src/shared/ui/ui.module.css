@@ -6,19 +6,20 @@
  * ============================================== */
 
 .brand {
+  min-inline-size: 0;
+  max-inline-size: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   color: var(--text-primary);
   gap: 2px;
 }
 .brandArtwork {
   display: block;
-  inline-size: 196px;
+  inline-size: clamp(240px, 26vw, 360px);
   max-inline-size: 100%;
-  padding: var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--brand-artwork-surface);
+  padding: 0;
+  background: transparent;
 }
 .brandLogo {
   display: block;
@@ -26,8 +27,27 @@
   block-size: auto;
 }
 .brandTagline {
-  font-size: 12px;
-  color: var(--text-secondary);
+  font-size: clamp(14px, 1.2vw, 16px);
+  font-weight: var(--weight-bold);
+  line-height: 1.5;
+  color: var(--text-primary);
+  text-align: center;
+  max-inline-size: 100%;
+}
+:global(html[lang='ar']) .brandTagline {
+  font-size: clamp(16px, 1.4vw, 18px);
+}
+.prominent {
+  gap: 2px;
+}
+.prominent .brandArtwork {
+  inline-size: clamp(320px, 42vw, 560px);
+}
+.prominent .brandTagline {
+  font-size: clamp(16px, 1.4vw, 20px);
+}
+:global(html[lang='ar']) .prominent .brandTagline {
+  font-size: clamp(18px, 1.6vw, 22px);
 }
 .inverse {
   color: var(--text-inverse);
@@ -46,7 +66,8 @@
   border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: var(--weight-semibold);
-  transition: background 0.15s;
+  /* Text and surfaces switch together; color interpolation breaks theme contrast. */
+  transition: box-shadow 0.15s;
 }
 .primary {
   background: var(--gradient-action);
@@ -71,19 +92,12 @@
   background: var(--disabled-bg);
   color: var(--disabled-text);
 }
-.languages {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
 .appearance {
   display: flex;
   align-items: center;
   gap: 8px;
   min-inline-size: 0;
+  direction: ltr;
 }
 .themeTrigger {
   display: inline-flex;
@@ -95,6 +109,12 @@
   border-radius: var(--radius-sm);
   background: var(--surface-card);
   color: var(--text-primary);
+}
+.languageTrigger {
+  inline-size: 76px;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
 }
 .themeMenu {
   z-index: 150;
@@ -122,19 +142,6 @@
   background: var(--accent-tint);
   outline: 2px solid var(--focus);
   outline-offset: -2px;
-}
-.languages button {
-  min-inline-size: 44px;
-  min-block-size: 44px;
-  padding: 5px;
-  border: 0;
-  color: inherit;
-  background: transparent;
-  border-radius: 6px;
-}
-.languages button[aria-pressed='true'] {
-  color: var(--text-primary);
-  font-weight: var(--weight-bold);
 }
 .badge {
   border-radius: 5px;
@@ -167,6 +174,10 @@
   align-items: center;
   flex-direction: column;
   justify-content: center;
+  background: var(--surface-reading);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(4px);
 }
 .state h1 {
   font-size: 26px;

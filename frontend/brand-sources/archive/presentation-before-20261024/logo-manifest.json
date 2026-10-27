@@ -1,0 +1,20 @@
+{
+  "sources": [
+    {
+      "theme": "dark",
+      "file": "moulai-logo-dark.png",
+      "width": 2172,
+      "height": 724,
+      "sha256": "8a99797a3eb98478b909e88c64dc67c9a0d0b357d36a67563ae69af0f489218c",
+      "transparent": true
+    },
+    {
+      "theme": "light",
+      "file": "moulai-logo-light.png",
+      "width": 2172,
+      "height": 724,
+      "sha256": "b4c03f0cb84c6f11fa22c13760b9dd3fb7f682ea237f19eab68fe2493ee1c7e4",
+      "transparent": true
+    }
+  ]
+}

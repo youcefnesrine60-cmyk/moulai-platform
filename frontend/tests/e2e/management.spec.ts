@@ -365,7 +365,12 @@ test('French and Arabic management views, modal keyboard and 360px layout pass t
         .analyze()
     ).violations,
   ).toEqual([]);
-  await page.getByRole('button', { name: 'العربية' }).click();
+  await page
+    .getByRole('combobox', {
+      name: /Langue de l.interface|Interface language|لغة الواجهة/,
+    })
+    .click();
+  await page.getByRole('option', { name: 'العربية — AR' }).click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   if (info.project.name === 'mobile')
     await page.setViewportSize({ width: 360, height: 800 });

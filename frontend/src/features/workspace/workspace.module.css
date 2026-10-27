@@ -36,7 +36,7 @@
   gap: 24px;
 }
 .companyCard {
-  background: var(--surface-card);
+  background: var(--surface-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -128,7 +128,7 @@
 }
 .restaurantCard {
   border: 1px solid var(--border);
-  background: var(--surface-card);
+  background: var(--surface-panel);
   padding: 26px 26px 0;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-card);
@@ -162,7 +162,7 @@
   text-align: center;
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--surface-panel);
   padding: 55px 26px;
 }
 .empty svg {
@@ -202,7 +202,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 28px;
-  background: var(--surface-card);
+  background: var(--surface-panel);
 }
 .moduleCard > svg {
   color: var(--accent);

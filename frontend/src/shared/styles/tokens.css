@@ -10,12 +10,37 @@
   --brand-navy: #0b1324;
   --brand-mint: #e6f6e3;
   --brand-teal: #006e5f;
-  /* A constant light backing protects the original logo in either UI theme. */
+  /* Retained legacy anchor; current transparent logos need no backing. */
   --brand-artwork-surface: #ffffff;
   --surface-page: var(--brand-mint);
   --surface-card: #ffffff;
   --surface-muted: #d9eee4;
   --surface-sidebar: var(--brand-navy);
+  /* Panels transmit a little artwork; inputs, menus and dialogs stay opaque. */
+  --panel-opacity: 60%;
+  /* Dense reading areas need this local exception to retain text/focus contrast. */
+  --reading-opacity: 84%;
+  --surface-reading: color-mix(
+    in srgb,
+    var(--surface-card) var(--reading-opacity),
+    transparent
+  );
+  --surface-panel: color-mix(
+    in srgb,
+    var(--surface-card) var(--panel-opacity),
+    transparent
+  );
+  --surface-header: color-mix(in srgb, var(--surface-page) 60%, transparent);
+  --surface-scene-wash: color-mix(
+    in srgb,
+    var(--surface-page) 16%,
+    transparent
+  );
+  --surface-navigation: color-mix(
+    in srgb,
+    var(--surface-sidebar) 96%,
+    transparent
+  );
   --text-primary: var(--brand-navy);
   --text-secondary: #304d53;
   --text-muted: #3f5e61;

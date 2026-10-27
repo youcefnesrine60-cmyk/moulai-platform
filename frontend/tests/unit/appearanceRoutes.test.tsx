@@ -54,7 +54,10 @@ describe('live language and appearance changes', () => {
     await userEvent.click(
       dialog.getByRole('button', { name: 'Vérifier la modification' }),
     );
-    await userEvent.click(dialog.getByRole('button', { name: 'EN' }));
+    await userEvent.click(
+      dialog.getByRole('combobox', { name: i18n.t('preferences.language') }),
+    );
+    await userEvent.click(screen.getByRole('option', { name: 'English — EN' }));
     expect(
       dialog.getByRole('heading', { name: 'Add product' }),
     ).toBeInTheDocument();
@@ -70,7 +73,10 @@ describe('live language and appearance changes', () => {
     await act(async () => {
       window.moulaiTheme.choose('dark');
     });
-    await userEvent.click(dialog.getByRole('button', { name: 'العربية' }));
+    await userEvent.click(
+      dialog.getByRole('combobox', { name: i18n.t('preferences.language') }),
+    );
+    await userEvent.click(screen.getByRole('option', { name: 'العربية — AR' }));
     expect(document.documentElement).toHaveAttribute('dir', 'rtl');
     expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
     expect(dialog.getByRole('textbox', { name: 'الاسم' })).toHaveValue(
@@ -100,7 +106,10 @@ describe('live language and appearance changes', () => {
     await userEvent.click(
       dialog.getByRole('button', { name: 'Vérifier la modification' }),
     );
-    await userEvent.click(dialog.getByRole('button', { name: 'EN' }));
+    await userEvent.click(
+      dialog.getByRole('combobox', { name: i18n.t('preferences.language') }),
+    );
+    await userEvent.click(screen.getByRole('option', { name: 'English — EN' }));
     expect(
       dialog.getByRole('heading', { name: 'Confirm review change' }),
     ).toBeInTheDocument();

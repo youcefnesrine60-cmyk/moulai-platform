@@ -173,6 +173,23 @@ export function RestaurantFrame(): ReactElement {
         {company.permissions.includes('tenant.orders.read') && (
           <NavLink to={`${basePath}/orders`}>{t('nav.orders')}</NavLink>
         )}
+        {company.permissions.includes('tenant.agents.read') && (
+          <>
+            <NavLink to={`${basePath}/agents`}>{t('nav.agents')}</NavLink>
+            <NavLink to={`${basePath}/channels`}>{t('nav.channels')}</NavLink>
+          </>
+        )}
+        {company.permissions.includes('tenant.conversations.read') && (
+          <NavLink to={`${basePath}/conversations`}>
+            {t('nav.conversations')}
+          </NavLink>
+        )}
+        {company.permissions.includes('tenant.reports.read') && (
+          <NavLink to={`${basePath}/reports`}>{t('nav.reports')}</NavLink>
+        )}
+        {company.permissions.includes('tenant.billing.read') && (
+          <NavLink to={`${basePath}/billing`}>{t('nav.billing')}</NavLink>
+        )}
       </nav>
       <Outlet key={basePath} context={context} />
       <p className={styles.integrationNote}>{t('business.reviewOnly')}</p>

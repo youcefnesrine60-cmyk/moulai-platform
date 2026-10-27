@@ -23,6 +23,14 @@ async function verifyBuild() {
       'REV-9201-',
       'Couscous maison',
       'Client de revue 1',
+      'IA-REV-',
+      'synthetic-visitor-',
+      'BILLING-REVIEW-',
+      'REGISTRATION-REVIEW-',
+      'AUDIT-REVIEW-',
+      'PAYMENT-REVIEW-',
+      'SYNTHETIC-CCP-NOT-PAYABLE',
+      'SYNTHETIC-RIP-NOT-PAYABLE',
     ]) {
       assert(
         !source.includes(fixture),
@@ -30,9 +38,15 @@ async function verifyBuild() {
       );
     }
     assert(
-      !['syntheticAdapter', 'restaurantFixtures', 'managementAdapter'].some(
-        (fixture) => name.includes(fixture),
-      ),
+      ![
+        'syntheticAdapter',
+        'restaurantFixtures',
+        'managementAdapter',
+        'intelligenceAdapter',
+        'intelligenceFixtures',
+        'officeAdapter',
+        'billingFixtures',
+      ].some((fixture) => name.includes(fixture)),
       'Synthetic adapter chunk is forbidden.',
     );
   }

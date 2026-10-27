@@ -14,7 +14,7 @@
   padding: 16px 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--surface-card);
+  background: var(--surface-panel);
   margin-block-end: 20px;
 }
 .contextNames {
@@ -84,7 +84,7 @@
 .panel {
   overflow-wrap: anywhere;
   padding: 24px;
-  background: var(--surface-card);
+  background: var(--surface-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   min-inline-size: 0;
@@ -140,7 +140,7 @@
   flex-wrap: wrap;
   gap: 16px;
   padding: 18px;
-  background: var(--surface-card);
+  background: var(--surface-panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   margin-block-end: 24px;
@@ -201,7 +201,7 @@
 .empty {
   text-align: center;
   padding: 48px 24px;
-  background: var(--surface-card);
+  background: var(--surface-panel);
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius-md);
 }
@@ -305,7 +305,7 @@
   align-items: center;
   padding: 20px;
   border: 1px solid var(--border);
-  background: var(--surface-card);
+  background: var(--surface-panel);
   border-radius: var(--radius-md);
 }
 .orderRow:hover {

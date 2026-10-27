@@ -53,6 +53,8 @@ export function Sidebar({
     ['tenant.catalog.read', 'nav.catalogue', BookOpen],
     ['tenant.orders.read', 'nav.orders', ClipboardList],
     ['tenant.agents.read', 'nav.agents', MessagesSquare],
+    ['tenant.agents.read', 'nav.channels', MessagesSquare],
+    ['tenant.conversations.read', 'nav.conversations', MessagesSquare],
     ['tenant.reports.read', 'nav.reports', ChartNoAxesCombined],
     ['tenant.billing.read', 'nav.billing', CreditCard],
   ] as const;
@@ -63,7 +65,6 @@ export function Sidebar({
   ] as const;
   return (
     <div className={styles.sidebarInterior}>
-      <Brand inverse />
       <div className={styles.areaLabel}>
         {t(platform ? 'nav.platformArea' : 'nav.tenantArea')}
       </div>
@@ -100,10 +101,16 @@ export function Sidebar({
             .filter(([permission]) => current?.permissions.includes(permission))
             .map(([, label, Icon]) =>
               restaurantId &&
-              (label === 'nav.catalogue' || label === 'nav.orders') ? (
+              (label === 'nav.catalogue' ||
+                label === 'nav.orders' ||
+                label === 'nav.agents' ||
+                label === 'nav.channels' ||
+                label === 'nav.conversations' ||
+                label === 'nav.reports' ||
+                label === 'nav.billing') ? (
                 <NavLink
                   key={label}
-                  to={`/workspace/organizations/${current?.id}/restaurants/${restaurantId}/${label === 'nav.catalogue' ? 'catalogue' : 'orders'}`}
+                  to={`/workspace/organizations/${current?.id}/restaurants/${restaurantId}/${{ 'nav.catalogue': 'catalogue', 'nav.orders': 'orders', 'nav.agents': 'agents', 'nav.channels': 'channels', 'nav.conversations': 'conversations', 'nav.reports': 'reports', 'nav.billing': 'billing' }[label]}`}
                   className={({ isActive }) =>
                     `${styles.navLink} ${isActive ? styles.navActive : ''}`
                   }
@@ -126,11 +133,17 @@ export function Sidebar({
               session.data?.platformPermissions.includes(permission),
             )
             .map(([, label, Icon]) => (
-              <div key={label} className={styles.unavailableItem}>
+              <NavLink
+                key={label}
+                to={`/platform/${label.split('.')[1]}`}
+                className={({ isActive }) =>
+                  `${styles.navLink} ${isActive ? styles.navActive : ''}`
+                }
+                onClick={close}
+              >
                 <Icon size={18} aria-hidden="true" />
                 <span>{t(label)}</span>
-                <small>{t('common.soon')}</small>
-              </div>
+              </NavLink>
             ))}
       </nav>
       <div className={styles.sidebarBottom}>
@@ -221,12 +234,23 @@ export function Shell({
                         ? 'nav.catalogue'
                         : location.pathname.includes('/orders')
                           ? 'nav.orders'
-                          : 'nav.restaurants',
+                          : location.pathname.includes('/agents')
+                            ? 'nav.agents'
+                            : location.pathname.includes('/channels')
+                              ? 'nav.channels'
+                              : location.pathname.includes('/conversations')
+                                ? 'nav.conversations'
+                                : location.pathname.includes('/reports')
+                                  ? 'nav.reports'
+                                  : location.pathname.includes('/billing')
+                                    ? 'nav.billing'
+                                    : 'nav.restaurants',
                   )}
                 </span>
               </>
             )}
           </div>
+          <Brand />
           <div className={styles.headerActions}>
             <AppearanceControls />
             <span

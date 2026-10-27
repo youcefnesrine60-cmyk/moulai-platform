@@ -196,7 +196,12 @@ test('Arabic text, semantic RTL, keyboard/mobile menu and accessibility', async 
   page,
 }, testInfo) => {
   await enter(page);
-  await page.getByRole('button', { name: 'العربية' }).click();
+  await page
+    .getByRole('combobox', {
+      name: /Langue de l.interface|Interface language|لغة الواجهة/,
+    })
+    .click();
+  await page.getByRole('option', { name: 'العربية — AR' }).click();
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
   await expect(
@@ -291,7 +296,12 @@ test('minimum 360px Arabic layout keeps navigation and cards inside the viewport
 }) => {
   await page.setViewportSize({ width: 360, height: 800 });
   await enter(page);
-  await page.getByRole('button', { name: 'العربية' }).click();
+  await page
+    .getByRole('combobox', {
+      name: /Langue de l.interface|Interface language|لغة الواجهة/,
+    })
+    .click();
+  await page.getByRole('option', { name: 'العربية — AR' }).click();
   await expect(
     page.getByRole('heading', { name: 'لكل مؤسسة مساحتها.' }),
   ).toBeVisible();

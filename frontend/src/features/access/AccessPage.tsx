@@ -12,10 +12,14 @@ import { z } from 'zod';
 import * as Select from '@radix-ui/react-select';
 import {
   ArrowUpRight,
+  CalendarDays,
   Check,
   CheckCircle2,
   ChevronDown,
+  ClipboardList,
+  Clock3,
   LockKeyhole,
+  MessagesSquare,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -159,25 +163,27 @@ export function AccessPage(): ReactElement {
         <div className={styles.reviewBanner}>{t('review.banner')}</div>
       )}
       <header className={styles.header}>
-        <Brand />
+        <Brand prominent />
         <AppearanceControls />
       </header>
       <main className={styles.main}>
         <aside className={styles.editorial}>
-          <span className={styles.editorialKicker}>
-            <bdi>MoulAI™</bdi> / {t('nav.context')}
-          </span>
-          <h2>{t('access.editorialTitle')}</h2>
-          <p>{t('access.editorialBody')}</p>
-          <div className={styles.editorialFeatures}>
-            {['One', 'Two', 'Three'].map((key) => (
-              <p key={key}>
-                <CheckCircle2 size={18} aria-hidden="true" />
-                {t(`access.feature${key}`)}
-              </p>
-            ))}
+          <div className={styles.editorialCopy}>
+            <span className={styles.editorialKicker}>
+              <bdi>MoulAI™</bdi> / {t('nav.context')}
+            </span>
+            <h2>{t('access.editorialTitle')}</h2>
+            <p>{t('access.editorialBody')}</p>
+            <div className={styles.editorialFeatures}>
+              {['One', 'Two', 'Three'].map((key) => (
+                <p key={key}>
+                  <CheckCircle2 size={18} aria-hidden="true" />
+                  {t(`access.feature${key}`)}
+                </p>
+              ))}
+            </div>
+            <small>{t('access.editorialFooter')}</small>
           </div>
-          <small>{t('access.editorialFooter')}</small>
         </aside>
         <section className={styles.entry}>
           <p className="eyebrow">{t('access.eyebrow')}</p>
@@ -197,10 +203,42 @@ export function AccessPage(): ReactElement {
             {t('access.privacy')}
           </p>
         </section>
+        <section
+          className={styles.servicePresentation}
+          aria-labelledby="service-title"
+          aria-describedby="service-vision"
+        >
+          <div className={styles.serviceHeading}>
+            <h2 id="service-title" dir="ltr">
+              {t('access.serviceTitle')}
+            </h2>
+            <p className={styles.serviceLead}>{t('access.serviceLead')}</p>
+          </div>
+          <div className={styles.serviceCopy}>
+            <p>{t('access.serviceTeam')}</p>
+          </div>
+          <ul className={styles.serviceCapabilities}>
+            {(
+              [
+                ['access.serviceCustomers', MessagesSquare],
+                ['access.serviceAppointments', CalendarDays],
+                ['access.serviceOrders', ClipboardList],
+                ['access.serviceContinuous', Clock3],
+              ] as const
+            ).map(([key, Icon]) => (
+              <li key={key}>
+                <Icon size={28} aria-hidden="true" />
+                <span>{t(key)}</span>
+              </li>
+            ))}
+          </ul>
+          <p id="service-vision" className={styles.serviceVision}>
+            {t('access.serviceVision')}
+          </p>
+        </section>
       </main>
       <footer className={styles.footer}>
         <span dir="ltr">© 2026 MoulAI™</span>
-        <span>{t('brand.tagline')}</span>
       </footer>
     </div>
   );

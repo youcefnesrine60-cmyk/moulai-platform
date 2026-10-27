@@ -126,7 +126,10 @@ describe('browser access composition', () => {
     await screen.findByRole('heading', {
       name: 'Chaque entreprise, son espace.',
     });
-    await userEvent.click(screen.getByRole('button', { name: 'العربية' }));
+    await userEvent.click(
+      screen.getByRole('combobox', { name: i18n.t('preferences.language') }),
+    );
+    await userEvent.click(screen.getByRole('option', { name: 'العربية — AR' }));
     expect(
       await screen.findByRole('heading', { name: 'لكل مؤسسة مساحتها.' }),
     ).toBeInTheDocument();

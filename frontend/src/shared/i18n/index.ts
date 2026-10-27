@@ -13,6 +13,12 @@ import { en } from './en';
 import { businessFr } from './business.fr';
 import { businessAr } from './business.ar';
 import { businessEn } from './business.en';
+import { intelligenceFr } from './intelligence.fr';
+import { intelligenceEn } from './intelligence.en';
+import { intelligenceAr } from './intelligence.ar';
+import { officeFr } from './office.fr';
+import { officeEn } from './office.en';
+import { officeAr } from './office.ar';
 import type { Locale, LocalizedLabel } from '../access/contracts';
 
 /** Store only a language preference; identities and tenant data stay in memory. */
@@ -27,9 +33,15 @@ function initialLanguage(): Locale {
 
 await i18n.use(initReactI18next).init({
   resources: {
-    fr: { translation: { ...fr, ...businessFr } },
-    ar: { translation: { ...ar, ...businessAr } },
-    en: { translation: { ...en, ...businessEn } },
+    fr: {
+      translation: { ...fr, ...businessFr, ...intelligenceFr, ...officeFr },
+    },
+    ar: {
+      translation: { ...ar, ...businessAr, ...intelligenceAr, ...officeAr },
+    },
+    en: {
+      translation: { ...en, ...businessEn, ...intelligenceEn, ...officeEn },
+    },
   },
   lng: initialLanguage(),
   fallbackLng: 'fr',

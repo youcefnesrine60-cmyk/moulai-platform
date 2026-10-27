@@ -1,0 +1,38 @@
+/* ==============================================
+ * MoulAI™ Platform - Agent-as-a-Service
+ * Author: Youcef Nesrine
+ * License: CC BY-NC-ND 4.0
+ * Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+ * ============================================== */
+
+.canvas {
+  position: relative;
+  isolation: isolate;
+  min-block-size: 100dvh;
+}
+.background {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--surface-page);
+}
+.background img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: left center;
+}
+.background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--surface-scene-wash);
+}
+@media (max-width: 760px) {
+  .background img {
+    object-position: 24% top;
+  }
+}
