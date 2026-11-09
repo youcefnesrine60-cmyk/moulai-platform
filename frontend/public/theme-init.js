@@ -6,51 +6,60 @@
 // ==============================================
 
 // @ts-check
-/** One store initializes before paint and serves React without remounting forms. */
+/** Device-local schedule before paint; manual choice lasts only this opening. */
 (() => {
   /** @typedef {'light' | 'dark'} Theme */
-  /** @typedef {Theme | 'system'} Preference */
-  /** @typedef {Readonly<{theme: Theme, preference: Preference}>} Snapshot */
-  const key = 'moulai.theme';
-  const media =
-    typeof window.matchMedia === 'function'
-      ? window.matchMedia('(prefers-color-scheme: dark)')
-      : null;
+  /** @typedef {Readonly<{theme: Theme, preference: Theme, manual: boolean}>} Snapshot */
+  const configuration = document.getElementById('moulai-appearance-schedule');
+  if (!configuration?.textContent)
+    throw new Error('Appearance schedule is required');
+  /** @type {Readonly<{dayStartsAt: string, nightStartsAt: string, status: string}>} */
+  const schedule = Object.freeze(JSON.parse(configuration.textContent));
+  /** @param {string} value @returns {number} */
+  const minuteOfDay = (value) =>
+    Number(value.slice(0, 2)) * 60 + Number(value.slice(3, 5));
+  const start = minuteOfDay(schedule.dayStartsAt);
+  const end = minuteOfDay(schedule.nightStartsAt);
+  if (
+    ![schedule.dayStartsAt, schedule.nightStartsAt].every((v) =>
+      /^([01]\d|2[0-3]):[0-5]\d$/.test(v),
+    ) ||
+    start === end
+  )
+    throw new Error('Invalid appearance schedule');
+  /** @type {Theme | null} */
+  let manual = null;
   /** @type {Set<() => void>} */
   const subscribers = new Set();
-
-  /** Read only the appearance key; unavailable storage keeps system behavior. @returns {Preference} */
-  function readPreference() {
-    try {
-      const value = window.localStorage.getItem(key);
-      return value === 'light' || value === 'dark' ? value : 'system';
-    } catch {
-      return 'system';
-    }
-  }
-  /** @param {Preference} preference @returns {Snapshot} */
-  function resolve(preference) {
-    return Object.freeze({
-      preference,
-      theme:
-        preference === 'system'
-          ? media?.matches
-            ? 'dark'
-            : 'light'
-          : preference,
-    });
+  /** Device hours ignore restaurant zones, OS preference and stored choices. @returns {Theme} */
+  function scheduledTheme() {
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    const day =
+      start < end
+        ? minutes >= start && minutes < end
+        : minutes >= start || minutes < end;
+    return day ? 'light' : 'dark';
   }
   /** @type {Snapshot} */
-  let snapshot = resolve(readPreference());
-
-  /** @param {Preference} preference @returns {void} */
-  function apply(preference) {
-    const next = resolve(preference);
+  let snapshot = Object.freeze({
+    theme: scheduledTheme(),
+    preference: scheduledTheme(),
+    manual: false,
+  });
+  /** Keep React snapshots stable without changing foreground opacity. @returns {void} */
+  function apply() {
+    const theme = manual ?? scheduledTheme();
     const changed =
-      next.theme !== snapshot.theme || next.preference !== snapshot.preference;
-    snapshot = changed ? next : snapshot;
-    document.documentElement.dataset.theme = snapshot.theme;
-    document.documentElement.style.colorScheme = snapshot.theme;
+      theme !== snapshot.theme || snapshot.manual !== (manual !== null);
+    if (changed)
+      snapshot = Object.freeze({
+        theme,
+        preference: theme,
+        manual: manual !== null,
+      });
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
     const meta = document.querySelector('meta[name="theme-color"]');
     const background = window
       .getComputedStyle(document.documentElement)
@@ -59,35 +68,27 @@
     if (meta && background) meta.setAttribute('content', background);
     if (changed) subscribers.forEach((listener) => listener());
   }
-  /** @param {Preference} preference @returns {void} */
-  function choose(preference) {
-    if (!['light', 'dark', 'system'].includes(preference))
+  /** Never persist a manual choice to another opening. @param {Theme} value @returns {void} */
+  function choose(value) {
+    if (value !== 'light' && value !== 'dark')
       throw new TypeError('Invalid theme preference');
-    try {
-      if (preference === 'system') window.localStorage.removeItem(key);
-      else window.localStorage.setItem(key, preference);
-    } catch {
-      /* The in-memory preference still works when storage is denied. */
-    }
-    apply(preference);
+    manual = value;
+    apply();
   }
-  /** @returns {void} */
-  function systemChanged() {
-    if (snapshot.preference === 'system') apply('system');
+  /** Follow clock boundaries until manually overridden. @returns {void} */
+  function tick() {
+    apply();
+    window.setTimeout(tick, 60000 - (Date.now() % 60000));
   }
-  if (media?.addEventListener) media.addEventListener('change', systemChanged);
-  window.addEventListener('storage', (event) => {
-    if (event.key !== key && event.key !== null) return;
-    try {
-      if (event.storageArea !== window.localStorage) return;
-    } catch {
-      return;
-    }
-    apply(readPreference());
+  window.setTimeout(tick, 60000 - (Date.now() % 60000));
+  document.addEventListener('visibilitychange', apply);
+  window.addEventListener('focus', apply);
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) manual = null;
+    apply();
   });
   Object.defineProperty(window, 'moulaiTheme', {
     value: Object.freeze({
-      /** @returns {Snapshot} */
       getSnapshot: () => snapshot,
       /** @param {() => void} listener @returns {() => void} */
       subscribe: (listener) => {
@@ -97,12 +98,11 @@
         };
       },
       choose,
+      /** Compatibility hook: refresh the device clock only; business zones cannot override it. */
+      setContextTimezone: apply,
+      getSchedule: () => schedule,
     }),
   });
-  apply(snapshot.preference);
-  document.addEventListener(
-    'DOMContentLoaded',
-    () => apply(snapshot.preference),
-    { once: true },
-  );
+  apply();
+  document.addEventListener('DOMContentLoaded', apply, { once: true });
 })();

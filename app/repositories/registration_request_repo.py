@@ -7,10 +7,10 @@
 
 # ==============================================
 # MOULAI MODULE - APP / REPOSITORIES / REGISTRATION REQUEST REPO
-# Operational component of the MoulAI platform.
+# Preserve request ownership and serialize approval persistence in its business transaction.
 # ==============================================
 
-"""MoulAI operational module for registration request repo.
+"""Read registration requests and lock canonical identities for atomic approvals.
 
 Part of MoulAI Platform - Agent-as-a-Service.
 """
@@ -29,13 +29,18 @@ Part of MoulAI Platform - Agent-as-a-Service.
 # حذف الطلب
 # ==============================================
 
+import hashlib
 from typing import (
     Any,
     TypeAlias,
 )
 
-from sqlalchemy import or_
+from sqlalchemy import (
+    or_,
+    text,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import raiseload
 
 from app.core.logger import logger
 from app.models.registration_request import RegistrationRequest
@@ -94,6 +99,40 @@ class RegistrationRequestRepository(
     # ==========================================
     # 📖 QUERIES
     # ==========================================
+
+    # ==============================================
+    # LOCK THE APPROVAL REQUEST AND CANONICAL IDENTITY
+    # Serialize duplicate requests and different requests sharing a not-yet-created owner.
+    # ==============================================
+
+    async def get_for_approval(self, *, request_id: int) -> RegistrationRequest | None:
+        """Refresh the locked request and hold a transaction-scoped identity lock.
+
+        The stable signed bigint key includes a namespace; a hash collision can only
+        serialize unrelated registrations, never authorize or mix their records.
+        The caller must own the transaction throughout approval.
+        """
+        request = (
+            await self.session.execute(
+                self._select()
+                .options(raiseload("*"))
+                .where(self.model.id == request_id)
+                .with_for_update()
+                .execution_options(populate_existing=True)
+            )
+        ).scalar_one_or_none()
+        if request is not None:
+            key = int.from_bytes(
+                hashlib.sha256(
+                    f"moulai-registration:{request.chat_id}".encode()
+                ).digest()[:8],
+                byteorder="big",
+                signed=True,
+            )
+            await self.session.execute(
+                text("SELECT pg_advisory_xact_lock(CAST(:key AS bigint))"), {"key": key}
+            )
+        return request
 
     # ==============================================
     # GET BY CHAT ID

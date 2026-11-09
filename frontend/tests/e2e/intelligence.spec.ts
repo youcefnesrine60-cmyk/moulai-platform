@@ -5,6 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
+import { installManualThemeFixture } from './manualThemeFixture';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fr } from '../../src/shared/i18n/fr';
@@ -425,7 +426,7 @@ test('Keyboard form, validation, confirmation, locale/System preference and scop
     .getByRole('combobox', { name: copy('ar', 'preferences.theme') })
     .click();
   await page
-    .getByRole('option', { name: copy('ar', 'theme.system'), exact: true })
+    .getByRole('option', { name: copy('ar', 'theme.dark'), exact: true })
     .click();
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect(page.locator('[data-gateway]')).toHaveAttribute(
@@ -485,3 +486,6 @@ test('Normal build is disconnected and does not admit the intelligence review', 
   ).toHaveCount(0);
   await expect(page.getByText(/IA-REV-|synthetic-visitor-/)).toHaveCount(0);
 });
+
+// Visual fixtures request a manual choice; opening policy is checked independently.
+test.beforeEach(async ({ page }) => installManualThemeFixture(page));

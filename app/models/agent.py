@@ -11,23 +11,20 @@
 # يدير الوكلاء والقنوات والمحادثات والرسائل
 # ==============================================
 
-"""MoulAI operational module for agent.
+"""Persist agents, channels, conversations and their validated lifecycle state.
 
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from typing import (
-    Any,
-    Dict,
-)
+from typing import Any  # isort: skip  # fmt: skip
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     Float,
     ForeignKey,
     Integer,
-    JSON,
     String,
     Text,
     case,
@@ -45,7 +42,7 @@ from .base import BaseModel
 # 🧩 TYPES
 # ==============================================
 
-JSONDict = Dict[str, Any]
+JSONDict = dict[str, Any]
 CONVERSATION_STATUS_KEY = "_moulai_status"
 MESSAGE_CONTENT_TYPE_KEY = "_moulai_content_type"
 _CONVERSATION_STATUSES = frozenset({"active", "closed", "suspended"})
@@ -115,6 +112,7 @@ class Agent(BaseModel):
     is_active = Column(
         Boolean,
         default=True,
+        nullable=False,
         comment="حالة النشاط",
     )
 
@@ -233,6 +231,7 @@ class Channel(BaseModel):
     is_active = Column(
         Boolean,
         default=True,
+        nullable=False,
         comment="حالة النشاط",
     )
 
@@ -344,6 +343,7 @@ class Conversation(BaseModel):
     is_active = Column(
         Boolean,
         default=True,
+        nullable=False,
         comment="حالة النشاط",
     )
 

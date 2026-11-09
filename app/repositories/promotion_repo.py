@@ -6,22 +6,31 @@
 # ==============================================
 
 # ==============================================
-# 🎉 PROMOTION REPOSITORY
-# عمليات قاعدة البيانات للعروض الترويجية باستخدام SQLAlchemy
-# Async SQLAlchemy Version
+# PROMOTION REPOSITORY
+# Select applicable dated campaigns with deterministic rate and priority ordering.
 # ==============================================
 
-"""MoulAI operational module for promotion repo.
+"""Select applicable dated campaigns with deterministic rate and priority ordering."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
 
-from datetime import UTC, datetime
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
+
+from datetime import (
+    UTC,
+    datetime,
+)
 from typing import (
     Any,
+    TypeAlias,
 )
 
 from sqlalchemy import (
+    Select,
     and_,
     or_,
     select,
@@ -34,14 +43,17 @@ from app.repositories.base import BaseRepository
 
 # ==============================================
 # 🧩 TYPES
+# Describe shared input, update and result structures for this module.
 # ==============================================
 
-PromotionData = dict[str, Any]
-PromotionUpdateData = dict[str, Any]
-PromotionList = list[Promotion]
+PromotionData: TypeAlias = dict[str, Any]
+PromotionUpdateData: TypeAlias = dict[str, Any]
+PromotionList: TypeAlias = list[Promotion]
+
 
 # ==============================================
 # 🎉 PROMOTION REPOSITORY
+# مستودع العروض الترويجية - يوفر عمليات خاصة بالعروض الترويجية.
 # ==============================================
 
 
@@ -68,11 +80,13 @@ class PromotionRepository(
     """
 
     # ==============================================
-    #   INIT
+    # INIT
+    # تهيئة مستودع العروض الترويجية.
     # ==============================================
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -83,11 +97,12 @@ class PromotionRepository(
         """
         super().__init__(Promotion, session)
 
-    # ==========================================
+    # ==============================================
     # 🔍 BASE QUERY
-    # ==========================================
+    # بناء الاستعلام الأساسي للعروض الترويجية.
+    # ==============================================
 
-    def _build_base_query(self):
+    def _build_base_query(self) -> Select[tuple[Promotion]]:
         """
         بناء الاستعلام الأساسي للعروض الترويجية.
 
@@ -96,18 +111,23 @@ class PromotionRepository(
         """
         return select(self.model)
 
-    # ==========================================
+    # ==============================================
     # 📖 QUERIES
-    # ==========================================
+    # Read persisted records through the existing repository selection rules.
+    # ==============================================
 
     # ==============================================
     # GET ACTIVE PROMOTIONS
+    # الحصول على العروض الترويجية النشطة حالياً.
     # ==============================================
 
     async def get_active_promotions(
         self,
         *,
         now: datetime | None = None,
+        restaurant_id: int | None = None,
+        owner_id: int | None = None,
+        plan_id: int | None = None,
         skip: int = 0,
         limit: int = 100,
     ) -> PromotionList:
@@ -130,24 +150,53 @@ class PromotionRepository(
                 .where(
                     and_(
                         self.model.active.is_(True),
+                        (
+                            self.model.owner_id.is_(None)
+                            if owner_id is None
+                            else (
+                                self.model.owner_id.is_(None)
+                                | (self.model.owner_id == owner_id)
+                            )
+                        ),
+                        (
+                            self.model.plan_id.is_(None)
+                            if plan_id is None
+                            else (
+                                self.model.plan_id.is_(None)
+                                | (self.model.plan_id == plan_id)
+                            )
+                        ),
+                        (
+                            self.model.restaurant_id.is_(None)
+                            if restaurant_id is None
+                            else (
+                                self.model.restaurant_id.is_(None)
+                                | (self.model.restaurant_id == restaurant_id)
+                            )
+                        ),
                         or_(
                             self.model.starts_at.is_(None),
                             self.model.starts_at <= current_time,
                         ),
                         or_(
                             self.model.expires_at.is_(None),
-                            self.model.expires_at >= current_time,
+                            self.model.expires_at > current_time,
                         ),
                     ),
                 )
-                .order_by(self.model.id.desc())
+                .order_by(
+                    self.model.discount_percent.desc(),
+                    self.model.priority.desc(),
+                    self.model.id.asc(),
+                )
                 .offset(skip)
                 .limit(limit)
             )
 
             result = await self.session.execute(query)
 
-            return list(result.scalars().all())
+            rows = list(result.scalars().all())
+            return rows
 
         except Exception as e:
             logger.exception(
@@ -158,6 +207,7 @@ class PromotionRepository(
 
     # ==============================================
     # GET ALL ORDERED
+    # الحصول على جميع العروض الترويجية مرتبة حسب المعرف تنازلياً.
     # ==============================================
 
     async def get_all_ordered(
@@ -197,6 +247,7 @@ class PromotionRepository(
 
     # ==============================================
     # GET BY RESTAURANT
+    # الحصول على العروض الترويجية لمطعم معين.
     # ==============================================
 
     async def get_by_restaurant(
@@ -246,6 +297,7 @@ class PromotionRepository(
 
     # ==============================================
     # SEARCH PROMOTIONS
+    # البحث في العروض الترويجية بالاسم.
     # ==============================================
 
     async def search_promotions(
@@ -306,12 +358,14 @@ class PromotionRepository(
             )
             raise
 
-    # ==========================================
+    # ==============================================
     # ✏️ MUTATIONS
+    # Group persistence changes while retaining the caller's transaction contract.
     # ==============================================
 
     # ==============================================
     # ACTIVATE PROMOTION
+    # تفعيل عرض ترويجي.
     # ==============================================
 
     async def activate(
@@ -340,6 +394,7 @@ class PromotionRepository(
 
     # ==============================================
     # DEACTIVATE PROMOTION
+    # إلغاء تفعيل عرض ترويجي.
     # ==============================================
 
     async def deactivate(
@@ -368,6 +423,7 @@ class PromotionRepository(
 
     # ==============================================
     # UPDATE DISCOUNT PERCENT
+    # تحديث نسبة الخصم لعرض ترويجي.
     # ==============================================
 
     async def update_discount_percent(
@@ -399,12 +455,14 @@ class PromotionRepository(
             data={"discount_percent": discount_percent},
         )
 
-    # ==========================================
+    # ==============================================
     # 📊 STATISTICS
+    # Aggregate persisted counts and values through the existing query paths.
     # ==============================================
 
     # ==============================================
     # COUNT BY RESTAURANT
+    # حساب عدد العروض الترويجية لمطعم معين.
     # ==============================================
 
     async def count_by_restaurant(

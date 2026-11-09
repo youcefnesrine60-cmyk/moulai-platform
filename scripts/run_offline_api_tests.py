@@ -5,6 +5,11 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# OFFLINE TEST RUNNER
+# Measure unit and HTTP contracts with blocked external access and workspace-owned temporary storage.
+# ==============================================
+
 """Run isolated HTTP contracts with coverage and a mandatory network guard.
 
 Shared conftest files are deliberately disabled: their integration fixtures
@@ -12,6 +17,7 @@ truncate the development database. This runner executes mocked HTTP and unit
 contracts only. It never starts the application's database lifecycle.
 """
 
+# isort: split
 # ==============================================
 # IMPORTS AND OFFLINE SUITE
 # ==============================================
@@ -220,6 +226,9 @@ def main(*, arguments: Sequence[str] | None = None) -> int:
 
     os.chdir(PROJECT_ROOT)
     sys.path.insert(0, str(PROJECT_ROOT))
+    from test_support.offline_storage import reserve_pytest_directory
+
+    temporary_directory = reserve_pytest_directory()
     os.environ["DEBUG"] = "false"
     os.environ["REDIS_URL"] = ""
     os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
@@ -254,6 +263,7 @@ def main(*, arguments: Sequence[str] | None = None) -> int:
             pytest.main(
                 [
                     "--noconftest",
+                    "--basetemp=" + str(temporary_directory),
                     "-o",
                     "addopts=",
                     "-p",

@@ -5,12 +5,23 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# CATALOG TRANSACTION PROOFS ON MAIN POSTGRESQL
+# Exercise owner isolation and rollback against the current reconstructed schema.
+# ==============================================
+
 """Catalog HTTP/transaction proofs on the owned disposable loopback PostgreSQL.
 
 No fixture reads DATABASE_URL or TEST_DATABASE_URL. The existing local launcher
-provides the independent URL, instance marker and legacy migration profile.
+provides the independent URL, instance marker and main migration profile.
 Synthetic rows are retained until that launcher's isolated server is stopped.
 """
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Use real local sessions and the application's catalog contracts without Neon.
+# ==============================================
 
 from collections.abc import AsyncIterator
 from itertools import count
@@ -57,7 +68,7 @@ from app.schemas.product_option import ProductOptionCreate
 from app.services.business.catalog_transaction import catalog_transaction
 from app.services.business.product_option_service import ProductOptionService
 from test_support.local_postgres import (
-    LOCAL_REVISION,
+    LOCAL_MAIN_REVISION,
     LocalPostgresSettings,
     read_local_test_identity,
 )
@@ -91,7 +102,7 @@ class CatalogGraph(NamedTuple):
 async def catalog_engine() -> AsyncIterator[AsyncEngine]:
     """Attest the launcher's exact local server; never fall back to Neon."""
     configuration = LocalPostgresSettings()
-    assert configuration.PROFILE == "legacy"
+    assert configuration.PROFILE == "main"
     engine = create_async_engine(
         configuration.URL.get_secret_value(),
         echo=False,
@@ -105,7 +116,7 @@ async def catalog_engine() -> AsyncIterator[AsyncEngine]:
             )
             assert (
                 await connection.scalar(text("SELECT version_num FROM alembic_version"))
-                == LOCAL_REVISION
+                == LOCAL_MAIN_REVISION
             )
         yield engine
     finally:

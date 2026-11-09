@@ -5,7 +5,18 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# PYTEST DATABASE BOUNDARIES
+# Verify offline execution, explicit database opt-ins and safe temporary storage in child pytest runs.
+# ==============================================
+
 """Exercise the real shared pytest boundary without connecting to a database."""
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the local framework, schema and contract dependencies used in this file.
+# ==============================================
 
 import importlib.util
 import os
@@ -219,6 +230,56 @@ def test_dynamic_engine_request(request):
 
 
 # ==============================================
+# DEDICATED REHEARSALS NEVER INHERIT A GENERAL DATABASE TARGET
+# Keep pure checks running, but require the historical-schema launcher before executing its factory-dependent cases.
+# ==============================================
+
+
+@pytest.mark.parametrize("marker", ["country_rehearsal", "operational_rehearsal"])
+@pytest.mark.parametrize(
+    "arguments", [(), ("--run-database-tests",), ("--local-postgres-tests",)]
+)
+def test_dedicated_rehearsals_do_not_use_ambient_or_shared_database(
+    boundary_directory: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    marker: str,
+    arguments: tuple[str, ...],
+) -> None:
+    """Report unexecuted cases explicitly without opening a connection, even under a general local/remote database opt-in."""
+    monkeypatch.setenv("LOCAL_POSTGRES_TEST_PROFILE", "legacy")
+    monkeypatch.setenv("LOCAL_POSTGRES_TEST_INSTANCE_ID", "a" * 32)
+    monkeypatch.setenv("LOCAL_POSTGRES_TEST_SERVER_PORT", "55432")
+    monkeypatch.setenv(
+        "LOCAL_POSTGRES_TEST_URL",
+        "postgresql+asyncpg://moulai_pytest:unused-fixture-password@127.0.0.1:55432/moulai_pytest",
+    )
+    monkeypatch.setenv("COUNTRY_BASE_TEST_URL", "not-an-admitted-database")
+    monkeypatch.setenv("MOULAI_O1_TEST_INSTANCE", "not-an-admitted-instance")
+    result = run_boundary_project(
+        directory=boundary_directory,
+        arguments=arguments,
+        source=f"""
+import pytest
+pytestmark = pytest.mark.{marker}
+
+@pytest.fixture
+def factory():
+    raise AssertionError("Dedicated database factory must not run here")
+
+def test_actual_database_case(factory):
+    raise AssertionError("No dedicated runner is active")
+
+def test_pure_case_without_database():
+    assert True
+""",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "1 passed, 1 skipped" in result.stdout
+    assert "NOT RUN in this campaign" in result.stdout
+    assert "rehearse_country_base.py" in result.stdout
+
+
+# ==============================================
 # A CAUGHT NETWORK ATTEMPT STILL FAILS THE RUN
 # ==============================================
 
@@ -302,6 +363,34 @@ def test_boundary_storage_does_not_delete_another_run() -> None:
         assert not first_directory.exists()
         assert marker.read_text(encoding="utf-8") == "synthetic"
     assert not second_directory.exists()
+
+
+# ==============================================
+# DEFAULT TMP_PATH DOES NOT DEPEND ON THE WINDOWS TEMP ROOT
+# Exercise pytest's actual fixture after denying system-temp lookup in a child run.
+# ==============================================
+
+
+def test_default_tmp_path_uses_workspace_storage(boundary_directory: Path) -> None:
+    """The shared configuration protects tmp_path, not only custom boundary fixtures."""
+    result = run_boundary_project(
+        directory=boundary_directory,
+        source="""
+import os
+import tempfile
+from pathlib import Path
+
+def test_real_tmp_path(request, monkeypatch):
+    def denied():
+        raise PermissionError("system temp is inaccessible")
+    monkeypatch.setattr(tempfile, "gettempdir", denied)
+    temporary = request.getfixturevalue("tmp_path")
+    assert temporary.is_relative_to(Path(os.environ["PYTHONPATH"]) / "artifacts")
+    (temporary / "marker.txt").write_text("synthetic", encoding="utf-8")
+""",
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "1 passed" in result.stdout
 
 
 # ==============================================

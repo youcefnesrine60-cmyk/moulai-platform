@@ -6,22 +6,27 @@
 # ==============================================
 
 # ==============================================
-# 💰 FEATURE PRICING & USAGE MODELS
-# نماذج تسعير الميزات والاستخدام
-# تدير تسعير الميزات وحدود الاستخدام وعدادات الاستخدام
+# FEATURE AND BRANCH PRICING MODELS
+# Map feature tariffs, usage limits, usage counters and progressive branch tariff rules.
 # ==============================================
 
-"""MoulAI operational module for feature pricing.
+"""Map feature tariffs, usage limits, usage counters and progressive branch tariff rules."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from sqlalchemy import (
     Boolean,
     Column,
-    Float,
+    DateTime,
     ForeignKey,
     Integer,
+    Numeric,
     String,
 )
 from sqlalchemy.orm import relationship
@@ -52,11 +57,17 @@ class FeaturePricing(BaseModel):
         feature: علاقة مع نموذج Feature
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "feature_pricing"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     feature_id = Column(
         Integer,
@@ -70,7 +81,7 @@ class FeaturePricing(BaseModel):
         comment="دورة الفوترة: monthly, yearly",
     )
     price = Column(
-        Float,
+        Numeric(24, 8),
         nullable=False,
         comment="السعر",
     )
@@ -80,9 +91,12 @@ class FeaturePricing(BaseModel):
         comment="حالة النشاط",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
+
+    currency = Column(String(3), nullable=False, default="DZD", server_default="DZD")
 
     feature = relationship(
         "Feature",
@@ -91,9 +105,10 @@ class FeaturePricing(BaseModel):
         # comment="الميزة المرتبطة",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -129,11 +144,17 @@ class FeatureUsageLimit(BaseModel):
         feature: علاقة مع نموذج Feature
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "feature_usage_limits"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     plan_id = Column(
         Integer,
@@ -156,9 +177,10 @@ class FeatureUsageLimit(BaseModel):
         comment="نوع الحد: hard, soft",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     plan = relationship(
         "SubscriptionPlan",
@@ -173,9 +195,10 @@ class FeatureUsageLimit(BaseModel):
         # comment="الميزة المرتبطة",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -215,11 +238,17 @@ class FeatureUsageCounter(BaseModel):
         feature: علاقة مع نموذج Feature
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "feature_usage_counters"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     restaurant_id = Column(
         Integer,
@@ -248,9 +277,10 @@ class FeatureUsageCounter(BaseModel):
         comment="الشهر",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     restaurant = relationship(
         "Restaurant",
@@ -265,9 +295,10 @@ class FeatureUsageCounter(BaseModel):
         # comment="الميزة المرتبطة",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -308,11 +339,17 @@ class BranchPricing(BaseModel):
         plan: علاقة مع نموذج SubscriptionPlan
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "branch_pricing"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     plan_id = Column(
         Integer,
@@ -330,7 +367,7 @@ class BranchPricing(BaseModel):
         comment="الحد الأقصى لعدد الفروع",
     )
     price_per_branch = Column(
-        Float,
+        Numeric(24, 8),
         nullable=False,
         comment="السعر لكل فرع",
     )
@@ -340,9 +377,18 @@ class BranchPricing(BaseModel):
         comment="حالة النشاط",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
+
+    currency = Column(String(3), nullable=False, default="DZD", server_default="DZD")
+    market = Column(String(10), nullable=True)
+    grid_code = Column(
+        String(80), nullable=False, default="configured", server_default="configured"
+    )
+    starts_at = Column(DateTime, nullable=True)
+    expires_at = Column(DateTime, nullable=True)
 
     plan = relationship(
         "SubscriptionPlan",
@@ -351,9 +397,10 @@ class BranchPricing(BaseModel):
         # comment="خطة الاشتراك المرتبطة (اختياري)",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """

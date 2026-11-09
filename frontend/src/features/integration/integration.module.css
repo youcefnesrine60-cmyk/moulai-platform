@@ -1,0 +1,86 @@
+/* MoulAI™ — shared semantic surfaces; no new visual identity. */
+.record pre {
+  max-inline-size: 100%;
+  overflow: auto;
+  padding: 12px;
+}
+.panel {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-panel);
+  min-inline-size: 0;
+}
+.panel p {
+  margin-block: 12px;
+  overflow-wrap: anywhere;
+}
+.form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-block: 20px;
+}
+.form h2,
+.form p {
+  grid-column: 1/-1;
+}
+.form label,
+.field {
+  display: grid;
+  gap: 7px;
+  min-inline-size: 0;
+}
+.form input,
+.form select,
+.field select {
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 10px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.campaigns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.record {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  min-inline-size: 0;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-block: 12px;
+}
+.document {
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+.choice {
+  display: flex !important;
+  align-items: flex-start;
+  gap: 10px;
+  padding-block: 10px;
+}
+.choice input {
+  inline-size: 20px;
+  block-size: 20px;
+  flex: 0 0 20px;
+}
+@media (max-width: 680px) {
+  .form,
+  .campaigns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .panel {
+    padding: 12px;
+  }
+}

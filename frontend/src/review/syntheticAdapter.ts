@@ -16,6 +16,7 @@ import {
 } from '../shared/access/contracts';
 import { createManagementAdapter } from './managementAdapter';
 import { createIntelligenceAdapter } from './intelligenceAdapter';
+import { createDiningAdapter } from './diningAdapter';
 import { createOfficeAdapter } from './officeAdapter';
 import type { RestaurantScope } from '../shared/business/contracts';
 
@@ -242,7 +243,17 @@ export function createSyntheticAdapter(latency = 350): AccessAdapter {
     (signal) => pause(signal, latency),
   );
 
+  const dining = createDiningAdapter(
+    authorize,
+    () => profile === 'owner',
+    (signal) => pause(signal, latency),
+    () => generation,
+  );
+
   return {
+    diningBranches: dining.diningBranches,
+    diningWorkspace: dining.diningWorkspace,
+    simulateDining: dining.simulateDining,
     ...office,
     agentWorkspace: intelligence.agentWorkspace,
     conversations: intelligence.conversations,
@@ -258,12 +269,14 @@ export function createSyntheticAdapter(latency = 350): AccessAdapter {
       return session();
     },
     async openReview(nextProfile) {
+      dining.reset();
       management.reset();
       intelligence.reset();
       profile = nextProfile;
       generation += 1;
     },
     async signOut() {
+      dining.reset();
       management.reset();
       intelligence.reset();
       profile = null;

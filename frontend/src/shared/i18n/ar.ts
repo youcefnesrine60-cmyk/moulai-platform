@@ -12,6 +12,7 @@ export const ar: Record<keyof typeof fr, string> & Record<string, string> = {
   'preferences.language': 'لغة الواجهة',
   'preferences.theme': 'المظهر',
   'theme.light': 'فاتح',
+  'theme.auto': 'تلقائي',
   'theme.dark': 'داكن',
   'theme.system': 'تفضيل النظام',
   'app.title': 'MoulAI™ — مساحة الإدارة',

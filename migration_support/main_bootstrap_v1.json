@@ -1,0 +1,1737 @@
+{
+  "version": "main-bootstrap-v1",
+  "source_commit": "7a667633f593afbabc9949cef12f603535eba94e",
+  "first_complete_model_commit": "59c4b9bb007b93ea61bacb92b537df8af0a2c144",
+  "historical_exactness": "pre-August physical DDL unavailable; explicit historical compatibility reconstruction",
+  "source_files_sha256": {
+    "app/models/__init__.py": "bdcfd84c77ded89481be5194ef2843727ad97dc1a8520194ddc8ecf5d1de627c",
+    "app/models/admin.py": "2c07ed512b825fb30212c87396acbf2944e1bb26d0ee1dbd2684cf2bc508e3cd",
+    "app/models/admin_log.py": "60f33dae3604f1dcd708753a0ddb83fda5428bf7fae87f90038aa1bac7eb08c1",
+    "app/models/admin_session.py": "d938b6d98a0c3dd5ed9756bfa9e788f9bf799a0bc071656506180442370bb1bc",
+    "app/models/agent.py": "39893d1b969fd1f9bc89cbc392e01e0937dd0da1619ce643be9dda03b7f90cd3",
+    "app/models/base.py": "5a9b24b58b7f607ba0aa804b2c3805ddbfaf7db76790465dcee7503d38a5685f",
+    "app/models/branch.py": "3139238e2d7d56e6440f3986f4729d5d8e96697e3a631738b6b44d3cff7dad90",
+    "app/models/category.py": "39d056245ff4d86d18a5e3ca3b270509d63abe41f134fe2b93ee12c7e4201659",
+    "app/models/complaint.py": "e42fd45030b1014b63ba9fd89951dffbcc6277dceb6bd337283583fb4bbb3bf3",
+    "app/models/feature_pricing.py": "83df9c7f3bc349925ae7031912c8c31b8eae78391078508621b43723e4287482",
+    "app/models/loyalty_discount.py": "31de98e46097cce1b1d1eda757b2b1cd1108e2892763b645ee2969c16da13daf",
+    "app/models/manual_payment.py": "27e8dfab625ab27d0d96f96bb08b0b12d0371c527b4edea63e81ac1c1c27813e",
+    "app/models/option_group.py": "2c0d1a4a3724f52ef8483faca960926f8a9b6968d3a0e3ea99fb8669f4b7902d",
+    "app/models/order.py": "68af56cfcdd74bbf0c7b25f62d5f2dd06b840c4a6288cefb4534727df0c9a814",
+    "app/models/order_item.py": "9580c35861ee1ad953793354a3f77c0626507fae07ca4019a0531667340a7f6b",
+    "app/models/owner.py": "7e127ba760b44d9e9109cb7c2edc53b5326e76289c99474ffe1569ec17438372",
+    "app/models/payment.py": "e45e37cae39419ebac66ddfe70f3060fa76a011a27ff9be69b75aab20727a56d",
+    "app/models/product.py": "f24ceb1542d6291abfab492b305f43b58e2b63b44782ffbeac23bbe2d2143b65",
+    "app/models/product_option.py": "6c0fa65efccb6c8e83571d55e0b16cb5e260bbc950da685d6484d1560edd62ec",
+    "app/models/rbac.py": "48e440713ac59f2ab31b32e0943f2ef1f79acf54b44b9be0d120a26dda50863d",
+    "app/models/registration_request.py": "c3cdb12ea32bf36c8ec8e8c7451b567ac61bb8102a1d51211b971c9672153d18",
+    "app/models/restaurant.py": "d645b9ae9f1e26575418bee17ccf6279643479a7f2f10fd32d20c429edcee3b0",
+    "app/models/restaurant_group.py": "971c4c30dd6b1004025baa1e82410ebfcf00a354c630a2f5882252e5571d729c",
+    "app/models/restaurant_metric.py": "e20a78a86762b0d5b8bae1c928d889bbc1a181dc8f5739b1d67f335701a12e6a",
+    "app/models/restaurant_model.py": "a3d02e39174bc38f25cded147b915de6eb538a61eb83b3271bbd3efc38340e79",
+    "app/models/restaurant_order_counter.py": "8f445f5115002622d02019d920b188e83a1440985d29ce3e26504227f4c47f3d",
+    "app/models/restaurant_payment_setting.py": "5d73af387c10de43ab9c1619704c6898387b76791f80c25f69a20924fdc01351",
+    "app/models/subscription.py": "cf612df53652374d64ca00d105ea67b406fae887d26c80b1fbd80ea3fbe48cbe",
+    "app/models/telegram_update.py": "880dc293de8a8dfa0dc36944ba33381850fbda1cc78bdd20ad6e404cf743c071",
+    "app/models/user.py": "20f00c10c4d6186b149ede78370ae5e2d744ca32ba16727078077298b6a31f81",
+    "app/models/user_state.py": "36c53a0d52970bc44ca9b989f442caa397c2fd6e0e190d8ddfecb1627ce018c3"
+  },
+  "schema_privilege_policy": "PUBLIC schema rights revoked, matching verified development snapshot; local database owner retains authority via pg_database_owner; Neon platform default ACLs not copied",
+  "tables": [
+    "admins",
+    "branch_pricing",
+    "branches",
+    "categories",
+    "feature_pricing",
+    "feature_usage_counters",
+    "feature_usage_limits",
+    "features",
+    "loyalty_discounts",
+    "multi_restaurant_discounts",
+    "option_groups",
+    "order_item_options",
+    "order_items",
+    "order_payments",
+    "order_status_history",
+    "orders",
+    "owners",
+    "payments",
+    "plan_features",
+    "product_options",
+    "products",
+    "promotions",
+    "registration_requests",
+    "restaurant_branches",
+    "restaurant_groups",
+    "restaurant_metrics",
+    "restaurant_order_counters",
+    "restaurants",
+    "subscription_feature_requests",
+    "subscription_features",
+    "subscription_plans",
+    "subscriptions",
+    "users"
+  ],
+  "migration_owned_tables_excluded": {
+    "agents": "2026_08_01_15_14_02_sync_database_with_models.py",
+    "channels": "2026_08_01_15_14_02_sync_database_with_models.py",
+    "conversations": "2026_08_01_15_14_02_sync_database_with_models.py",
+    "messages": "2026_08_01_15_14_02_sync_database_with_models.py",
+    "admin_logs": "2026_08_13_15_44_01_add_admin_log_and_session_tables.py",
+    "admin_sessions": "2026_08_13_15_44_01_add_admin_log_and_session_tables.py",
+    "restaurant_payment_settings": "2026_08_21_21_56_49_add_restaurant_payment_settings.py",
+    "complaints": "2026_09_12_10_00_00_add_customer_complaints.py",
+    "roles": "2026_10_11_10_00_00_add_rbac_roles_permissions.py",
+    "permissions": "2026_10_11_10_00_00_add_rbac_roles_permissions.py",
+    "role_permissions": "2026_10_11_10_00_00_add_rbac_roles_permissions.py",
+    "manual_payment_receipts": "2026_10_13_10_00_00_manual_payment_review.py",
+    "manual_payment_audit": "2026_10_13_10_00_00_manual_payment_review.py"
+  },
+  "migration_owned_columns_excluded": {
+    "users": {
+      "consent": "2026_08_01_15_14_02_sync_database_with_models.py",
+      "customer_name": "2026_08_12_02_22_08_add_user_relationship_to_orders.py",
+      "customer_phone": "2026_08_12_02_22_08_add_user_relationship_to_orders.py"
+    },
+    "restaurants": {
+      "group_id": "2026_08_01_15_14_02_sync_database_with_models.py",
+      "updated_at": "2026_08_13_16_05_12_add_updated_at_to_restaurants.py"
+    },
+    "orders": {
+      "user_id": "2026_08_12_02_22_08_add_user_relationship_to_orders.py"
+    },
+    "payments": {
+      "user_id": "2026_08_13_13_49_15_drop_payments_user_id.py",
+      "payment_provider": "2026_10_13_10_00_00_manual_payment_review.py",
+      "currency": "2026_10_13_10_00_00_manual_payment_review.py"
+    },
+    "owners": {
+      "updated_at": "2026_08_15_07_05_54_add_updated_at_to_owners.py",
+      "auth_subject": "2026_10_06_04_00_00_add_owner_auth_subject.py"
+    },
+    "subscriptions": {
+      "updated_at": "2026_08_15_12_27_32_add_updated_at_to_subscriptions.py"
+    },
+    "restaurant_metrics": {
+      "created_at": "2026_08_15_17_10_44_add_timestamps_to_restaurant_metrics.py",
+      "updated_at": "2026_08_15_17_10_44_add_timestamps_to_restaurant_metrics.py"
+    },
+    "registration_requests": {
+      "owner_id": "2026_08_15_17_51_21_add_owner_id_to_registration_requests.py"
+    },
+    "branch_pricing": {
+      "plan_id": "2026_09_11_16_12_10_add_plan_id_to_branch_pricing_and_.py"
+    },
+    "loyalty_discounts": {
+      "owner_id": "2026_09_11_16_12_10_add_plan_id_to_branch_pricing_and_.py"
+    },
+    "promotions": {
+      "restaurant_id": "2026_09_11_16_12_10_add_plan_id_to_branch_pricing_and_.py"
+    },
+    "admins": {
+      "role_id": "2026_10_11_10_00_00_add_rbac_roles_permissions.py",
+      "auth_subject": "2026_10_13_10_00_00_manual_payment_review.py"
+    }
+  },
+  "table_provenance": {
+    "admins": {
+      "class": "Admin",
+      "path": "app/models/admin.py",
+      "columns": {
+        "chat_id": {
+          "path": "app/models/admin.py",
+          "attribute": "chat_id",
+          "declaration": "Column(BigInteger, unique=True, nullable=False, index=True, comment='معرف المستخدم في تيليجرام')"
+        },
+        "username": {
+          "path": "app/models/admin.py",
+          "attribute": "username",
+          "declaration": "Column(String(255), index=True, comment='اسم المستخدم')"
+        },
+        "full_name": {
+          "path": "app/models/admin.py",
+          "attribute": "full_name",
+          "declaration": "Column(String(255), comment='الاسم الكامل')"
+        },
+        "role": {
+          "path": "app/models/admin.py",
+          "attribute": "role",
+          "declaration": "Column(String(50), nullable=False, default='admin', comment='دور المدير: admin, super_admin, support')"
+        },
+        "password_hash": {
+          "path": "app/models/admin.py",
+          "attribute": "password_hash",
+          "declaration": "Column(String(255), comment='كلمة المرور المشفرة')"
+        },
+        "is_active": {
+          "path": "app/models/admin.py",
+          "attribute": "is_active",
+          "declaration": "Column(Boolean, default=True, comment='حالة النشاط')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "branches": {
+      "class": "Branch",
+      "path": "app/models/branch.py",
+      "columns": {
+        "restaurant_id": {
+          "path": "app/models/branch.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), nullable=False, comment='معرف المطعم')"
+        },
+        "name": {
+          "path": "app/models/branch.py",
+          "attribute": "name",
+          "declaration": "Column(Text, nullable=False, comment='اسم الفرع')"
+        },
+        "phone": {
+          "path": "app/models/branch.py",
+          "attribute": "phone",
+          "declaration": "Column(String(20), comment='رقم الهاتف')"
+        },
+        "wilaya": {
+          "path": "app/models/branch.py",
+          "attribute": "wilaya",
+          "declaration": "Column(String(100), comment='الولاية')"
+        },
+        "lat": {
+          "path": "app/models/branch.py",
+          "attribute": "lat",
+          "declaration": "Column(Float, comment='خط العرض (الإحداثي)')"
+        },
+        "lng": {
+          "path": "app/models/branch.py",
+          "attribute": "lng",
+          "declaration": "Column(Float, comment='خط الطول (الإحداثي)')"
+        },
+        "is_active": {
+          "path": "app/models/branch.py",
+          "attribute": "is_active",
+          "declaration": "Column(Boolean, default=True, comment='حالة النشاط')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "categories": {
+      "class": "Category",
+      "path": "app/models/category.py",
+      "columns": {
+        "restaurant_id": {
+          "path": "app/models/category.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), nullable=False, comment='معرف المطعم')"
+        },
+        "name": {
+          "path": "app/models/category.py",
+          "attribute": "name",
+          "declaration": "Column(Text, nullable=False, comment='اسم التصنيف')"
+        },
+        "sort_order": {
+          "path": "app/models/category.py",
+          "attribute": "sort_order",
+          "declaration": "Column(Integer, default=0, comment='ترتيب التصنيف')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "feature_pricing": {
+      "class": "FeaturePricing",
+      "path": "app/models/feature_pricing.py",
+      "columns": {
+        "feature_id": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "feature_id",
+          "declaration": "Column(Integer, ForeignKey('features.id', ondelete='CASCADE'), nullable=False, comment='معرف الميزة')"
+        },
+        "billing_cycle": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "billing_cycle",
+          "declaration": "Column(String(50), nullable=False, comment='دورة الفوترة: monthly, yearly')"
+        },
+        "price": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "price",
+          "declaration": "Column(Float, nullable=False, comment='السعر')"
+        },
+        "active": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "active",
+          "declaration": "Column(Boolean, default=True, comment='حالة النشاط')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "feature_usage_limits": {
+      "class": "FeatureUsageLimit",
+      "path": "app/models/feature_pricing.py",
+      "columns": {
+        "plan_id": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "plan_id",
+          "declaration": "Column(Integer, ForeignKey('subscription_plans.id'), nullable=False, comment='معرف الخطة')"
+        },
+        "feature_id": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "feature_id",
+          "declaration": "Column(Integer, ForeignKey('features.id'), nullable=False, comment='معرف الميزة')"
+        },
+        "monthly_limit": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "monthly_limit",
+          "declaration": "Column(Integer, comment='الحد الشهري')"
+        },
+        "limit_type": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "limit_type",
+          "declaration": "Column(String(50), comment='نوع الحد: hard, soft')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "feature_usage_counters": {
+      "class": "FeatureUsageCounter",
+      "path": "app/models/feature_pricing.py",
+      "columns": {
+        "restaurant_id": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), nullable=False, comment='معرف المطعم')"
+        },
+        "feature_id": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "feature_id",
+          "declaration": "Column(Integer, ForeignKey('features.id', ondelete='CASCADE'), nullable=False, comment='معرف الميزة')"
+        },
+        "usage_count": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "usage_count",
+          "declaration": "Column(Integer, nullable=False, default=0, comment='عدد مرات الاستخدام')"
+        },
+        "period_year": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "period_year",
+          "declaration": "Column(Integer, comment='السنة')"
+        },
+        "period_month": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "period_month",
+          "declaration": "Column(Integer, comment='الشهر')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "branch_pricing": {
+      "class": "BranchPricing",
+      "path": "app/models/feature_pricing.py",
+      "columns": {
+        "min_branches": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "min_branches",
+          "declaration": "Column(Integer, nullable=False, comment='الحد الأدنى لعدد الفروع')"
+        },
+        "max_branches": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "max_branches",
+          "declaration": "Column(Integer, comment='الحد الأقصى لعدد الفروع')"
+        },
+        "price_per_branch": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "price_per_branch",
+          "declaration": "Column(Float, nullable=False, comment='السعر لكل فرع')"
+        },
+        "active": {
+          "path": "app/models/feature_pricing.py",
+          "attribute": "active",
+          "declaration": "Column(Boolean, default=True, comment='حالة النشاط')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "loyalty_discounts": {
+      "class": "LoyaltyDiscount",
+      "path": "app/models/loyalty_discount.py",
+      "columns": {
+        "years_required": {
+          "path": "app/models/loyalty_discount.py",
+          "attribute": "years_required",
+          "declaration": "Column(Integer, nullable=False, comment='عدد السنوات المطلوبة للحصول على الخصم')"
+        },
+        "discount_percent": {
+          "path": "app/models/loyalty_discount.py",
+          "attribute": "discount_percent",
+          "declaration": "Column(Float, nullable=False, comment='نسبة الخصم')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "multi_restaurant_discounts": {
+      "class": "MultiRestaurantDiscount",
+      "path": "app/models/loyalty_discount.py",
+      "columns": {
+        "min_restaurants": {
+          "path": "app/models/loyalty_discount.py",
+          "attribute": "min_restaurants",
+          "declaration": "Column(Integer, nullable=False, comment='الحد الأدنى لعدد المطاعم للحصول على الخصم')"
+        },
+        "discount_percent": {
+          "path": "app/models/loyalty_discount.py",
+          "attribute": "discount_percent",
+          "declaration": "Column(Float, nullable=False, comment='نسبة الخصم')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "promotions": {
+      "class": "Promotion",
+      "path": "app/models/loyalty_discount.py",
+      "columns": {
+        "name": {
+          "path": "app/models/loyalty_discount.py",
+          "attribute": "name",
+          "declaration": "Column(String(255), nullable=False, comment='اسم العرض الترويجي')"
+        },
+        "discount_percent": {
+          "path": "app/models/loyalty_discount.py",
+          "attribute": "discount_percent",
+          "declaration": "Column(Float, nullable=False, comment='نسبة الخصم')"
+        },
+        "starts_at": {
+          "path": "app/models/loyalty_discount.py",
+          "attribute": "starts_at",
+          "declaration": "Column(DateTime, comment='تاريخ بدء العرض')"
+        },
+        "expires_at": {
+          "path": "app/models/loyalty_discount.py",
+          "attribute": "expires_at",
+          "declaration": "Column(DateTime, comment='تاريخ انتهاء العرض')"
+        },
+        "active": {
+          "path": "app/models/loyalty_discount.py",
+          "attribute": "active",
+          "declaration": "Column(Boolean, default=True, comment='حالة النشاط')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "option_groups": {
+      "class": "OptionGroup",
+      "path": "app/models/option_group.py",
+      "columns": {
+        "product_id": {
+          "path": "app/models/option_group.py",
+          "attribute": "product_id",
+          "declaration": "Column(Integer, ForeignKey('products.id', ondelete='CASCADE'), nullable=False, comment='معرف المنتج')"
+        },
+        "name": {
+          "path": "app/models/option_group.py",
+          "attribute": "name",
+          "declaration": "Column(Text, nullable=False, comment='اسم مجموعة الخيارات')"
+        },
+        "required": {
+          "path": "app/models/option_group.py",
+          "attribute": "required",
+          "declaration": "Column(Boolean, default=False, comment='هل الاختيار إلزامي')"
+        },
+        "multiple_choice": {
+          "path": "app/models/option_group.py",
+          "attribute": "multiple_choice",
+          "declaration": "Column(Boolean, default=False, comment='هل يمكن اختيار عدة خيارات')"
+        },
+        "sort_order": {
+          "path": "app/models/option_group.py",
+          "attribute": "sort_order",
+          "declaration": "Column(Integer, default=0, comment='ترتيب العرض')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "orders": {
+      "class": "Order",
+      "path": "app/models/order.py",
+      "columns": {
+        "restaurant_id": {
+          "path": "app/models/order.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), nullable=False, comment='معرف المطعم')"
+        },
+        "branch_id": {
+          "path": "app/models/order.py",
+          "attribute": "branch_id",
+          "declaration": "Column(Integer, ForeignKey('branches.id', ondelete='SET NULL'), nullable=True, comment='معرف الفرع')"
+        },
+        "table_id": {
+          "path": "app/models/order.py",
+          "attribute": "table_id",
+          "declaration": "Column(Integer, nullable=True, comment='معرف الطاولة')"
+        },
+        "employee_id": {
+          "path": "app/models/order.py",
+          "attribute": "employee_id",
+          "declaration": "Column(Integer, nullable=True, comment='معرف الموظف')"
+        },
+        "order_number": {
+          "path": "app/models/order.py",
+          "attribute": "order_number",
+          "declaration": "Column(String(50), nullable=False, comment='رقم الطلب')"
+        },
+        "order_type": {
+          "path": "app/models/order.py",
+          "attribute": "order_type",
+          "declaration": "Column(String(30), nullable=False, comment='نوع الطلب: dine_in, takeaway, delivery')"
+        },
+        "delivery_address": {
+          "path": "app/models/order.py",
+          "attribute": "delivery_address",
+          "declaration": "Column(Text, comment='عنوان التوصيل')"
+        },
+        "customer_note": {
+          "path": "app/models/order.py",
+          "attribute": "customer_note",
+          "declaration": "Column(Text, comment='ملاحظات العميل')"
+        },
+        "status": {
+          "path": "app/models/order.py",
+          "attribute": "status",
+          "declaration": "Column(String(50), nullable=False, comment='حالة الطلب: pending, confirmed, preparing, ready, completed, cancelled')"
+        },
+        "subtotal_amount": {
+          "path": "app/models/order.py",
+          "attribute": "subtotal_amount",
+          "declaration": "Column(Float, nullable=False, default=0, comment='المبلغ الإجمالي قبل الخصم')"
+        },
+        "discount_amount": {
+          "path": "app/models/order.py",
+          "attribute": "discount_amount",
+          "declaration": "Column(Float, nullable=False, default=0, comment='مبلغ الخصم')"
+        },
+        "tax_amount": {
+          "path": "app/models/order.py",
+          "attribute": "tax_amount",
+          "declaration": "Column(Float, nullable=False, default=0, comment='مبلغ الضريبة')"
+        },
+        "delivery_amount": {
+          "path": "app/models/order.py",
+          "attribute": "delivery_amount",
+          "declaration": "Column(Float, nullable=False, default=0, comment='مبلغ التوصيل')"
+        },
+        "total_amount": {
+          "path": "app/models/order.py",
+          "attribute": "total_amount",
+          "declaration": "Column(Float, nullable=False, default=0, comment='المبلغ الإجمالي النهائي')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "order_items": {
+      "class": "OrderItem",
+      "path": "app/models/order_item.py",
+      "columns": {
+        "order_id": {
+          "path": "app/models/order_item.py",
+          "attribute": "order_id",
+          "declaration": "Column(BigInteger, ForeignKey('orders.id', ondelete='CASCADE'), nullable=False, comment='معرف الطلب')"
+        },
+        "product_id": {
+          "path": "app/models/order_item.py",
+          "attribute": "product_id",
+          "declaration": "Column(Integer, ForeignKey('products.id'), nullable=False, comment='معرف المنتج')"
+        },
+        "product_name": {
+          "path": "app/models/order_item.py",
+          "attribute": "product_name",
+          "declaration": "Column(String(255), nullable=False, comment='اسم المنتج (نسخة لحظة الطلب)')"
+        },
+        "unit_price": {
+          "path": "app/models/order_item.py",
+          "attribute": "unit_price",
+          "declaration": "Column(Float, nullable=False, comment='سعر الوحدة (نسخة لحظة الطلب)')"
+        },
+        "quantity": {
+          "path": "app/models/order_item.py",
+          "attribute": "quantity",
+          "declaration": "Column(Integer, nullable=False, comment='الكمية')"
+        },
+        "total_price": {
+          "path": "app/models/order_item.py",
+          "attribute": "total_price",
+          "declaration": "Column(Float, nullable=False, comment='السعر الإجمالي (unit_price * quantity)')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "order_item_options": {
+      "class": "OrderItemOption",
+      "path": "app/models/order_item.py",
+      "columns": {
+        "order_item_id": {
+          "path": "app/models/order_item.py",
+          "attribute": "order_item_id",
+          "declaration": "Column(BigInteger, ForeignKey('order_items.id', ondelete='CASCADE'), nullable=False, comment='معرف عنصر الطلب')"
+        },
+        "option_group_name": {
+          "path": "app/models/order_item.py",
+          "attribute": "option_group_name",
+          "declaration": "Column(String(255), nullable=False, comment='اسم مجموعة الخيار (نسخة لحظة الطلب)')"
+        },
+        "option_name": {
+          "path": "app/models/order_item.py",
+          "attribute": "option_name",
+          "declaration": "Column(String(255), nullable=False, comment='اسم الخيار (نسخة لحظة الطلب)')"
+        },
+        "additional_price": {
+          "path": "app/models/order_item.py",
+          "attribute": "additional_price",
+          "declaration": "Column(Float, nullable=False, default=0, comment='السعر الإضافي لهذا الخيار')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "order_payments": {
+      "class": "OrderPayment",
+      "path": "app/models/order_item.py",
+      "columns": {
+        "order_id": {
+          "path": "app/models/order_item.py",
+          "attribute": "order_id",
+          "declaration": "Column(BigInteger, ForeignKey('orders.id', ondelete='CASCADE'), nullable=False, comment='معرف الطلب')"
+        },
+        "payment_method": {
+          "path": "app/models/order_item.py",
+          "attribute": "payment_method",
+          "declaration": "Column(String(50), nullable=False, comment='طريقة الدفع: cash, card, online')"
+        },
+        "payment_status": {
+          "path": "app/models/order_item.py",
+          "attribute": "payment_status",
+          "declaration": "Column(String(50), nullable=False, comment='حالة الدفع: pending, paid, failed, refunded')"
+        },
+        "amount": {
+          "path": "app/models/order_item.py",
+          "attribute": "amount",
+          "declaration": "Column(Float, nullable=False, comment='المبلغ المدفوع')"
+        },
+        "transaction_reference": {
+          "path": "app/models/order_item.py",
+          "attribute": "transaction_reference",
+          "declaration": "Column(String(255), nullable=True, comment='مرجع المعاملة من بوابة الدفع')"
+        },
+        "paid_at": {
+          "path": "app/models/order_item.py",
+          "attribute": "paid_at",
+          "declaration": "Column(DateTime, nullable=True, comment='تاريخ ووقت الدفع')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "order_status_history": {
+      "class": "OrderStatusHistory",
+      "path": "app/models/order_item.py",
+      "columns": {
+        "order_id": {
+          "path": "app/models/order_item.py",
+          "attribute": "order_id",
+          "declaration": "Column(BigInteger, ForeignKey('orders.id', ondelete='CASCADE'), nullable=False, comment='معرف الطلب')"
+        },
+        "old_status": {
+          "path": "app/models/order_item.py",
+          "attribute": "old_status",
+          "declaration": "Column(String(50), nullable=True, comment='الحالة السابقة')"
+        },
+        "new_status": {
+          "path": "app/models/order_item.py",
+          "attribute": "new_status",
+          "declaration": "Column(String(50), nullable=False, comment='الحالة الجديدة')"
+        },
+        "changed_by_employee_id": {
+          "path": "app/models/order_item.py",
+          "attribute": "changed_by_employee_id",
+          "declaration": "Column(Integer, nullable=True, comment='معرف الموظف الذي غيّر الحالة')"
+        },
+        "note": {
+          "path": "app/models/order_item.py",
+          "attribute": "note",
+          "declaration": "Column(Text, nullable=True, comment='ملاحظة إضافية عن التغيير')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "owners": {
+      "class": "Owner",
+      "path": "app/models/owner.py",
+      "columns": {
+        "chat_id": {
+          "path": "app/models/owner.py",
+          "attribute": "chat_id",
+          "declaration": "Column(BigInteger, unique=True, nullable=False, index=True, comment='معرف المستخدم في تيليجرام')"
+        },
+        "full_name": {
+          "path": "app/models/owner.py",
+          "attribute": "full_name",
+          "declaration": "Column(String(255), comment='الاسم الكامل للمالك')"
+        },
+        "phone": {
+          "path": "app/models/owner.py",
+          "attribute": "phone",
+          "declaration": "Column(String(20), comment='رقم الهاتف')"
+        },
+        "email": {
+          "path": "app/models/owner.py",
+          "attribute": "email",
+          "declaration": "Column(String(255), comment='البريد الإلكتروني')"
+        },
+        "registration_status": {
+          "path": "app/models/owner.py",
+          "attribute": "registration_status",
+          "declaration": "Column(String(50), nullable=False, default='pending', comment='حالة التسجيل: pending, approved, rejected')"
+        },
+        "trial_used": {
+          "path": "app/models/owner.py",
+          "attribute": "trial_used",
+          "declaration": "Column(Boolean, default=False, comment='هل تم استخدام الفترة التجريبية')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        }
+      }
+    },
+    "payments": {
+      "class": "Payment",
+      "path": "app/models/payment.py",
+      "columns": {
+        "owner_id": {
+          "path": "app/models/payment.py",
+          "attribute": "owner_id",
+          "declaration": "Column(Integer, ForeignKey('owners.id', ondelete='CASCADE'), nullable=False, comment='معرف المالك')"
+        },
+        "restaurant_id": {
+          "path": "app/models/payment.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), nullable=False, comment='معرف المطعم')"
+        },
+        "subscription_id": {
+          "path": "app/models/payment.py",
+          "attribute": "subscription_id",
+          "declaration": "Column(Integer, ForeignKey('subscriptions.id', ondelete='SET NULL'), nullable=True, comment='معرف الاشتراك')"
+        },
+        "payment_method": {
+          "path": "app/models/payment.py",
+          "attribute": "payment_method",
+          "declaration": "Column(String(50), nullable=False, comment='طريقة الدفع: card, bank_transfer, manual')"
+        },
+        "amount": {
+          "path": "app/models/payment.py",
+          "attribute": "amount",
+          "declaration": "Column(Float, nullable=False, comment='المبلغ')"
+        },
+        "status": {
+          "path": "app/models/payment.py",
+          "attribute": "status",
+          "declaration": "Column(String(50), nullable=False, default='pending', comment='حالة الدفع: pending, completed, failed, refunded')"
+        },
+        "external_reference": {
+          "path": "app/models/payment.py",
+          "attribute": "external_reference",
+          "declaration": "Column(Text, comment='المرجع الخارجي')"
+        },
+        "paid_at": {
+          "path": "app/models/payment.py",
+          "attribute": "paid_at",
+          "declaration": "Column(DateTime, comment='تاريخ ووقت الدفع')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "products": {
+      "class": "Product",
+      "path": "app/models/product.py",
+      "columns": {
+        "restaurant_id": {
+          "path": "app/models/product.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), nullable=False, comment='معرف المطعم')"
+        },
+        "category_id": {
+          "path": "app/models/product.py",
+          "attribute": "category_id",
+          "declaration": "Column(Integer, ForeignKey('categories.id', ondelete='CASCADE'), nullable=False, comment='معرف التصنيف')"
+        },
+        "name": {
+          "path": "app/models/product.py",
+          "attribute": "name",
+          "declaration": "Column(Text, nullable=False, comment='اسم المنتج')"
+        },
+        "description": {
+          "path": "app/models/product.py",
+          "attribute": "description",
+          "declaration": "Column(Text, comment='وصف المنتج')"
+        },
+        "price": {
+          "path": "app/models/product.py",
+          "attribute": "price",
+          "declaration": "Column(Float, nullable=False, comment='سعر المنتج')"
+        },
+        "image_url": {
+          "path": "app/models/product.py",
+          "attribute": "image_url",
+          "declaration": "Column(Text, comment='رابط صورة المنتج')"
+        },
+        "is_available": {
+          "path": "app/models/product.py",
+          "attribute": "is_available",
+          "declaration": "Column(Boolean, default=True, comment='حالة التوفر')"
+        },
+        "sort_order": {
+          "path": "app/models/product.py",
+          "attribute": "sort_order",
+          "declaration": "Column(Integer, default=0, comment='ترتيب العرض')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "product_options": {
+      "class": "ProductOption",
+      "path": "app/models/product_option.py",
+      "columns": {
+        "group_id": {
+          "path": "app/models/product_option.py",
+          "attribute": "group_id",
+          "declaration": "Column(Integer, ForeignKey('option_groups.id', ondelete='CASCADE'), nullable=False, comment='معرف مجموعة الخيارات')"
+        },
+        "name": {
+          "path": "app/models/product_option.py",
+          "attribute": "name",
+          "declaration": "Column(Text, nullable=False, comment='اسم الخيار')"
+        },
+        "extra_price": {
+          "path": "app/models/product_option.py",
+          "attribute": "extra_price",
+          "declaration": "Column(Float, default=0, comment='السعر الإضافي')"
+        },
+        "is_available": {
+          "path": "app/models/product_option.py",
+          "attribute": "is_available",
+          "declaration": "Column(Boolean, default=True, comment='حالة التوفر')"
+        },
+        "sort_order": {
+          "path": "app/models/product_option.py",
+          "attribute": "sort_order",
+          "declaration": "Column(Integer, default=0, comment='ترتيب العرض')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "registration_requests": {
+      "class": "RegistrationRequest",
+      "path": "app/models/registration_request.py",
+      "columns": {
+        "chat_id": {
+          "path": "app/models/registration_request.py",
+          "attribute": "chat_id",
+          "declaration": "Column(BigInteger, nullable=False, comment='معرف المستخدم في تيليجرام')"
+        },
+        "full_name": {
+          "path": "app/models/registration_request.py",
+          "attribute": "full_name",
+          "declaration": "Column(Text, nullable=False, comment='الاسم الكامل للمالك')"
+        },
+        "owner_phone": {
+          "path": "app/models/registration_request.py",
+          "attribute": "owner_phone",
+          "declaration": "Column(Text, nullable=False, comment='رقم هاتف المالك')"
+        },
+        "email": {
+          "path": "app/models/registration_request.py",
+          "attribute": "email",
+          "declaration": "Column(Text, comment='البريد الإلكتروني للمالك')"
+        },
+        "restaurant_name": {
+          "path": "app/models/registration_request.py",
+          "attribute": "restaurant_name",
+          "declaration": "Column(Text, nullable=False, comment='اسم المطعم')"
+        },
+        "restaurant_type": {
+          "path": "app/models/registration_request.py",
+          "attribute": "restaurant_type",
+          "declaration": "Column(Text, nullable=False, comment='نوع المطعم')"
+        },
+        "restaurant_phone": {
+          "path": "app/models/registration_request.py",
+          "attribute": "restaurant_phone",
+          "declaration": "Column(Text, nullable=False, comment='رقم هاتف المطعم')"
+        },
+        "wilaya": {
+          "path": "app/models/registration_request.py",
+          "attribute": "wilaya",
+          "declaration": "Column(Text, comment='الولاية')"
+        },
+        "lat": {
+          "path": "app/models/registration_request.py",
+          "attribute": "lat",
+          "declaration": "Column(Float, comment='خط العرض (الإحداثي)')"
+        },
+        "lng": {
+          "path": "app/models/registration_request.py",
+          "attribute": "lng",
+          "declaration": "Column(Float, comment='خط الطول (الإحداثي)')"
+        },
+        "status": {
+          "path": "app/models/registration_request.py",
+          "attribute": "status",
+          "declaration": "Column(Text, nullable=False, default='pending', comment='حالة الطلب: pending, approved, rejected')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "restaurants": {
+      "class": "Restaurant",
+      "path": "app/models/restaurant.py",
+      "columns": {
+        "owner_id": {
+          "path": "app/models/restaurant.py",
+          "attribute": "owner_id",
+          "declaration": "Column(Integer, ForeignKey('owners.id', ondelete='CASCADE'), nullable=False, comment='معرف المالك')"
+        },
+        "name": {
+          "path": "app/models/restaurant.py",
+          "attribute": "name",
+          "declaration": "Column(String(255), nullable=False, comment='اسم المطعم')"
+        },
+        "type": {
+          "path": "app/models/restaurant.py",
+          "attribute": "type",
+          "declaration": "Column(String(100), nullable=False, comment='نوع المطعم: pizza, burger, cafe, etc.')"
+        },
+        "phone": {
+          "path": "app/models/restaurant.py",
+          "attribute": "phone",
+          "declaration": "Column(String(20), nullable=False, comment='رقم الهاتف')"
+        },
+        "wilaya": {
+          "path": "app/models/restaurant.py",
+          "attribute": "wilaya",
+          "declaration": "Column(String(100), nullable=False, comment='الولاية')"
+        },
+        "lat": {
+          "path": "app/models/restaurant.py",
+          "attribute": "lat",
+          "declaration": "Column(Float, nullable=True, comment='خط العرض (الإحداثي)')"
+        },
+        "lng": {
+          "path": "app/models/restaurant.py",
+          "attribute": "lng",
+          "declaration": "Column(Float, nullable=True, comment='خط الطول (الإحداثي)')"
+        },
+        "is_active": {
+          "path": "app/models/restaurant.py",
+          "attribute": "is_active",
+          "declaration": "Column(Boolean, default=True, comment='حالة النشاط')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        }
+      }
+    },
+    "restaurant_groups": {
+      "class": "RestaurantGroup",
+      "path": "app/models/restaurant_group.py",
+      "columns": {
+        "owner_id": {
+          "path": "app/models/restaurant_group.py",
+          "attribute": "owner_id",
+          "declaration": "Column(Integer, ForeignKey('owners.id', ondelete='CASCADE'), nullable=False, comment='معرف المالك')"
+        },
+        "name": {
+          "path": "app/models/restaurant_group.py",
+          "attribute": "name",
+          "declaration": "Column(String(255), nullable=False, comment='اسم المجموعة')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "restaurant_branches": {
+      "class": "RestaurantBranch",
+      "path": "app/models/restaurant_group.py",
+      "columns": {
+        "group_id": {
+          "path": "app/models/restaurant_group.py",
+          "attribute": "group_id",
+          "declaration": "Column(Integer, ForeignKey('restaurant_groups.id', ondelete='CASCADE'), nullable=False, comment='معرف المجموعة')"
+        },
+        "restaurant_id": {
+          "path": "app/models/restaurant_group.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), nullable=False, comment='معرف المطعم')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "restaurant_metrics": {
+      "class": "RestaurantMetric",
+      "path": "app/models/restaurant_metric.py",
+      "columns": {
+        "restaurant_id": {
+          "path": "app/models/restaurant_metric.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), primary_key=True, comment='معرف المطعم (المفتاح الأساسي)')"
+        },
+        "products_count": {
+          "path": "app/models/restaurant_metric.py",
+          "attribute": "products_count",
+          "declaration": "Column(Integer, nullable=False, default=0, comment='عدد المنتجات')"
+        },
+        "categories_count": {
+          "path": "app/models/restaurant_metric.py",
+          "attribute": "categories_count",
+          "declaration": "Column(Integer, nullable=False, default=0, comment='عدد التصنيفات')"
+        },
+        "monthly_orders": {
+          "path": "app/models/restaurant_metric.py",
+          "attribute": "monthly_orders",
+          "declaration": "Column(Integer, nullable=False, default=0, comment='عدد الطلبات الشهرية')"
+        },
+        "average_order_value": {
+          "path": "app/models/restaurant_metric.py",
+          "attribute": "average_order_value",
+          "declaration": "Column(Float, nullable=False, default=0, comment='متوسط قيمة الطلب')"
+        }
+      }
+    },
+    "restaurant_order_counters": {
+      "class": "RestaurantOrderCounter",
+      "path": "app/models/restaurant_order_counter.py",
+      "columns": {
+        "restaurant_id": {
+          "path": "app/models/restaurant_order_counter.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), primary_key=True, comment='معرف المطعم (المفتاح الأساسي)')"
+        },
+        "last_number": {
+          "path": "app/models/restaurant_order_counter.py",
+          "attribute": "last_number",
+          "declaration": "Column(BigInteger, nullable=False, default=0, comment='آخر رقم طلب تم استخدامه')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "subscription_plans": {
+      "class": "SubscriptionPlan",
+      "path": "app/models/subscription.py",
+      "columns": {
+        "code": {
+          "path": "app/models/subscription.py",
+          "attribute": "code",
+          "declaration": "Column(String(50), unique=True, nullable=False, comment='كود الخطة (فريد)')"
+        },
+        "name": {
+          "path": "app/models/subscription.py",
+          "attribute": "name",
+          "declaration": "Column(String(100), nullable=False, comment='اسم الخطة')"
+        },
+        "description": {
+          "path": "app/models/subscription.py",
+          "attribute": "description",
+          "declaration": "Column(Text, comment='وصف الخطة')"
+        },
+        "base_price": {
+          "path": "app/models/subscription.py",
+          "attribute": "base_price",
+          "declaration": "Column(Float, nullable=False, default=0, comment='السعر الأساسي')"
+        },
+        "plan_discount_percent": {
+          "path": "app/models/subscription.py",
+          "attribute": "plan_discount_percent",
+          "declaration": "Column(Float, nullable=False, default=0, comment='نسبة الخصم')"
+        },
+        "display_order": {
+          "path": "app/models/subscription.py",
+          "attribute": "display_order",
+          "declaration": "Column(Integer, default=0, comment='ترتيب العرض')"
+        },
+        "active": {
+          "path": "app/models/subscription.py",
+          "attribute": "active",
+          "declaration": "Column(Boolean, default=True, comment='حالة النشاط')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "features": {
+      "class": "Feature",
+      "path": "app/models/subscription.py",
+      "columns": {
+        "code": {
+          "path": "app/models/subscription.py",
+          "attribute": "code",
+          "declaration": "Column(String(50), unique=True, nullable=False, comment='كود الميزة (فريد)')"
+        },
+        "name": {
+          "path": "app/models/subscription.py",
+          "attribute": "name",
+          "declaration": "Column(String(100), nullable=False, comment='اسم الميزة')"
+        },
+        "description": {
+          "path": "app/models/subscription.py",
+          "attribute": "description",
+          "declaration": "Column(Text, comment='وصف الميزة')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "plan_features": {
+      "class": "PlanFeature",
+      "path": "app/models/subscription.py",
+      "columns": {
+        "plan_id": {
+          "path": "app/models/subscription.py",
+          "attribute": "plan_id",
+          "declaration": "Column(Integer, ForeignKey('subscription_plans.id', ondelete='CASCADE'), nullable=False, comment='معرف الخطة')"
+        },
+        "feature_id": {
+          "path": "app/models/subscription.py",
+          "attribute": "feature_id",
+          "declaration": "Column(Integer, ForeignKey('features.id', ondelete='CASCADE'), nullable=False, comment='معرف الميزة')"
+        },
+        "included": {
+          "path": "app/models/subscription.py",
+          "attribute": "included",
+          "declaration": "Column(Boolean, default=True, comment='هل الميزة مدرجة في الخطة')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "subscriptions": {
+      "class": "Subscription",
+      "path": "app/models/subscription.py",
+      "columns": {
+        "owner_id": {
+          "path": "app/models/subscription.py",
+          "attribute": "owner_id",
+          "declaration": "Column(Integer, ForeignKey('owners.id', ondelete='CASCADE'), nullable=False, comment='معرف المالك')"
+        },
+        "restaurant_id": {
+          "path": "app/models/subscription.py",
+          "attribute": "restaurant_id",
+          "declaration": "Column(Integer, ForeignKey('restaurants.id', ondelete='CASCADE'), nullable=False, comment='معرف المطعم')"
+        },
+        "plan_id": {
+          "path": "app/models/subscription.py",
+          "attribute": "plan_id",
+          "declaration": "Column(Integer, ForeignKey('subscription_plans.id'), nullable=False, comment='معرف الخطة')"
+        },
+        "billing_cycle": {
+          "path": "app/models/subscription.py",
+          "attribute": "billing_cycle",
+          "declaration": "Column(String(50), nullable=False, comment='دورة الفوترة: monthly, quarterly, yearly')"
+        },
+        "amount": {
+          "path": "app/models/subscription.py",
+          "attribute": "amount",
+          "declaration": "Column(Float, nullable=False, comment='المبلغ')"
+        },
+        "starts_at": {
+          "path": "app/models/subscription.py",
+          "attribute": "starts_at",
+          "declaration": "Column(DateTime, comment='تاريخ البدء')"
+        },
+        "expires_at": {
+          "path": "app/models/subscription.py",
+          "attribute": "expires_at",
+          "declaration": "Column(DateTime, comment='تاريخ الانتهاء')"
+        },
+        "status": {
+          "path": "app/models/subscription.py",
+          "attribute": "status",
+          "declaration": "Column(String(50), nullable=False, default='pending', comment='حالة الاشتراك: pending, trial, active, expired, cancelled')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        }
+      }
+    },
+    "subscription_features": {
+      "class": "SubscriptionFeature",
+      "path": "app/models/subscription.py",
+      "columns": {
+        "subscription_id": {
+          "path": "app/models/subscription.py",
+          "attribute": "subscription_id",
+          "declaration": "Column(Integer, ForeignKey('subscriptions.id', ondelete='CASCADE'), nullable=False, comment='معرف الاشتراك')"
+        },
+        "feature_id": {
+          "path": "app/models/subscription.py",
+          "attribute": "feature_id",
+          "declaration": "Column(Integer, ForeignKey('features.id', ondelete='CASCADE'), nullable=False, comment='معرف الميزة')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "subscription_feature_requests": {
+      "class": "SubscriptionFeatureRequest",
+      "path": "app/models/subscription.py",
+      "columns": {
+        "subscription_id": {
+          "path": "app/models/subscription.py",
+          "attribute": "subscription_id",
+          "declaration": "Column(Integer, ForeignKey('subscriptions.id', ondelete='CASCADE'), nullable=False, comment='معرف الاشتراك')"
+        },
+        "feature_id": {
+          "path": "app/models/subscription.py",
+          "attribute": "feature_id",
+          "declaration": "Column(Integer, ForeignKey('features.id', ondelete='CASCADE'), nullable=False, comment='معرف الميزة')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    },
+    "users": {
+      "class": "User",
+      "path": "app/models/user.py",
+      "columns": {
+        "chat_id": {
+          "path": "app/models/user.py",
+          "attribute": "chat_id",
+          "declaration": "Column(BigInteger, unique=True, index=True, nullable=True, comment='معرف المستخدم في تيليجرام')"
+        },
+        "id": {
+          "path": "app/models/base.py",
+          "attribute": "id",
+          "declaration": "Column(Integer, primary_key=True, index=True, comment='المعرف الرئيسي للنموذج')"
+        },
+        "created_at": {
+          "path": "app/models/base.py",
+          "attribute": "created_at",
+          "declaration": "Column(DateTime, server_default=func.now(), comment='تاريخ ووقت الإنشاء')"
+        },
+        "updated_at": {
+          "path": "app/models/base.py",
+          "attribute": "updated_at",
+          "declaration": "Column(DateTime, onupdate=func.now(), server_default=func.now(), comment='تاريخ ووقت آخر تحديث')"
+        }
+      }
+    }
+  },
+  "statements": [
+    "REVOKE ALL ON SCHEMA public FROM PUBLIC",
+    "CREATE TABLE admins (\n\tchat_id BIGINT NOT NULL, \n\tusername VARCHAR(255), \n\tfull_name VARCHAR(255), \n\trole VARCHAR(50) NOT NULL, \n\tpassword_hash VARCHAR(255), \n\tis_active BOOLEAN, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE branch_pricing (\n\tmin_branches INTEGER NOT NULL, \n\tmax_branches INTEGER, \n\tprice_per_branch FLOAT NOT NULL, \n\tactive BOOLEAN, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE branches (\n\trestaurant_id INTEGER NOT NULL, \n\tname TEXT NOT NULL, \n\tphone VARCHAR(20), \n\twilaya VARCHAR(100), \n\tlat FLOAT, \n\tlng FLOAT, \n\tis_active BOOLEAN, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE categories (\n\trestaurant_id INTEGER NOT NULL, \n\tname TEXT NOT NULL, \n\tsort_order INTEGER, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE feature_pricing (\n\tfeature_id INTEGER NOT NULL, \n\tbilling_cycle VARCHAR(50) NOT NULL, \n\tprice FLOAT NOT NULL, \n\tactive BOOLEAN, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE feature_usage_counters (\n\trestaurant_id INTEGER NOT NULL, \n\tfeature_id INTEGER NOT NULL, \n\tusage_count INTEGER NOT NULL, \n\tperiod_year INTEGER, \n\tperiod_month INTEGER, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE feature_usage_limits (\n\tplan_id INTEGER NOT NULL, \n\tfeature_id INTEGER NOT NULL, \n\tmonthly_limit INTEGER, \n\tlimit_type VARCHAR(50), \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE features (\n\tcode VARCHAR(50) NOT NULL, \n\tname VARCHAR(100) NOT NULL, \n\tdescription TEXT, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id), \n\tUNIQUE (code)\n)",
+    "CREATE TABLE loyalty_discounts (\n\tyears_required INTEGER NOT NULL, \n\tdiscount_percent FLOAT NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE multi_restaurant_discounts (\n\tmin_restaurants INTEGER NOT NULL, \n\tdiscount_percent FLOAT NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE option_groups (\n\tproduct_id INTEGER NOT NULL, \n\tname TEXT NOT NULL, \n\trequired BOOLEAN, \n\tmultiple_choice BOOLEAN, \n\tsort_order INTEGER, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE order_item_options (\n\torder_item_id BIGINT NOT NULL, \n\toption_group_name VARCHAR(255) NOT NULL, \n\toption_name VARCHAR(255) NOT NULL, \n\tadditional_price FLOAT NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE order_items (\n\torder_id BIGINT NOT NULL, \n\tproduct_id INTEGER NOT NULL, \n\tproduct_name VARCHAR(255) NOT NULL, \n\tunit_price FLOAT NOT NULL, \n\tquantity INTEGER NOT NULL, \n\ttotal_price FLOAT NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE order_payments (\n\torder_id BIGINT NOT NULL, \n\tpayment_method VARCHAR(50) NOT NULL, \n\tpayment_status VARCHAR(50) NOT NULL, \n\tamount FLOAT NOT NULL, \n\ttransaction_reference VARCHAR(255), \n\tpaid_at TIMESTAMP WITHOUT TIME ZONE, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE order_status_history (\n\torder_id BIGINT NOT NULL, \n\told_status VARCHAR(50), \n\tnew_status VARCHAR(50) NOT NULL, \n\tchanged_by_employee_id INTEGER, \n\tnote TEXT, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE orders (\n\trestaurant_id INTEGER NOT NULL, \n\tbranch_id INTEGER, \n\ttable_id INTEGER, \n\temployee_id INTEGER, \n\torder_number VARCHAR(50) NOT NULL, \n\torder_type VARCHAR(30) NOT NULL, \n\tdelivery_address TEXT, \n\tcustomer_note TEXT, \n\tstatus VARCHAR(50) NOT NULL, \n\tsubtotal_amount FLOAT NOT NULL, \n\tdiscount_amount FLOAT NOT NULL, \n\ttax_amount FLOAT NOT NULL, \n\tdelivery_amount FLOAT NOT NULL, \n\ttotal_amount FLOAT NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE owners (\n\tchat_id BIGINT NOT NULL, \n\tfull_name VARCHAR(255), \n\tphone VARCHAR(20), \n\temail VARCHAR(255), \n\tregistration_status VARCHAR(50) NOT NULL, \n\ttrial_used BOOLEAN, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE payments (\n\towner_id INTEGER NOT NULL, \n\trestaurant_id INTEGER NOT NULL, \n\tsubscription_id INTEGER, \n\tpayment_method VARCHAR(50) NOT NULL, \n\tamount FLOAT NOT NULL, \n\tstatus VARCHAR(50) NOT NULL, \n\texternal_reference TEXT, \n\tpaid_at TIMESTAMP WITHOUT TIME ZONE, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE plan_features (\n\tplan_id INTEGER NOT NULL, \n\tfeature_id INTEGER NOT NULL, \n\tincluded BOOLEAN, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE product_options (\n\tgroup_id INTEGER NOT NULL, \n\tname TEXT NOT NULL, \n\textra_price FLOAT, \n\tis_available BOOLEAN, \n\tsort_order INTEGER, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE products (\n\trestaurant_id INTEGER NOT NULL, \n\tcategory_id INTEGER NOT NULL, \n\tname TEXT NOT NULL, \n\tdescription TEXT, \n\tprice FLOAT NOT NULL, \n\timage_url TEXT, \n\tis_available BOOLEAN, \n\tsort_order INTEGER, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE promotions (\n\tname VARCHAR(255) NOT NULL, \n\tdiscount_percent FLOAT NOT NULL, \n\tstarts_at TIMESTAMP WITHOUT TIME ZONE, \n\texpires_at TIMESTAMP WITHOUT TIME ZONE, \n\tactive BOOLEAN, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE registration_requests (\n\tchat_id BIGINT NOT NULL, \n\tfull_name TEXT NOT NULL, \n\towner_phone TEXT NOT NULL, \n\temail TEXT, \n\trestaurant_name TEXT NOT NULL, \n\trestaurant_type TEXT NOT NULL, \n\trestaurant_phone TEXT NOT NULL, \n\twilaya TEXT, \n\tlat FLOAT, \n\tlng FLOAT, \n\tstatus TEXT NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE restaurant_branches (\n\tgroup_id INTEGER NOT NULL, \n\trestaurant_id INTEGER NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE restaurant_groups (\n\towner_id INTEGER NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE restaurant_metrics (\n\trestaurant_id INTEGER NOT NULL, \n\tproducts_count INTEGER NOT NULL, \n\tcategories_count INTEGER NOT NULL, \n\tmonthly_orders INTEGER NOT NULL, \n\taverage_order_value FLOAT NOT NULL, \n\tPRIMARY KEY (restaurant_id)\n)",
+    "CREATE TABLE restaurant_order_counters (\n\trestaurant_id INTEGER NOT NULL, \n\tlast_number BIGINT NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (restaurant_id)\n)",
+    "CREATE TABLE restaurants (\n\towner_id INTEGER NOT NULL, \n\tname VARCHAR(255) NOT NULL, \n\ttype VARCHAR(100) NOT NULL, \n\tphone VARCHAR(20) NOT NULL, \n\twilaya VARCHAR(100) NOT NULL, \n\tlat FLOAT, \n\tlng FLOAT, \n\tis_active BOOLEAN, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id), \n\tCONSTRAINT uq_restaurant_location UNIQUE (owner_id, name, phone, wilaya, lat, lng)\n)",
+    "CREATE TABLE subscription_feature_requests (\n\tsubscription_id INTEGER NOT NULL, \n\tfeature_id INTEGER NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE subscription_features (\n\tsubscription_id INTEGER NOT NULL, \n\tfeature_id INTEGER NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE subscription_plans (\n\tcode VARCHAR(50) NOT NULL, \n\tname VARCHAR(100) NOT NULL, \n\tdescription TEXT, \n\tbase_price FLOAT NOT NULL, \n\tplan_discount_percent FLOAT NOT NULL, \n\tdisplay_order INTEGER, \n\tactive BOOLEAN, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id), \n\tUNIQUE (code)\n)",
+    "CREATE TABLE subscriptions (\n\towner_id INTEGER NOT NULL, \n\trestaurant_id INTEGER NOT NULL, \n\tplan_id INTEGER NOT NULL, \n\tbilling_cycle VARCHAR(50) NOT NULL, \n\tamount FLOAT NOT NULL, \n\tstarts_at TIMESTAMP WITHOUT TIME ZONE, \n\texpires_at TIMESTAMP WITHOUT TIME ZONE, \n\tstatus VARCHAR(50) NOT NULL, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE TABLE users (\n\tchat_id BIGINT, \n\tid SERIAL NOT NULL, \n\tcreated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tupdated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(), \n\tPRIMARY KEY (id)\n)",
+    "CREATE UNIQUE INDEX ix_admins_chat_id ON admins (chat_id)",
+    "CREATE INDEX ix_admins_id ON admins (id)",
+    "CREATE INDEX ix_admins_username ON admins (username)",
+    "CREATE INDEX ix_branch_pricing_id ON branch_pricing (id)",
+    "ALTER TABLE branches ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "CREATE INDEX idx_branches_restaurant ON branches (restaurant_id)",
+    "CREATE INDEX ix_branches_id ON branches (id)",
+    "ALTER TABLE categories ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_categories_id ON categories (id)",
+    "ALTER TABLE feature_pricing ADD FOREIGN KEY(feature_id) REFERENCES features (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_feature_pricing_id ON feature_pricing (id)",
+    "ALTER TABLE feature_usage_counters ADD FOREIGN KEY(feature_id) REFERENCES features (id) ON DELETE CASCADE",
+    "ALTER TABLE feature_usage_counters ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_feature_usage_counters_id ON feature_usage_counters (id)",
+    "ALTER TABLE feature_usage_limits ADD FOREIGN KEY(feature_id) REFERENCES features (id)",
+    "ALTER TABLE feature_usage_limits ADD FOREIGN KEY(plan_id) REFERENCES subscription_plans (id)",
+    "CREATE INDEX ix_feature_usage_limits_id ON feature_usage_limits (id)",
+    "CREATE INDEX ix_features_id ON features (id)",
+    "CREATE INDEX ix_loyalty_discounts_id ON loyalty_discounts (id)",
+    "CREATE INDEX ix_multi_restaurant_discounts_id ON multi_restaurant_discounts (id)",
+    "ALTER TABLE option_groups ADD FOREIGN KEY(product_id) REFERENCES products (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_option_groups_id ON option_groups (id)",
+    "ALTER TABLE order_item_options ADD FOREIGN KEY(order_item_id) REFERENCES order_items (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_order_item_options_id ON order_item_options (id)",
+    "ALTER TABLE order_items ADD FOREIGN KEY(order_id) REFERENCES orders (id) ON DELETE CASCADE",
+    "ALTER TABLE order_items ADD FOREIGN KEY(product_id) REFERENCES products (id)",
+    "CREATE INDEX ix_order_items_id ON order_items (id)",
+    "ALTER TABLE order_payments ADD FOREIGN KEY(order_id) REFERENCES orders (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_order_payments_id ON order_payments (id)",
+    "ALTER TABLE order_status_history ADD FOREIGN KEY(order_id) REFERENCES orders (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_order_status_history_id ON order_status_history (id)",
+    "ALTER TABLE orders ADD FOREIGN KEY(branch_id) REFERENCES branches (id) ON DELETE SET NULL",
+    "ALTER TABLE orders ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "CREATE INDEX idx_orders_branch ON orders (branch_id)",
+    "CREATE INDEX idx_orders_created_at ON orders (created_at)",
+    "CREATE INDEX idx_orders_restaurant ON orders (restaurant_id)",
+    "CREATE UNIQUE INDEX idx_orders_restaurant_order_number ON orders (restaurant_id, order_number)",
+    "CREATE INDEX idx_orders_status ON orders (status)",
+    "CREATE INDEX ix_orders_id ON orders (id)",
+    "CREATE UNIQUE INDEX ix_owners_chat_id ON owners (chat_id)",
+    "CREATE INDEX ix_owners_id ON owners (id)",
+    "ALTER TABLE payments ADD FOREIGN KEY(owner_id) REFERENCES owners (id) ON DELETE CASCADE",
+    "ALTER TABLE payments ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "ALTER TABLE payments ADD FOREIGN KEY(subscription_id) REFERENCES subscriptions (id) ON DELETE SET NULL",
+    "CREATE INDEX ix_payments_id ON payments (id)",
+    "ALTER TABLE plan_features ADD FOREIGN KEY(feature_id) REFERENCES features (id) ON DELETE CASCADE",
+    "ALTER TABLE plan_features ADD FOREIGN KEY(plan_id) REFERENCES subscription_plans (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_plan_features_id ON plan_features (id)",
+    "ALTER TABLE product_options ADD FOREIGN KEY(group_id) REFERENCES option_groups (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_product_options_id ON product_options (id)",
+    "ALTER TABLE products ADD FOREIGN KEY(category_id) REFERENCES categories (id) ON DELETE CASCADE",
+    "ALTER TABLE products ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_products_id ON products (id)",
+    "CREATE INDEX ix_promotions_id ON promotions (id)",
+    "CREATE INDEX ix_registration_requests_id ON registration_requests (id)",
+    "ALTER TABLE restaurant_branches ADD FOREIGN KEY(group_id) REFERENCES restaurant_groups (id) ON DELETE CASCADE",
+    "ALTER TABLE restaurant_branches ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_restaurant_branches_id ON restaurant_branches (id)",
+    "ALTER TABLE restaurant_groups ADD FOREIGN KEY(owner_id) REFERENCES owners (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_restaurant_groups_id ON restaurant_groups (id)",
+    "ALTER TABLE restaurant_metrics ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "ALTER TABLE restaurant_order_counters ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "ALTER TABLE restaurants ADD FOREIGN KEY(owner_id) REFERENCES owners (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_restaurants_id ON restaurants (id)",
+    "ALTER TABLE subscription_feature_requests ADD FOREIGN KEY(feature_id) REFERENCES features (id) ON DELETE CASCADE",
+    "ALTER TABLE subscription_feature_requests ADD FOREIGN KEY(subscription_id) REFERENCES subscriptions (id) ON DELETE CASCADE",
+    "CREATE INDEX idx_subscription_feature_requests_feature ON subscription_feature_requests (feature_id)",
+    "CREATE INDEX idx_subscription_feature_requests_subscription ON subscription_feature_requests (subscription_id)",
+    "CREATE INDEX ix_subscription_feature_requests_id ON subscription_feature_requests (id)",
+    "ALTER TABLE subscription_features ADD FOREIGN KEY(feature_id) REFERENCES features (id) ON DELETE CASCADE",
+    "ALTER TABLE subscription_features ADD FOREIGN KEY(subscription_id) REFERENCES subscriptions (id) ON DELETE CASCADE",
+    "CREATE INDEX ix_subscription_features_id ON subscription_features (id)",
+    "CREATE INDEX ix_subscription_plans_id ON subscription_plans (id)",
+    "ALTER TABLE subscriptions ADD FOREIGN KEY(owner_id) REFERENCES owners (id) ON DELETE CASCADE",
+    "ALTER TABLE subscriptions ADD FOREIGN KEY(restaurant_id) REFERENCES restaurants (id) ON DELETE CASCADE",
+    "ALTER TABLE subscriptions ADD FOREIGN KEY(plan_id) REFERENCES subscription_plans (id)",
+    "CREATE INDEX ix_subscriptions_id ON subscriptions (id)",
+    "CREATE UNIQUE INDEX uq_active_subscription ON subscriptions (restaurant_id) WHERE status IN ('trial', 'active')",
+    "CREATE UNIQUE INDEX ix_users_chat_id ON users (chat_id)",
+    "CREATE INDEX ix_users_id ON users (id)"
+  ]
+}

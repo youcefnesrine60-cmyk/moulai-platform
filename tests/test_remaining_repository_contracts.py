@@ -5,7 +5,18 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# REGISTRATION AND CATALOGUE CONTRACTS
+# Check strict asynchronous approval dependencies and canonical repository argument contracts.
+# ==============================================
+
 """Guard canonical registration signatures and product option group boundaries."""
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the local framework, schema and contract dependencies used in this file.
+# ==============================================
 
 from datetime import (
     UTC,
@@ -40,7 +51,10 @@ from app.schemas.registration_request import (
     RegistrationRequestUpdate,
 )
 from app.services.business.option_groups_service import OptionGroupsService
-from app.services.business.registration_request_service import RegistrationRequestService  # fmt: skip
+from app.services.business.owner_service import OwnerService
+
+from app.services.business.registration_request_service import RegistrationRequestService  # isort: skip  # fmt: skip
+from app.services.business.subscription_service import SubscriptionService
 from tests.test_owner_statistics_contracts import owner_record
 
 # ==============================================
@@ -71,21 +85,27 @@ def registration_record() -> RegistrationRequestResponse:
 
 def registration_service() -> RegistrationRequestService:
     """Create a real service with strict repository method specifications."""
-    service = RegistrationRequestService(session=MagicMock(spec=AsyncSession))
+    session = create_autospec(AsyncSession, instance=True)
+    session.info = {}
+    session.in_transaction.return_value = False
+    service = RegistrationRequestService(session=session)
     service.repo = create_autospec(RegistrationRequestRepository, instance=True)
     service.repo.get_by_id.return_value = registration_record()
+    service.repo.get_for_approval.return_value = registration_record()
     service.repo.update.return_value = registration_record()
     service.repo.approve.return_value = registration_record().model_copy(
         update={"status": "approved", "owner_id": 17},
     )
-    service.owner_service = MagicMock()
+    service.owner_service = create_autospec(OwnerService, instance=True)
     service.owner_service.get_owner_by_id = AsyncMock(return_value=owner_record())
     service.owner_service.get_owner_by_chat_id = AsyncMock(return_value=None)
     service.owner_service.create_owner = AsyncMock(return_value=owner_record())
     service.owner_service.approve_owner = AsyncMock()
     service.restaurant_repo = MagicMock()
     service.restaurant_repo.create = AsyncMock(return_value=SimpleNamespace(id=99))
-    service.subscription_service = MagicMock()
+    service.subscription_service = create_autospec(SubscriptionService, instance=True)
+    service.subscription_service.validate_trial_configuration.return_value = (2, set())
+    service.subscription_service.require_trial_eligibility.return_value = None
     service.subscription_service.create_trial_subscription = AsyncMock(
         return_value=SimpleNamespace(id=101),
     )
@@ -203,7 +223,9 @@ async def test_registration_approval_supplies_an_owner_create_schema() -> None:
     assert payload.chat_id == 425
     assert payload.email is None
     assert result.owner_id == 17
-    service.repo.get_by_id.assert_awaited_once_with(id=41)
+    service.repo.get_for_approval.assert_awaited_once_with(request_id=41)
+    service.repo.get_by_id.assert_not_awaited()
+    service.subscription_service.validate_trial_configuration.assert_awaited_once_with()
     service.restaurant_repo.create.assert_awaited_once()
 
 
@@ -218,7 +240,7 @@ async def test_registration_cannot_assign_another_telegram_users_owner(
         update={"id": 18, "chat_id": 999},
     )
     if linked_owner:
-        service.repo.get_by_id.return_value = registration_record().model_copy(
+        service.repo.get_for_approval.return_value = registration_record().model_copy(
             update={"owner_id": 18},
         )
 
@@ -242,7 +264,32 @@ async def test_registration_reuses_the_owner_bound_to_the_request_chat() -> None
 
     service.owner_service.get_owner_by_chat_id.assert_awaited_once_with(chat_id=425)
     service.owner_service.create_owner.assert_not_awaited()
+    service.subscription_service.require_trial_eligibility.assert_awaited_once_with(
+        owner_id=17
+    )
     assert service.restaurant_repo.create.await_args.kwargs["data"]["owner_id"] == 17
+
+
+# ==============================================
+# CURRENT APPROVAL CONFIGURATION PREFLIGHT
+# Strict asynchronous doubles must preserve rejection before any domain creation.
+# ==============================================
+
+
+@pytest.mark.asyncio
+async def test_registration_preflight_failure_prevents_domain_creation() -> None:
+    """A missing configuration never turns into a mocked success or an awaited MagicMock."""
+    service = registration_service()
+    service.subscription_service.validate_trial_configuration.side_effect = ValueError(
+        "trial_plan_not_found"
+    )
+    with pytest.raises(ValueError, match="trial_plan_not_found"):
+        await service.approve(request_id=41)
+    service.repo.get_for_approval.assert_awaited_once_with(request_id=41)
+    service.owner_service.create_owner.assert_not_awaited()
+    service.restaurant_repo.create.assert_not_awaited()
+    service.subscription_service.create_trial_subscription.assert_not_awaited()
+    service.repo.approve.assert_not_awaited()
 
 
 # ==============================================

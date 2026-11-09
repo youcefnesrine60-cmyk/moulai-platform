@@ -141,14 +141,19 @@ export function LanguageControl(): ReactElement {
 /** One direction-aware accessible theme selector uses the pre-paint store. */
 export function ThemeControl(): ReactElement {
   const { t } = useTranslation();
-  const { theme, preference, choose } = useTheme();
+  const { theme, preference, manual, choose } = useTheme();
   const Icon = theme === 'dark' ? Moon : Sun;
+  const currentAppearance = (
+    <>
+      <Icon size={19} aria-hidden="true" />
+      <span className="sr-only">{t(`theme.${preference}`)}</span>
+    </>
+  );
   return (
     <Select.Root
-      value={preference}
+      value={manual ? preference : ''}
       onValueChange={(value) => {
-        if (value === 'light' || value === 'dark' || value === 'system')
-          choose(value);
+        if (value === 'light' || value === 'dark') choose(value);
       }}
     >
       <Select.Trigger
@@ -156,9 +161,8 @@ export function ThemeControl(): ReactElement {
         aria-label={t('preferences.theme')}
         title={`${t('preferences.theme')} · ${t(`theme.${preference}`)}`}
       >
-        <Select.Value>
-          <Icon size={19} aria-hidden="true" />
-          <span className="sr-only">{t(`theme.${preference}`)}</span>
+        <Select.Value placeholder={currentAppearance}>
+          {currentAppearance}
         </Select.Value>
       </Select.Trigger>
       <Select.Portal>
@@ -168,7 +172,7 @@ export function ThemeControl(): ReactElement {
           sideOffset={6}
         >
           <Select.Viewport>
-            {(['light', 'dark', 'system'] as const).map((value) => (
+            {(['light', 'dark'] as const).map((value) => (
               <Select.Item
                 key={value}
                 value={value}

@@ -5,6 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
+import { installManualThemeFixture } from './manualThemeFixture';
 import { createHash } from 'node:crypto';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -384,12 +385,20 @@ test('live language and System changes preserve the selected review profile and 
       page.getByText(copy(locale, 'access.serviceLead'), { exact: true }),
     ).toBeVisible();
     for (const theme of ['dark', 'light'] as const) {
-      await page.emulateMedia({ colorScheme: theme });
+      await page
+        .getByRole('combobox', { name: copy(locale, 'preferences.theme') })
+        .click();
+      await page
+        .getByRole('option', {
+          name: copy(locale, `theme.${theme}`),
+          exact: true,
+        })
+        .click();
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
       await brand(page, locale, theme, info);
       await expect(
         page.getByRole('combobox', { name: copy(locale, 'preferences.theme') }),
-      ).toContainText(copy(locale, 'theme.system'));
+      ).toContainText(copy(locale, `theme.${theme}`));
     }
   }
   await page.reload();
@@ -418,3 +427,6 @@ test('normal build exposes the approved brand and presentation without synthetic
   await brand(page, 'fr', theme as Theme, info);
   await capture(page, 'normal-build-disconnected-access', info);
 });
+
+// Visual fixtures request a manual choice; opening policy is checked independently.
+test.beforeEach(async ({ page }) => installManualThemeFixture(page));

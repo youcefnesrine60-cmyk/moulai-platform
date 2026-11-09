@@ -15,22 +15,14 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from app.repositories.orders_repo import lock_order
-
+# isort: split
 # ==============================================
 # 📦 ORDERS SERVICE - UPDATE
 # تحديث الطلب
 # (change_order_status, recalculate_order_totals)
 # ==============================================
 
-from typing import (
-    Any,
-    Dict,
-    Optional,
-    Tuple,
-)
-
-from app.services.business.orders.transaction import transactional_order
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,12 +31,12 @@ from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
-
 from app.core.logger import logger
 from app.models.order import Order
-from app.repositories.orders_repo import OrdersRepository
-from app.repositories.order_status_history_repo import (
-    OrderStatusHistoryRepository,
+from app.repositories.order_status_history_repo import OrderStatusHistoryRepository
+from app.repositories.orders_repo import (
+    OrdersRepository,
+    lock_order,
 )
 from app.services.business.orders.constants import (
     can_transition,
@@ -52,13 +44,14 @@ from app.services.business.orders.constants import (
 )
 from app.services.business.orders.helpers import check_order_editable
 from app.services.business.orders.read import get_restaurant_order
+from app.services.business.orders.transaction import transactional_order
 
 # ==============================================
 # 🧩 TYPES
 # ==============================================
 
-OrderTotals = Tuple[float, float, float, float, float]
-OrderUpdateData = Dict[str, Any]
+OrderTotals = tuple[float, float, float, float, float]
+OrderUpdateData = dict[str, Any]
 
 
 # ==============================================
@@ -71,8 +64,8 @@ async def change_order_status(
     *,
     order_id: int,
     new_status: str,
-    employee_id: Optional[int] = None,
-    note: Optional[str] = None,
+    employee_id: int | None = None,
+    note: str | None = None,
     session: AsyncSession,
 ) -> Order:
     order, _ = await _change_order_status_in_transaction(
@@ -94,10 +87,10 @@ async def _change_order_status_in_transaction(
     *,
     order_id: int,
     new_status: str,
-    employee_id: Optional[int] = None,
-    note: Optional[str] = None,
+    employee_id: int | None = None,
+    note: str | None = None,
     session: AsyncSession,
-) -> Tuple[Order, bool]:
+) -> tuple[Order, bool]:
     """
     تغيير حالة الطلب.
 
@@ -170,13 +163,24 @@ async def _change_order_status_in_transaction(
 
 
 async def transition_locked_order(
-    *, order, new_status, session, employee_id=None, note=None
-):
+    *,
+    order: Order,
+    new_status: str,
+    session: AsyncSession,
+    employee_id: int | None = None,
+    note: str | None = None,
+) -> tuple[Order, bool]:
     """Apply one legal transition to an already locked, authorized order."""
     old_status = order.status
     if old_status == new_status:
         return order, False
-    if not can_transition(old_status, new_status):
+    # Actual on-site service has no fictitious delivery leg.
+    on_site_completion = (
+        old_status == "ready"
+        and new_status == "completed"
+        and order.order_type == "dine_in"
+    )
+    if not can_transition(old_status, new_status) and not on_site_completion:
         raise ValidationError(
             message=f"Cannot change order from {old_status} to {new_status}"
         )
@@ -264,9 +268,7 @@ async def recalculate_order_totals(
     Raises:
         NotFoundError: إذا لم يتم العثور على الطلب
     """
-    from app.services.business.orders.totals import (
-        recalculate_order_totals as recalculate,
-    )
+    from app.services.business.orders.totals import recalculate_order_totals as recalculate  # isort: skip; fmt: skip
 
     return await recalculate(
         order_id=order_id,
@@ -411,10 +413,10 @@ async def update_order(
 async def update_order_customer_info(
     *,
     order_id: int,
-    customer_name: Optional[str] = None,
-    customer_phone: Optional[str] = None,
-    delivery_address: Optional[str] = None,
-    customer_note: Optional[str] = None,
+    customer_name: str | None = None,
+    customer_phone: str | None = None,
+    delivery_address: str | None = None,
+    customer_note: str | None = None,
     session: AsyncSession,
 ) -> Order:
     """

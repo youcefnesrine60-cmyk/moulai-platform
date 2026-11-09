@@ -6,21 +6,30 @@
 # ==============================================
 
 # ==============================================
-# 🎖️ LOYALTY DISCOUNT REPOSITORY
-# عمليات قاعدة البيانات لخصومات الولاء باستخدام SQLAlchemy
-# Async SQLAlchemy Version
+# LOYALTY DISCOUNT REPOSITORY
+# Select eligible loyalty tiers and maintain their persisted configuration.
 # ==============================================
 
-"""MoulAI operational module for loyalty discount repo.
+"""Select eligible loyalty tiers and maintain their persisted configuration."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
 
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
+
+from decimal import Decimal
 from typing import (
     Any,
+    TypeAlias,
 )
 
-from sqlalchemy import select
+from sqlalchemy import (
+    Select,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import logger
@@ -29,14 +38,17 @@ from app.repositories.base import BaseRepository
 
 # ==============================================
 # 🧩 TYPES
+# Describe shared input, update and result structures for this module.
 # ==============================================
 
-LoyaltyDiscountData = dict[str, Any]
-LoyaltyDiscountUpdateData = dict[str, Any]
-LoyaltyDiscountList = list[LoyaltyDiscount]
+LoyaltyDiscountData: TypeAlias = dict[str, Any]
+LoyaltyDiscountUpdateData: TypeAlias = dict[str, Any]
+LoyaltyDiscountList: TypeAlias = list[LoyaltyDiscount]
+
 
 # ==============================================
 # 🎖️ LOYALTY DISCOUNT REPOSITORY
+# مستودع خصومات الولاء - يوفر عمليات خاصة بخصومات الولاء.
 # ==============================================
 
 
@@ -62,11 +74,13 @@ class LoyaltyDiscountRepository(
     """
 
     # ==============================================
-    #   INIT
+    # INIT
+    # تهيئة مستودع خصومات الولاء.
     # ==============================================
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -77,11 +91,12 @@ class LoyaltyDiscountRepository(
         """
         super().__init__(LoyaltyDiscount, session)
 
-    # ==========================================
+    # ==============================================
     # 🔍 BASE QUERY
-    # ==========================================
+    # بناء الاستعلام الأساسي لخصومات الولاء.
+    # ==============================================
 
-    def _build_base_query(self):
+    def _build_base_query(self) -> Select[tuple[LoyaltyDiscount]]:
         """
         بناء الاستعلام الأساسي لخصومات الولاء.
 
@@ -90,12 +105,14 @@ class LoyaltyDiscountRepository(
         """
         return select(self.model)
 
-    # ==========================================
+    # ==============================================
     # 📖 QUERIES
-    # ==========================================
+    # Read persisted records through the existing repository selection rules.
+    # ==============================================
 
     # ==============================================
     # GET ALL ORDERED
+    # الحصول على جميع خصومات الولاء مرتبة حسب عدد السنوات المطلوبة.
     # ==============================================
 
     async def get_all_ordered(
@@ -135,13 +152,15 @@ class LoyaltyDiscountRepository(
 
     # ==============================================
     # GET DISCOUNT FOR YEARS
+    # حساب نسبة الخصم المطبقة لعدد سنوات معين.
     # ==============================================
 
     async def get_discount_for_years(
         self,
         *,
         years: int,
-    ) -> float:
+        owner_id: int | None = None,
+    ) -> Decimal:
         """
         حساب نسبة الخصم المطبقة لعدد سنوات معين.
 
@@ -154,8 +173,22 @@ class LoyaltyDiscountRepository(
         try:
             query = (
                 self._build_base_query()
-                .where(self.model.years_required <= years)
-                .order_by(self.model.years_required.desc())
+                .where(
+                    self.model.years_required <= years,
+                    (
+                        self.model.owner_id.is_(None)
+                        if owner_id is None
+                        else (
+                            self.model.owner_id.is_(None)
+                            | (self.model.owner_id == owner_id)
+                        )
+                    ),
+                )
+                .order_by(
+                    self.model.years_required.desc(),
+                    self.model.owner_id.is_not(None).desc(),
+                    self.model.id.asc(),
+                )
                 .limit(1)
             )
 
@@ -164,9 +197,9 @@ class LoyaltyDiscountRepository(
             discount = result.scalar_one_or_none()
 
             if not discount:
-                return 0.0
+                return Decimal(0)
 
-            return float(discount.discount_percent)
+            return discount.discount_percent
 
         except Exception as e:
             logger.exception(
@@ -180,6 +213,7 @@ class LoyaltyDiscountRepository(
 
     # ==============================================
     # GET BY OWNER
+    # الحصول على خصومات الولاء الخاصة بمالك معين.
     # ==============================================
 
     async def get_by_owner(
@@ -223,12 +257,14 @@ class LoyaltyDiscountRepository(
             )
             raise
 
-    # ==========================================
+    # ==============================================
     # ✏️ MUTATIONS
+    # Group persistence changes while retaining the caller's transaction contract.
     # ==============================================
 
     # ==============================================
     # UPDATE DISCOUNT PERCENT
+    # تحديث نسبة الخصم.
     # ==============================================
 
     async def update_discount_percent(
@@ -260,12 +296,14 @@ class LoyaltyDiscountRepository(
             data={"discount_percent": discount_percent},
         )
 
-    # ==========================================
+    # ==============================================
     # 📊 STATISTICS
+    # Aggregate persisted counts and values through the existing query paths.
     # ==============================================
 
     # ==============================================
     # COUNT ALL
+    # حساب إجمالي عدد خصومات الولاء.
     # ==============================================
 
     async def count_all(self) -> int:

@@ -22,11 +22,16 @@ from typing import (
 )
 
 from sqlalchemy import (
+    func,
     or_,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import (
+    raiseload,
+    selectinload,
+)
+from sqlalchemy.sql.elements import ColumnElement
 
 from app.core.logger import logger
 from app.models.admin import Admin
@@ -38,7 +43,10 @@ from app.repositories.base import BaseRepository
 # ==============================================
 
 AdminData: TypeAlias = dict[str, Any]
-AdminUpdateData: TypeAlias = dict[str, Any]
+AdminUpdateValue: TypeAlias = (
+    str | int | bool | datetime | ColumnElement[datetime] | None
+)
+AdminUpdateData: TypeAlias = dict[str, AdminUpdateValue]
 AdminList: TypeAlias = list[Admin]
 AdminDictList: TypeAlias = list[dict[str, Any]]
 
@@ -107,6 +115,7 @@ class AdminRepository(
         query = (
             self._select()
             .options(
+                raiseload("*"),
                 selectinload(self.model.role_record).selectinload(
                     Role.permissions,
                 ),
@@ -554,13 +563,14 @@ class AdminRepository(
 
     # ==============================================
     # UPDATE ADMIN
+    # Write this administrator only; record field names and use the existing database clock.
     # ==============================================
 
     async def update_admin(
         self,
         *,
         admin_id: int,
-        **updates,
+        **updates: AdminUpdateValue,
     ) -> Admin | None:
         """
         تحديث بيانات المدير.
@@ -576,7 +586,7 @@ class AdminRepository(
             "admin_repo_update",
             extra={
                 "admin_id": admin_id,
-                "updates": updates,
+                "updated_fields": sorted(updates),
             },
         )
 
@@ -593,7 +603,10 @@ class AdminRepository(
             return await self.get_by_id(id=admin_id)
 
         # تحديث updated_at تلقائياً
-        clean_updates["updated_at"] = datetime.now()
+        # Match this TIMESTAMP WITHOUT TIME ZONE column's existing now() default
+        # and onupdate expression. The database timezone determines this new value;
+        # existing wall-clock dates are neither reinterpreted nor converted.
+        clean_updates["updated_at"] = func.now()
 
         admin_obj = await self.update(
             id=admin_id,
@@ -602,7 +615,11 @@ class AdminRepository(
 
         if admin_obj:
             logger.info(
-                "admin_updated_successfully",
+                (
+                    "admin_update_prepared"
+                    if self.session.info.get("defer_repository_commit")
+                    else "admin_update_committed"
+                ),
                 extra={
                     "admin_id": admin_id,
                     "updated_fields": list(clean_updates.keys()),

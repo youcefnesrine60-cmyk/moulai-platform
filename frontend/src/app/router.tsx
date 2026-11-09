@@ -11,6 +11,7 @@ import { AccessError } from '../shared/access/contracts';
 import { ErrorPanel, LoadingPanel } from '../shared/ui/primitives';
 import { RequireSession, useLeaveReview } from './access';
 import { Shell } from './Shell';
+import { RouteRecovery } from '../shared/ui/RenderRecovery';
 
 /** Restore keyboard context when a navigation replaces the current main view. */
 function NavigationFocus(): ReactElement {
@@ -35,8 +36,39 @@ function NotFound(): ReactElement {
 export const routes: RouteObject[] = [
   {
     element: <NavigationFocus />,
+    ErrorBoundary: RouteRecovery,
     HydrateFallback: LoadingPanel,
     children: [
+      ...(import.meta.env.DEV &&
+      ['dining', 'operational'].includes(import.meta.env.MODE)
+        ? [
+            ...['/menu', '/verify-document'].map((path) => ({
+              path,
+              lazy: async () => ({
+                Component:
+                  import.meta.env.MODE === 'operational'
+                    ? (
+                        await import('../features/dining/local/PublicDiningPage')
+                      ).IntegratedPublicDiningPage
+                    : (
+                        await import('../features/dining/local/PublicDiningPage')
+                      ).PublicDiningPage,
+              }),
+            })),
+          ]
+        : []),
+      ...(import.meta.env.DEV && import.meta.env.MODE === 'dining'
+        ? [
+            {
+              path: '/dining-local',
+              lazy: async () => ({
+                Component: (
+                  await import('../features/dining/local/LocalDiningPage')
+                ).LocalDiningPage,
+              }),
+            },
+          ]
+        : []),
       { path: '/', element: <Navigate to="/access" replace /> },
       {
         path: '/access',
@@ -50,6 +82,26 @@ export const routes: RouteObject[] = [
           {
             element: <Shell />,
             children: [
+              ...(import.meta.env.DEV && import.meta.env.MODE === 'operational'
+                ? [
+                    {
+                      path: '/workspace/enrollment',
+                      lazy: async () => ({
+                        Component: (
+                          await import('../features/integration/EnrollmentPage')
+                        ).EnrollmentPage,
+                      }),
+                    },
+                    {
+                      path: '/workspace/invitations',
+                      lazy: async () => ({
+                        Component: (
+                          await import('../features/integration/OperationalPages')
+                        ).OperationalInvitationsPage,
+                      }),
+                    },
+                  ]
+                : []),
               {
                 path: '/workspace',
                 lazy: async () => ({
@@ -69,10 +121,42 @@ export const routes: RouteObject[] = [
               {
                 path: '/workspace/organizations/:organizationId/restaurants/:restaurantId',
                 lazy: async () => ({
-                  Component: (await import('../features/management/scope'))
-                    .RestaurantFrame,
+                  Component:
+                    import.meta.env.DEV &&
+                    import.meta.env.MODE === 'operational'
+                      ? (
+                          await import('../features/integration/OperationalPages')
+                        ).OperationalRestaurantFrame
+                      : (await import('../features/management/scope'))
+                          .RestaurantFrame,
                 }),
                 children: [
+                  ...(import.meta.env.DEV &&
+                  import.meta.env.MODE === 'operational'
+                    ? [
+                        {
+                          path: 'offer',
+                          lazy: async () => ({
+                            Component: (
+                              await import('../features/integration/OwnerOfferPage')
+                            ).OwnerOfferPage,
+                          }),
+                        },
+                      ]
+                    : []),
+                  {
+                    path: 'tables',
+                    lazy: async () => ({
+                      Component:
+                        import.meta.env.DEV &&
+                        import.meta.env.MODE === 'operational'
+                          ? (
+                              await import('../features/dining/local/LocalDiningPage')
+                            ).IntegratedDiningPage
+                          : (await import('../features/dining/DiningPage'))
+                              .DiningPage,
+                    }),
+                  },
                   {
                     path: 'reports',
                     lazy: async () => ({
@@ -190,6 +274,34 @@ export const routes: RouteObject[] = [
           {
             element: <Shell platform />,
             children: [
+              ...(import.meta.env.DEV && import.meta.env.MODE === 'operational'
+                ? [
+                    {
+                      path: '/platform/billing-countries',
+                      lazy: async () => ({
+                        Component: (
+                          await import('../features/integration/EnrollmentPage')
+                        ).BillingCountryReviewPage,
+                      }),
+                    },
+                    {
+                      path: '/platform/saas-payments',
+                      lazy: async () => ({
+                        Component: (
+                          await import('../features/integration/SaasPayments')
+                        ).SaasPaymentReviewPage,
+                      }),
+                    },
+                    {
+                      path: '/platform/pricing',
+                      lazy: async () => ({
+                        Component: (
+                          await import('../features/integration/PricingCampaignsPage')
+                        ).PricingCampaignsPage,
+                      }),
+                    },
+                  ]
+                : []),
               {
                 path: '/platform/requests',
                 lazy: async () => ({
@@ -217,8 +329,14 @@ export const routes: RouteObject[] = [
               {
                 path: '/platform',
                 lazy: async () => ({
-                  Component: (await import('../features/platform/PlatformPage'))
-                    .PlatformPage,
+                  Component:
+                    import.meta.env.DEV &&
+                    import.meta.env.MODE === 'operational'
+                      ? (
+                          await import('../features/integration/OperationalPages')
+                        ).OperationalPlatformPage
+                      : (await import('../features/platform/PlatformPage'))
+                          .PlatformPage,
                 }),
               },
             ],

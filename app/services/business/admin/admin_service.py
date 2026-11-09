@@ -15,9 +15,7 @@
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
-from typing import (
-    Any,
-)
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,6 +26,10 @@ from app.core.exceptions import (
 )
 from app.core.logger import logger
 from app.core.security import hash_password
+from app.core.security.platform_permissions import (
+    SUBSCRIPTION_PRICING_MANAGE,
+    TENANT_BILLING_COUNTRY_MANAGE,
+)
 from app.repositories.admin.admin_repo import AdminRepository
 from app.schemas.admin import (
     AdminCreate,
@@ -848,9 +850,12 @@ class AdminService:
             permission_codes = {
                 permission.code for permission in role_record.permissions
             }
-            if (
-                "*" not in permission_codes
-                and required_permission not in permission_codes
+            # Pricing authority is an explicit owner-approved exception to legacy wildcard grants.
+            # Other existing permissions retain their established RBAC behavior.
+            if required_permission not in permission_codes and (
+                required_permission
+                in {SUBSCRIPTION_PRICING_MANAGE, TENANT_BILLING_COUNTRY_MANAGE}
+                or "*" not in permission_codes
             ):
                 raise UnauthorizedError(
                     message=f"المدير ليس لديه الصلاحية المطلوبة: {required_permission}",
@@ -884,7 +889,8 @@ class AdminService:
 
             return admin_obj.role == "super_admin" and admin_obj.is_active
 
-        except Exception as e:
+        # This legacy boolean authorization predicate must deny on every repository failure.
+        except Exception as e:  # noqa: BLE001
             logger.exception(
                 "admin_service_is_super_admin_failed",
                 extra={

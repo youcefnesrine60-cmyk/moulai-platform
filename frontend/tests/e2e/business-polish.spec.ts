@@ -1,3 +1,4 @@
+import { installManualThemeFixture } from './manualThemeFixture';
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fr } from '../../src/shared/i18n/fr';
@@ -45,12 +46,12 @@ async function capture(page: Page, label: string) {
     fullPage: true,
   });
 }
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, baseURL }) => {
   await page.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     expect(url.hostname).toBe('127.0.0.1');
-    expect(url.port).toBe('5573');
+    expect(['5573', new URL(baseURL!).port]).toContain(url.port);
     expect(['GET', 'HEAD']).toContain(request.method());
     expect(url.pathname).not.toMatch(/^\/api(?:\/|$)/);
     await route.continue();
@@ -178,13 +179,13 @@ for (const width of [1440, 320, 360, 390])
       });
 
 if (!before)
-  test('keyboard receipt disclosure and System preserve the localized billing draft', async ({
+  test('keyboard receipt disclosure and manual appearance preserve the localized billing draft', async ({
     page,
   }) => {
     await page.setViewportSize({ width: 320, height: 1000 });
     await page.emulateMedia({ colorScheme: 'light' });
     await page.addInitScript(() => {
-      localStorage.setItem('moulai.theme', 'system');
+      localStorage.setItem('moulai.theme', 'light');
       localStorage.setItem('moulai.locale', 'fr');
     });
     await page.goto('/access');
@@ -208,7 +209,7 @@ if (!before)
     await page
       .getByRole('option', { name: 'العربية — AR', exact: true })
       .click();
-    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.evaluate(() => window.moulaiTheme.choose('dark'));
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await expect(
       row.getByRole('textbox', { name: officeAr['office.reference'] }),
@@ -238,3 +239,6 @@ if (!before)
     ).toBeVisible();
     await capture(page, '320-ar-system-dark-reports');
   });
+
+// Visual fixtures request a manual choice; opening policy is checked independently.
+test.beforeEach(async ({ page }) => installManualThemeFixture(page));

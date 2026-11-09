@@ -142,6 +142,7 @@ export const en: Record<keyof typeof fr, string> = {
   'preferences.language': 'Interface language',
   'preferences.theme': 'Appearance',
   'theme.light': 'Light',
+  'theme.auto': 'Automatic',
   'theme.dark': 'Dark',
   'theme.system': 'System preference',
   'app.title': 'MoulAI™ — Management workspace',

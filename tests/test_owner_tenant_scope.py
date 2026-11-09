@@ -5,12 +5,23 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# OWNER TENANT SCOPE
+# Verify owner isolation across ORM reads and writes in a disposable relational fixture.
+# ==============================================
+
 """Verify owner predicates and write boundaries using real disposable SQL.
 
 These tests use local SQLite only; they do not validate asyncpg or PostgreSQL
 locking. Fixture setup is trusted and unscoped. Every operation under test
 uses the production session guard and real SQLAlchemy statements.
 """
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the local framework, schema and contract dependencies used in this file.
+# ==============================================
 
 from collections.abc import Iterator
 from typing import Any
@@ -28,13 +39,13 @@ from sqlalchemy import (
     text,
     update,
 )
+from sqlalchemy.exc import MissingGreenlet
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import (
     Session,
     aliased,
     raiseload,
 )
-from sqlalchemy.exc import MissingGreenlet
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security.tenant_scope import (
     TenantModel,
@@ -55,6 +66,7 @@ from app.models.product import Product
 from app.models.product_option import ProductOption
 from app.models.restaurant import Restaurant
 from app.services.business.branch_service import BranchService
+from test_support.offline_storage import create_sqlite_schema
 
 MODEL_DATA: dict[TenantModel, dict[str, Any]] = {
     Restaurant: {
@@ -85,7 +97,11 @@ MODEL_DATA: dict[TenantModel, dict[str, Any]] = {
 def tenant_session() -> Iterator[Session]:
     """Create a separate private database for every security assertion."""
     engine = create_engine("sqlite://")
-    Base.metadata.create_all(engine)
+    create_sqlite_schema(
+        engine=engine,
+        tables=[Owner.__table__, *(model.__table__ for model in MODEL_DATA)],
+        mappers=Base.registry.mappers,
+    )
     with engine.begin() as connection:
         connection.execute(
             Owner.__table__.insert(),

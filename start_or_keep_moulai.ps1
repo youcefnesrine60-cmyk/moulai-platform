@@ -9,15 +9,18 @@
 
 <#
 .SYNOPSIS
-    Keep this project's existing MoulAI server or start it in the foreground.
+    Keep or start the isolated integrated MoulAI review in the foreground.
 .DESCRIPTION
-    Match the project virtualenv and canonical Uvicorn arguments. Servers from
-    other projects do not prevent startup. Return the server's actual exit code.
+    Default to the prepared local instance, without reading the legacy backend
+    database target. LegacyBackend explicitly selects the historical launcher;
+    its schema validation remains mandatory and no migration is automatic.
 .EXAMPLE
     .\start_or_keep_moulai.ps1
 #>
 [CmdletBinding(PositionalBinding = $false)]
-param ()
+param (
+    [switch]$LegacyBackend
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -29,7 +32,12 @@ $ErrorActionPreference = 'Stop'
 try {
     [string]$modulePath = Join-Path -Path $PSScriptRoot -ChildPath 'scripts\MoulAI.Process.psm1'
     Import-Module -Name $modulePath -Force -ErrorAction Stop
-    [int]$exitCode = Start-MoulaiApplication -ProjectRoot $PSScriptRoot -KeepRunning
+    [int]$exitCode = if ($LegacyBackend) {
+        Start-MoulaiApplication -ProjectRoot $PSScriptRoot -KeepRunning
+    }
+    else {
+        Start-MoulaiOperationalApplication -ProjectRoot $PSScriptRoot
+    }
     exit $exitCode
 }
 catch {

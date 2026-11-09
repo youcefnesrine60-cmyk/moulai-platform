@@ -6,34 +6,37 @@
 # ==============================================
 
 # ==============================================
-# MOULAI MODULE - APP / HANDLERS / OWNER_HANDLER / SUBSCRIPTION STEP
-# Operational component of the MoulAI platform.
+# OWNER SUBSCRIPTION PRESENTATION
+# Read owner subscription context and present the existing plan and quotation workflow.
 # ==============================================
 
-"""MoulAI operational module for subscription step.
+"""Read owner subscription context and present the existing plan and quotation workflow."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
 
-from datetime import datetime, timezone
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
+
+from datetime import (
+    datetime,
+    timezone,
+)
 
 from app.core.database import get_session
 from app.core.logger import logger
 from app.helpers.ui_manager import UIManager
-from app.repositories.branches_repo import BranchesRepository
-from app.repositories.categories_repo import CategoriesRepository
 
 # ✅ إضافة استيراد orders_repo
-from app.repositories.orders_repo import OrdersRepository
-from app.repositories.products_repo import ProductRepository
-from app.repositories.restaurant.restaurant_repo import RestaurantRepository
-from app.repositories.state_repo import get_state, set_state
-from app.repositories.subscription_plan_repo import SubscriptionPlanRepository
-from app.services.business.owner_service import OwnerService
-from app.services.business.pricing_service import calculate_subscription_pricing
-from app.views.subscription_ui import (
-    subscription_ui,
+from app.repositories.state_repo import (
+    get_state,
+    set_state,
 )
+from app.repositories.subscription_plan_repo import SubscriptionPlanRepository
+from app.services.business.pricing_service import calculate_subscription_pricing
+from app.views.subscription_ui import subscription_ui
 from app.views.ui import button
 
 # ==============================================
@@ -41,9 +44,9 @@ from app.views.ui import button
 # عرض الباقات المتاحة لصاحب المحل
 # ==============================================
 
-
 # ==============================================
 # SHOW SUBSCRIPTION PLANS FOR OWNER
+# عرض الباقات المتاحة للاشتراك لصاحب المحل
 # ==============================================
 
 
@@ -71,12 +74,13 @@ async def show_subscription_plans_for_owner(
         },
     )
 
-    # ==========================================
+    # ==============================================
     # 1️⃣ جلب الباقات النشطة
-    # ==========================================
+    # Read active persisted plans and report explicitly when no plan is available.
+    # ==============================================
 
     async with await get_session() as session:
-        plans = await SubscriptionPlanRepository(session).get_active()
+        plans = await SubscriptionPlanRepository(session=session).get_active()
 
     if not plans:
         logger.warning(
@@ -94,9 +98,10 @@ async def show_subscription_plans_for_owner(
         )
         return
 
-    # ==========================================
+    # ==============================================
     # 2️⃣ حفظ بيانات المالك والمطعم في الحالة
-    # ==========================================
+    # Retain the selected owner and restaurant for the subsequent subscription step.
+    # ==============================================
 
     state = await get_state(chat_id=chat_id)
 
@@ -112,9 +117,11 @@ async def show_subscription_plans_for_owner(
         state=state,
     )
 
-    # ==========================================
+    # ==============================================
     # 3️⃣ عرض واجهة الباقات
-    # ==========================================
+    # Render the selected plan instructions using the existing owner conversation
+    # interface.
+    # ==============================================
 
     plans_ui = await subscription_ui(
         plans=plans,
@@ -133,9 +140,9 @@ async def show_subscription_plans_for_owner(
 # حساب سعر الاشتراك لصاحب المحل
 # ==============================================
 
-
 # ==============================================
 # CALCULATE SUBSCRIPTION PRICE FOR OWNER
+# حساب سعر الاشتراك لباقة معينة لصاحب المحل
 # ==============================================
 
 
@@ -159,9 +166,10 @@ async def calculate_subscription_price_for_owner(
         },
     )
 
-    # ==========================================
+    # ==============================================
     # 1️⃣ جلب حالة المستخدم
-    # ==========================================
+    # Require existing owner and restaurant context before requesting a quotation.
+    # ==============================================
 
     state = await get_state(chat_id=chat_id)
 
@@ -188,123 +196,37 @@ async def calculate_subscription_price_for_owner(
         )
         return
 
-    # ==========================================
+    # ==============================================
     # 2️⃣ جلب بيانات المطعم وحجمه
-    # ==========================================
+    # Read verified historical metrics and calculate the owned restaurant quotation.
+    # ==============================================
 
     # 🔢 عدد المنتجات
-    async with await get_session() as session:
-        products_count = await ProductRepository(session).count_by_restaurant(
-            restaurant_id=restaurant_id,
-        )
+    from app.services.business import subscription_metrics
 
-    # 🔢 عدد الأقسام
     async with await get_session() as session:
-        categories = await CategoriesRepository(session).get_by_restaurant_id(
-            restaurant_id=restaurant_id,
-        )
-    categories_count = len(categories)
-
-    # 🔢 عدد الفروع
-    async with await get_session() as session:
-        branches_count = await BranchesRepository(session).count_by_restaurant(
-            restaurant_id=restaurant_id,
-        )
-
-    # 🔢 عدد المطاعم المملوكة لنفس المالك
-    async with await get_session() as session:
-        restaurants = await RestaurantRepository(session).get_by_owner_id(
+        _ref, inputs = await subscription_metrics.pricing_inputs(
+            session=session,
             owner_id=owner_id,
-        )
-    restaurants_count = len(restaurants)
-
-    # 🔢 عدد سنوات التواجد في المنصة
-    async with await get_session() as session:
-        created_at = await OwnerService(session=session).get_created_at(
-            owner_id=owner_id,
-        )
-
-    now = datetime.now(timezone.utc)
-    if created_at:
-        if created_at.tzinfo is None:
-            created_at = created_at.replace(tzinfo=timezone.utc)
-        years_with_platform = max(0, (now - created_at).days // 365)
-    else:
-        years_with_platform = 0
-
-    # ==========================================
-    # 📦 جلب عدد الطلبات الشهرية
-    # ==========================================
-
-    # ✅ جلب جميع طلبات المطعم
-    async with await get_session() as session:
-        order_models = await OrdersRepository(session).get_by_restaurant_id(
             restaurant_id=restaurant_id,
+            now=datetime.now(timezone.utc),
         )
-    orders = [
-        {
-            "created_at": order.created_at,
-            "status": order.status,
-            "total_amount": order.total_amount,
-        }
-        for order in order_models
-    ]
-
-    # ✅ حساب عدد الطلبات الشهرية (آخر 30 يوماً)
-    from datetime import timedelta
-
-    thirty_days_ago = now - timedelta(days=30)
-
-    monthly_orders = sum(
-        1
-        for order in orders
-        if order.get("created_at")
-        and (
-            order["created_at"].replace(tzinfo=timezone.utc)
-            if order["created_at"].tzinfo is None
-            else order["created_at"]
-        )
-        >= thirty_days_ago
-    )
-
-    # ==========================================
-    # 💰 حساب متوسط قيمة الطلب
-    # ==========================================
-
-    # ✅ حساب متوسط قيمة الطلبات المكتملة
-    completed_orders = [order for order in orders if order.get("status") == "completed"]
-
-    if completed_orders:
-        total_amount = sum(
-            float(order.get("total_amount", 0)) for order in completed_orders
-        )
-        average_order_value = total_amount / len(completed_orders)
-    else:
-        average_order_value = 0
-
-    # ==========================================
-    # 3️⃣ حساب السعر
-    # ==========================================
-
-    async with await get_session() as session:
         pricing = await calculate_subscription_pricing(
             session=session,
             plan_id=plan_id,
             billing_cycle="monthly",
             payment_method="electronic",
-            restaurants_count=restaurants_count,
-            branches_count=branches_count,
-            years_with_platform=years_with_platform,
-            products_count=products_count,
-            categories_count=categories_count,
-            monthly_orders=monthly_orders,
-            average_order_value=average_order_value,
-            additional_feature_ids=None,
+            owner_id=owner_id,
+            restaurant_id=restaurant_id,
+            **inputs,
         )
-
-    # ==========================================
-    # 4️⃣ حفظ خطة الاشتراك المختارة في الحالة
-    # ==========================================
+    products_count = inputs["products_count"]
+    categories_count = inputs["categories_count"]
+    branches_count = inputs["branches_count"]
+    restaurants_count = inputs["restaurants_count"]
+    years_with_platform = inputs["years_with_platform"]
+    monthly_orders = inputs["monthly_orders"]
+    average_order_value = inputs["average_order_value"]
 
     state["selected_plan_id"] = plan_id
     state["pricing_result"] = pricing
@@ -314,9 +236,11 @@ async def calculate_subscription_price_for_owner(
         state=state,
     )
 
-    # ==========================================
+    # ==============================================
     # 5️⃣ عرض تفاصيل السعر
-    # ==========================================
+    # Present the retained metrics, discounts and final amount without recalculating
+    # them.
+    # ==============================================
 
     text = (
         f"💳 **تفاصيل سعر الاشتراك**\n\n"

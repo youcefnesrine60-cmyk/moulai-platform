@@ -17,7 +17,7 @@
   --surface-muted: #d9eee4;
   --surface-sidebar: var(--brand-navy);
   /* Panels transmit a little artwork; inputs, menus and dialogs stay opaque. */
-  --panel-opacity: 60%;
+  --panel-opacity: 40%;
   /* Dense reading areas need this local exception to retain text/focus contrast. */
   --reading-opacity: 84%;
   --surface-reading: color-mix(
@@ -30,7 +30,7 @@
     var(--surface-card) var(--panel-opacity),
     transparent
   );
-  --surface-header: color-mix(in srgb, var(--surface-page) 60%, transparent);
+  --surface-header: color-mix(in srgb, var(--surface-page) 40%, transparent);
   --surface-scene-wash: color-mix(
     in srgb,
     var(--surface-page) 16%,
@@ -140,4 +140,73 @@
 html[lang='ar'] {
   --weight-semibold: 700;
   --font-body: 'Tajawal', 'Sora Variable', sans-serif;
+}
+
+/* Dining service states: functional colors complement navy/teal; never recolor artwork. */
+:root {
+  --dining-available-bg: #edf8f0;
+  --dining-available-text: #14532d;
+  --dining-available-border: #3a7e50;
+  --dining-occupied-bg: #fff4eb;
+  --dining-occupied-text: #873600;
+  --dining-occupied-border: #a65c26;
+  --dining-dirty-bg: #fff9e6;
+  --dining-dirty-text: #6e5000;
+  --dining-dirty-border: #947013;
+  --dining-maintenance-bg: #f7f1ff;
+  --dining-maintenance-text: #64328a;
+  --dining-maintenance-border: #8d62aa;
+  --dining-offline-bg: #f0f3f5;
+  --dining-offline-text: #3a4650;
+  --dining-offline-border: #6c7c88;
+  --dining-planning-bg: #edf5ff;
+  --dining-planning-text: #1c4b8c;
+  --dining-planning-border: #597fb1;
+  --dining-neutral-bg: #f1f4f8;
+  --dining-neutral-text: #445166;
+  --dining-neutral-border: #788596;
+  --dining-alert-bg: #fff1f2;
+  --dining-alert-text: #9a1930;
+  --dining-alert-border: #b75060;
+}
+:root[data-theme='dark'] {
+  --dining-available-bg: #142c21;
+  --dining-available-text: #bff0cf;
+  --dining-available-border: #559b71;
+  --dining-occupied-bg: #33241b;
+  --dining-occupied-text: #ffd4ad;
+  --dining-occupied-border: #c7854b;
+  --dining-dirty-bg: #302b16;
+  --dining-dirty-text: #f6e3a0;
+  --dining-dirty-border: #ad9845;
+  --dining-maintenance-bg: #281f36;
+  --dining-maintenance-text: #e5c9ff;
+  --dining-maintenance-border: #aa81c6;
+  --dining-offline-bg: #252c33;
+  --dining-offline-text: #d6dfe8;
+  --dining-offline-border: #84929f;
+  --dining-planning-bg: #172b43;
+  --dining-planning-text: #c4deff;
+  --dining-planning-border: #759fd2;
+  --dining-neutral-bg: #253040;
+  --dining-neutral-text: #dce7f4;
+  --dining-neutral-border: #8597af;
+  --dining-alert-bg: #351f26;
+  --dining-alert-text: #ffced6;
+  --dining-alert-border: #d27e8c;
+}
+
+/* Local session warning uses semantic foreground/surface and leaves inputs usable. */
+.session-warning {
+  position: sticky;
+  bottom: 0;
+  z-index: 30;
+  padding: 1rem;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border: 2px solid var(--brand-teal);
+}
+.session-warning a {
+  color: inherit;
+  text-decoration: underline;
 }

@@ -20,7 +20,7 @@
 .header {
   direction: ltr;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px) minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   padding: 8px 24px;
@@ -36,6 +36,29 @@
   grid-column: 3;
   justify-self: end;
   align-self: start;
+}
+.headerControls {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+.choiceHelp {
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.choiceHelp summary {
+  min-block-size: 44px;
+  cursor: pointer;
+}
+.choiceHelp dt {
+  font-weight: 700;
+  margin-block-start: 12px;
+}
+.choiceHelp dd {
+  margin-inline: 0;
 }
 .main {
   position: relative;

@@ -131,13 +131,21 @@ for (const width of [1440, 1101, 834, 360, 320]) {
       ).toHaveValue('0');
       await expect(page).toHaveURL(new RegExp(`${path}$`));
       for (const theme of ['light', 'dark'] as const) {
-        await page.emulateMedia({ colorScheme: theme });
+        await page
+          .getByRole('combobox', { name: copy(locale, 'preferences.theme') })
+          .click();
+        await page
+          .getByRole('option', {
+            name: copy(locale, `theme.${theme}`),
+            exact: true,
+          })
+          .click();
         await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
         await expect(
           dialog.getByRole('combobox', {
             name: copy(locale, 'preferences.theme'),
           }),
-        ).toContainText(copy(locale, 'theme.system'));
+        ).toContainText(copy(locale, `theme.${theme}`));
         const result = await new AxeBuilder({ page })
           .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
           .analyze();

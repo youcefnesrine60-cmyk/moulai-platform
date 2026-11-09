@@ -1,7 +1,7 @@
 # Project Maintenance and Local Artifacts
 
-Reviewed: **2026-10-16**. This document records repository organization and
-local cleanup. It does not authorize a database operation or deployment.
+Reviewed: **2026-11-02**. The original structural review was recorded on
+2026-10-16. This document records repository organization and local cleanup. It does not authorize a database operation or deployment.
 
 ## Maintained layout
 
@@ -104,3 +104,54 @@ module or remove a runtime dependency without a separate review.
 
 Local cleanup does not connect to PostgreSQL or Redis, import the application,
 start a server, modify identities, register webhooks, or publish a release.
+
+## Project-only housekeeping — 2026-11-02
+
+The owner explicitly selected project cleanup only. No volume optimization,
+defragmentation, TRIM operation or disk configuration change is included.
+
+The maintained layout also includes:
+
+- `frontend/`: the UI, approved brand assets, typed adapters and local fixtures.
+- `migration_support/`: versioned migration/bootstrap contracts.
+- `alembic_local_test/`: explicit disposable-local migration admission.
+- `test_support/`: shared isolated test infrastructure.
+
+Use [the complete artifact catalogue](../artifacts/INDEX.md) to find evidence by
+domain. Existing artifact paths are retained: references in historical reports
+must not be broken by moving deliveries into a new hierarchy.
+
+### Cache policy
+
+Root `.mypy_cache`, `.ruff_cache` and `.pytest_cache` directories and
+`__pycache__` directories inside maintained Python source roots are regenerable.
+They can be removed after confirming that they contain no Git-tracked files.
+Keep `.venv/`, `venv/`, `node_modules/`, the working frontend build, `.coverage`,
+local configuration and historical test results. Their presence alone is not
+proof that they are unnecessary.
+
+### Stopped disposable PostgreSQL data
+
+Only UUID run directories beneath `artifacts/postgres-local-tests/` qualify.
+Before archiving a raw `server-data/` tree, require PostgreSQL 18, no
+`postmaster.pid`, and `pg_ctl status` exit code 3. No database connection is made.
+Refuse paths outside the exact run, reparse points, tracked files, existing
+archives or source changes during capture.
+
+A verified run contains `server-data.archived.zip` and
+`server-data-archive.json`. The ZIP contains the original relative `server-data/`
+paths, empty directories and `archive-content-sha256.json` with each file's size
+and SHA-256. Verify every member and compare the original files again before
+removing the raw copy. Preserve all sibling logs, catalogues and test reports.
+
+These archives preserve diagnostic bytes and ZIP timestamps. They do not
+preserve NTFS ACLs and are not replacements for private `pg_dump` backups.
+Restoring a server or using archived credentials requires a separate reviewed
+local procedure; do not extract over an existing or running cluster. Permanent
+and external backups remain outside this cleanup scope.
+
+Full receipts, preservation hashes, the bounded cleanup source and results are
+in [the dated cleanup delivery](../artifacts/project-cleanup-20261102/rapport.md).
+No general test campaign is required for cache removal and byte-preserving
+archival; validate path confinement, archive integrity, source preservation and
+Git state instead.

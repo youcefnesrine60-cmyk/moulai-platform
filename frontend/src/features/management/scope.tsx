@@ -164,6 +164,7 @@ export function RestaurantFrame(): ReactElement {
         </div>
       </section>
       <nav className={styles.tabs} aria-label={t('restaurant.context')}>
+        <NavLink to={`${basePath}/tables`}>{t('dining.title')}</NavLink>
         <NavLink to={basePath} end>
           {t('business.overview')}
         </NavLink>

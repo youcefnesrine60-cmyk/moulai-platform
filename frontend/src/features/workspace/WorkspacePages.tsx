@@ -41,15 +41,21 @@ import styles from './workspace.module.css';
 export function OrganizationsPage(): ReactElement {
   const { t } = useTranslation();
   const query = useOrganizations();
+  const operational = useAdapter().mode === 'authenticated-local';
   const leave = useLeaveReview();
   if (query.isPending) return <LoadingPanel />;
   if (query.isError)
     return (
-      <ErrorPanel
-        error={query.error}
-        retry={() => void query.refetch()}
-        leave={() => void leave()}
-      />
+      <>
+        <ErrorPanel
+          error={query.error}
+          retry={() => void query.refetch()}
+          leave={() => void leave()}
+        />
+        {operational && (
+          <Link to="/workspace/enrollment">{t('o3.enroll')}</Link>
+        )}
+      </>
     );
   return (
     <>
@@ -70,7 +76,9 @@ export function OrganizationsPage(): ReactElement {
       </div>
       <div className={styles.sectionHeading}>
         <h2>{t('nav.workspace')}</h2>
-        <Badge tone="test">{t('review.badge')}</Badge>
+        <Badge tone="test">
+          {t(operational ? 'integration.persisted' : 'review.badge')}
+        </Badge>
       </div>
       <div className={styles.cards}>
         {query.data.map((company, index) => (
@@ -84,7 +92,9 @@ export function OrganizationsPage(): ReactElement {
               className={`${styles.cardVisual} ${index % 2 ? styles.sand : ''}`}
             >
               <Building2 size={36} strokeWidth={1.2} aria-hidden="true" />
-              <span className={styles.visualLabel}>{t('review.badge')}</span>
+              <span className={styles.visualLabel}>
+                {t(operational ? 'integration.persisted' : 'review.badge')}
+              </span>
             </div>
             <div className={styles.cardBody}>
               <div className={styles.cardTop}>
@@ -107,7 +117,22 @@ export function OrganizationsPage(): ReactElement {
           </Link>
         ))}
       </div>
-      <BoundaryNote />
+      {operational ? (
+        <>
+          <p>{t('integration.scope')}</p>
+          <Link to="/workspace/invitations">
+            {t('integration.invitations')}
+          </Link>
+          {query.data.length === 0 && (
+            <>
+              <p role="status">{t('state.unlinked.body')}</p>
+              <Link to="/workspace/enrollment">{t('o3.enroll')}</Link>
+            </>
+          )}
+        </>
+      ) : (
+        <BoundaryNote />
+      )}
     </>
   );
 }
@@ -162,7 +187,13 @@ export function RestaurantsPage(): ReactElement {
       </div>
       <div className={styles.sectionHeading}>
         <h2>{t('restaurants.count', { count: query.data.length })}</h2>
-        <Badge tone="test">{t('review.badge')}</Badge>
+        <Badge tone="test">
+          {t(
+            adapter.mode === 'authenticated-local'
+              ? 'integration.persisted'
+              : 'review.badge',
+          )}
+        </Badge>
       </div>
       {query.data.length === 0 ? (
         <section className={styles.empty}>
@@ -200,7 +231,11 @@ export function RestaurantsPage(): ReactElement {
           ))}
         </div>
       )}
-      <BoundaryNote />
+      {adapter.mode === 'authenticated-local' ? (
+        <p>{t('integration.scope')}</p>
+      ) : (
+        <BoundaryNote />
+      )}
     </>
   );
 }

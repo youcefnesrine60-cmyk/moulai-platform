@@ -6,23 +6,27 @@
 # ==============================================
 
 # ==============================================
-# 🎁 LOYALTY & DISCOUNT MODELS
-# نماذج الولاء والخصومات والعروض الترويجية
-# تدير خصومات الولاء وخصومات المطاعم المتعددة والعروض
+# DISCOUNT AND PROMOTION MODELS
+# Map loyalty tiers, restaurant-count discounts and targeted promotional campaigns.
 # ==============================================
 
-"""MoulAI operational module for loyalty discount.
+"""Map loyalty tiers, restaurant-count discounts and targeted promotional campaigns."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Float,
     ForeignKey,
     Integer,
+    Numeric,
     String,
 )
 from sqlalchemy.orm import relationship
@@ -48,11 +52,17 @@ class LoyaltyDiscount(BaseModel):
         owner: علاقة مع نموذج Owner
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "loyalty_discounts"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     owner_id = Column(
         Integer,
@@ -66,14 +76,15 @@ class LoyaltyDiscount(BaseModel):
         comment="عدد السنوات المطلوبة للحصول على الخصم",
     )
     discount_percent = Column(
-        Float,
+        Numeric(12, 8),
         nullable=False,
         comment="نسبة الخصم",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     owner = relationship(
         "Owner",
@@ -82,9 +93,10 @@ class LoyaltyDiscount(BaseModel):
         # comment="المالك المرتبط (اختياري)",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -116,11 +128,17 @@ class MultiRestaurantDiscount(BaseModel):
         discount_percent: نسبة الخصم
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "multi_restaurant_discounts"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     min_restaurants = Column(
         Integer,
@@ -128,14 +146,15 @@ class MultiRestaurantDiscount(BaseModel):
         comment="الحد الأدنى لعدد المطاعم للحصول على الخصم",
     )
     discount_percent = Column(
-        Float,
+        Numeric(12, 8),
         nullable=False,
         comment="نسبة الخصم",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -172,11 +191,17 @@ class Promotion(BaseModel):
         restaurant: علاقة مع نموذج Restaurant
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "promotions"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     restaurant_id = Column(
         Integer,
@@ -190,7 +215,7 @@ class Promotion(BaseModel):
         comment="اسم العرض الترويجي",
     )
     discount_percent = Column(
-        Float,
+        Numeric(12, 8),
         nullable=False,
         comment="نسبة الخصم",
     )
@@ -208,9 +233,14 @@ class Promotion(BaseModel):
         comment="حالة النشاط",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
+
+    owner_id = Column(Integer, ForeignKey("owners.id"), nullable=True)
+    plan_id = Column(Integer, ForeignKey("subscription_plans.id"), nullable=True)
+    priority = Column(Integer, nullable=False, default=0, server_default="0")
 
     restaurant = relationship(
         "Restaurant",
@@ -219,9 +249,10 @@ class Promotion(BaseModel):
         # comment="المطعم المرتبط (اختياري)",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """

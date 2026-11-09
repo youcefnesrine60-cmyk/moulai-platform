@@ -7,10 +7,10 @@
 
 # ==============================================
 # MOULAI MODULE - APP / SERVICES / BUSINESS / REGISTRATION REQUEST SERVICE
-# Operational component of the MoulAI platform.
+# Coordinate atomic registration approval and preserve existing request ownership rules.
 # ==============================================
 
-"""MoulAI operational module for registration request service.
+"""Coordinate atomic registration, owner and trial approval without early notifications.
 
 Part of MoulAI Platform - Agent-as-a-Service.
 """
@@ -35,6 +35,7 @@ from app.core.security import sanitize_input
 from app.models.registration_request import RegistrationRequest
 from app.repositories.registration_request_repo import RegistrationRequestRepository
 from app.repositories.restaurant.restaurant_repo import RestaurantRepository
+from app.schemas.owner import OwnerCreate
 
 # ✅ استيراد المخططات
 from app.schemas.registration_request import (
@@ -43,8 +44,8 @@ from app.schemas.registration_request import (
     RegistrationRequestStatusUpdate,
     RegistrationRequestUpdate,
 )
-from app.schemas.owner import OwnerCreate
 from app.services.business.owner_service import OwnerService
+from app.services.business.payment_transaction import payment_transaction
 from app.services.business.subscription_service import SubscriptionService
 
 # ==============================================
@@ -714,54 +715,56 @@ class RegistrationRequestService:
 
     # ==============================================
     # APPROVE
+    # Commit the complete onboarding graph once, or roll back every write from this attempt.
     # ==============================================
 
     async def approve(
-        self,
-        *,
-        request_id: int,
-        owner_id: int | None = None,
+        self, *, request_id: int, owner_id: int | None = None
     ) -> RegistrationRequestResponse:
+        """Approve one request atomically, preserving an explicit caller transaction.
+
+        Lock and refresh the request, serialize its persisted identity, and validate
+        configuration before creating domain rows. Every owner, restaurant, trial,
+        entitlement, consumed trial right and reminder shares this transaction.
+        Missing/rejected/approved requests retain their existing domain errors.
+        No success message or external I/O is dispatched by this service.
         """
-        الموافقة على طلب التسجيل وإنشاء المالك والمطعم والاشتراك.
-
-        Args:
-            request_id: معرف طلب التسجيل
-            owner_id: معرف المالك (اختياري - إذا كان المالك موجوداً مسبقاً)
-
-        Returns:
-            RegistrationRequestResponse: بيانات طلب التسجيل المحدث
-
-        Raises:
-            NotFoundError: إذا لم يتم العثور على الطلب
-            ValidationError: إذا كان الطلب معتمداً أو مرفوضاً مسبقاً
-        """
+        async with payment_transaction(session=self.session):
+            request = await self.repo.get_for_approval(request_id=request_id)
+            if request is None:
+                raise NotFoundError(
+                    message=f"طلب التسجيل بـ ID '{request_id}' غير موجود"
+                )
+            if request.status == "approved":
+                raise ValidationError(message=f"طلب التسجيل #{request_id} معتمد بالفعل")
+            if request.status == "rejected":
+                raise ValidationError(
+                    message=f"طلب التسجيل #{request_id} مرفوض، لا يمكن اعتماده"
+                )
+            await self.subscription_service.validate_trial_configuration()
+            response = await self._approve_locked_request(
+                request=request, owner_id=owner_id
+            )
         logger.info(
-            "registration_request_service_approve",
-            extra={
-                "request_id": request_id,
-                "owner_id": owner_id,
-            },
+            (
+                "registration_approval_prepared_in_caller_transaction"
+                if self.session.in_transaction()
+                else "registration_approval_committed"
+            ),
+            extra={"request_id": request_id, "owner_id": response.owner_id},
         )
+        return response
 
-        # 1️⃣ الحصول على الطلب
-        request = await self.repo.get_by_id(id=request_id)
+    # ==============================================
+    # PREPARE THE LOCKED APPROVAL GRAPH
+    # Repository writes defer their commits to approve's common transaction boundary.
+    # ==============================================
 
-        if not request:
-            raise NotFoundError(
-                message=f"طلب التسجيل بـ ID '{request_id}' غير موجود",
-            )
-
-        if request.status == "approved":
-            raise ValidationError(
-                message=f"طلب التسجيل #{request_id} معتمد بالفعل",
-            )
-
-        if request.status == "rejected":
-            raise ValidationError(
-                message=f"طلب التسجيل #{request_id} مرفوض، لا يمكن اعتماده",
-            )
-
+    async def _approve_locked_request(
+        self, *, request: RegistrationRequest, owner_id: int | None
+    ) -> RegistrationRequestResponse:
+        """Create or update only this attempt's records; propagate every failure to rollback."""
+        request_id = request.id
         # 2️⃣ Resolve the owner using the request's persisted Telegram identity.
         resolved_owner_id = owner_id if owner_id is not None else request.owner_id
         if resolved_owner_id is not None:
@@ -774,6 +777,9 @@ class RegistrationRequestService:
             owner = await self.owner_service.get_owner_by_chat_id(
                 chat_id=request.chat_id
             )
+
+        if owner is not None:
+            await self.subscription_service.require_trial_eligibility(owner_id=owner.id)
 
         if owner is None:
             owner = await self.owner_service.create_owner(
@@ -788,7 +794,7 @@ class RegistrationRequestService:
             )
 
             logger.info(
-                "owner_created_during_approval",
+                "owner_prepared_during_approval",
                 extra={"owner_id": owner.id},
             )
 
@@ -814,7 +820,7 @@ class RegistrationRequestService:
         restaurant_id = restaurant.id
 
         logger.info(
-            "restaurant_created_during_approval",
+            "restaurant_prepared_during_approval",
             extra={"restaurant_id": restaurant_id},
         )
 
@@ -826,7 +832,7 @@ class RegistrationRequestService:
         subscription_id = subscription.id if subscription else None
 
         logger.info(
-            "subscription_created_during_approval",
+            "trial_prepared_during_approval",
             extra={"subscription_id": subscription_id},
         )
 
@@ -844,16 +850,7 @@ class RegistrationRequestService:
                 message=f"طلب التسجيل بـ ID '{request_id}' غير موجود",
             )
 
-        logger.info(
-            "registration_approved_successfully",
-            extra={
-                "request_id": request_id,
-                "owner_id": owner_id,
-                "restaurant_id": restaurant_id,
-                "subscription_id": subscription_id,
-            },
-        )
-
+        await self.session.flush()
         return RegistrationRequestResponse.model_validate(updated_request)
 
     # ==============================================

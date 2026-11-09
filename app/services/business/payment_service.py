@@ -6,14 +6,19 @@
 # ==============================================
 
 # ==============================================
-# MOULAI MODULE - APP / SERVICES / BUSINESS / PAYMENT SERVICE
-# Operational component of the MoulAI platform.
+# PAYMENT BUSINESS SERVICE
+# Coordinate owned payment persistence and atomic subscription settlement operations.
 # ==============================================
 
-"""MoulAI operational module for payment service.
+"""Coordinate owned payment persistence and atomic subscription settlement operations."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from datetime import (
     datetime,
@@ -25,7 +30,6 @@ from typing import (
     TypeAlias,
 )
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import raiseload
 
@@ -41,6 +45,7 @@ from app.core.logger import logger
 from app.models.payment import Payment
 from app.models.restaurant import Restaurant
 from app.repositories.payment_repo import PaymentRepository
+from app.repositories.subscription_queries import base_select
 from app.repositories.subscription_repo import SubscriptionRepository
 
 # ✅ استيراد المخططات
@@ -56,6 +61,7 @@ from app.services.business.subscription_service import SubscriptionService
 
 # ==============================================
 # 🧩 CONSTANTS
+# Group the fixed identifiers and supported values used by the following operations.
 # ==============================================
 
 VALID_PAYMENT_STATUSES = {"pending", "paid", "failed", "cancelled", "refunded"}
@@ -64,6 +70,7 @@ ALLOWED_PAYMENT_METHODS = {"cash", "card", "ccp", "baridimob", "stripe", "paypal
 
 # ==============================================
 # 🧩 TYPES
+# Describe shared input, update and result structures for this module.
 # ==============================================
 
 PaymentResult: TypeAlias = dict[str, Any]
@@ -72,6 +79,7 @@ PaymentList: TypeAlias = list[Payment]
 
 # ==============================================
 # 💳 PAYMENT SERVICE
+# خدمة المدفوعات - تدير منطق الأعمال للمدفوعات.
 # ==============================================
 
 
@@ -94,7 +102,8 @@ class PaymentService:
     """
 
     # ==============================================
-    #   INIT
+    # INIT
+    # تهيئة خدمة المدفوعات.
     # ==============================================
 
     def __init__(
@@ -117,6 +126,7 @@ class PaymentService:
 
     # ==============================================
     # CONFIRM AUTHENTICATED PROVIDER PAYMENT
+    # Settle a payment from an authenticated provider event in one transaction.
     # ==============================================
 
     async def confirm_external_payment(self, *, external_reference: str) -> None:
@@ -134,6 +144,7 @@ class PaymentService:
 
     # ==============================================
     # RECORD AUTHENTICATED PROVIDER FAILURE
+    # Record a gateway failure without downgrading a terminal payment.
     # ==============================================
 
     async def fail_external_payment(self, *, external_reference: str) -> None:
@@ -156,12 +167,14 @@ class PaymentService:
                 raise ValueError("payment_not_found")
         logger.warning("payment_callback_failed", extra={"payment_id": payment.id})
 
-    # ==========================================
+    # ==============================================
     # 🛠️ PRIVATE HELPERS
-    # ==========================================
+    # التحقق من صحة انتقال حالة الدفع.
+    # ==============================================
 
     # ==============================================
     # VALIDATE PAYMENT STATUS TRANSITION
+    # التحقق من صحة انتقال حالة الدفع.
     # ==============================================
 
     async def _validate_status_transition(
@@ -212,12 +225,14 @@ class PaymentService:
                 },
             )
 
-    # ==========================================
+    # ==============================================
     # 📖 QUERIES
-    # ==========================================
+    # Read persisted records through the existing repository selection rules.
+    # ==============================================
 
     # ==============================================
     # GET BY ID
+    # الحصول على دفع بالمعرف.
     # ==============================================
 
     async def get_by_id(
@@ -255,6 +270,7 @@ class PaymentService:
 
     # ==============================================
     # GET BY EXTERNAL REFERENCE
+    # الحصول على دفع بواسطة المرجع الخارجي.
     # ==============================================
 
     async def get_by_external_reference(
@@ -287,6 +303,7 @@ class PaymentService:
 
     # ==============================================
     # GET BY SUBSCRIPTION
+    # الحصول على مدفوعات اشتراك معين.
     # ==============================================
 
     async def get_by_subscription(
@@ -326,6 +343,7 @@ class PaymentService:
 
     # ==============================================
     # GET BY STATUS
+    # الحصول على مدفوعات حسب الحالة.
     # ==============================================
 
     async def get_by_status(
@@ -377,6 +395,7 @@ class PaymentService:
 
     # ==============================================
     # GET PAYMENT SUMMARY
+    # الحصول على ملخص المدفوعات.
     # ==============================================
 
     async def get_payment_summary(
@@ -419,9 +438,9 @@ class PaymentService:
         )
 
         total_payments = len(payments)
-        total_amount = 0.0
-        paid_amount = 0.0
-        pending_amount = 0.0
+        total_amount = Decimal(0)
+        paid_amount = Decimal(0)
+        pending_amount = Decimal(0)
 
         status_counts: dict[str, int] = {}
 
@@ -443,12 +462,14 @@ class PaymentService:
             status_counts=status_counts,
         )
 
-    # ==========================================
+    # ==============================================
     # ✏️ MUTATIONS
-    # ==========================================
+    # Group persistence changes while retaining the caller's transaction contract.
+    # ==============================================
 
     # ==============================================
     # CREATE PAYMENT
+    # Create a manual subscription invoice from the server's stored price.
     # ==============================================
 
     async def create_payment(self, *, payment_data: PaymentCreate) -> PaymentResponse:
@@ -474,9 +495,9 @@ class PaymentService:
                 raise NotFoundError(message="Subscription not found")
             restaurant_owner = (
                 await self.session.execute(
-                    select(Restaurant.owner_id).where(
-                        Restaurant.id == payment_data.restaurant_id
-                    )
+                    base_select(Restaurant)
+                    .with_only_columns(Restaurant.owner_id)
+                    .where(Restaurant.id == payment_data.restaurant_id)
                 )
             ).scalar_one_or_none()
             if restaurant_owner != payment_data.owner_id:
@@ -484,8 +505,31 @@ class PaymentService:
             if subscription.status not in {"pending", "pending_payment"}:
                 raise ValidationError(message="Subscription is not pending payment")
             amount = Decimal(str(subscription.amount))
+            from app.models.subscription_pricing import SubscriptionPricingSnapshot
+
+            retained_terms = (
+                await self.session.execute(
+                    base_select(SubscriptionPricingSnapshot)
+                    .with_only_columns(SubscriptionPricingSnapshot.parameters)
+                    .where(
+                        SubscriptionPricingSnapshot.subscription_id == subscription.id
+                    )
+                )
+            ).scalar_one_or_none()
+            pricing_method = (
+                "cash" if payment_data.payment_method == "cash" else "electronic"
+            )
+            if (retained_terms is None and pricing_method == "cash") or (
+                retained_terms is not None
+                and retained_terms.get("payment_method") != pricing_method
+            ):
+                raise ValidationError(
+                    message="Payment method does not match the retained quote"
+                )
             provider.prepare_payment(
-                method=payment_data.payment_method, amount=amount, currency="DZD"
+                method=payment_data.payment_method,
+                amount=amount,
+                currency=subscription.currency,
             )
             if Decimal(str(payment_data.amount)) != amount:
                 raise ValidationError(
@@ -505,8 +549,8 @@ class PaymentService:
                     "subscription_id": subscription.id,
                     "payment_method": payment_data.payment_method,
                     "payment_provider": provider.code,
-                    "currency": "DZD",
-                    "amount": float(amount),
+                    "currency": subscription.currency,
+                    "amount": amount,
                     "status": "pending",
                     "external_reference": None,
                 }
@@ -516,6 +560,7 @@ class PaymentService:
 
     # ==============================================
     # UPDATE PAYMENT STATUS
+    # تحديث حالة الدفع.
     # ==============================================
 
     async def update_payment_status(
@@ -553,6 +598,14 @@ class PaymentService:
                 message=f"الدفع بـ ID '{payment_id}' غير موجود",
             )
 
+        if status_data.status == "paid" and (
+            payment.payment_method == "cash"
+            or payment.payment_provider == "manual_cash"
+        ):
+            raise ValidationError(
+                message="Cash settlement requires the physical collection workflow"
+            )
+
         # التحقق من صحة انتقال الحالة
         await self._validate_status_transition(
             current_status=payment.status,
@@ -583,6 +636,7 @@ class PaymentService:
 
     # ==============================================
     # CONFIRM PAYMENT
+    # Internal settlement command; API callers must supply verified authority.
     # ==============================================
 
     async def confirm_payment(self, *, payment_id: int) -> PaymentResponse:
@@ -590,7 +644,7 @@ class PaymentService:
         async with payment_transaction(session=self.session):
             payment = (
                 await self.session.execute(
-                    select(Payment)
+                    base_select(Payment)
                     .options(raiseload("*"))
                     .where(Payment.id == payment_id)
                     .with_for_update()
@@ -599,6 +653,27 @@ class PaymentService:
             ).scalar_one_or_none()
             if payment is None:
                 raise NotFoundError(message="Payment not found")
+            if (
+                payment.payment_method == "cash"
+                or payment.payment_provider == "manual_cash"
+            ):
+                from app.models.cash_collection import CashCollection
+
+                receipt = (
+                    await self.session.execute(
+                        base_select(CashCollection).where(
+                            CashCollection.payment_id == payment_id,
+                            CashCollection.subscription_id == payment.subscription_id,
+                            CashCollection.expected_amount == payment.amount,
+                            CashCollection.received_amount == payment.amount,
+                            CashCollection.currency == payment.currency,
+                        )
+                    )
+                ).scalar_one_or_none()
+                if receipt is None:
+                    raise ValidationError(
+                        message="Verified physical cash receipt required"
+                    )
             if payment.status == "paid":
                 return PaymentResponse.model_validate(payment)
             await self._validate_status_transition(
@@ -618,6 +693,7 @@ class PaymentService:
 
     # ==============================================
     # FAIL PAYMENT
+    # تعيين الدفع كفاشل.
     # ==============================================
 
     async def fail_payment(
@@ -672,6 +748,7 @@ class PaymentService:
 
     # ==============================================
     # CANCEL PAYMENT
+    # إلغاء الدفع.
     # ==============================================
 
     async def cancel_payment(
@@ -726,6 +803,7 @@ class PaymentService:
 
     # ==============================================
     # REFUND PAYMENT
+    # استرداد الدفع.
     # ==============================================
 
     async def refund_payment(
@@ -783,6 +861,7 @@ class PaymentService:
 
     # ==============================================
     # DELETE PAYMENT
+    # حذف دفع.
     # ==============================================
 
     async def delete_payment(

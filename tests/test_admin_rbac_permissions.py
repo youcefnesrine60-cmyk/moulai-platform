@@ -13,11 +13,15 @@
 """Unit tests for normalized RBAC authorization in ``AdminService``."""
 
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import (
+    AsyncMock,
+    MagicMock,
+)
 
 import pytest
 
 from app.core.exceptions import UnauthorizedError
+from app.core.security.platform_permissions import SUBSCRIPTION_PRICING_MANAGE
 from app.services.business.admin.admin_service import AdminService
 
 # ==============================================
@@ -80,7 +84,7 @@ async def test_permission_is_granted_when_attached_to_active_role() -> None:
 
 @pytest.mark.asyncio
 async def test_wildcard_permission_grants_platform_access() -> None:
-    """The super-admin wildcard grants every requested permission."""
+    """Legacy wildcard behavior remains valid for ordinary platform permissions."""
     service = build_service(
         admin=build_admin(
             legacy_role="super_admin",
@@ -92,6 +96,57 @@ async def test_wildcard_permission_grants_platform_access() -> None:
     assert await service.check_admin_permission(
         admin_id=1,
         required_permission="rbac.manage",
+    )
+
+
+# ==============================================
+# EXPLICIT SAAS PRICING GRANT
+# A platform title, wildcard or neighboring management permission cannot supply this grant.
+# ==============================================
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "codes",
+    [
+        (),
+        ("*",),
+        ("admins.manage",),
+        ("restaurants.manage",),
+        ("payments.review",),
+        ("admins.manage", "restaurants.manage", "payments.review"),
+    ],
+)
+@pytest.mark.parametrize(
+    "permission", ["subscriptions.pricing.manage", "tenant.billing_country.manage"]
+)
+async def test_pricing_permission_cannot_be_inferred(
+    codes: tuple[str, ...], permission: str
+) -> None:
+    """Exercise the shared existing authorization mechanism without any database or grant write."""
+    service = build_service(
+        admin=build_admin(
+            legacy_role="super_admin", role_code="super_admin", permission_codes=codes
+        )
+    )
+    with pytest.raises(UnauthorizedError):
+        await service.check_admin_permission(admin_id=1, required_permission=permission)
+
+
+# ==============================================
+# POSITIVE EXPLICIT PRICING AUTHORIZATION
+# An active account must actually carry the new permission in its persisted authorization context.
+# ==============================================
+
+
+@pytest.mark.asyncio
+async def test_explicit_pricing_permission_is_accepted() -> None:
+    """The new strict requirement does not accidentally reject an explicitly assigned grant."""
+    service = build_service(
+        admin=build_admin(permission_codes=(SUBSCRIPTION_PRICING_MANAGE,))
+    )
+    assert await service.check_admin_permission(
+        admin_id=1, required_permission=SUBSCRIPTION_PRICING_MANAGE
     )
 
 

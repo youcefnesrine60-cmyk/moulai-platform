@@ -161,6 +161,16 @@
   gap: 8px;
   align-self: start;
 }
+/* Help remains above appearance controls within the same logo header, including RTL. */
+.headerActions:has(:global([data-assistance-dock])) {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-items: end;
+}
+.headerActions:has(:global([data-assistance-dock]))
+  > :global(#operational-help-slot) {
+  grid-column: 1 / -1;
+}
 .sidebarInterior :focus-visible,
 .closeButton:focus-visible {
   outline-color: var(--focus-on-dark);
@@ -320,5 +330,35 @@
   .footer {
     padding: 18px 20px;
     font-size: 12px;
+  }
+}
+
+/* The service board uses a compact header only on the tables route. */
+.operationalHeader {
+  padding-block: 6px;
+}
+.operationalHeader > [data-brand-size] {
+  inline-size: min(420px, 100%);
+}
+.operationalHeader > [data-brand-size] > span:first-child {
+  inline-size: 100%;
+}
+.operationalHeader > [data-brand-size] > span:last-child {
+  white-space: nowrap;
+  font-size: clamp(12px, 1.2vw, 18px);
+}
+.operationalContent {
+  padding: 24px;
+  margin-block: 14px;
+}
+@media (max-width: 760px) {
+  .operationalHeader > [data-brand-size] {
+    inline-size: min(360px, 100%);
+  }
+  .operationalHeader > [data-brand-size] > span:last-child {
+    font-size: clamp(12px, 3.5vw, 16px);
+  }
+  .operationalContent {
+    padding: 16px;
   }
 }

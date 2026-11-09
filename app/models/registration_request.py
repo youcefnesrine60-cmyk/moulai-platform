@@ -11,7 +11,7 @@
 # يدير طلبات تسجيل المالكين والمطاعم الجديدة
 # ==============================================
 
-"""MoulAI operational module for registration request.
+"""Persist registration forms whose optional owner link survives owner deletion.
 
 Part of MoulAI Platform - Agent-as-a-Service.
 """
@@ -124,7 +124,7 @@ class RegistrationRequest(BaseModel):
 
     owner_id = Column(
         Integer,
-        ForeignKey("owners.id"),
+        ForeignKey("owners.id", ondelete="SET NULL"),
         nullable=True,
         # comment="معرف المالك المرتبط بعد الموافقة",
     )

@@ -5,20 +5,37 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# ISOLATED ALEMBIC ENVIRONMENT
+# Run migrations only through the explicitly checked disposable PostgreSQL connection.
+# ==============================================
+
 """Pinned local-only entry point for the compatibility or tenant-E1 profile."""
+
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from sqlalchemy.engine import Connection
 
 from alembic import context
 from test_support.local_postgres import (
+    LOCAL_DINING_REVISION,
     LOCAL_E1_REVISION,
+    LOCAL_MAIN_REVISION,
     LOCAL_REVISION,
+    LOCAL_S1_REVISION,
     LocalPostgresSettings,
     read_local_test_identity,
 )
 
 # ==============================================
 # EXECUTE ONLY A CHECKED CONNECTION AT THE EXACT PROFILE REVISION
+# Admit only the selected legacy or K10 E1 target on a pinned local instance.
 # ==============================================
 
 
@@ -34,9 +51,12 @@ def run_local_migrations() -> None:
         or not connection.in_transaction()
     ):
         raise RuntimeError("local_migration_requires_pinned_approved_target")
-    expected_revision = (
-        LOCAL_E1_REVISION if configuration.PROFILE == "k10" else LOCAL_REVISION
-    )
+    expected_revision = {
+        "dining": LOCAL_DINING_REVISION,
+        "k10": LOCAL_E1_REVISION,
+        "subscription": LOCAL_S1_REVISION,
+        "main": LOCAL_MAIN_REVISION,
+    }.get(configuration.PROFILE, LOCAL_REVISION)
     if context.get_revision_argument() != expected_revision:
         raise RuntimeError("local_migration_profile_revision_mismatch")
     read_local_test_identity(connection, configuration=configuration)

@@ -5,12 +5,27 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# DISPOSABLE POSTGRESQL TEST LAUNCHER
+# Prepare bounded local test processes and reject permanent or remote database
+# destinations.
+# ==============================================
+
 """Provision an owned disposable PostgreSQL instance and run live fixture tests."""
 
 from __future__ import annotations
 
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
+
 import argparse
+import ast
 import asyncio
+import errno
+import hashlib
 import json
 import os
 import secrets
@@ -26,6 +41,11 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+# ==============================================
+# CONFIGURATION AND CONSTANTS
+# Group the existing configuration values without changing their defaults.
+# ==============================================
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -40,17 +60,97 @@ from alembic import command
 from scripts.run_offline_api_tests import TestResults
 from test_support.local_postgres import (
     LOCAL_DATABASE,
+    LOCAL_DINING_REVISION,
     LOCAL_E1_REVISION,
+    LOCAL_MAIN_REVISION,
     LOCAL_PORT,
     LOCAL_REVISION,
     LOCAL_ROLE,
+    LOCAL_S1_REVISION,
     LocalPostgresNetworkGuard,
     LocalPostgresSettings,
     read_local_test_identity,
 )
 
 # ==============================================
+# HISTORICAL TABLE INVENTORY FROM FROZEN DDL
+# Keep E1 admission independent of later ORM additions such as subscription S1.
+# ==============================================
+
+
+def legacy_schema_tables() -> set[str]:
+    """Read literal baseline table names; never execute or rewrite migrations."""
+    source = ROOT / "alembic_test/versions/ae6a266365fb_test_schema_baseline.py"
+    content = source.read_bytes()
+    if hashlib.sha256(content).hexdigest() != (
+        "6b168b7bd283d09e6959e61d44cabbf22431a83355dc58f249ff688f59d108e4"
+    ):
+        raise RuntimeError("local_legacy_inventory_source_mismatch")
+    tree = ast.parse(content.decode("utf-8"))
+    tables = {
+        node.args[0].value
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and isinstance(node.func.value, ast.Name)
+        and node.func.value.id == "op"
+        and node.func.attr == "create_table"
+        and node.args
+        and isinstance(node.args[0], ast.Constant)
+        and isinstance(node.args[0].value, str)
+    } | {"alembic_version", "manual_payment_receipts", "manual_payment_audit"}
+    if len(tables) != 47:
+        raise RuntimeError("local_legacy_inventory_source_mismatch")
+    return tables
+
+
+# ==============================================
+# SELECT ONLY TESTS SUPPORTED BY THE RECONSTRUCTED SCHEMA
+# Default to the main history; historical compatibility schemas are not S1a.
+# ==============================================
+
+
+def select_tests(*, profile: str, suite: str, paths: list[str] | None) -> list[str]:
+    """Reject obsolete broad legacy runs before starting a disposable server."""
+    if profile == "legacy":
+        raise ValueError("legacy_schema_not_current_application:use_--profile_main")
+    if suite != "profile":
+        if profile != "main" or paths:
+            raise ValueError("dedicated_suite_requires_main_profile_without_test_paths")
+        return [
+            (
+                "tests/test_health_only_postgres.py"
+                if suite == "health-only"
+                else "tests/test_catalog_postgres_transactions.py"
+            ),
+            "--maxfail=1",
+        ]
+    if paths:
+        return paths
+    if profile == "k10":
+        return ["tests/test_k10_postgres.py", "--maxfail=1"]
+    if profile == "dining":
+        return ["tests/dining"]
+    if profile == "subscription":
+        return [
+            "tests/subscription_diagnostics",
+            "tests/test_subscription_lifecycle.py",
+            "tests/test_subscription_decisions.py",
+            "tests/test_cash_collection.py",
+            "tests/test_subscription_trial_clock.py",
+            "tests/test_subscription_compat.py",
+            "tests/test_pricing_discount_database_integration.py",
+            "tests/test_manual_payment_workflow.py",
+            "tests/test_payment_subscription_transactions.py",
+        ]
+    if profile == "main":
+        return ["-m", "database"]
+    raise ValueError("unsupported_local_profile")
+
+
+# ==============================================
 # BOUNDED LOCAL PROCESS EXECUTION
+# Execute local tools without printing environment values or raw errors.
 # ==============================================
 
 
@@ -76,6 +176,7 @@ def run_process(
 
 # ==============================================
 # CHOOSE AN AVAILABLE LOCAL BACKEND WITHOUT STARTING EXISTING SERVICES
+# Prefer an already running Docker engine; otherwise use installed binaries.
 # ==============================================
 
 
@@ -100,6 +201,7 @@ def choose_backend(*, requested: str) -> str:
 
 # ==============================================
 # CONFIGURE PINNED LOCAL ALEMBIC EXECUTION
+# Apply the explicit compatibility or tenant-E1 history on a fresh local DB.
 # ==============================================
 
 
@@ -112,18 +214,45 @@ def apply_local_migrations(
         text("SELECT count(*) FROM pg_tables WHERE schemaname='public'")
     ).scalar_one():
         raise RuntimeError("local_database_must_be_new_and_empty")
+    if configuration.PROFILE == "dining":
+        # Preserve the exact S1a admission path, then apply only the explicit
+        # additive D1 node on this same owned disposable connection.
+        apply_local_migrations(
+            connection,
+            configuration=configuration.model_copy(update={"PROFILE": "main"}),
+        )
+    if configuration.PROFILE == "main":
+        from migration_support.main_bootstrap import apply_main_bootstrap
+
+        apply_main_bootstrap(connection, configuration=configuration)
     config = Config()
     config.set_main_option("script_location", str(ROOT / "alembic_local_test"))
-    config.set_main_option("version_locations", str(ROOT / "alembic_test/versions"))
+    config.set_main_option(
+        "version_locations",
+        str(
+            ROOT
+            / (
+                "alembic/versions"
+                if configuration.PROFILE in {"main", "dining"}
+                else "alembic_test/versions"
+            )
+        ),
+    )
     config.set_main_option("path_separator", "os")
     config.attributes["connection"] = connection
     config.attributes["local_configuration"] = configuration
-    target = LOCAL_E1_REVISION if configuration.PROFILE == "k10" else LOCAL_REVISION
+    target = {
+        "dining": LOCAL_DINING_REVISION,
+        "k10": LOCAL_E1_REVISION,
+        "subscription": LOCAL_S1_REVISION,
+        "main": LOCAL_MAIN_REVISION,
+    }.get(configuration.PROFILE, LOCAL_REVISION)
     command.upgrade(config, target)
 
 
 # ==============================================
 # PROVISION ONLY THE NEW INSTANCE'S DEDICATED DATABASE AND UNPRIVILEGED ROLE
+# Use loopback only; credentials remain in memory and are never reported.
 # ==============================================
 
 
@@ -136,7 +265,7 @@ async def provision_database(
     """Use loopback only; credentials remain in memory and are never reported."""
     bootstrap = await asyncpg.connect(
         host="127.0.0.1",
-        port=LOCAL_PORT,
+        port=configuration.CLIENT_PORT,
         database="postgres",
         user="moulai_test_bootstrap",
         password=bootstrap_password,
@@ -152,7 +281,14 @@ async def provision_database(
             f"CREATE ROLE {LOCAL_ROLE} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE "
             f"PASSWORD '{runtime_password}'"
         )
-        await bootstrap.execute(f"CREATE DATABASE {LOCAL_DATABASE} OWNER {LOCAL_ROLE}")
+        if configuration.PROFILE in {"main", "dining"}:
+            await bootstrap.execute(
+                f"CREATE DATABASE {LOCAL_DATABASE} OWNER {LOCAL_ROLE} TEMPLATE template0 ENCODING 'UTF8' LOCALE_PROVIDER builtin BUILTIN_LOCALE 'C.UTF-8' LC_COLLATE 'C' LC_CTYPE 'C'"
+            )
+        else:
+            await bootstrap.execute(
+                f"CREATE DATABASE {LOCAL_DATABASE} OWNER {LOCAL_ROLE}"
+            )
         await bootstrap.execute(
             f"COMMENT ON DATABASE {LOCAL_DATABASE} IS "
             f"'moulai-local-pytest:{configuration.INSTANCE_ID}'"
@@ -186,10 +322,18 @@ async def provision_database(
             server = (
                 await connection.execute(text("SHOW server_version"))
             ).scalar_one()
-            expected_revision = (
-                LOCAL_E1_REVISION if configuration.PROFILE == "k10" else LOCAL_REVISION
-            )
-            expected_count = 56 if configuration.PROFILE == "k10" else 47
+            expected_revision = {
+                "dining": LOCAL_DINING_REVISION,
+                "k10": LOCAL_E1_REVISION,
+                "subscription": LOCAL_S1_REVISION,
+                "main": LOCAL_MAIN_REVISION,
+            }.get(configuration.PROFILE, LOCAL_REVISION)
+            expected_count = {
+                "k10": 56,
+                "subscription": 52,
+                "main": 61,
+                "dining": 92,
+            }.get(configuration.PROFILE, 47)
             if version != expected_revision or count != expected_count:
                 raise RuntimeError("local_migration_catalog_mismatch")
             observed = {
@@ -198,12 +342,11 @@ async def provision_database(
                 "server_version": server,
             }
             if configuration.PROFILE == "k10":
-                from app.models import Base
                 from scripts.rehearse_tenant_e1 import verify_e1_catalog
 
                 observed["e1_catalog"] = await verify_e1_catalog(
                     connection,
-                    legacy_tables=set(Base.metadata.tables) | {"alembic_version"},
+                    legacy_tables=legacy_schema_tables(),
                 )
             return observed
     finally:
@@ -212,11 +355,16 @@ async def provision_database(
 
 # ==============================================
 # RUN ONLY REAL POSTGRESQL FIXTURE CONSUMERS
+# Capture actual outcomes and keep test console output outside the root.
 # ==============================================
 
 
 def execute_tests(
-    *, output: Path, profile: str = "legacy", suite: str = "profile"
+    *,
+    output: Path,
+    profile: str = "main",
+    suite: str = "profile",
+    paths: list[str] | None = None,
 ) -> dict[str, Any]:
     """Capture actual outcomes and keep test console output outside the root."""
     import pytest
@@ -227,15 +375,7 @@ def execute_tests(
         redirect_stdout(stream),
         redirect_stderr(stream),
     ):
-        selection = (
-            ["tests/test_k10_postgres.py", "--maxfail=1"]
-            if profile == "k10"
-            else ["-m", "database"]
-        )
-        if suite == "health-only":
-            selection = ["tests/test_health_only_postgres.py", "--maxfail=1"]
-        if suite == "catalog":
-            selection = ["tests/test_catalog_postgres_transactions.py", "--maxfail=1"]
+        selection = select_tests(profile=profile, suite=suite, paths=paths)
         code = int(
             pytest.main(
                 [
@@ -267,7 +407,44 @@ def execute_tests(
 
 
 # ==============================================
+# SELECT ONLY AN ALREADY APPROVED TEST PORT
+# Keep existing listeners untouched; native startup may use the second isolated port only when the caller has not pinned one explicitly.
+# ==============================================
+
+
+def select_local_port(*, backend: str, requested: int | None) -> int:
+    """Probe the fixed allowlist before provisioning; never terminate a listener or select an arbitrary free port."""
+    if requested not in {None, LOCAL_PORT, 55435}:
+        raise ValueError("local_test_port_not_admitted")
+    if backend != "native" and requested == 55435:
+        raise ValueError("alternate_local_test_port_requires_native")
+    candidates = (
+        (requested,)
+        if requested is not None
+        else (LOCAL_PORT, 55435) if backend == "native" else (LOCAL_PORT,)
+    )
+    for candidate in candidates:
+        try:
+            with socket.socket() as reservation:
+                reservation.bind(("127.0.0.1", candidate))
+            return candidate
+        except OSError as error:
+            if error.errno not in {errno.EADDRINUSE, errno.EACCES} and getattr(
+                error, "winerror", None
+            ) not in {10048, 10013}:
+                raise
+    ports = ", ".join(str(port) for port in candidates)
+    raise ValueError(
+        f"Port(s) de test local indisponible(s) : {ports}. "
+        "Aucun service existant n'a ete arrete. "
+        "Utilisez --backend native --port 55435 si ce port est libre, "
+        "ou attendez la fin de l'autre campagne de tests."
+    )
+
+
+# ==============================================
 # OWN THE COMPLETE LOCAL SERVER LIFECYCLE
+# Create, migrate, test and stop only this launcher's isolated instance.
 # ==============================================
 
 
@@ -278,28 +455,73 @@ def main() -> int:
         "--backend", choices=("auto", "docker", "native"), default="auto"
     )
     parser.add_argument("--postgres-bin", type=Path)
-    parser.add_argument("--profile", choices=("legacy", "k10"), default="legacy")
+    parser.add_argument(
+        "--port",
+        type=int,
+        choices=(55432, 55435),
+        default=None,
+        help="Pin an approved port; native default tries 55432 then 55435 without stopping existing services",
+    )
+    parser.add_argument(
+        "--profile",
+        choices=("legacy", "k10", "subscription", "main", "dining"),
+        default="main",
+    )
     parser.add_argument(
         "--suite", choices=("profile", "health-only", "catalog"), default="profile"
     )
+    parser.add_argument("--test-paths", nargs="+")
+    parser.add_argument(
+        "--main-archive",
+        type=Path,
+        help="Export and locally restore S1a canonical seeds instead of running tests",
+    )
     options = parser.parse_args()
-    if options.suite == "health-only" and options.profile != "legacy":
-        parser.error("The health-only suite uses the isolated legacy schema only")
-    if options.suite == "catalog" and options.profile != "legacy":
-        parser.error("The catalog suite uses the isolated legacy schema only")
+    if options.main_archive and (options.profile != "main" or options.test_paths):
+        parser.error("Canonical archive requires main profile and no test selection")
+    if options.test_paths:
+        for name in options.test_paths:
+            target = (ROOT / name).resolve()
+            if (
+                not target.is_relative_to(ROOT / "tests")
+                or not target.exists()
+                or name.startswith("-")
+            ):
+                parser.error(
+                    "Test paths must exist under the repository tests directory"
+                )
+
+    try:
+        select_tests(
+            profile=options.profile, suite=options.suite, paths=options.test_paths
+        )
+    except ValueError as error:
+        parser.error(str(error))
     os.chdir(ROOT)
+    backend = choose_backend(requested=options.backend)
+    try:
+        port = select_local_port(backend=backend, requested=options.port)
+    except ValueError as error:
+        parser.error(str(error))
+    except OSError:
+        parser.error(
+            "Impossible de verifier le port local. Aucun serveur n'a ete demarre."
+        )
+    if options.port is None and port != LOCAL_PORT:
+        print(
+            f"Port {LOCAL_PORT} indisponible ; utilisation du port de test isole {port}. Aucun service existant n'est arrete.",
+            flush=True,
+        )
     instance_id = uuid4().hex
     output = ROOT / "artifacts/postgres-local-tests" / instance_id
     output.mkdir(parents=True)
-    backend = choose_backend(requested=options.backend)
-    with socket.socket() as reservation:
-        reservation.bind(("127.0.0.1", LOCAL_PORT))
     bootstrap_password = secrets.token_hex(32)
     runtime_password = secrets.token_hex(32)
     configuration = LocalPostgresSettings(
-        URL=f"postgresql+asyncpg://{LOCAL_ROLE}:{runtime_password}@127.0.0.1:{LOCAL_PORT}/{LOCAL_DATABASE}",
+        CLIENT_PORT=port,
+        URL=f"postgresql+asyncpg://{LOCAL_ROLE}:{runtime_password}@127.0.0.1:{port}/{LOCAL_DATABASE}",
         INSTANCE_ID=instance_id,
-        SERVER_PORT=5432 if backend == "docker" else LOCAL_PORT,
+        SERVER_PORT=5432 if backend == "docker" else port,
         PROFILE=options.profile,
     )
     os.environ.update(
@@ -311,15 +533,16 @@ def main() -> int:
             "OIDC_ALLOW_LOCAL_HTTP": "false",
             "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
             "LOCAL_POSTGRES_TEST_URL": configuration.URL.get_secret_value(),
+            "LOCAL_POSTGRES_TEST_CLIENT_PORT": str(configuration.CLIENT_PORT),
             "LOCAL_POSTGRES_TEST_INSTANCE_ID": instance_id,
             "LOCAL_POSTGRES_TEST_SERVER_PORT": str(configuration.SERVER_PORT),
             "LOCAL_POSTGRES_TEST_PROFILE": configuration.PROFILE,
         }
     )
-    guard = LocalPostgresNetworkGuard()
+    guard = LocalPostgresNetworkGuard(client_port=configuration.CLIENT_PORT)
     sys.addaudithook(guard)
     print(
-        f"Local PostgreSQL: backend={backend}, port={LOCAL_PORT}, run={instance_id}",
+        f"Local PostgreSQL: backend={backend}, port={configuration.CLIENT_PORT}, run={instance_id}",
         flush=True,
     )
     project = f"moulai-pgtests-{instance_id}"
@@ -385,7 +608,7 @@ def main() -> int:
                     "-l",
                     str(output / "server.log"),
                     "-o",
-                    f"-h 127.0.0.1 -p {LOCAL_PORT} -c log_min_error_statement=panic",
+                    f"-h 127.0.0.1 -p {configuration.CLIENT_PORT} -c log_min_error_statement=panic",
                     "-w",
                     "-t",
                     "30",
@@ -400,12 +623,69 @@ def main() -> int:
                 runtime_password=runtime_password,
             )
         )
-        print("Local schema ready; running PostgreSQL fixtures.", flush=True)
-        summary.update(
-            execute_tests(
-                output=output, profile=configuration.PROFILE, suite=options.suite
+        if configuration.PROFILE in {"main", "dining"}:
+            from test_support.main_reconstruction import verify_main_reconstruction
+
+            os.environ.update(
+                {
+                    "DATABASE_TARGET": "primary",
+                    "DATABASE_URL": configuration.URL.get_secret_value(),
+                    "TEST_DATABASE_URL": configuration.URL.get_secret_value(),
+                    "APP_ENV": "test",
+                    "BOT_TOKEN": "000000000:LOCAL_REHEARSAL_NOT_A_REAL_BOT_TOKEN",
+                    "OPENAI_API_KEY": "local-rehearsal-no-provider-access",
+                    "OPENAI_BASE_URL": "http://127.0.0.1:1",
+                    "LOG_FILE_PATH": str(output / "application.log"),
+                }
             )
-        )
+            if configuration.PROFILE == "main":
+                summary["main_verification"] = asyncio.run(
+                    verify_main_reconstruction(
+                        configuration=configuration, output=output
+                    )
+                )
+            else:
+                from test_support.dining_reconstruction import verify_dining_reconstruction  # isort: skip  # fmt: skip
+
+                summary["dining_verification"] = asyncio.run(
+                    verify_dining_reconstruction(
+                        configuration=configuration, output=output
+                    )
+                )
+        if options.main_archive:
+            from test_support.main_reconstruction import prepare_main_archive
+
+            (output / "main-catalogue-before-restore.json").write_bytes(
+                (output / "main-catalogue.json").read_bytes()
+            )
+            summary["canonical_archive"] = asyncio.run(
+                prepare_main_archive(
+                    configuration=configuration,
+                    binary_root=binary_root,
+                    destination=options.main_archive,
+                    catalogue_before=json.loads(
+                        (output / "main-catalogue-before-restore.json").read_text(
+                            encoding="utf-8"
+                        )
+                    ),
+                )
+            )
+            summary["restored_main_verification"] = asyncio.run(
+                verify_main_reconstruction(configuration=configuration, output=output)
+            )
+            summary["validation_scope"] = (
+                "canonical archive and actual local restoration; no pytest campaign"
+            )
+        else:
+            print("Local schema ready; running PostgreSQL fixtures.", flush=True)
+            summary.update(
+                execute_tests(
+                    output=output,
+                    profile=configuration.PROFILE,
+                    suite=options.suite,
+                    paths=options.test_paths,
+                )
+            )
         summary["network_denied_categories"] = dict(guard.denied)
     except (
         OSError,
@@ -436,8 +716,18 @@ def main() -> int:
                 )
         summary["server_stopped"] = started
     summary["passed"] = (
-        summary.get("pytest_exit_code") == 0
-        and summary.get("outcomes", {}).get("passed", 0) > 0
+        (
+            (
+                summary.get("pytest_exit_code") == 0
+                and summary.get("outcomes", {}).get("passed", 0) > 0
+            )
+            or bool(
+                summary.get("canonical_archive", {}).get(
+                    "local_clean_restore_completed"
+                )
+                and summary.get("restored_main_verification")
+            )
+        )
         and not summary.get("outcomes", {}).get("skipped", 0)
         and not guard.denied
         and "setup_error" not in summary

@@ -1,0 +1,72 @@
+/* MoulAI™ — existing visual tokens, logical RTL spacing and compact review layout. */
+.filters {
+  display: flex;
+  align-items: end;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-block: 24px;
+}
+.filters label {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+}
+.filters select,
+.filters input {
+  min-block-size: 44px;
+  max-inline-size: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-panel);
+  color: var(--text-primary);
+  padding: 10px;
+  font: inherit;
+}
+.tables {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+  margin-block: 20px;
+}
+.tableTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tableTop h3 {
+  margin: 0;
+}
+.alert {
+  color: var(--accent);
+  font-weight: 600;
+}
+.scroll {
+  overflow-x: auto;
+}
+.scroll table {
+  border-collapse: collapse;
+  inline-size: 100%;
+}
+.scroll th,
+.scroll td {
+  text-align: start;
+  padding: 14px 12px;
+  border-block-end: 1px solid var(--border);
+  white-space: nowrap;
+}
+.amounts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 20px;
+}
+.amounts dt {
+  color: var(--text-secondary);
+}
+.amounts dd {
+  margin: 8px 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+.tables ~ section + section {
+  margin-block-start: 20px;
+}

@@ -5,6 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
+import { installManualThemeFixture } from './manualThemeFixture';
 import { createHash } from 'node:crypto';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -248,3 +249,6 @@ for (const width of [1440, 834, 360])
         );
         await expect(page.getByText('Maison Safran')).toHaveCount(0);
       });
+
+// Visual fixtures request a manual choice; opening policy is checked independently.
+test.beforeEach(async ({ page }) => installManualThemeFixture(page));

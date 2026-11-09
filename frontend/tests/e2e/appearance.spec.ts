@@ -5,6 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
+import { installManualThemeFixture } from './manualThemeFixture';
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fr } from '../../src/shared/i18n/fr';
@@ -34,7 +35,7 @@ function copy(locale: Locale, key: string): string {
 async function chooseTheme(
   page: Page,
   locale: Locale,
-  theme: Theme | 'system',
+  theme: Theme,
   dialog = false,
 ): Promise<void> {
   const control = dialog
@@ -379,7 +380,7 @@ for (const locale of ['fr', 'en', 'ar'] as const)
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     });
 
-    test(`${locale}/${theme}: normal build first frame and persisted preferences`, async ({
+    test(`${locale}/${theme}: normal build explicitly selected fixture appearance`, async ({
       page,
     }) => {
       await page.emulateMedia({
@@ -389,12 +390,17 @@ for (const locale of ['fr', 'en', 'ar'] as const)
         ({ locale: language, theme: appearance }) => {
           localStorage.setItem('moulai.locale', language);
           localStorage.setItem('moulai.theme', appearance);
-          requestAnimationFrame(() =>
-            Reflect.set(window, 'firstAppearance', {
-              theme: document.documentElement.dataset.theme,
-              background: getComputedStyle(document.documentElement)
-                .backgroundColor,
-            }),
+          document.addEventListener(
+            'DOMContentLoaded',
+            () =>
+              requestAnimationFrame(() =>
+                Reflect.set(window, 'manualFixtureFrame', {
+                  theme: document.documentElement.dataset.theme,
+                  background: getComputedStyle(document.documentElement)
+                    .backgroundColor,
+                }),
+              ),
+            { once: true },
           );
         },
         { locale, theme },
@@ -404,7 +410,7 @@ for (const locale of ['fr', 'en', 'ar'] as const)
         page.getByRole('heading', { name: copy(locale, 'access.title') }),
       ).toBeVisible();
       expect(
-        await page.evaluate(() => Reflect.get(window, 'firstAppearance')),
+        await page.evaluate(() => Reflect.get(window, 'manualFixtureFrame')),
       ).toEqual({
         theme,
         background: theme === 'dark' ? 'rgb(11, 19, 36)' : 'rgb(230, 246, 227)',
@@ -421,33 +427,31 @@ for (const locale of ['fr', 'en', 'ar'] as const)
     });
   }
 
-test('system preference, explicit override, live OS change and cross-tab synchronization', async ({
+test('device schedule resets each opening and manual choices remain tab-local', async ({
   page,
   context,
 }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.clock.setFixedTime(new Date('2026-11-05T20:00:00Z'));
+  await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/access');
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await chooseTheme(page, 'fr', 'light');
-  await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   const second = await context.newPage();
+  await second.clock.setFixedTime(new Date('2026-11-05T20:00:00Z'));
   await second.goto('http://127.0.0.1:5173/access');
-  await expect(second.locator('html')).toHaveAttribute('data-theme', 'light');
-  await chooseTheme(page, 'fr', 'dark');
   await expect(second.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await chooseTheme(page, 'fr', 'system');
-  await page.emulateMedia({ colorScheme: 'light' });
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await second.close();
 });
 
-test('blocked storage preserves system theme and working language/theme controls', async ({
+test('blocked storage preserves the device schedule and working language/theme controls', async ({
   page,
 }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.clock.setFixedTime(new Date('2026-11-05T20:00:00Z'));
+  await page.emulateMedia({ colorScheme: 'light' });
   await page.addInitScript(() => {
     Object.defineProperty(window, 'localStorage', {
       get() {
@@ -469,3 +473,8 @@ test('blocked storage preserves system theme and working language/theme controls
   ).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
+
+// Visual fixtures request a manual choice; opening policy is checked independently.
+test.beforeEach(async ({ page }) => installManualThemeFixture(page));
+
+test.use({ timezoneId: 'UTC' });

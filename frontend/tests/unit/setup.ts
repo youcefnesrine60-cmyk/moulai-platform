@@ -13,6 +13,14 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 
 // Execute the actual parser-blocking bootstrap once in each isolated test window.
+const appearanceSchedule = document.createElement('script');
+appearanceSchedule.id = 'moulai-appearance-schedule';
+appearanceSchedule.type = 'application/json';
+appearanceSchedule.textContent = readFileSync(
+  'public/appearance-schedule.json',
+  'utf8',
+);
+document.head.append(appearanceSchedule);
 runInNewContext(readFileSync('public/theme-init.js', 'utf8'), {
   window,
   document,

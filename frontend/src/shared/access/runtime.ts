@@ -10,6 +10,13 @@ import { disconnectedAdapter } from './disconnected';
 
 /** Rollup removes this review-only import from every production build. */
 export async function createAccessAdapter(): Promise<AccessAdapter> {
+  if (
+    import.meta.env.DEV &&
+    import.meta.env.MODE === 'operational' &&
+    location.hostname === '127.0.0.1'
+  ) {
+    return (await import('./operational')).operationalAdapter;
+  }
   if (import.meta.env.DEV && import.meta.env.MODE === 'review') {
     if (
       !['127.0.0.1', 'localhost', '[::1]'].includes(

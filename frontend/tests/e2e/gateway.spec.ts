@@ -5,6 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
+import { installManualThemeFixture } from './manualThemeFixture';
 import { createHash } from 'node:crypto';
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
@@ -30,11 +31,11 @@ async function gateway(page: Page, theme: Theme): Promise<void> {
   ).toContain(`/brand/gateway/${theme}-`);
 }
 
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, baseURL }) => {
   await page.route('**/*', async (route) => {
     const url = new URL(route.request().url());
     expect(['127.0.0.1', 'localhost']).toContain(url.hostname);
-    expect(['5273', '4273']).toContain(url.port);
+    expect(['5273', '4273', new URL(baseURL!).port]).toContain(url.port);
     await route.continue();
   });
   page.on('pageerror', (error) => {
@@ -176,13 +177,12 @@ for (const width of [1440, 1920, 834, 390, 360])
         });
       });
 
-test('System follows OS live; explicit preferences and the selected review profile survive changes', async ({
+test('device opening and manual appearance preserve the selected review profile', async ({
   page,
 }) => {
+  await page.clock.setFixedTime(new Date('2026-11-05T12:00:00Z'));
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/access');
-  await gateway(page, 'dark');
-  await page.emulateMedia({ colorScheme: 'light' });
   await gateway(page, 'light');
   await page.getByRole('combobox', { name: 'Profil de test' }).click();
   await page
@@ -203,21 +203,15 @@ test('System follows OS live; explicit preferences and the selected review profi
   await page.emulateMedia({ colorScheme: 'light' });
   await gateway(page, 'dark');
   await page.reload();
-  await gateway(page, 'dark');
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-  await page.getByRole('combobox', { name: 'Appearance' }).click();
-  await page
-    .getByRole('option', { name: 'System preference', exact: true })
-    .click();
   await gateway(page, 'light');
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await gateway(page, 'dark');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
 });
 
 test('normal build stays disconnected, uses the effective Gateway and retains palette if images fail', async ({
   page,
 }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
+  await page.clock.setFixedTime(new Date('2026-11-05T20:00:00Z'));
   await page.goto('http://127.0.0.1:4273/access');
   await gateway(page, 'dark');
   await expect(
@@ -237,3 +231,8 @@ test('normal build stays disconnected, uses the effective Gateway and retains pa
     .analyze();
   expect(accessibility.violations).toEqual([]);
 });
+
+// Visual fixtures request a manual choice; opening policy is checked independently.
+test.beforeEach(async ({ page }) => installManualThemeFixture(page));
+
+test.use({ timezoneId: 'UTC' });

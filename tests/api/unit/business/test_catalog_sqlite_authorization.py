@@ -5,6 +5,11 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# SQLITE CATALOGUE AUTHORIZATION
+# Exercise real scoped catalogue SQL using only the fixture relations and their parents.
+# ==============================================
+
 """Exercise real tenant-filtered catalog SQL against disposable in-memory SQLite.
 
 The adapter forwards async session operations to SQLite's synchronous driver;
@@ -12,6 +17,12 @@ it preserves SQLAlchemy session events and real repository/business operations.
 These relational tests complement PostgreSQL validation, without claiming to
 exercise asyncpg, production data, or PostgreSQL transaction semantics.
 """
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the local framework, schema and contract dependencies used in this file.
+# ==============================================
 
 from collections.abc import (
     Iterator,
@@ -37,12 +48,15 @@ from app.api.auth import (
 )
 from app.core.database import get_db
 from app.models.base import Base
+from app.models.branch import Branch
 from app.models.category import Category
+from app.models.feature_pricing import FeatureUsageCounter
 from app.models.option_group import OptionGroup
 from app.models.owner import Owner
 from app.models.product import Product
 from app.models.product_option import ProductOption
 from app.models.restaurant import Restaurant
+from test_support.offline_storage import create_sqlite_schema
 from tests.api.unit.business._support import (
     api_module,
     request,
@@ -83,7 +97,23 @@ class SQLiteCatalogSession(AsyncSession):
 def catalog_database() -> Iterator[SQLiteCatalogSession]:
     """Seed two isolated owners using trusted fixture setup outside scoped SQL."""
     engine = create_engine("sqlite://")
-    Base.metadata.create_all(engine)
+    create_sqlite_schema(
+        engine=engine,
+        mappers=Base.registry.mappers,
+        tables=[
+            model.__table__
+            for model in (
+                Owner,
+                Restaurant,
+                Category,
+                Product,
+                OptionGroup,
+                ProductOption,
+                Branch,
+                FeatureUsageCounter,
+            )
+        ],
+    )
     with engine.begin() as connection:
         connection.execute(
             Owner.__table__.insert(),

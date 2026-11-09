@@ -5,12 +5,23 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# HEALTH-ONLY TRANSACTION PROOFS ON MAIN POSTGRESQL
+# Verify server-enforced read-only access and the current FastAPI schema checks.
+# ==============================================
+
 """Non-writing runtime proofs on the existing disposable loopback launcher.
 
 Only test setup writes its synthetic probe. The production transaction listener
 is unchanged; Neon identity observations are replaced with real local instance
 attestation because a standalone PostgreSQL server has no Neon postmaster GUCs.
 """
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Reuse production read-only guards while attesting only the disposable server.
+# ==============================================
 
 import importlib
 from collections.abc import AsyncIterator
@@ -66,7 +77,7 @@ async def local_probe(
     if not request.config.getoption("--local-postgres-tests"):
         pytest.skip("Health-only PostgreSQL proofs require the isolated local launcher")
     configuration = LocalPostgresSettings()
-    assert configuration.PROFILE == "legacy"
+    assert configuration.PROFILE == "main"
     arguments = {"ssl": False, "timeout": 10, "command_timeout": 15}
     writer = create_async_engine(
         configuration.URL.get_secret_value(),

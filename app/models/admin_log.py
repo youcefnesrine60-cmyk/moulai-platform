@@ -10,14 +10,16 @@
 # سجل أنشطة المدير
 # ==============================================
 
-"""MoulAI operational module for admin log.
+"""Map retained administrative decisions and their immutable actor snapshots.
 
-Part of MoulAI Platform - Agent-as-a-Service.
+The nullable live administrator link may disappear through ON DELETE SET NULL.
+Actor identity, timestamp and decision details remain stored under O1 guards.
 """
 
 from sqlalchemy import (
     Column,
     DateTime,
+    FetchedValue,
     ForeignKey,
     Integer,
     String,
@@ -55,10 +57,18 @@ class AdminLog(BaseModel):
 
     admin_id = Column(
         Integer,
-        ForeignKey("admins.id", ondelete="CASCADE"),
-        nullable=False,
+        ForeignKey("admins.id", ondelete="SET NULL"),
+        nullable=True,
         comment="معرف المدير",
     )
+    # ==========================================
+    # RETAINED ACTOR SNAPSHOT
+    # The database captures these values on insertion, independently of future account changes.
+    # ==========================================
+
+    actor_admin_id = Column(Integer, nullable=False, server_default=FetchedValue())
+    actor_name = Column(String(255), nullable=True, server_default=FetchedValue())
+    actor_subject = Column(String(255), nullable=True, server_default=FetchedValue())
     action = Column(
         String(50),
         nullable=False,

@@ -7,6 +7,8 @@
 
 import {
   createContext,
+  useEffect,
+  useState,
   useContext,
   type ReactElement,
   type ReactNode,
@@ -18,6 +20,7 @@ import {
   type AccessAdapter,
   type AccessSession,
 } from '../shared/access/contracts';
+import { useTranslation } from 'react-i18next';
 import { ErrorPanel, LoadingPanel } from '../shared/ui/primitives';
 
 const AdapterContext = createContext<AccessAdapter | null>(null);
@@ -30,9 +33,20 @@ export function AccessProvider({
   adapter: AccessAdapter;
   children: ReactNode;
 }): ReactElement {
+  const client = useQueryClient();
+  useEffect(() => {
+    const clear = () => {
+      void client.cancelQueries();
+      client.clear();
+      client.setQueryData(sessionKey, null);
+    };
+    window.addEventListener('moulai-session-expired', clear);
+    return () => window.removeEventListener('moulai-session-expired', clear);
+  }, [client]);
   return (
     <AdapterContext.Provider value={adapter}>
       {children}
+      {adapter.mode === 'authenticated-local' && <SessionWarning />}
     </AdapterContext.Provider>
   );
 }
@@ -48,7 +62,8 @@ export function useSession() {
   return useQuery({
     queryKey: sessionKey,
     queryFn: ({ signal }) => adapter.getSession(signal),
-    staleTime: Infinity,
+    staleTime: adapter.mode === 'authenticated-local' ? 0 : Infinity,
+    refetchInterval: adapter.mode === 'authenticated-local' ? 30000 : false,
     retry: false,
   });
 }
@@ -107,4 +122,32 @@ export function RequireSession({
       />
     );
   return <Outlet />;
+}
+
+/** Warn before token expiry; no refresh or business command is replayed. */
+export function SessionWarning(): ReactElement | null {
+  const { t } = useTranslation();
+  const session = useSession();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const remaining = Math.ceil(
+    (session.data?.expiresAt ?? Infinity) - now / 1000,
+  );
+  useEffect(() => {
+    if (remaining <= 0 && session.data)
+      window.dispatchEvent(new Event('moulai-session-expired'));
+  }, [remaining, session.data]);
+  if (!session.data || remaining > 60) return null;
+  return (
+    <aside role="status" aria-live="polite" className="session-warning">
+      <strong>
+        {t('followup.session', { seconds: Math.max(0, remaining) })}
+      </strong>
+      <p>{t('followup.sessionDraft')}</p>
+      <a href="/api/web/auth/login">{t('followup.reconnect')}</a>
+    </aside>
+  );
 }

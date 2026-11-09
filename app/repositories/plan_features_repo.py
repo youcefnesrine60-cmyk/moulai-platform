@@ -6,24 +6,29 @@
 # ==============================================
 
 # ==============================================
-# 📦 PLAN FEATURE REPOSITORY
-# عمليات قاعدة البيانات لميزات الخطط باستخدام SQLAlchemy
-# Async SQLAlchemy Version
+# PLAN FEATURE REPOSITORY
+# Manage plan-feature relationships and resolve canonical included entitlements.
 # ==============================================
 
-"""MoulAI operational module for plan features repo.
+"""Manage plan-feature relationships and resolve canonical included entitlements."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
+    TypeAlias,
 )
 
-from sqlalchemy import select
+from sqlalchemy import (
+    Select,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import logger
@@ -32,14 +37,17 @@ from app.repositories.base import BaseRepository
 
 # ==============================================
 # 🧩 TYPES
+# Describe shared input, update and result structures for this module.
 # ==============================================
 
-PlanFeatureData = Dict[str, Any]
-PlanFeatureUpdateData = Dict[str, Any]
-PlanFeatureList = List[PlanFeature]
+PlanFeatureData: TypeAlias = dict[str, Any]
+PlanFeatureUpdateData: TypeAlias = dict[str, Any]
+PlanFeatureList: TypeAlias = list[PlanFeature]
+
 
 # ==============================================
 # 📦 PLAN FEATURE REPOSITORY
+# مستودع ميزات الخطة - يوفر عمليات ربط الميزات بالخطط.
 # ==============================================
 
 
@@ -65,11 +73,13 @@ class PlanFeatureRepository(
     """
 
     # ==============================================
-    #   INIT
+    # INIT
+    # تهيئة مستودع ميزات الخطة.
     # ==============================================
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -80,11 +90,12 @@ class PlanFeatureRepository(
         """
         super().__init__(PlanFeature, session)
 
-    # ==========================================
+    # ==============================================
     # 🔍 BASE QUERY
-    # ==========================================
+    # بناء الاستعلام الأساسي لميزات الخطط.
+    # ==============================================
 
-    def _build_base_query(self):
+    def _build_base_query(self) -> Select[tuple[PlanFeature]]:
         """
         بناء الاستعلام الأساسي لميزات الخطط.
 
@@ -93,12 +104,14 @@ class PlanFeatureRepository(
         """
         return select(self.model)
 
-    # ==========================================
+    # ==============================================
     # 📖 QUERIES
-    # ==========================================
+    # Read persisted records through the existing repository selection rules.
+    # ==============================================
 
     # ==============================================
     # GET BY PLAN
+    # الحصول على جميع ميزات خطة معينة.
     # ==============================================
 
     async def get_by_plan(
@@ -138,6 +151,7 @@ class PlanFeatureRepository(
 
     # ==============================================
     # GET INCLUDED BY PLAN
+    # الحصول على الميزات المدرجة فقط في خطة معينة.
     # ==============================================
 
     async def get_included_by_plan(
@@ -180,6 +194,7 @@ class PlanFeatureRepository(
 
     # ==============================================
     # GET BY PLAN AND FEATURE
+    # الحصول على ربط محدد بين خطة وميزة.
     # ==============================================
 
     async def get_by_plan_and_feature(
@@ -187,7 +202,7 @@ class PlanFeatureRepository(
         *,
         plan_id: int,
         feature_id: int,
-    ) -> Optional[PlanFeature]:
+    ) -> PlanFeature | None:
         """
         الحصول على ربط محدد بين خطة وميزة.
 
@@ -223,12 +238,14 @@ class PlanFeatureRepository(
             )
             raise
 
-    # ==========================================
+    # ==============================================
     # ✅ EXISTENCE CHECKS
-    # ==========================================
+    # التحقق من أن خطة تحتوي على ميزة مدرجة.
+    # ==============================================
 
     # ==============================================
     # PLAN HAS FEATURE
+    # التحقق من أن خطة تحتوي على ميزة مدرجة.
     # ==============================================
 
     async def plan_has_feature(
@@ -273,12 +290,14 @@ class PlanFeatureRepository(
             )
             raise
 
-    # ==========================================
+    # ==============================================
     # ✏️ MUTATIONS
-    # ==========================================
+    # Group persistence changes while retaining the caller's transaction contract.
+    # ==============================================
 
     # ==============================================
     # ADD FEATURE TO PLAN
+    # إضافة ميزة إلى خطة (أو تحديث الحالة إذا كانت موجودة).
     # ==============================================
 
     async def add_feature_to_plan(
@@ -299,6 +318,8 @@ class PlanFeatureRepository(
         Returns:
             كائن PlanFeature
         """
+        if not included:
+            await self._protect_original(plan_id=plan_id, feature_id=feature_id)
         existing = await self.get_by_plan_and_feature(
             plan_id=plan_id,
             feature_id=feature_id,
@@ -342,6 +363,7 @@ class PlanFeatureRepository(
 
     # ==============================================
     # UPDATE INCLUDED STATUS
+    # تحديث حالة تضمين الميزة في الخطة.
     # ==============================================
 
     async def update_included_status(
@@ -350,7 +372,7 @@ class PlanFeatureRepository(
         plan_id: int,
         feature_id: int,
         included: bool,
-    ) -> Optional[PlanFeature]:
+    ) -> PlanFeature | None:
         """
         تحديث حالة تضمين الميزة في الخطة.
 
@@ -362,6 +384,8 @@ class PlanFeatureRepository(
         Returns:
             كائن PlanFeature المحدث أو None
         """
+        if not included:
+            await self._protect_original(plan_id=plan_id, feature_id=feature_id)
         existing = await self.get_by_plan_and_feature(
             plan_id=plan_id,
             feature_id=feature_id,
@@ -387,7 +411,38 @@ class PlanFeatureRepository(
         return updated
 
     # ==============================================
+    # PROTECT MANDATORY PLAN INCLUSIONS
+    # Reject removal of a mandatory canonical plan inclusion.
+    # ==============================================
+
+    async def _protect_original(self, *, plan_id: int, feature_id: int) -> None:
+        """Reject removal of a mandatory canonical plan inclusion."""
+
+        from app.models.subscription import (
+            Feature,
+            SubscriptionPlan,
+        )
+        from app.services.business.subscription_contract import (
+            INCLUDED,
+            plan_code,
+        )
+
+        code = (
+            await self.session.execute(
+                select(SubscriptionPlan.code).where(SubscriptionPlan.id == plan_id)
+            )
+        ).scalar_one()
+        feature = (
+            await self.session.execute(
+                select(Feature.code).where(Feature.id == feature_id)
+            )
+        ).scalar_one()
+        if feature in INCLUDED[plan_code(code=code)]:
+            raise ValueError("mandatory_feature_cannot_be_removed")
+
+    # ==============================================
     # REMOVE FEATURE FROM PLAN
+    # إزالة ميزة من خطة.
     # ==============================================
 
     async def remove_feature_from_plan(
@@ -406,6 +461,7 @@ class PlanFeatureRepository(
         Returns:
             True إذا تم الحذف
         """
+        await self._protect_original(plan_id=plan_id, feature_id=feature_id)
         existing = await self.get_by_plan_and_feature(
             plan_id=plan_id,
             feature_id=feature_id,
@@ -426,12 +482,14 @@ class PlanFeatureRepository(
 
         return True
 
-    # ==========================================
+    # ==============================================
     # 📊 STATISTICS
-    # ==========================================
+    # Aggregate persisted counts and values through the existing query paths.
+    # ==============================================
 
     # ==============================================
     # COUNT BY PLAN
+    # حساب عدد الميزات في خطة.
     # ==============================================
 
     async def count_by_plan(

@@ -5,9 +5,20 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# E1 STATIC MIGRATION CONTRACTS
+# Verify compiled tenant protections and preserve E1 ancestry through S1, dining and O4.
+# ==============================================
+
 """E1 static safety contracts: real compilation, zero database or SQLite IO."""
 
 from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the local framework, schema and contract dependencies used in this file.
+# ==============================================
 
 import ast
 import re
@@ -211,24 +222,59 @@ def test_existing_extensions_are_nullable_only(
 
 # ==============================================
 # DISTINCT ALEMBIC HISTORIES
+# Retain exact graph inventories and verify each approved main-history descendant.
 # ==============================================
 
 
 @pytest.mark.parametrize(
-    "directory,head,parent,count",
+    "directory,heads,s1_revision,s1_parent,e1_revision,e1_parent,count",
     [
-        ("alembic", "e1a92b200001", "c413b7918a20", 17),
-        ("alembic_test", "e1b92b200001", "dce91870b4a2", 4),
+        (
+            "alembic",
+            {"o420261108"},
+            "s1a20261028",
+            "e1a92b200001",
+            "e1a92b200001",
+            "c413b7918a20",
+            26,
+        ),
+        (
+            "alembic_test",
+            {"e1b92b200001", "s1b20261028"},
+            "s1b20261028",
+            "dce91870b4a2",
+            "e1b92b200001",
+            "dce91870b4a2",
+            5,
+        ),
     ],
 )
 def test_histories_have_distinct_reviewed_parents(
-    directory: str, head: str, parent: str, count: int
+    directory: str,
+    heads: set[str],
+    s1_revision: str,
+    s1_parent: str,
+    e1_revision: str,
+    e1_parent: str,
+    count: int,
 ) -> None:
     """Never graft the main history onto a differently versioned test baseline."""
     graph = revision_graph(directory=PROJECT_ROOT / directory / "versions")
     assert len(graph) == count
-    assert set(graph) - set(graph.values()) == {head}
-    assert graph[head] == parent
+    assert set(graph) - set(graph.values()) == heads
+    if directory == "alembic":
+        assert graph["d1a20261102"] == "s1a20261028"
+        assert graph["d1b20261103"] == "d1a20261102"
+        assert graph["d1c20261104"] == "d1b20261103"
+        assert graph["d1d20261105"] == "d1c20261104"
+        assert graph["o120261108"] == "d1d20261105"
+        assert graph["o220261108"] == "o120261108"
+        assert graph["o320261108"] == "o220261108"
+        assert graph["o420261108"] == "o320261108"
+    assert graph[s1_revision] == s1_parent
+    assert graph[e1_revision] == e1_parent
+    other_e1 = "e1b92b200001" if directory == "alembic" else "e1a92b200001"
+    assert other_e1 not in graph
 
 
 # ==============================================

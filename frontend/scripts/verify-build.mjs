@@ -31,6 +31,12 @@ async function verifyBuild() {
       'PAYMENT-REVIEW-',
       'SYNTHETIC-CCP-NOT-PAYABLE',
       'SYNTHETIC-RIP-NOT-PAYABLE',
+      '/local-d1/session',
+      'X-Customer-Proof',
+      '/dining-local',
+      '/api/web/platform/pricing',
+      'https://127.0.0.1:8444',
+      'moulai_integrated',
     ]) {
       assert(
         !source.includes(fixture),
@@ -46,6 +52,12 @@ async function verifyBuild() {
         'intelligenceFixtures',
         'officeAdapter',
         'billingFixtures',
+        'LocalDiningPage',
+        'OperationalPages',
+        'PricingCampaignsPage',
+        'OwnerOfferPage',
+        'ReminderEditor',
+        'PricingHistory',
       ].some((fixture) => name.includes(fixture)),
       'Synthetic adapter chunk is forbidden.',
     );

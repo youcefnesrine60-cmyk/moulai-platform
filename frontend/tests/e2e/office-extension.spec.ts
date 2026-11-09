@@ -1,3 +1,4 @@
+import { installManualThemeFixture } from './manualThemeFixture';
 import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fr } from '../../src/shared/i18n/fr';
@@ -35,12 +36,12 @@ async function capture(page: Page, label: string) {
     fullPage: true,
   });
 }
-test.beforeEach(async ({ page }) => {
+test.beforeEach(async ({ page, baseURL }) => {
   await page.route('**/*', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     expect(url.hostname).toBe('127.0.0.1');
-    expect(['5473', '4473']).toContain(url.port);
+    expect(['5473', '4473', new URL(baseURL!).port]).toContain(url.port);
     expect(['GET', 'HEAD']).toContain(request.method());
     expect(url.pathname).not.toMatch(/^\/api(?:\/|$)/);
     await route.continue();
@@ -188,12 +189,12 @@ for (const width of [1440, 390])
         await capture(page, `${label}-verification-rejection`);
       });
 
-test('System follows the OS while a localized subscription preview retains its selection', async ({
+test('manual appearance preserves a localized subscription preview', async ({
   page,
 }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await page.addInitScript(() => {
-    localStorage.setItem('moulai.theme', 'system');
+    localStorage.setItem('moulai.theme', 'light');
   });
   await page.goto('/access');
   await page
@@ -213,7 +214,7 @@ test('System follows the OS while a localized subscription preview retains its s
     .getByRole('combobox', { name: fr['preferences.language'] })
     .click();
   await page.getByRole('option', { name: 'العربية — AR', exact: true }).click();
-  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.evaluate(() => window.moulaiTheme.choose('dark'));
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
   await expect(
@@ -240,3 +241,6 @@ test('normal build stays disconnected for the extended workflows', async ({
     page.getByText(/SYNTHETIC-CCP-NOT-PAYABLE|SYNTHETIC-RIP-NOT-PAYABLE/),
   ).toHaveCount(0);
 });
+
+// Visual fixtures request a manual choice; opening policy is checked independently.
+test.beforeEach(async ({ page }) => installManualThemeFixture(page));

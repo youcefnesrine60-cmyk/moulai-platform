@@ -1,0 +1,739 @@
+/* MoulAI™ — shared validated tokens; isolated local forms, no visual redesign. */
+.publicPage {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+.publicPage label {
+  display: grid;
+  gap: 8px;
+  min-inline-size: 0;
+  flex: 1;
+}
+.publicPage :is(input, select) {
+  box-sizing: border-box;
+  font: inherit;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-block-size: 44px;
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.publicPage form {
+  display: grid;
+  gap: 12px;
+}
+.publicPage button {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  white-space: normal;
+}
+.page {
+  min-block-size: 100vh;
+  padding: 24px clamp(16px, 4vw, 64px);
+  color: var(--text-primary);
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-block-end: 24px;
+}
+.banner,
+.card {
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  margin-block-end: 16px;
+  overflow-wrap: anywhere;
+}
+.card summary {
+  cursor: pointer;
+  font-size: 1.05rem;
+  font-weight: 700;
+  min-block-size: 44px;
+  display: list-item;
+}
+.fields {
+  border: 0;
+  padding: 16px 0 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  min-inline-size: 0;
+}
+.fields label {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  font-weight: 600;
+  min-inline-size: 0;
+}
+.fields input,
+.fields textarea,
+.fields select,
+.banner select {
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  min-block-size: 44px;
+  min-inline-size: 0;
+  inline-size: 100%;
+}
+.fields select[multiple] {
+  min-block-size: 110px;
+}
+.fields textarea {
+  min-block-size: 100px;
+}
+.fields .check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-block-size: 44px;
+}
+.check input {
+  inline-size: 20px;
+  min-block-size: 20px;
+}
+.fields button {
+  align-self: end;
+  min-block-size: 44px;
+}
+.time {
+  display: grid;
+  gap: 8px;
+}
+.wide {
+  grid-column: 1/-1;
+}
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.row > * {
+  flex: 1;
+  min-inline-size: 120px;
+}
+.table {
+  overflow-x: auto;
+}
+.table table {
+  inline-size: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  text-align: start;
+  padding: 12px;
+  border-block-end: 1px solid var(--border);
+  white-space: nowrap;
+}
+.notice {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+.error {
+  border-inline-start: 4px solid var(--dining-alert-border);
+  background: var(--dining-alert-bg);
+  color: var(--dining-alert-text);
+  padding-inline-start: 16px;
+}
+.tabs {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-block: 24px;
+}
+.tabs button[aria-pressed='true'] {
+  border-block-end: 3px solid var(--accent);
+}
+.output {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.money {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+/* Operational header is compact; official artwork and its intrinsic proportions stay unchanged. */
+.page {
+  padding-block: 12px 24px;
+}
+.header {
+  margin-block-end: 10px;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+.compactBrand {
+  inline-size: 200px;
+  min-inline-size: 0;
+}
+.intro {
+  margin-block-end: 10px;
+  background: var(--surface-reading);
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.intro h1 {
+  font-size: clamp(1.05rem, 2vw, 1.45rem);
+  margin: 0 0 6px;
+}
+.reviewNotice {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: var(--weight-medium);
+}
+.environment {
+  font-size: 0.78rem;
+}
+.environment summary,
+.sessionControls summary,
+.accessBar summary {
+  min-block-size: 44px;
+  padding-block: 10px;
+  cursor: pointer;
+}
+.sessionControls {
+  margin-block-start: 4px;
+  border-block-start: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.sessionControls form {
+  margin-block-end: 10px;
+}
+.sessionControls label {
+  display: grid;
+  gap: 5px;
+}
+.sessionControls select {
+  inline-size: 100%;
+  min-block-size: 44px;
+  max-inline-size: 100%;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  font: inherit;
+}
+.accessBar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  background: var(--surface-reading);
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+}
+.accessBar details {
+  flex: 1;
+  min-inline-size: 0;
+}
+.accessBar p {
+  margin: 4px 0;
+}
+.tabs {
+  gap: 8px;
+  margin-block: 12px;
+}
+.planningPanel {
+  padding: 14px;
+  margin-block-end: 14px;
+  background: var(--surface-reading);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.planningToolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-block-end: 10px;
+}
+.planningToolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+}
+.planningToolbar input {
+  min-block-size: 44px;
+  border: 1px solid var(--border-strong);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  max-inline-size: 100%;
+}
+.environment summary:focus,
+.sessionControls summary:focus,
+.accessBar summary:focus {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+@media (max-width: 480px) {
+  .compactBrand {
+    inline-size: 152px;
+  }
+  .page {
+    padding-inline: 12px;
+  }
+  .planningPanel {
+    padding: 10px;
+  }
+  .intro {
+    padding: 10px;
+  }
+}
+.page button {
+  border-color: var(--border-strong);
+}
+
+/* Dense form surfaces preserve contrast; introductory glass panels are defined separately below. */
+.table,
+.card,
+.intro,
+.accessBar,
+.planningPanel,
+.banner {
+  background: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+}
+.table {
+  padding: 12px;
+  margin-block: 16px;
+  max-inline-size: 100%;
+}
+.table caption {
+  text-align: start;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 12px;
+}
+.table th {
+  background: var(--surface-muted);
+}
+.table td {
+  white-space: normal;
+  min-inline-size: 110px;
+  vertical-align: top;
+}
+.table tbody tr:hover {
+  background: var(--accent-tint);
+}
+.table:focus-visible,
+.page :is(input, select, textarea):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.page :is(input, select, textarea),
+.page option {
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.page :is(input, select, textarea):disabled {
+  opacity: 1;
+  color: var(--text-secondary);
+  background: var(--surface-reading);
+  cursor: not-allowed;
+}
+.page {
+  padding-inline: clamp(12px, 2vw, 28px);
+  min-inline-size: 0;
+}
+.header {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+}
+.header > :nth-child(2) {
+  justify-self: end;
+}
+.activeContext {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+.activeContext p {
+  margin-block: 6px;
+}
+.reviewNotice {
+  background: var(--review-bg);
+  color: var(--review-text);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+}
+.navButton {
+  color: inherit;
+  background: transparent;
+  border: 1px solid transparent;
+  text-align: start;
+  inline-size: 100%;
+  font: inherit;
+}
+.navButton[aria-pressed='true'] {
+  background: var(--sidebar-active);
+  color: var(--text-inverse);
+}
+.navButton:disabled {
+  opacity: 1;
+  color: var(--disabled-text);
+  background: var(--disabled-bg);
+}
+.mobileNavigation {
+  display: none;
+}
+.tabButton {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  padding: 10px;
+  min-block-size: 44px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.pick {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-inline-size: 0;
+}
+.selectedChoice {
+  color: var(--text-secondary);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.choices {
+  display: grid;
+  gap: 8px;
+}
+.fields .choices label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-block-size: 44px;
+}
+.choices input {
+  inline-size: 20px;
+  min-block-size: 20px;
+  flex: 0 0 20px;
+}
+.fieldError {
+  border-inline-start: 3px solid var(--dining-alert-border);
+  padding: 12px;
+  background: var(--surface-card);
+}
+.workspace {
+  min-inline-size: 0;
+}
+@media (max-width: 760px) {
+  .mobileNavigation {
+    display: block;
+  }
+}
+
+/* Equal flexible tracks center the artwork against the complete main header. */
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 420px) minmax(0, 1fr);
+  direction: ltr;
+}
+.compactBrand {
+  grid-column: 2;
+  justify-self: center;
+  inline-size: min(420px, 100%);
+}
+.compactBrand > div {
+  inline-size: 100%;
+}
+.compactBrand > div > span:first-child {
+  inline-size: 100%;
+}
+.compactBrand > div > span:last-child {
+  white-space: nowrap;
+  font-size: clamp(12px, 1.2vw, 18px);
+}
+.header > :nth-child(2) {
+  grid-column: 3;
+  justify-self: end;
+  align-self: start;
+}
+@media (max-width: 1060px) {
+  .header {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .header > :nth-child(2) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .compactBrand {
+    grid-column: 1;
+    grid-row: 2;
+    inline-size: min(360px, 100%);
+  }
+  .compactBrand > div > span:last-child {
+    font-size: clamp(12px, 3.5vw, 16px);
+  }
+}
+.multi {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  min-inline-size: 0;
+  padding: 12px;
+  margin: 0;
+}
+.fields .multi label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-block-size: 44px;
+}
+.multi input[type='checkbox'] {
+  inline-size: 20px;
+  min-block-size: 20px;
+  flex: 0 0 20px;
+}
+.multi small {
+  display: block;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+.multi p {
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+}
+
+/* Only backgrounds transmit the artwork. Foreground controls and official assets stay opaque. */
+.header,
+.intro,
+.accessBar,
+.sectionIntro {
+  background: var(--surface-panel);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+}
+.sectionIntro {
+  padding: 16px 20px;
+  margin-block: 0 16px;
+}
+.sectionIntro h2 {
+  margin-block: 0 10px;
+}
+.sectionIntro p {
+  margin-block: 8px;
+  line-height: 1.6;
+}
+.table table {
+  min-inline-size: 650px;
+}
+.table th,
+.table td {
+  overflow-wrap: normal;
+  word-break: normal;
+  min-inline-size: 135px;
+  line-height: 1.5;
+}
+.table td:first-child {
+  min-inline-size: 180px;
+}
+.card h3 {
+  overflow-wrap: normal;
+  line-height: 1.4;
+}
+.card details {
+  margin-block: 10px;
+}
+.card details p {
+  overflow-wrap: anywhere;
+}
+.card .row {
+  align-items: start;
+}
+.card .row > * {
+  flex: 1 1 180px;
+}
+
+.auditJson {
+  max-inline-size: min(440px, 70vw);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  direction: ltr;
+  text-align: left;
+}
+
+/* Local operational hierarchy; other platform areas retain their validated layout. */
+.sidebarTitle {
+  text-align: center;
+  display: grid;
+  gap: 6px;
+  margin-block: 0 24px;
+  line-height: 1.4;
+}
+.sidebarTitle > bdi {
+  font-size: 24px;
+  font-weight: 700;
+}
+.sidebarTitle > span {
+  font-size: 14px;
+  font-weight: 500;
+}
+.headerControls {
+  display: grid;
+  inline-size: 100%;
+  gap: 10px;
+  justify-items: end;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+}
+.headerControls > div {
+  max-inline-size: 100%;
+}
+.fieldControl {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  min-inline-size: 0;
+}
+.elementLabel {
+  position: relative;
+  padding-inline-end: 44px;
+  min-block-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-inline-size: 0;
+}
+.elementLabel > [role='button'] {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: -6px;
+}
+.elementLabel label {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.submitElement {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  align-self: end;
+  min-inline-size: 0;
+}
+.submitElement > button {
+  flex: 1;
+  min-inline-size: 0;
+  white-space: normal;
+}
+.checkRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-inline-size: 0;
+}
+.checkRow > label {
+  flex: 1;
+}
+.sessionForm {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 2fr);
+  grid-template-rows: auto minmax(44px, auto) auto;
+  gap: 8px 16px;
+  align-items: stretch;
+}
+.sessionForm > .pick {
+  grid-row: 1 / 4;
+  grid-column: 1;
+  grid-template-rows: subgrid;
+}
+.sessionForm select {
+  block-size: 100%;
+  min-block-size: 44px;
+}
+.sessionActions {
+  grid-row: 2;
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-inline-size: 0;
+  align-items: stretch;
+}
+.sessionAction {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-inline-size: 0;
+}
+.sessionAction > button {
+  flex: 1;
+  min-inline-size: 0;
+  min-block-size: 44px;
+  white-space: normal;
+}
+.page select,
+.page option,
+.selectedChoice {
+  unicode-bidi: plaintext;
+}
+@media (max-width: 1060px) {
+  .headerControls {
+    inline-size: 100%;
+  }
+}
+@media (max-width: 760px) {
+  .sessionForm {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+  .sessionForm > .pick {
+    grid-column: 1;
+    grid-row: auto;
+    grid-template-rows: auto auto auto;
+  }
+  .sessionActions {
+    grid-column: 1;
+    grid-row: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Main-shell integration shares the existing workspace, without a nested application frame. */
+.integratedFrame {
+  display: block;
+  min-inline-size: 0;
+}
+.integratedBody {
+  margin: 0;
+  min-inline-size: 0;
+}
+.integratedFrame .page {
+  padding: 0;
+  min-block-size: 0;
+}
+.integratedFrame .mobileNavigation {
+  display: block;
+}

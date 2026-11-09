@@ -6,17 +6,25 @@
 # ==============================================
 
 # ==============================================
-# 💰 BRANCH PRICING REPOSITORY
-# عمليات قاعدة البيانات لتسعير الفروع باستخدام SQLAlchemy
+# BRANCH PRICING REPOSITORY
+# Query configured branch tariffs and delegate progressive pricing through the shared
+# rules.
 # ==============================================
 
-"""MoulAI operational module for branch pricing repo.
+"""Query configured branch tariffs and delegate progressive pricing through the shared rules."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
 
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
+
+from decimal import Decimal
 from typing import (
     Any,
+    TypeAlias,
 )
 
 from sqlalchemy import (
@@ -32,14 +40,17 @@ from app.repositories.base import BaseRepository
 
 # ==============================================
 # 🧩 TYPES
+# Describe shared input, update and result structures for this module.
 # ==============================================
 
-BranchPricingData = dict[str, Any]
-BranchPricingUpdateData = dict[str, Any]
-BranchPricingList = list[BranchPricing]
+BranchPricingData: TypeAlias = dict[str, Any]
+BranchPricingUpdateData: TypeAlias = dict[str, Any]
+BranchPricingList: TypeAlias = list[BranchPricing]
+
 
 # ==============================================
 # 💰 BRANCH PRICING REPOSITORY
+# مستودع تسعير الفروع - يوفر عمليات خاصة بتسعير الفروع.
 # ==============================================
 
 
@@ -64,11 +75,13 @@ class BranchPricingRepository(
     """
 
     # ==============================================
-    #   INIT
+    # INIT
+    # تهيئة مستودع تسعير الفروع.
     # ==============================================
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -79,12 +92,14 @@ class BranchPricingRepository(
         """
         super().__init__(BranchPricing, session)
 
-    # ==========================================
+    # ==============================================
     # 📖 QUERIES
-    # ==========================================
+    # Read persisted records through the existing repository selection rules.
+    # ==============================================
 
     # ==============================================
     # GET ACTIVE
+    # الحصول على قواعد تسعير الفروع النشطة.
     # ==============================================
 
     async def get_active(
@@ -125,12 +140,14 @@ class BranchPricingRepository(
 
     # ==============================================
     # GET RULE FOR BRANCHES
+    # الحصول على قاعدة تسعير تناسب عدد فروع معين.
     # ==============================================
 
     async def get_rule_for_branches(
         self,
         *,
         branches_count: int,
+        plan_id: int | None = None,
     ) -> BranchPricing | None:
         """
         الحصول على قاعدة تسعير تناسب عدد فروع معين.
@@ -147,6 +164,14 @@ class BranchPricingRepository(
                 .where(
                     and_(
                         self.model.active == True,
+                        (
+                            self.model.plan_id.is_(None)
+                            if plan_id is None
+                            else (
+                                self.model.plan_id.is_(None)
+                                | (self.model.plan_id == plan_id)
+                            )
+                        ),
                         self.model.min_branches <= branches_count,
                         or_(
                             self.model.max_branches.is_(None),
@@ -155,6 +180,7 @@ class BranchPricingRepository(
                     ),
                 )
                 .order_by(
+                    self.model.plan_id.is_not(None).desc(),
                     self.model.min_branches.desc(),
                     self.model.id.desc(),
                 )
@@ -177,71 +203,30 @@ class BranchPricingRepository(
 
     # ==============================================
     # CALCULATE COST
+    # Delegate progressive branch charging to the configured shared pricing rules.
     # ==============================================
 
     async def calculate_cost(
         self,
         *,
         branches_count: int,
-    ) -> float:
-        """
-        حساب تكلفة الفروع بناءً على عددها.
+    ) -> Decimal:
+        """Delegate progressive branch charging to the configured shared pricing rules."""
 
-        Args:
-            branches_count: عدد الفروع
+        from app.services.business.subscription_branch_pricing import branch_breakdown
 
-        Returns:
-            التكلفة الإجمالية
-        """
-        try:
-            # إذا كان عدد الفروع 1 أو أقل، التكلفة 0
-            if branches_count <= 1:
-                return 0.0
+        return (
+            await branch_breakdown(session=self.session, branches_count=branches_count)
+        )[0]
 
-            # الحصول على قاعدة التسعير المناسبة
-            rule = await self.get_rule_for_branches(
-                branches_count=branches_count,
-            )
-
-            if not rule:
-                logger.warning(
-                    "branch_pricing_repo_no_rule_found",
-                    extra={"branches_count": branches_count},
-                )
-                return 0.0
-
-            # حساب التكلفة: (عدد الفروع - 1) * سعر الفرع الإضافي
-            extra_branches = branches_count - 1
-            cost = extra_branches * float(rule.price_per_branch)
-
-            logger.info(
-                "branch_pricing_repo_calculate_cost",
-                extra={
-                    "branches_count": branches_count,
-                    "extra_branches": extra_branches,
-                    "price_per_branch": float(rule.price_per_branch),
-                    "cost": cost,
-                },
-            )
-
-            return cost
-
-        except Exception as e:
-            logger.exception(
-                "branch_pricing_repo_calculate_cost_failed",
-                extra={
-                    "branches_count": branches_count,
-                    "error": str(e),
-                },
-            )
-            raise
-
-    # ==========================================
+    # ==============================================
     # ✏️ UPDATES
-    # ==========================================
+    # تحديث سعر الفرع الإضافي.
+    # ==============================================
 
     # ==============================================
     # UPDATE PRICE
+    # تحديث سعر الفرع الإضافي.
     # ==============================================
 
     async def update_price(
@@ -275,6 +260,7 @@ class BranchPricingRepository(
 
     # ==============================================
     # ACTIVATE
+    # تفعيل قاعدة تسعير.
     # ==============================================
 
     async def activate(
@@ -303,6 +289,7 @@ class BranchPricingRepository(
 
     # ==============================================
     # DEACTIVATE
+    # إلغاء تفعيل قاعدة تسعير.
     # ==============================================
 
     async def deactivate(

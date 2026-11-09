@@ -10,6 +10,15 @@ import { AccessError, type AccessAdapter } from './contracts';
 /** Intentional fail-closed deployment state until Business Integration is approved. */
 export const disconnectedAdapter: AccessAdapter = {
   mode: 'disconnected',
+  async diningBranches() {
+    throw new AccessError('notConnected');
+  },
+  async diningWorkspace() {
+    throw new AccessError('notConnected');
+  },
+  async simulateDining() {
+    throw new AccessError('notConnected');
+  },
   async reportBreakdown() {
     throw new AccessError('notConnected');
   },

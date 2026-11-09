@@ -6,15 +6,19 @@
 # ==============================================
 
 # ==============================================
-# 📦 SUBSCRIPTION MODEL
-# نظام الاشتراكات والخطط والميزات
-# يدير خطط الاشتراك والميزات والاشتراكات النشطة
+# SUBSCRIPTION AND ENTITLEMENT MODELS
+# Map plans, features, service periods and requested or activated entitlements.
 # ==============================================
 
-"""MoulAI operational module for subscription.
+"""Map plans, features, service periods and requested or activated entitlements."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from sqlalchemy import (
     Boolean,
@@ -24,8 +28,10 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
 
@@ -61,11 +67,17 @@ class SubscriptionPlan(BaseModel):
         branch_pricing: قائمة تسعير الفروع
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "subscription_plans"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     code = Column(
         String(50),
@@ -105,9 +117,10 @@ class SubscriptionPlan(BaseModel):
         comment="حالة النشاط",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     subscriptions = relationship(
         "Subscription",
@@ -137,9 +150,10 @@ class SubscriptionPlan(BaseModel):
         # comment="قائمة تسعير الفروع",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -177,11 +191,17 @@ class Feature(BaseModel):
         usage_counters: قائمة عدادات الاستخدام
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "features"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     code = Column(
         String(50),
@@ -199,9 +219,10 @@ class Feature(BaseModel):
         comment="وصف الميزة",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     plan_features = relationship(
         "PlanFeature",
@@ -246,9 +267,10 @@ class Feature(BaseModel):
         # comment="قائمة عدادات الاستخدام",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -280,11 +302,17 @@ class PlanFeature(BaseModel):
         feature: علاقة مع نموذج Feature
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "plan_features"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     plan_id = Column(
         Integer,
@@ -304,9 +332,10 @@ class PlanFeature(BaseModel):
         comment="هل الميزة مدرجة في الخطة",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     plan = relationship(
         "SubscriptionPlan",
@@ -321,9 +350,10 @@ class PlanFeature(BaseModel):
         # comment="الميزة",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -372,11 +402,17 @@ class Subscription(BaseModel):
         payments: قائمة المدفوعات
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "subscriptions"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     owner_id = Column(
         Integer,
@@ -402,7 +438,7 @@ class Subscription(BaseModel):
         comment="دورة الفوترة: monthly, quarterly, yearly",
     )
     amount = Column(
-        Float,
+        Numeric(24, 8),
         nullable=False,
         comment="المبلغ",
     )
@@ -421,9 +457,15 @@ class Subscription(BaseModel):
         comment="حالة الاشتراك: pending, trial, active, expired, cancelled",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔒 CONSTRAINTS
-    # ==========================================
+    # Enforce the declared integrity rules on persisted records.
+    # ==============================================
+
+    calendar_anchor = Column(DateTime, nullable=True)
+    cancelled_at = Column(DateTime, nullable=True)
+    currency = Column(String(3), nullable=False, default="DZD", server_default="DZD")
+    market = Column(String(10), nullable=True)
 
     __table_args__ = (
         Index(
@@ -435,9 +477,10 @@ class Subscription(BaseModel):
         ),
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     owner = relationship(
         "Owner",
@@ -478,9 +521,10 @@ class Subscription(BaseModel):
         # comment="قائمة المدفوعات",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -514,11 +558,22 @@ class SubscriptionFeature(BaseModel):
         feature: علاقة مع نموذج Feature
     """
 
-    __tablename__ = "subscription_features"
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
 
-    # ==========================================
+    __tablename__ = "subscription_features"
+    __table_args__ = (
+        UniqueConstraint(
+            "subscription_id", "feature_id", name="uq_subscription_feature"
+        ),
+    )
+
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     subscription_id = Column(
         Integer,
@@ -533,9 +588,10 @@ class SubscriptionFeature(BaseModel):
         comment="معرف الميزة",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     subscription = relationship(
         "Subscription",
@@ -550,9 +606,10 @@ class SubscriptionFeature(BaseModel):
         # comment="الميزة",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """
@@ -586,11 +643,17 @@ class SubscriptionFeatureRequest(BaseModel):
         feature: علاقة مع نموذج Feature
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "subscription_feature_requests"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     subscription_id = Column(
         Integer,
@@ -605,9 +668,10 @@ class SubscriptionFeatureRequest(BaseModel):
         comment="معرف الميزة",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔒 CONSTRAINTS
-    # ==========================================
+    # Enforce the declared integrity rules on persisted records.
+    # ==============================================
 
     __table_args__ = (
         Index(
@@ -622,9 +686,10 @@ class SubscriptionFeatureRequest(BaseModel):
         ),
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     subscription = relationship(
         "Subscription",
@@ -639,9 +704,10 @@ class SubscriptionFeatureRequest(BaseModel):
         # comment="الميزة",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """

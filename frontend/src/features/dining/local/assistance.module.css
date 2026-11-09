@@ -1,0 +1,236 @@
+/* MoulAI™ — opaque readable help, independent of the underlying form lifecycle. */
+.elementHelp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: transparent;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.elementHelp > span {
+  display: grid;
+  place-items: center;
+  inline-size: 18px;
+  block-size: 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  font-size: 12px;
+  line-height: 1;
+}
+.conversation {
+  display: grid;
+  grid-template-rows: minmax(80px, 1fr) auto;
+  block-size: min(640px, calc(100dvh - 260px));
+  min-block-size: 220px;
+}
+.conversationBody {
+  overflow: auto;
+  padding-inline: 4px;
+}
+.composer {
+  border-block-start: 1px solid var(--border-strong);
+  padding-block-start: 8px;
+  background: var(--surface-card);
+}
+.composer .field {
+  margin-block: 0 8px;
+}
+.composer textarea {
+  min-block-size: 65px;
+  max-block-size: 110px;
+}
+.composer .voice {
+  max-block-size: 120px;
+  overflow: auto;
+  margin-block: 8px 0;
+  padding: 8px;
+}
+.messages {
+  white-space: normal;
+}
+.composer .voice .actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  margin: 0;
+  gap: 8px;
+}
+.composer .voice button {
+  padding: 8px;
+  font-size: 12px;
+  min-block-size: 44px;
+}
+.optionHelp {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.optionHelp p {
+  margin-block: 0 4px;
+}
+.optionHelp summary {
+  min-block-size: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+.optionHelp dt {
+  font-weight: 700;
+  margin-block-start: 10px;
+}
+.optionHelp dd {
+  margin-inline: 0;
+}
+.elementHelp:hover {
+  background: var(--surface-reading);
+}
+.elementHelp:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 80;
+}
+.panel {
+  position: fixed;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 81;
+  inline-size: min(840px, calc(100vw - 24px));
+  max-block-size: calc(100dvh - 24px);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  background: var(--surface-card);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+.panel[dir='rtl'] {
+  inset-inline-start: auto;
+  left: 50%;
+}
+.heading,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-block: 12px;
+}
+.heading {
+  justify-content: space-between;
+}
+.heading h2 {
+  margin: 0;
+}
+.actions button {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  white-space: normal;
+}
+.field {
+  display: grid;
+  gap: 8px;
+  font-weight: 600;
+  margin-block: 16px;
+  min-inline-size: 0;
+}
+.field input,
+.field textarea,
+.field select {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 44px;
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+.field textarea {
+  min-block-size: 100px;
+  resize: vertical;
+}
+.box,
+.voice {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-block: 16px;
+  min-inline-size: 0;
+}
+.box h3 {
+  margin-block: 16px 6px;
+}
+.box p {
+  margin-block: 8px;
+}
+.box li {
+  margin-block: 8px;
+}
+.notice {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.question {
+  font-weight: 700;
+  white-space: pre-wrap;
+}
+.voice {
+  font-size: 0.9rem;
+}
+.voice p {
+  margin-block: 8px;
+}
+.panel :is(button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.panel summary {
+  cursor: pointer;
+  min-block-size: 44px;
+}
+.guidedNotice {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+}
+:global(.moulai-guided-focus) {
+  outline: 4px solid var(--focus) !important;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 8px var(--surface-card);
+}
+@media (max-width: 600px) {
+  .panel {
+    padding: 16px;
+  }
+  .dock {
+    justify-content: flex-end;
+  }
+  .dock button {
+    flex: 1;
+  }
+  .actions {
+    align-items: stretch;
+  }
+}

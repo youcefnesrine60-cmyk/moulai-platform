@@ -6,22 +6,25 @@
 # ==============================================
 
 # ==============================================
-# 💳 PAYMENT SCHEMAS
-# نماذج Pydantic للمدفوعات
-# تدير التحقق من صحة البيانات وتسلسلها للمدفوعات
+# PAYMENT INPUT AND RESPONSE SCHEMAS
+# Validate payment data and serialize the existing payment and statistics contracts.
 # ==============================================
 
-"""MoulAI operational module for payment.
+"""Validate payment data and serialize the existing payment and statistics contracts."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from datetime import datetime
+from decimal import Decimal
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
+    TypeAlias,
 )
 
 from pydantic import (
@@ -32,15 +35,17 @@ from pydantic import (
 
 # ==============================================
 # 🧩 TYPES
+# Describe shared input, update and result structures for this module.
 # ==============================================
 
-PaymentData = Dict[str, Any]
-PaymentUpdateData = Dict[str, Any]
-PaymentListData = List[Dict[str, Any]]
+PaymentData: TypeAlias = dict[str, Any]
+PaymentUpdateData: TypeAlias = dict[str, Any]
+PaymentListData: TypeAlias = list[dict[str, Any]]
 
 
 # ==============================================
 # 📦 BASE SCHEMA
+# المخطط الأساسي للدفع.
 # ==============================================
 
 
@@ -60,6 +65,11 @@ class PaymentBase(BaseModel):
         external_reference: المرجع الخارجي من بوابة الدفع
     """
 
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
+
     owner_id: int = Field(
         ...,
         description="معرف المالك",
@@ -70,7 +80,7 @@ class PaymentBase(BaseModel):
         description="معرف المطعم",
         json_schema_extra={"example": 1},
     )
-    subscription_id: Optional[int] = Field(
+    subscription_id: int | None = Field(
         None,
         description="معرف الاشتراك المرتبط",
         json_schema_extra={"example": 1},
@@ -81,7 +91,7 @@ class PaymentBase(BaseModel):
         description="طريقة الدفع: cash, card, online",
         json_schema_extra={"example": "card"},
     )
-    amount: float = Field(
+    amount: Decimal = Field(
         ...,
         gt=0,
         description="المبلغ",
@@ -93,7 +103,7 @@ class PaymentBase(BaseModel):
         description="حالة الدفع: pending, paid, failed, cancelled",
         json_schema_extra={"example": "pending"},
     )
-    external_reference: Optional[str] = Field(
+    external_reference: str | None = Field(
         None,
         max_length=255,
         description="المرجع الخارجي من بوابة الدفع",
@@ -103,6 +113,7 @@ class PaymentBase(BaseModel):
 
 # ==============================================
 # 📥 CREATE SCHEMA
+# مخطط إنشاء دفع جديد.
 # ==============================================
 
 
@@ -119,6 +130,11 @@ class PaymentCreate(BaseModel):
         external_reference: المرجع الخارجي (اختياري)
     """
 
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
+
     owner_id: int = Field(
         ...,
         description="معرف المالك",
@@ -129,7 +145,7 @@ class PaymentCreate(BaseModel):
         description="معرف المطعم",
         json_schema_extra={"example": 1},
     )
-    subscription_id: Optional[int] = Field(
+    subscription_id: int | None = Field(
         None,
         description="معرف الاشتراك المرتبط",
         json_schema_extra={"example": 1},
@@ -140,13 +156,13 @@ class PaymentCreate(BaseModel):
         description="طريقة الدفع: cash, card, online",
         json_schema_extra={"example": "card"},
     )
-    amount: float = Field(
+    amount: Decimal = Field(
         ...,
         gt=0,
         description="المبلغ",
         json_schema_extra={"example": 100.50},
     )
-    external_reference: Optional[str] = Field(
+    external_reference: str | None = Field(
         None,
         max_length=255,
         description="المرجع الخارجي من بوابة الدفع",
@@ -156,6 +172,7 @@ class PaymentCreate(BaseModel):
 
 # ==============================================
 # 📤 UPDATE SCHEMA
+# مخطط تحديث الدفع - جميع الحقول اختيارية.
 # ==============================================
 
 
@@ -169,19 +186,24 @@ class PaymentUpdate(BaseModel):
         paid_at: تاريخ الدفع
     """
 
-    status: Optional[str] = Field(
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
+
+    status: str | None = Field(
         None,
         max_length=50,
         description="حالة الدفع: pending, paid, failed, cancelled",
         json_schema_extra={"example": "paid"},
     )
-    external_reference: Optional[str] = Field(
+    external_reference: str | None = Field(
         None,
         max_length=255,
         description="المرجع الخارجي من بوابة الدفع",
         json_schema_extra={"example": "pay_123456789"},
     )
-    paid_at: Optional[datetime] = Field(
+    paid_at: datetime | None = Field(
         None,
         description="تاريخ الدفع",
     )
@@ -189,6 +211,7 @@ class PaymentUpdate(BaseModel):
 
 # ==============================================
 # 📤 STATUS UPDATE SCHEMA
+# مخطط تحديث حالة الدفع.
 # ==============================================
 
 
@@ -201,13 +224,18 @@ class PaymentStatusUpdate(BaseModel):
         paid_at: تاريخ الدفع (عند التأكيد)
     """
 
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
+
     status: str = Field(
         ...,
         max_length=50,
         description="الحالة الجديدة: paid, failed, cancelled",
         json_schema_extra={"example": "paid"},
     )
-    paid_at: Optional[datetime] = Field(
+    paid_at: datetime | None = Field(
         None,
         description="تاريخ الدفع (عند التأكيد)",
     )
@@ -215,6 +243,7 @@ class PaymentStatusUpdate(BaseModel):
 
 # ==============================================
 # 📤 CONFIRM PAYMENT SCHEMA
+# مخطط تأكيد الدفع.
 # ==============================================
 
 
@@ -227,13 +256,18 @@ class PaymentConfirm(BaseModel):
         paid_at: تاريخ الدفع
     """
 
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
+
     external_reference: str = Field(
         ...,
         max_length=255,
         description="المرجع الخارجي من بوابة الدفع",
         json_schema_extra={"example": "pay_123456789"},
     )
-    paid_at: Optional[datetime] = Field(
+    paid_at: datetime | None = Field(
         None,
         description="تاريخ الدفع (افتراضي: الآن)",
     )
@@ -241,6 +275,7 @@ class PaymentConfirm(BaseModel):
 
 # ==============================================
 # 📤 RESPONSE SCHEMA
+# مخطط استجابة الدفع - يحتوي على جميع الحقول بما فيها التواريخ.
 # ==============================================
 
 
@@ -254,6 +289,11 @@ class PaymentResponse(PaymentBase):
         updated_at: تاريخ آخر تحديث
         paid_at: تاريخ الدفع
     """
+
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
 
     payment_provider: str | None = None
     currency: str = "DZD"
@@ -273,7 +313,7 @@ class PaymentResponse(PaymentBase):
         ...,
         description="تاريخ آخر تحديث",
     )
-    paid_at: Optional[datetime] = Field(
+    paid_at: datetime | None = Field(
         None,
         description="تاريخ الدفع",
     )
@@ -281,6 +321,7 @@ class PaymentResponse(PaymentBase):
 
 # ==============================================
 # 📋 LIST RESPONSE
+# مخطط استجابة قائمة المدفوعات.
 # ==============================================
 
 
@@ -297,9 +338,14 @@ class PaymentListResponse(BaseModel):
         limit: الحد الأقصى للسجلات
     """
 
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
+
     model_config = ConfigDict(from_attributes=True)
 
-    items: List[PaymentResponse] = Field(
+    items: list[PaymentResponse] = Field(
         ...,
         description="قائمة المدفوعات",
     )
@@ -325,6 +371,7 @@ class PaymentListResponse(BaseModel):
 
 # ==============================================
 # 📊 PAYMENT STATUS SCHEMA
+# مخطط حالة الدفع.
 # ==============================================
 
 
@@ -344,6 +391,11 @@ class PaymentStatus(BaseModel):
         amount: المبلغ
         paid_at: تاريخ الدفع
     """
+
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -377,12 +429,12 @@ class PaymentStatus(BaseModel):
         description="هل الدفع ملغى؟",
         json_schema_extra={"example": False},
     )
-    amount: float = Field(
+    amount: Decimal = Field(
         ...,
         description="المبلغ",
         json_schema_extra={"example": 100.50},
     )
-    paid_at: Optional[datetime] = Field(
+    paid_at: datetime | None = Field(
         None,
         description="تاريخ الدفع",
     )
@@ -390,6 +442,7 @@ class PaymentStatus(BaseModel):
 
 # ==============================================
 # 📊 PAYMENT SUMMARY SCHEMA
+# مخطط ملخص المدفوعات.
 # ==============================================
 
 
@@ -409,6 +462,11 @@ class PaymentSummary(BaseModel):
         total_paid_amount: إجمالي المبلغ المدفوع
         total_pending_amount: إجمالي المبلغ المعلق
     """
+
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -442,19 +500,19 @@ class PaymentSummary(BaseModel):
         json_schema_extra={"example": 1},
         ge=0,
     )
-    total_amount: float = Field(
+    total_amount: Decimal = Field(
         ...,
         description="إجمالي المبلغ",
         json_schema_extra={"example": 1000.00},
         ge=0,
     )
-    total_paid_amount: float = Field(
+    total_paid_amount: Decimal = Field(
         ...,
         description="إجمالي المبلغ المدفوع",
         json_schema_extra={"example": 500.00},
         ge=0,
     )
-    total_pending_amount: float = Field(
+    total_pending_amount: Decimal = Field(
         ...,
         description="إجمالي المبلغ المعلق",
         json_schema_extra={"example": 300.00},
@@ -464,19 +522,20 @@ class PaymentSummary(BaseModel):
 
 # ==============================================
 # 📋 EXPORTS
+# Declare the public names intentionally exposed to importing modules.
 # ==============================================
 
 __all__ = [
     "PaymentBase",
-    "PaymentCreate",
-    "PaymentUpdate",
-    "PaymentStatusUpdate",
     "PaymentConfirm",
-    "PaymentResponse",
-    "PaymentListResponse",
-    "PaymentStatus",
-    "PaymentSummary",
+    "PaymentCreate",
     "PaymentData",
-    "PaymentUpdateData",
     "PaymentListData",
+    "PaymentListResponse",
+    "PaymentResponse",
+    "PaymentStatus",
+    "PaymentStatusUpdate",
+    "PaymentSummary",
+    "PaymentUpdate",
+    "PaymentUpdateData",
 ]

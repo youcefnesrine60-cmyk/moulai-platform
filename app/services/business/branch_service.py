@@ -6,14 +6,18 @@
 # ==============================================
 
 # ==============================================
-# MOULAI MODULE - APP / SERVICES / BUSINESS / BRANCH SERVICE
-# Operational component of the MoulAI platform.
+# OWNED RESTAURANT BRANCH SERVICE
+# Enforce restaurant ownership and subscription entitlement around branch operations.
 # ==============================================
 
-"""MoulAI operational module for branch service.
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+"""Enforce restaurant ownership and subscription entitlement around branch operations."""
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -60,6 +64,7 @@ from app.services.business.feature_usage_counter_engine import (
 
 # ==============================================
 # 🧩 CONSTANTS
+# Group the fixed identifiers and supported values used by the following operations.
 # ==============================================
 
 BRANCH_FEATURE_ID = 3
@@ -68,10 +73,17 @@ MAX_BRANCHES_PER_RESTAURANT = 10
 
 # ==============================================
 # 🧩 TYPES
+# Describe shared input, update and result structures for this module.
 # ==============================================
 
 BranchData = dict[str, Any]
 BranchList = list[Branch]
+
+
+# ==============================================
+# BASE RESTAURANT SELECT
+# Select restaurant identifiers before applying authenticated owner scope.
+# ==============================================
 
 
 def _base_restaurant_select() -> Select[tuple[int]]:
@@ -115,6 +127,7 @@ async def branch_transaction(session: AsyncSession) -> AsyncIterator[None]:
 
 # ==============================================
 # 🏢 BRANCH SERVICE
+# خدمة الفروع - تدير منطق الأعمال للفروع.
 # ==============================================
 
 
@@ -135,7 +148,8 @@ class BranchService:
     """
 
     # ==============================================
-    #   INIT
+    # INIT
+    # تهيئة خدمة الفروع.
     # ==============================================
 
     def __init__(
@@ -154,10 +168,11 @@ class BranchService:
         self.owner_id = owner_id
         bind_owner_scope(session=session, owner_id=owner_id)
         self.repo = BranchesRepository(session)
-        self.pricing_repo = BranchPricingRepository(session)
+        self.pricing_repo = BranchPricingRepository(session=session)
 
     # ==============================================
     # AUTHENTICATED RESTAURANT OWNERSHIP
+    # Reject inaccessible parents before feature checks or branch operations.
     # ==============================================
 
     async def _require_owned_restaurant(
@@ -174,6 +189,11 @@ class BranchService:
         if restaurant is None:
             raise NotFoundError(message="Restaurant not found")
 
+    # ==============================================
+    # GET LOCKED BRANCH
+    # Lock the owned parent first, then its branch, before counter changes.
+    # ==============================================
+
     async def _get_locked_branch(self, *, branch_id: int) -> Branch:
         """Lock the owned parent first, then its branch, before counter changes."""
         restaurant_id = await self.session.scalar(
@@ -188,6 +208,11 @@ class BranchService:
         if branch is None or branch.restaurant_id != restaurant_id:
             raise NotFoundError(message="Branch not found")
         return branch
+
+    # ==============================================
+    # REQUIRE BRANCH ENTITLEMENT
+    # Check subscription access without treating a branch ID as permission.
+    # ==============================================
 
     async def _require_branch_entitlement(self, *, restaurant_id: int) -> None:
         """Check subscription access without treating a branch ID as permission."""
@@ -207,6 +232,11 @@ class BranchService:
                 raise
             raise ForbiddenError(message=error_code, error_code=error_code) from error
 
+    # ==============================================
+    # REQUIRE BRANCH CAPACITY
+    # Enforce the active-branch cap while holding the restaurant row lock.
+    # ==============================================
+
     async def _require_branch_capacity(self, *, restaurant_id: int) -> None:
         """Enforce the active-branch cap while holding the restaurant row lock."""
         count = await self.count_by_restaurant(
@@ -221,10 +251,12 @@ class BranchService:
 
     # ==========================================
     # 📖 QUERIES
+    # Read persisted records through the existing repository selection rules.
     # ==========================================
 
     # ==============================================
     # GET BY ID
+    # الحصول على فرع بالمعرف.
     # ==============================================
 
     async def get_by_id(
@@ -262,6 +294,7 @@ class BranchService:
 
     # ==============================================
     # GET BY RESTAURANT
+    # الحصول على فروع مطعم معين.
     # ==============================================
 
     async def get_by_restaurant(
@@ -316,6 +349,7 @@ class BranchService:
 
     # ==============================================
     # COUNT BY RESTAURANT
+    # حساب عدد فروع مطعم معين.
     # ==============================================
 
     async def count_by_restaurant(
@@ -350,6 +384,7 @@ class BranchService:
 
     # ==============================================
     # SEARCH
+    # البحث عن فروع.
     # ==============================================
 
     async def search(
@@ -406,10 +441,12 @@ class BranchService:
 
     # ==========================================
     # 💰 PRICING
+    # Resolve configured tariffs and retain the established calculation ordering.
     # ==========================================
 
     # ==============================================
     # GET BRANCH COST
+    # حساب تكلفة الفروع لمطعم معين.
     # ==============================================
 
     async def get_branch_cost(
@@ -447,10 +484,12 @@ class BranchService:
 
     # ==========================================
     # 📊 STATISTICS
+    # Aggregate persisted counts and values through the existing query paths.
     # ==========================================
 
     # ==============================================
     # GET BRANCH SUMMARY
+    # الحصول على ملخص الفروع لمطعم معين.
     # ==============================================
 
     async def get_branch_summary(
@@ -511,10 +550,12 @@ class BranchService:
 
     # ==========================================
     # ✏️ MUTATIONS
+    # Group persistence changes while retaining the caller's transaction contract.
     # ==========================================
 
     # ==============================================
     # CREATE BRANCH
+    # Create one branch and its feature-usage increment atomically.
     # ==============================================
 
     async def create_branch(
@@ -584,6 +625,7 @@ class BranchService:
 
     # ==============================================
     # UPDATE BRANCH
+    # تحديث فرع.
     # ==============================================
 
     async def update_branch(
@@ -664,6 +706,7 @@ class BranchService:
 
     # ==============================================
     # UPDATE BRANCH STATUS
+    # تحديث حالة الفرع (نشط/غير نشط).
     # ==============================================
 
     async def update_branch_status(
@@ -711,6 +754,7 @@ class BranchService:
 
     # ==============================================
     # DEACTIVATE BRANCH
+    # إلغاء تفعيل فرع.
     # ==============================================
 
     async def deactivate_branch(
@@ -761,6 +805,7 @@ class BranchService:
 
     # ==============================================
     # ACTIVATE BRANCH
+    # تفعيل فرع.
     # ==============================================
 
     async def activate_branch(
@@ -813,6 +858,7 @@ class BranchService:
 
     # ==============================================
     # DELETE BRANCH
+    # حذف فرع.
     # ==============================================
 
     async def delete_branch(

@@ -5,8 +5,14 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# PAYMENT HTTP CONTRACTS
+# Verify authenticated ledger access and exact Decimal JSON amounts through real in-process routes.
+# ==============================================
+
 """Verify payment HTTP ownership, error translation, and immutable ledger rules."""
 
+# isort: split
 # ==============================================
 # IMPORTS AND INERT HTTP HARNESS
 # ==============================================
@@ -16,6 +22,7 @@ from datetime import (
     datetime,
     timezone,
 )
+from decimal import Decimal
 from typing import (
     Any,
     TypeAlias,
@@ -208,9 +215,33 @@ async def test_payment_status_flags_match_the_ledger(
     response = await payment_http.request("GET", "/41/status")
     assert response.status_code == 200
     data = response.json()
-    assert data["payment_id"] == 41 and data["amount"] == 1200
+    assert data["payment_id"] == 41
+    assert isinstance(data["amount"], str)
+    assert (
+        data["amount"] == payment_record(status=state).model_dump(mode="json")["amount"]
+    )
     for value in ("pending", "paid", "failed", "cancelled"):
         assert data[f"is_{value}"] is (state == value)
+
+
+# ==============================================
+# EXACT DECIMAL JSON AMOUNTS
+# Verify fractional monetary values cross HTTP as decimal strings without float coercion.
+# ==============================================
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("amount", ["0.01", "1200.01", "999999.99"])
+async def test_payment_status_preserves_decimal_json_amount(
+    payment_http: PaymentHarness, amount: str
+) -> None:
+    """Keep the ledger's exact Decimal value in the public JSON contract."""
+    payment_http.service.get_by_id.return_value = payment_record().model_copy(
+        update={"amount": Decimal(amount)}
+    )
+    response = await payment_http.request("GET", "/41/status")
+    assert response.status_code == 200
+    assert response.json()["amount"] == amount
 
 
 def checkout_payload() -> JsonObject:
@@ -336,7 +367,9 @@ async def test_payment_summary_passes_only_the_authenticated_owner(
         "GET", "/stats/summary", params={"restaurant_id": 21}
     )
     assert response.status_code == 200
-    assert response.json()["total_paid_amount"] == 1200
+    assert response.json()["total_paid_amount"] == "1200"
+    assert response.json()["total_amount"] == "3600"
+    assert response.json()["total_pending_amount"] == "2400"
     payment_http.service.get_payment_summary.assert_awaited_once_with(
         restaurant_id=21, owner_id=11
     )

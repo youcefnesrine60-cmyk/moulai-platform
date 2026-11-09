@@ -6,24 +6,24 @@
 # ==============================================
 
 # ==============================================
-# 💳 SUBSCRIPTION PLAN REPOSITORY
-# عمليات قاعدة البيانات لخطط الاشتراك باستخدام SQLAlchemy
-# قراءة الباقات (Basic, Professional, Enterprise, Trial)
-# قراءة السعر الأساسي
-# قراءة نسبة التخفيض
-# قراءة الكود
+# SUBSCRIPTION PLAN REPOSITORY
+# Read active plan definitions and delegate current base-price calculation.
 # ==============================================
 
-"""MoulAI operational module for subscription plan repo.
+"""Read active plan definitions and delegate current base-price calculation."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
 
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
+
+from decimal import Decimal
 from typing import (
     Any,
-    Dict,
-    List,
-    Optional,
+    TypeAlias,
 )
 
 from sqlalchemy import select
@@ -35,14 +35,17 @@ from app.repositories.base import BaseRepository
 
 # ==============================================
 # 🧩 TYPES
+# Describe shared input, update and result structures for this module.
 # ==============================================
 
-SubscriptionPlanData = Dict[str, Any]
-SubscriptionPlanUpdateData = Dict[str, Any]
-SubscriptionPlanList = List[SubscriptionPlan]
+SubscriptionPlanData: TypeAlias = dict[str, Any]
+SubscriptionPlanUpdateData: TypeAlias = dict[str, Any]
+SubscriptionPlanList: TypeAlias = list[SubscriptionPlan]
+
 
 # ==============================================
 # 💳 SUBSCRIPTION PLAN REPOSITORY
+# مستودع خطط الاشتراك - يوفر عمليات خاصة بخطط الاشتراك.
 # ==============================================
 
 
@@ -68,11 +71,13 @@ class SubscriptionPlanRepository(
     """
 
     # ==============================================
-    #   INIT
+    # INIT
+    # تهيئة مستودع خطط الاشتراك.
     # ==============================================
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -83,19 +88,21 @@ class SubscriptionPlanRepository(
         """
         super().__init__(SubscriptionPlan, session)
 
-    # ==========================================
+    # ==============================================
     # 📖 QUERIES
-    # ==========================================
+    # Read persisted records through the existing repository selection rules.
+    # ==============================================
 
     # ==============================================
     # GET BY CODE
+    # الحصول على خطة اشتراك بواسطة الكود.
     # ==============================================
 
     async def get_by_code(
         self,
         *,
         code: str,
-    ) -> Optional[SubscriptionPlan]:
+    ) -> SubscriptionPlan | None:
         """
         الحصول على خطة اشتراك بواسطة الكود.
 
@@ -124,6 +131,7 @@ class SubscriptionPlanRepository(
 
     # ==============================================
     # GET ACTIVE
+    # الحصول على خطط الاشتراك النشطة.
     # ==============================================
 
     async def get_active(
@@ -167,11 +175,12 @@ class SubscriptionPlanRepository(
 
     # ==============================================
     # GET TRIAL PLAN
+    # الحصول على خطة التجربة المجانية.
     # ==============================================
 
     async def get_trial_plan(
         self,
-    ) -> Optional[SubscriptionPlan]:
+    ) -> SubscriptionPlan | None:
         """
         الحصول على خطة التجربة المجانية.
 
@@ -182,6 +191,7 @@ class SubscriptionPlanRepository(
 
     # ==============================================
     # GET BY DISPLAY ORDER
+    # الحصول على خطط الاشتراك مرتبة حسب ترتيب العرض.
     # ==============================================
 
     async def get_by_display_order(
@@ -222,12 +232,14 @@ class SubscriptionPlanRepository(
             )
             raise
 
-    # ==========================================
+    # ==============================================
     # ✏️ UPDATES
-    # ==========================================
+    # تحديث السعر الأساسي للخطة.
+    # ==============================================
 
     # ==============================================
     # UPDATE PRICE
+    # تحديث السعر الأساسي للخطة.
     # ==============================================
 
     async def update_price(
@@ -235,7 +247,7 @@ class SubscriptionPlanRepository(
         *,
         plan_id: int,
         base_price: float,
-    ) -> Optional[SubscriptionPlan]:
+    ) -> SubscriptionPlan | None:
         """
         تحديث السعر الأساسي للخطة.
 
@@ -261,6 +273,7 @@ class SubscriptionPlanRepository(
 
     # ==============================================
     # UPDATE DISCOUNT
+    # تحديث نسبة التخفيض للخطة.
     # ==============================================
 
     async def update_discount(
@@ -268,7 +281,7 @@ class SubscriptionPlanRepository(
         *,
         plan_id: int,
         plan_discount_percent: float,
-    ) -> Optional[SubscriptionPlan]:
+    ) -> SubscriptionPlan | None:
         """
         تحديث نسبة التخفيض للخطة.
 
@@ -294,13 +307,14 @@ class SubscriptionPlanRepository(
 
     # ==============================================
     # ACTIVATE
+    # تفعيل خطة اشتراك.
     # ==============================================
 
     async def activate(
         self,
         *,
         plan_id: int,
-    ) -> Optional[SubscriptionPlan]:
+    ) -> SubscriptionPlan | None:
         """
         تفعيل خطة اشتراك.
 
@@ -322,13 +336,14 @@ class SubscriptionPlanRepository(
 
     # ==============================================
     # DEACTIVATE
+    # إلغاء تفعيل خطة اشتراك.
     # ==============================================
 
     async def deactivate(
         self,
         *,
         plan_id: int,
-    ) -> Optional[SubscriptionPlan]:
+    ) -> SubscriptionPlan | None:
         """
         إلغاء تفعيل خطة اشتراك.
 
@@ -350,6 +365,7 @@ class SubscriptionPlanRepository(
 
     # ==============================================
     # UPDATE DISPLAY ORDER
+    # تحديث ترتيب عرض الخطة.
     # ==============================================
 
     async def update_display_order(
@@ -357,7 +373,7 @@ class SubscriptionPlanRepository(
         *,
         plan_id: int,
         display_order: int,
-    ) -> Optional[SubscriptionPlan]:
+    ) -> SubscriptionPlan | None:
         """
         تحديث ترتيب عرض الخطة.
 
@@ -381,19 +397,21 @@ class SubscriptionPlanRepository(
             data={"display_order": display_order},
         )
 
-    # ==========================================
+    # ==============================================
     # 💰 CALCULATIONS
-    # ==========================================
+    # حساب السعر النهائي للخطة بعد التخفيض.
+    # ==============================================
 
     # ==============================================
     # CALCULATE PRICE
+    # حساب السعر النهائي للخطة بعد التخفيض.
     # ==============================================
 
     async def calculate_price(
         self,
         *,
         plan_id: int,
-    ) -> float:
+    ) -> Decimal:
         """
         حساب السعر النهائي للخطة بعد التخفيض.
 
@@ -406,14 +424,8 @@ class SubscriptionPlanRepository(
         Raises:
             ValueError: إذا لم يتم العثور على الخطة
         """
-        plan = await self.get_by_id(id=plan_id)
+        from app.services.business.pricing_service import calculate_plan_base_price
 
-        if not plan:
-            raise ValueError(f"Subscription plan {plan_id} not found")
-
-        base_price = float(plan.base_price)
-        discount = float(plan.plan_discount_percent)
-
-        final_price = base_price - (base_price * discount / 100)
-
-        return round(final_price, 2)
+        return await calculate_plan_base_price(
+            session=self.session, plan_id=plan_id, billing_cycle="monthly"
+        )

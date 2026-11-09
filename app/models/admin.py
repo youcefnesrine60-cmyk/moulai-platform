@@ -11,9 +11,10 @@
 # يدير بيانات المديرين وأدوارهم وصلاحياتهم
 # ==============================================
 
-"""MoulAI operational module for admin.
+"""Persist platform administrator identities and their explicit role associations.
 
-Part of MoulAI Platform - Agent-as-a-Service.
+Audit relationships retain decisions after an administrator is deleted; session
+lifecycle and authorization are handled by their existing services.
 """
 
 from sqlalchemy import (
@@ -110,7 +111,8 @@ class Admin(BaseModel):
     logs = relationship(
         "AdminLog",
         back_populates="admin",
-        cascade="all, delete-orphan",
+        cascade="save-update, merge",
+        passive_deletes="all",
         lazy="selectin",
         # comment="سجل أنشطة المدير",
     )

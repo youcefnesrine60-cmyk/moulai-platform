@@ -5,28 +5,49 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# PAYMENT TRANSACTION REGRESSIONS
+# Check rollback, ownership and idempotent subscription or customer-order payment
+# effects.
+# ==============================================
+
 """PostgreSQL regressions for billing callbacks and customer order payments."""
+
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 import asyncio
 from datetime import (
     datetime,
     timedelta,
+    timezone,
 )
 from types import SimpleNamespace
+from typing import Never
 
 import pytest
 from sqlalchemy import (
+    Row,
     func,
     insert,
     select,
     update,
 )
-from sqlalchemy.ext.asyncio import async_sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+)
 
 from app.core.exceptions import (
     NotFoundError,
     ValidationError,
 )
+from app.models.base import BaseModel
 from app.models.order import Order
 from app.models.order_item import OrderPayment
 from app.models.owner import Owner
@@ -45,10 +66,27 @@ from app.repositories.subscription_features_repo import SubscriptionFeatureRepos
 from app.services.business.order_payments_service import OrderPaymentsService
 from app.services.business.payment_service import PaymentService
 
+# ==============================================
+# PAYMENT GRAPH
+# Create synthetic payment and subscription rows with independent test-session
+# factories.
+# ==============================================
+
 
 @pytest.fixture
-async def payment_graph(db_session, sample_restaurant_data):
-    async def put(model, **values):
+async def payment_graph(
+    db_session: AsyncSession, sample_restaurant_data: dict[str, object]
+) -> SimpleNamespace:
+    """Create synthetic payment and subscription rows with independent test-session factories."""
+
+    # ==============================================
+    # PUT
+    # Insert one synthetic fixture row and return its database-generated identifier.
+    # ==============================================
+
+    async def put(model: type[BaseModel], **values: object) -> int:
+        """Insert one synthetic fixture row and return its database-generated identifier."""
+
         return (
             await db_session.execute(
                 insert(model.__table__).values(**values).returning(model.id)
@@ -108,7 +146,22 @@ async def payment_graph(db_session, sample_restaurant_data):
     )
 
 
-async def snapshot(graph):
+# ==============================================
+# SNAPSHOT
+# Read payment, subscription and entitlement state from an independent test session.
+# ==============================================
+
+
+async def snapshot(
+    graph: SimpleNamespace,
+) -> tuple[
+    Row[tuple[str, datetime | None]],
+    Row[tuple[str, datetime | None, datetime | None]],
+    int,
+    int,
+]:
+    """Read payment, subscription and entitlement state from an independent test session."""
+
     async with graph.sessions() as reader:
         payment = (
             await reader.execute(
@@ -144,11 +197,19 @@ async def snapshot(graph):
     return payment, subscription, features, requests
 
 
+# ==============================================
+# TEST BILLING SUCCESS COMMITS AND DUPLICATE DOES NOT EXTEND
+# Verify billing success commits and duplicate does not extend.
+# ==============================================
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("cycle,days", [("monthly", 30), ("yearly", 365)])
 async def test_billing_success_commits_and_duplicate_does_not_extend(
-    payment_graph, cycle, days
-):
+    payment_graph: SimpleNamespace, cycle: str, days: int
+) -> None:
+    """Verify billing success commits and duplicate does not extend."""
+
     g = payment_graph
     async with g.sessions() as session:
         await session.execute(
@@ -164,7 +225,11 @@ async def test_billing_success_commits_and_duplicate_does_not_extend(
     assert first[0].status == "paid"
     assert first[0].paid_at == first[1].starts_at
     assert first[1].status == "active"
-    assert first[1].expires_at - first[1].starts_at == timedelta(days=days)
+    from app.services.business.subscription_calendar import add_months
+
+    assert first[1].expires_at == add_months(
+        start=first[1].starts_at, months=1 if cycle == "monthly" else 12
+    )
     assert first[2:] == (1, 0)
     async with g.sessions() as session:
         await PaymentService(session=session).confirm_external_payment(
@@ -176,14 +241,29 @@ async def test_billing_success_commits_and_duplicate_does_not_extend(
     assert await snapshot(g) == first
 
 
+# ==============================================
+# TEST FEATURE FAILURE ROLLS BACK PAYMENT AND ACTIVATION
+# Verify feature failure rolls back payment and activation.
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_feature_failure_rolls_back_payment_and_activation(
-    payment_graph, monkeypatch
-):
+    payment_graph: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Verify feature failure rolls back payment and activation."""
+
     g = payment_graph
     original = SubscriptionFeatureRepository.create_subscription_feature
 
-    async def fail_after_feature(self, **kwargs):
+    # ==============================================
+    # FAIL AFTER FEATURE
+    # Inject a controlled failure to verify transaction rollback.
+    # ==============================================
+
+    async def fail_after_feature(self, **kwargs: object) -> Never:
+        """Inject a controlled failure to verify transaction rollback."""
+
         await original(self, **kwargs)
         raise RuntimeError("feature transfer failed")
 
@@ -202,8 +282,18 @@ async def test_feature_failure_rolls_back_payment_and_activation(
     assert result[2:] == (0, 1)
 
 
+# ==============================================
+# TEST BILLING PRESERVES CALLER TRANSACTION AND AUTOBEGIN
+# Verify billing preserves caller transaction and autobegin.
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_billing_preserves_caller_transaction_and_autobegin(payment_graph):
+async def test_billing_preserves_caller_transaction_and_autobegin(
+    payment_graph: SimpleNamespace,
+) -> None:
+    """Verify billing preserves caller transaction and autobegin."""
+
     g = payment_graph
     async with g.sessions() as session:
         await session.begin()
@@ -224,16 +314,26 @@ async def test_billing_preserves_caller_transaction_and_autobegin(payment_graph)
     assert (await snapshot(g))[0].status == "paid"
 
 
+# ==============================================
+# TEST BILLING REJECTS INVALID EVENT WITHOUT WRITES
+# Verify billing rejects invalid event without writes.
+# ==============================================
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("case", ["missing", "cycle", "scope", "cancelled"])
-async def test_billing_rejects_invalid_event_without_writes(payment_graph, case):
+async def test_billing_rejects_invalid_event_without_writes(
+    payment_graph: SimpleNamespace, case: str
+) -> None:
+    """Verify billing rejects invalid event without writes."""
+
     g = payment_graph
     async with g.sessions() as session:
         if case == "cycle":
             await session.execute(
                 update(Subscription)
                 .where(Subscription.id == g.subscription)
-                .values(billing_cycle="quarterly")
+                .values(billing_cycle="weekly")
             )
         elif case == "scope":
             owner = (
@@ -262,8 +362,18 @@ async def test_billing_rejects_invalid_event_without_writes(payment_graph, case)
     assert result[2:] == (0, 1)
 
 
+# ==============================================
+# TEST FAILURE IS IDEMPOTENT AND DOES NOT ACTIVATE SUBSCRIPTION
+# Verify failure is idempotent and does not activate subscription.
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_failure_is_idempotent_and_does_not_activate_subscription(payment_graph):
+async def test_failure_is_idempotent_and_does_not_activate_subscription(
+    payment_graph: SimpleNamespace,
+) -> None:
+    """Verify failure is idempotent and does not activate subscription."""
+
     g = payment_graph
     async with g.sessions() as session:
         service = PaymentService(session=session)
@@ -277,11 +387,29 @@ async def test_failure_is_idempotent_and_does_not_activate_subscription(payment_
     assert result[2:] == (0, 1)
 
 
+# ==============================================
+# TEST CONCURRENT DUPLICATE SUCCESS CREATES FEATURES ONCE
+# Verify concurrent duplicate success creates features once.
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_concurrent_duplicate_success_creates_features_once(payment_graph):
+async def test_concurrent_duplicate_success_creates_features_once(
+    payment_graph: SimpleNamespace,
+) -> None:
+    """Verify concurrent duplicate success creates features once."""
+
     g = payment_graph
 
-    async def confirm():
+    # ==============================================
+    # CONFIRM
+    # Confirm the synthetic external payment through an independent session for
+    # concurrency checks.
+    # ==============================================
+
+    async def confirm() -> None:
+        """Confirm the synthetic external payment through an independent session for concurrency checks."""
+
         async with g.sessions() as session:
             await PaymentService(session=session).confirm_external_payment(
                 external_reference="gateway-1"
@@ -293,10 +421,18 @@ async def test_concurrent_duplicate_success_creates_features_once(payment_graph)
     assert result[2:] == (1, 0)
 
 
+# ==============================================
+# TEST CUSTOMER PAYMENT USES ORDER TABLE AMOUNT AND IS IDEMPOTENT
+# Verify customer payment uses order table amount and is idempotent.
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_customer_payment_uses_order_table_amount_and_is_idempotent(
-    payment_graph,
-):
+    payment_graph: SimpleNamespace,
+) -> None:
+    """Verify customer payment uses order table amount and is idempotent."""
+
     g = payment_graph
     async with g.sessions() as session:
         service = OrderPaymentsService(session=session)
@@ -326,8 +462,18 @@ async def test_customer_payment_uses_order_table_amount_and_is_idempotent(
         ).scalar_one() == "pending"
 
 
+# ==============================================
+# TEST CUSTOMER PAYMENT DENIES OTHER CUSTOMER
+# Verify customer payment denies other customer.
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_customer_payment_denies_other_customer(payment_graph):
+async def test_customer_payment_denies_other_customer(
+    payment_graph: SimpleNamespace,
+) -> None:
+    """Verify customer payment denies other customer."""
+
     g = payment_graph
     async with g.sessions() as session:
         with pytest.raises(NotFoundError):
@@ -339,8 +485,18 @@ async def test_customer_payment_denies_other_customer(payment_graph):
         ).scalar_one() == 0
 
 
+# ==============================================
+# TEST CUSTOMER PAYMENT QUOTE IS OWNED AND USES PERSISTED AMOUNT
+# Verify customer payment quote is owned and uses persisted amount.
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_customer_payment_quote_is_owned_and_uses_persisted_amount(payment_graph):
+async def test_customer_payment_quote_is_owned_and_uses_persisted_amount(
+    payment_graph: SimpleNamespace,
+) -> None:
+    """Verify customer payment quote is owned and uses persisted amount."""
+
     g = payment_graph
     async with g.sessions() as session:
         service = OrderPaymentsService(session=session)
@@ -353,8 +509,18 @@ async def test_customer_payment_quote_is_owned_and_uses_persisted_amount(payment
             await service.get_customer_payment_options(chat_id=82002, order_id=g.order)
 
 
+# ==============================================
+# TEST EXPLICITLY DISABLED ORDER METHODS ARE NOT DEFAULTED
+# Verify explicitly disabled order methods are not defaulted.
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_explicitly_disabled_order_methods_are_not_defaulted(payment_graph):
+async def test_explicitly_disabled_order_methods_are_not_defaulted(
+    payment_graph: SimpleNamespace,
+) -> None:
+    """Verify explicitly disabled order methods are not defaulted."""
+
     g = payment_graph
     async with g.sessions() as session:
         await session.execute(
@@ -379,13 +545,28 @@ async def test_explicitly_disabled_order_methods_are_not_defaulted(payment_graph
             )
 
 
+# ==============================================
+# TEST CUSTOMER CONFIRMATION FAILURE REMOVES NEW PAYMENT
+# Verify customer confirmation failure removes new payment.
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_customer_confirmation_failure_removes_new_payment(
-    payment_graph, monkeypatch
-):
+    payment_graph: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Verify customer confirmation failure removes new payment."""
+
     original = OrderPaymentsService.create_payment
 
-    async def fail_create(self, **kwargs):
+    # ==============================================
+    # FAIL CREATE
+    # Inject a controlled failure to verify transaction rollback.
+    # ==============================================
+
+    async def fail_create(self, **kwargs: object) -> Never:
+        """Inject a controlled failure to verify transaction rollback."""
+
         await original(self, **kwargs)
         raise RuntimeError("confirmation failed")
 
@@ -401,10 +582,20 @@ async def test_customer_confirmation_failure_removes_new_payment(
         ).scalar_one() == 0
 
 
+# ==============================================
+# TEST ACTIVE SUBSCRIPTION KEEPS ITS ORIGINAL DATES
+# Verify active subscription keeps its original dates.
+# ==============================================
+
+
 @pytest.mark.asyncio
-async def test_active_subscription_keeps_its_original_dates(payment_graph):
+async def test_active_subscription_keeps_its_original_dates(
+    payment_graph: SimpleNamespace,
+) -> None:
+    """Verify active subscription keeps its original dates."""
+
     g = payment_graph
-    starts = datetime(2026, 10, 1)  # noqa: DTZ001 - Existing DB columns store naive UTC.
+    starts = datetime(2026, 10, 1, tzinfo=timezone.utc).replace(tzinfo=None)
     expires = starts + timedelta(days=30)
     async with g.sessions() as session:
         await session.execute(

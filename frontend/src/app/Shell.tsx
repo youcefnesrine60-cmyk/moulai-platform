@@ -32,6 +32,7 @@ import {
 } from './access';
 import { Brand, AppearanceControls } from '../shared/ui/primitives';
 import styles from './shell.module.css';
+import { AccessHelp } from '../features/access/AccessHelp';
 
 /** Shared navigation with distinct platform and company affordances. */
 export function Sidebar({
@@ -42,6 +43,7 @@ export function Sidebar({
   close: () => void;
 }): ReactElement {
   const { t } = useTranslation();
+  const operational = useAdapter().mode === 'authenticated-local';
   const { organizationId, restaurantId } = useParams();
   const organizations = useOrganizations();
   const session = useSession();
@@ -128,6 +130,20 @@ export function Sidebar({
               ),
             )}
         {platform &&
+          operational &&
+          session.data?.platformPermissions.includes(
+            'subscriptions.pricing.manage',
+          ) && (
+            <NavLink
+              className={styles.navLink ?? ''}
+              to="/platform/pricing"
+              onClick={close}
+            >
+              {t('pricing.campaigns')}
+            </NavLink>
+          )}
+        {platform &&
+          !operational &&
           platformOperations
             .filter(([permission]) =>
               session.data?.platformPermissions.includes(permission),
@@ -153,7 +169,7 @@ export function Sidebar({
         </p>
         <button className={styles.signout} onClick={() => void leave()}>
           <LogOut size={18} aria-hidden="true" />
-          {t('nav.signout')}
+          {t(operational ? 'integration.signout' : 'nav.signout')}
         </button>
       </div>
     </div>
@@ -169,6 +185,7 @@ export function Shell({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const diningOperational = location.pathname.endsWith('/tables');
   const adapter = useAdapter();
   const atWorkspace = location.pathname === '/workspace';
   return (
@@ -183,7 +200,9 @@ export function Shell({
         {adapter.mode === 'synthetic' && (
           <div className={styles.reviewBanner}>{t('review.banner')}</div>
         )}
-        <header className={styles.header}>
+        <header
+          className={`${styles.header} ${diningOperational ? styles.operationalHeader : ''}`}
+        >
           <div className={styles.breadcrumb}>
             <Dialog.Root open={open} onOpenChange={setOpen}>
               <Dialog.Trigger
@@ -244,7 +263,9 @@ export function Shell({
                                   ? 'nav.reports'
                                   : location.pathname.includes('/billing')
                                     ? 'nav.billing'
-                                    : 'nav.restaurants',
+                                    : diningOperational
+                                      ? 'dining.title'
+                                      : 'nav.restaurants',
                   )}
                 </span>
               </>
@@ -252,6 +273,11 @@ export function Shell({
           </div>
           <Brand />
           <div className={styles.headerActions}>
+            {adapter.mode === 'authenticated-local' && (
+              <div id="operational-help-slot">
+                {!diningOperational && <AccessHelp operational />}
+              </div>
+            )}
             <AppearanceControls />
             <span
               className={styles.accountIcon}
@@ -262,7 +288,11 @@ export function Shell({
             </span>
           </div>
         </header>
-        <main id="main-content" className={styles.content} tabIndex={-1}>
+        <main
+          id="main-content"
+          className={`${styles.content} ${diningOperational ? styles.operationalContent : ''}`}
+          tabIndex={-1}
+        >
           <Outlet />
         </main>
         <footer className={styles.footer}>

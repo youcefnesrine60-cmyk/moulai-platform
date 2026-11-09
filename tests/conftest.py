@@ -6,11 +6,20 @@
 # ==============================================
 
 # ==============================================
-# 🧪 PYTEST CONFIGURATION
-# إعدادات مشتركة لجميع الاختبارات
+# PYTEST OFFLINE AND DATABASE BOUNDARIES
+# Install the offline guard and require explicit authorization for destructive database
+# fixtures.
 # ==============================================
 
 """Keep offline tests independent of explicitly authorized PostgreSQL fixtures."""
+
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 import asyncio
 import os
@@ -40,18 +49,22 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from scripts.run_offline_api_tests import OfflineNetworkGuard
+from test_support.offline_storage import reserve_pytest_directory
 
 # ==============================================
 # 🔧 TEST DATABASE
+# Identify the explicit test schema and keep it separate from application data.
 # ==============================================
 
 TEST_ALEMBIC_DIRECTORY = Path(__file__).resolve().parents[1] / "alembic_test"
 OFFLINE_GUARD: pytest.StashKey[OfflineNetworkGuard] = pytest.StashKey()
 AUDIT_ACTIVE: pytest.StashKey[bool] = pytest.StashKey()
+SEPARATE_REHEARSALS: pytest.StashKey[dict[str, int]] = pytest.StashKey()
 
 
 # ==============================================
 # EXPLICIT LIVE-DATABASE OPT-IN AND OFFLINE NETWORK GUARD
+# Require an explicit CLI choice before destructive database fixtures run.
 # ==============================================
 
 
@@ -73,16 +86,32 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 # ==============================================
 # CONFIGURE DEFAULT OFFLINE EXECUTION
+# Reuse the socket guard before collecting application test modules.
 # ==============================================
 
 
 def pytest_configure(config: pytest.Config) -> None:
     """Reuse the socket guard before collecting application test modules."""
+    # Reserve a unique workspace path before pytest constructs its tmp_path factory.
+    # An explicitly supplied --basetemp remains under the caller's control.
+    if config.option.basetemp is None:
+        config.option.basetemp = str(reserve_pytest_directory())
+    config.stash[SEPARATE_REHEARSALS] = {}
     config.addinivalue_line(
         "markers", "database: requires explicit live PostgreSQL test authorization"
     )
     config.addinivalue_line(
         "markers", "k10_postgres: requires the dedicated isolated local E1 profile"
+    )
+    config.addinivalue_line(
+        "markers",
+        "dining_postgres: requires the dedicated post-S1a local dining profile",
+    )
+    config.addinivalue_line(
+        "markers", "country_rehearsal: requires the dedicated disposable O3/O4 runner"
+    )
+    config.addinivalue_line(
+        "markers", "operational_rehearsal: requires the dedicated disposable O2 runner"
     )
     local_mode = config.getoption("--local-postgres-tests")
     if local_mode and config.getoption("--run-database-tests"):
@@ -101,13 +130,13 @@ def pytest_configure(config: pytest.Config) -> None:
         )
 
         try:
-            LocalPostgresSettings()
+            local_configuration = LocalPostgresSettings()
         except ValidationError:
             raise pytest.UsageError(
                 "Local PostgreSQL configuration is incomplete or unsafe. "
                 "Use python scripts/run_local_postgres_tests.py; no Neon fallback exists."
             ) from None
-        guard = LocalPostgresNetworkGuard()
+        guard = LocalPostgresNetworkGuard(client_port=local_configuration.CLIENT_PORT)
     else:
         guard = OfflineNetworkGuard()
     config.stash[OFFLINE_GUARD] = guard
@@ -115,6 +144,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
     # ==============================================
     # DISPATCH AUDIT EVENTS ONLY DURING THIS PYTEST SESSION
+    # Limit the hook to this run, including embedded pytest invocations.
     # ==============================================
 
     def audit_network(event: str, arguments: tuple[Any, ...]) -> None:
@@ -127,6 +157,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 # ==============================================
 # CLASSIFY LIVE FIXTURE DEPENDENCIES
+# Skip only live fixture consumers, including their transitive dependents.
 # ==============================================
 
 
@@ -135,6 +166,39 @@ def pytest_collection_modifyitems(
 ) -> None:
     """Skip only live fixture consumers, including their transitive dependents."""
     for item in items:
+        # ==============================================
+        # SEPARATE HISTORICAL SCHEMAS FROM THE GENERAL DATABASE PROFILE
+        # These runners use --noconftest and attest their own fresh databases; neither a remote opt-in nor ambient credentials admit them here.
+        # ==============================================
+
+        for marker, command in (
+            ("country_rehearsal", "scripts/rehearse_country_base.py --billing-country"),
+            (
+                "operational_rehearsal",
+                "scripts/rehearse_country_base.py --operational-history",
+            ),
+        ):
+            if item.get_closest_marker(marker) is not None and "factory" in getattr(
+                item, "fixturenames", ()
+            ):
+                separate = config.stash[SEPARATE_REHEARSALS]
+                separate[command] = separate.get(command, 0) + 1
+                item.add_marker(
+                    pytest.mark.skip(
+                        reason="Separate disposable-schema test: run python "
+                        + command
+                        + ". Not executed in this general run; no database connection opened."
+                    )
+                )
+        if item.get_closest_marker("dining_postgres") is not None and (
+            not config.getoption("--local-postgres-tests")
+            or os.environ.get("LOCAL_POSTGRES_TEST_PROFILE") != "dining"
+        ):
+            item.add_marker(
+                pytest.mark.skip(
+                    reason="Dining requires the isolated launcher --profile dining."
+                )
+            )
         if item.get_closest_marker("k10_postgres") is not None and (
             not config.getoption("--local-postgres-tests")
             or os.environ.get("LOCAL_POSTGRES_TEST_PROFILE") != "k10"
@@ -162,6 +226,7 @@ def pytest_collection_modifyitems(
 
 # ==============================================
 # REPORT UNEXPECTED NETWORK ATTEMPTS
+# A caught forbidden network attempt must not produce a successful run.
 # ==============================================
 
 
@@ -174,6 +239,7 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
 
 # ==============================================
 # EXPLAIN NETWORK POLICY FAILURES WITHOUT DESTINATION DETAILS
+# Make a rejected network event visible even if the test caught its error.
 # ==============================================
 
 
@@ -184,10 +250,18 @@ def pytest_terminal_summary(terminalreporter: Any, config: pytest.Config) -> Non
         terminalreporter.write_sep(
             "=", f"Offline network guard rejected {sum(guard.denied.values())} event(s)"
         )
+    separate = config.stash.get(SEPARATE_REHEARSALS, {})
+    if separate:
+        terminalreporter.write_sep(
+            "-", "Separate PostgreSQL scenarios NOT RUN in this campaign"
+        )
+        for command, count in sorted(separate.items()):
+            terminalreporter.write_line(f"{count} scenario(s): python {command}")
 
 
 # ==============================================
 # CLOSE THE SESSION AUDIT BOUNDARY
+# Deactivate this run's audit callback when pytest releases its config.
 # ==============================================
 
 
@@ -198,6 +272,7 @@ def pytest_unconfigure(config: pytest.Config) -> None:
 
 # ==============================================
 # LAZY GUARDED POSTGRESQL ENGINE
+# Validate the approved target only when a live fixture is requested.
 # ==============================================
 
 
@@ -270,6 +345,7 @@ async def test_database_engine(
 
 # ==============================================
 # TEST SCHEMA REVISION GUARD
+# Return the head revision from the dedicated test Alembic history.
 # ==============================================
 
 
@@ -277,18 +353,30 @@ def get_expected_test_schema_revision() -> str:
     """Return the head revision from the dedicated test Alembic history."""
     alembic_config = Config()
     alembic_config.set_main_option("script_location", str(TEST_ALEMBIC_DIRECTORY))
-    expected_revision = ScriptDirectory.from_config(alembic_config).get_current_head()
+    expected_revision = (
+        ScriptDirectory.from_config(alembic_config)
+        .get_revision("e1b92b200001")
+        .revision
+    )
     if expected_revision is None:
         raise RuntimeError("The dedicated test Alembic history has no head revision.")
 
     return expected_revision
 
 
+# ==============================================
+# VERIFY TEST SCHEMA REVISION
+# Refuse cleanup on a mismatched schema without prescribing a migration.
+# ==============================================
+
+
 @pytest.fixture(scope="session")
 async def verify_test_schema_revision(test_database_engine: AsyncEngine) -> None:
     """Refuse cleanup on a mismatched schema without prescribing a migration."""
     from test_support.local_postgres import (
+        LOCAL_MAIN_REVISION,
         LOCAL_REVISION,
+        LOCAL_S1_REVISION,
         LocalPostgresSettings,
         read_local_test_identity,
     )
@@ -298,7 +386,13 @@ async def verify_test_schema_revision(test_database_engine: AsyncEngine) -> None
     )
     local_mode = isinstance(local_configuration, LocalPostgresSettings)
     expected_revision = (
-        LOCAL_REVISION if local_mode else get_expected_test_schema_revision()
+        (
+            {"subscription": LOCAL_S1_REVISION, "main": LOCAL_MAIN_REVISION}.get(
+                local_configuration.PROFILE, LOCAL_REVISION
+            )
+        )
+        if local_mode
+        else get_expected_test_schema_revision()
     )
 
     try:
@@ -349,6 +443,7 @@ async def verify_test_schema_revision(test_database_engine: AsyncEngine) -> None
 
 # ==============================================
 # 🔧 ASYNCIO FIXTURE
+# إنشاء event loop للاختبارات غير المتزامنة.
 # ==============================================
 
 
@@ -367,6 +462,7 @@ def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
 
 # ==============================================
 # ✅ DB SESSION FIXTURE
+# إنشاء جلسة قاعدة بيانات اختبارية.
 # ==============================================
 
 
@@ -395,6 +491,7 @@ async def db_session(
 
 # ==============================================
 # ✅ CLIENT FIXTURE
+# إنشاء عميل اختبار HTTP مع جلسة قاعدة بيانات مستقلة لكل طلب.
 # ==============================================
 
 
@@ -421,9 +518,12 @@ async def client(
 
     # ==============================================
     # OVERRIDE GET DB
+    # Yield the explicitly selected test session to the dependency override.
     # ==============================================
 
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
+        """Yield the explicitly selected test session to the dependency override."""
+
         async with session_factory() as session:
             try:
                 yield session
@@ -445,6 +545,7 @@ async def client(
 
 # ==============================================
 # 🔧 TEST DATABASE CLEANUP FIXTURE
+# تنظيف قاعدة البيانات التجريبية قبل وبعد كل اختبار.
 # ==============================================
 
 
@@ -467,9 +568,13 @@ async def cleanup_test_database(
 
     # ==============================================
     # TRUNCATE ALL TABLES
+    # Clear only the verified test tables through the explicitly authorized fixture
+    # connection.
     # ==============================================
 
     async def truncate_all_tables() -> None:
+        """Clear only the verified test tables through the explicitly authorized fixture connection."""
+
         if not table_names:
             return
 
@@ -499,15 +604,103 @@ async def cleanup_test_database(
                         )
                     ).scalars()
                 )
-                if actual_tables != set(Base.metadata.tables) | {"alembic_version"}:
+                expected_tables = set(Base.metadata.tables) | {"alembic_version"}
+                if local_configuration.PROFILE not in {"subscription", "main"}:
+                    expected_tables -= {
+                        "subscription_pricing_config",
+                        "subscription_pricing_snapshots",
+                        "subscription_reminders",
+                        "cash_collections",
+                        "cash_collection_attempts",
+                    }
+                if local_configuration.PROFILE == "main":
+                    from migration_support.tenant_e1_schema import TENANT_TABLE_NAMES
+
+                    expected_tables |= set(TENANT_TABLE_NAMES)
+                if actual_tables != expected_tables:
                     raise RuntimeError("local_cleanup_catalog_not_allowlisted")
                 local_tables = ", ".join(
-                    f'public."{table.name}"'
-                    for table in reversed(Base.metadata.sorted_tables)
+                    f'public."{name}"'
+                    for name in sorted(expected_tables - {"alembic_version"})
                 )
-                await connection.execute(
-                    text(f"TRUNCATE TABLE {local_tables} RESTART IDENTITY")
-                )
+                if local_configuration.PROFILE == "main":
+                    # E1 retention triggers intentionally reject TRUNCATE. Keep
+                    # them active; subscription fixtures own untagged legacy rows
+                    # only and must never create tenant governance records.
+                    for name in set(TENANT_TABLE_NAMES) - {
+                        "tenant_roles",
+                        "tenant_role_permissions",
+                    }:
+                        if (
+                            await connection.execute(
+                                text(f'SELECT count(*) FROM public."{name}"')
+                            )
+                        ).scalar_one():
+                            raise RuntimeError(
+                                "main_subscription_cleanup_contains_retained_tenant_data"
+                            )
+                    # These five ancestors are referenced by retained E1 tables.
+                    # Delete their untagged fixture rows after truncating their
+                    # business dependants; never disable any retention trigger.
+                    delete_only = {
+                        "admins",
+                        "owners",
+                        "restaurant_groups",
+                        "restaurants",
+                        "roles",
+                    }
+                    truncate_names = (
+                        expected_tables
+                        - {"alembic_version"}
+                        - set(TENANT_TABLE_NAMES)
+                        - delete_only
+                    )
+                    quoted_tables = ", ".join(
+                        f'public."{name}"' for name in sorted(truncate_names)
+                    )
+                    await connection.execute(
+                        text(f"TRUNCATE TABLE {quoted_tables} RESTART IDENTITY")
+                    )
+                    for table in reversed(Base.metadata.sorted_tables):
+                        if table.name not in delete_only:
+                            continue
+                        await connection.execute(table.delete())
+                        sequence = (
+                            await connection.execute(
+                                text("SELECT pg_get_serial_sequence(:name, 'id')"),
+                                {"name": table.name},
+                            )
+                        ).scalar_one()
+                        if sequence:
+                            # Server-derived identifier belongs to this exact
+                            # allowlisted table; quote each namespace part.
+                            quoted = ".".join(
+                                '"' + part.replace('"', '""') + '"'
+                                for part in sequence.split(".")
+                            )
+                            await connection.execute(
+                                text(f"ALTER SEQUENCE {quoted} RESTART WITH 1")
+                            )
+                else:
+                    await connection.execute(
+                        text(f"TRUNCATE TABLE {local_tables} RESTART IDENTITY")
+                    )
+                if local_configuration.PROFILE in {"subscription", "main"}:
+                    from sqlalchemy import insert
+
+                    from app.models.subscription_pricing_legacy import LegacySubscriptionPricingConfig as SubscriptionPricingConfig  # isort: skip  # fmt: skip
+
+                    await connection.execute(
+                        insert(SubscriptionPricingConfig).values(
+                            id=1,
+                            base_price=3000,
+                            policies={
+                                "currencies": {"DZD": {"decimals": 2}},
+                                "reminder_days": [14, 7, 1, 0],
+                            },
+                        )
+                    )
+
                 return
             await connection.execute(
                 text(f"TRUNCATE TABLE {table_names} RESTART IDENTITY CASCADE"),
@@ -522,6 +715,7 @@ async def cleanup_test_database(
 
 # ==============================================
 # 📦 DATA FACTORIES - SAMPLE DATA
+# بيانات مالك نموذجية للاختبار.
 # ==============================================
 
 
@@ -546,6 +740,7 @@ def sample_owner_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE RESTAURANT DATA
+# بيانات مطعم نموذجية للاختبار.
 # ==============================================
 
 
@@ -570,6 +765,7 @@ def sample_restaurant_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE RESTAURANT GROUP DATA
+# بيانات مجموعة مطاعم نموذجية للاختبار.
 # ==============================================
 
 
@@ -590,6 +786,7 @@ def sample_restaurant_group_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE RESTAURANT BRANCH DATA
+# بيانات فرع مطعم نموذجية للاختبار.
 # ==============================================
 
 
@@ -609,6 +806,7 @@ def sample_restaurant_branch_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE BULK BRANCHES DATA
+# بيانات فروع متعددة نموذجية للاختبار.
 # ==============================================
 
 
@@ -628,6 +826,7 @@ def sample_bulk_branches_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE METRIC DATA
+# بيانات مقاييس نموذجية للاختبار.
 # ==============================================
 
 
@@ -649,6 +848,7 @@ def sample_metric_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE ORDER COUNTER DATA
+# بيانات عداد طلبات نموذجية للاختبار.
 # ==============================================
 
 
@@ -667,6 +867,7 @@ def sample_order_counter_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE PAYMENT SETTINGS DATA
+# بيانات إعدادات دفع نموذجية للاختبار.
 # ==============================================
 
 
@@ -690,6 +891,7 @@ def sample_payment_settings_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE ORDER DATA
+# بيانات طلب نموذجية للاختبار.
 # ==============================================
 
 
@@ -719,6 +921,7 @@ def sample_order_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE PRODUCT DATA
+# بيانات منتج نموذجية للاختبار.
 # ==============================================
 
 
@@ -743,6 +946,7 @@ def sample_product_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE CATEGORY DATA
+# بيانات تصنيف نموذجية للاختبار.
 # ==============================================
 
 
@@ -764,6 +968,7 @@ def sample_category_data() -> dict[str, Any]:
 
 # ==============================================
 # SAMPLE GROUP DATA
+# بيانات مجموعة نموذجية للاختبار (متوافقة مع الاختبارات القديمة).
 # ==============================================
 
 
@@ -784,6 +989,7 @@ def sample_group_data() -> dict[str, Any]:
 
 # ==============================================
 # 🏗️ HELPER FUNCTIONS
+# إنشاء مالك للاختبارات باستخدام DB مباشر.
 # ==============================================
 
 
@@ -814,6 +1020,7 @@ async def create_test_owner(
 
 # ==============================================
 # CREATE TEST RESTAURANT
+# إنشاء مطعم للاختبارات باستخدام DB مباشر.
 # ==============================================
 
 
@@ -846,6 +1053,7 @@ async def create_test_restaurant(
 
 # ==============================================
 # CREATE TEST GROUP
+# إنشاء مجموعة مطاعم للاختبارات باستخدام DB مباشر.
 # ==============================================
 
 
@@ -878,6 +1086,7 @@ async def create_test_group(
 
 # ==============================================
 # CREATE TEST BRANCH
+# إنشاء فرع مطعم للاختبارات باستخدام DB مباشر.
 # ==============================================
 
 
@@ -913,6 +1122,7 @@ async def create_test_branch(
 
 # ==============================================
 # 📋 EXPORTS
+# Declare the public names intentionally exposed to importing modules.
 # ==============================================
 
 __all__ = [

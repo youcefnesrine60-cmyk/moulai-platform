@@ -5,7 +5,21 @@
 # Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 # ==============================================
 
+# ==============================================
+# MANUAL TRANSFER WORKFLOW REGRESSIONS
+# Check evidence privacy, independent review and transactional settlement on synthetic
+# fixtures.
+# ==============================================
+
 """Real PostgreSQL proofs for private evidence and administrative settlement."""
+
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 import asyncio
 from datetime import datetime
@@ -68,18 +82,31 @@ from app.schemas.manual_payment import (
     ManualSubscriptionCheckout,
 )
 from app.services.business.manual_payment_service import ManualPaymentService
-from app.services.business.subscription_checkout_service import SubscriptionCheckoutService  # fmt: skip
+
+from app.services.business.subscription_checkout_service import SubscriptionCheckoutService  # isort: skip  # fmt: skip
+
+
+# ==============================================
+# CONFIGURATION AND CONSTANTS
+# Group the existing configuration values without changing their defaults.
+# ==============================================
 
 CONTENT = b"\x89PNG\r\n\x1a\nprivate-test-receipt"
 
 
 # ==============================================
 # FIXTURE AND PERSISTED STATE TYPES
+# Identify the two isolated tenants and the sessions used by workflow proofs.
 # ==============================================
 
 
 class ManualGraph(Protocol):
     """Identify the two isolated tenants and the sessions used by workflow proofs."""
+
+    # ==============================================
+    # CONTRACT FIELDS
+    # Describe the fields accepted or returned by this declared data contract.
+    # ==============================================
 
     owner: int
     other_owner: int
@@ -93,6 +120,11 @@ class ManualGraph(Protocol):
     sessions: async_sessionmaker[AsyncSession]
 
 
+# ==============================================
+# CONFIGURATION AND CONSTANTS
+# Group the existing configuration values without changing their defaults.
+# ==============================================
+
 StateSnapshot: TypeAlias = tuple[
     Row[tuple[str, datetime | None]],
     Row[tuple[str, datetime | None, datetime | None]],
@@ -102,11 +134,22 @@ StateSnapshot: TypeAlias = tuple[
 ]
 
 
+# ==============================================
+# MANUAL GRAPH
+# Persist separate tenants, pending invoices, and live administrative roles.
+# ==============================================
+
+
 @pytest.fixture
 async def manual_graph(
     db_session: AsyncSession, sample_restaurant_data: dict[str, Any]
 ) -> ManualGraph:
     """Persist separate tenants, pending invoices, and live administrative roles."""
+
+    # ==============================================
+    # PUT
+    # Insert a fixture through SQLAlchemy and return its generated primary key.
+    # ==============================================
 
     async def put(model: type[BaseModel], **values: Any) -> int:
         """Insert a fixture through SQLAlchemy and return its generated primary key."""
@@ -192,6 +235,12 @@ async def manual_graph(
     )
 
 
+# ==============================================
+# APPROVAL
+# Build verified bank evidence with explicit overrides for validation cases.
+# ==============================================
+
+
 def approval(**changes: Any) -> ManualPaymentReview:
     """Build verified bank evidence with explicit overrides for validation cases."""
     return ManualPaymentReview(
@@ -209,6 +258,12 @@ def approval(**changes: Any) -> ManualPaymentReview:
     )
 
 
+# ==============================================
+# UPLOAD
+# Store private evidence using the owning tenant and an independent session.
+# ==============================================
+
+
 async def upload(g: ManualGraph) -> ManualPaymentReceipt:
     """Store private evidence using the owning tenant and an independent session."""
     async with g.sessions() as session:
@@ -219,6 +274,12 @@ async def upload(g: ManualGraph) -> ManualPaymentReceipt:
             content=CONTENT,
             media_type="image/png",
         )
+
+
+# ==============================================
+# STATE
+# Read payment, subscription, feature, and audit state from persisted rows.
+# ==============================================
 
 
 async def state(g: ManualGraph) -> StateSnapshot:
@@ -261,6 +322,12 @@ async def state(g: ManualGraph) -> StateSnapshot:
         )
 
 
+# ==============================================
+# TEST UPLOAD DOES NOT SETTLE AND EXACT RETRY CREATES ONE AUDIT
+# Ensure upload does not settle and exact retry creates one audit.
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_upload_does_not_settle_and_exact_retry_creates_one_audit(
     manual_graph: ManualGraph,
@@ -276,6 +343,12 @@ async def test_upload_does_not_settle_and_exact_retry_creates_one_audit(
     assert snapshot[2:] == (0, 1, "pending")
 
 
+# ==============================================
+# TEST EVIDENCE CANNOT BE REUSED ACROSS TENANTS
+# Ensure evidence cannot be reused across tenants.
+# ==============================================
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("duplicate", ["file", "reference"])
 async def test_evidence_cannot_be_reused_across_tenants(
@@ -289,13 +362,19 @@ async def test_evidence_cannot_be_reused_across_tenants(
             await ManualPaymentService(session=session).submit_receipt(
                 payment_id=g.other_payment,
                 owner_id=g.other_owner,
-                transaction_reference="CCP / 12345"
-                if duplicate == "reference"
-                else "OTHER-123",
+                transaction_reference=(
+                    "CCP / 12345" if duplicate == "reference" else "OTHER-123"
+                ),
                 content=CONTENT if duplicate == "file" else CONTENT + b"other",
                 media_type="image/png",
             )
     assert (await state(g))[3] == 1
+
+
+# ==============================================
+# TEST FOREIGN OWNER IS DENIED BEFORE READ OR WRITE
+# Ensure foreign owner is denied before read or write.
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -318,6 +397,12 @@ async def test_foreign_owner_is_denied_before_read_or_write(
             await service.get_receipt(payment_id=g.payment, owner_id=g.other_owner)
 
 
+# ==============================================
+# TEST REVIEW REQUIRES MATCHING INDEPENDENT FUNDS
+# Ensure review requires matching independent funds.
+# ==============================================
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "changes",
@@ -335,6 +420,12 @@ async def test_review_requires_matching_independent_funds(
                 payment_id=g.payment, admin_id=g.reviewer, data=approval(**changes)
             )
     assert (await state(g))[2:] == (0, 1, "pending")
+
+
+# ==============================================
+# TEST REVIEW CHECKS LIVE DATABASE RBAC
+# Ensure review checks live database rbac.
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -360,6 +451,12 @@ async def test_review_checks_live_database_rbac(
     assert (await state(g))[2:] == (0, 1, "pending")
 
 
+# ==============================================
+# TEST CONCURRENT REVIEW SETTLES ONCE AND PRESERVES SUBSCRIPTION DATES
+# Ensure concurrent review settles once and preserves subscription dates.
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_concurrent_review_settles_once_and_preserves_subscription_dates(
     manual_graph: ManualGraph,
@@ -367,6 +464,11 @@ async def test_concurrent_review_settles_once_and_preserves_subscription_dates(
     """Ensure concurrent review settles once and preserves subscription dates."""
     g = manual_graph
     await upload(g)
+
+    # ==============================================
+    # REVIEW
+    # Approve the same verified invoice from a separate database session.
+    # ==============================================
 
     async def review() -> ManualPaymentReceipt:
         """Approve the same verified invoice from a separate database session."""
@@ -385,6 +487,12 @@ async def test_concurrent_review_settles_once_and_preserves_subscription_dates(
     assert await state(g) == snapshot
 
 
+# ==============================================
+# TEST REVIEW ROLLS BACK EVERY EFFECT WHEN FINAL WRITE FAILS
+# Ensure review rolls back every effect when final write fails.
+# ==============================================
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("failure_point", ["feature", "audit"])
 async def test_review_rolls_back_every_effect_when_final_write_fails(
@@ -396,6 +504,11 @@ async def test_review_rolls_back_every_effect_when_final_write_fails(
     if failure_point == "feature":
         original = SubscriptionFeatureRepository.create_subscription_feature
 
+        # ==============================================
+        # FAIL
+        # Inject a failure after the actual final write to prove complete rollback.
+        # ==============================================
+
         async def fail(self: SubscriptionFeatureRepository, **kwargs: Any) -> Never:
             """Inject a failure after the actual final write to prove complete rollback."""
             await original(self, **kwargs)
@@ -406,6 +519,11 @@ async def test_review_rolls_back_every_effect_when_final_write_fails(
         )
     else:
         original = ManualPaymentRepository.append_audit
+
+        # ==============================================
+        # FAIL
+        # Inject a failure after the actual final write to prove complete rollback.
+        # ==============================================
 
         async def fail(self: ManualPaymentRepository, **kwargs: Any) -> Never:
             """Inject a failure after the actual final write to prove complete rollback."""
@@ -425,6 +543,12 @@ async def test_review_rolls_back_every_effect_when_final_write_fails(
     assert snapshot[0] == ("pending", None)
     assert snapshot[1] == ("pending", None, None)
     assert snapshot[2:] == (0, 1, "pending")
+
+
+# ==============================================
+# TEST REJECTION CANNOT LATER BE APPROVED AND DOES NOT ACTIVATE
+# Ensure rejection cannot later be approved and does not activate.
+# ==============================================
 
 
 @pytest.mark.asyncio
@@ -451,6 +575,12 @@ async def test_rejection_cannot_later_be_approved_and_does_not_activate(
     assert snapshot[2:] == (0, 2, "rejected")
 
 
+# ==============================================
+# TEST PRIVATE UPLOAD DOWNLOAD AND ADMIN HTTP REVIEW
+# Ensure private upload download and admin http review.
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_private_upload_download_and_admin_http_review(
     manual_graph: ManualGraph, client: AsyncClient
@@ -472,7 +602,7 @@ async def test_private_upload_download_and_admin_http_review(
     assert response.json()["review_status"] == "pending"
     review_context = await client.get(f"/api/v1/admin/manual-payments/{g.payment}")
     assert review_context.status_code == 200, review_context.text
-    assert review_context.json()["payment"]["amount"] == 50
+    assert Decimal(review_context.json()["payment"]["amount"]) == Decimal(50)
     assert review_context.json()["audit"][0]["action"] == "receipt_submitted"
     download = await client.get(f"/api/v1/payments/{g.payment}/receipt/file")
     assert download.content == CONTENT
@@ -497,6 +627,12 @@ async def test_private_upload_download_and_admin_http_review(
     ).status_code == 404
 
 
+# ==============================================
+# TEST CHECKOUT USES SERVER PRICE AND REUSES PENDING INVOICE
+# Ensure checkout uses server price and reuses pending invoice.
+# ==============================================
+
+
 @pytest.mark.asyncio
 async def test_checkout_uses_server_price_and_reuses_pending_invoice(
     manual_graph: ManualGraph, sample_restaurant_data: dict[str, Any]
@@ -518,8 +654,19 @@ async def test_checkout_uses_server_price_and_reuses_pending_invoice(
             )
         ).scalar_one()
         await session.commit()
+        from test_support.subscription_fixtures import (
+            closed_trial,
+            seed_graph,
+        )
+
+        pricing_graph = await seed_graph(session)
+        pricing_graph.owner = g.owner
+        pricing_graph.restaurant = restaurant
+        await closed_trial(pricing_graph)
         data = ManualSubscriptionCheckout(
-            restaurant_id=restaurant, plan_id=g.plan, payment_method="baridimob"
+            restaurant_id=restaurant,
+            plan_id=pricing_graph.plans["basic"],
+            payment_method="baridimob",
         )
         first = await SubscriptionCheckoutService(session=session).create(
             owner_id=g.owner, data=data
@@ -540,6 +687,12 @@ async def test_checkout_uses_server_price_and_reuses_pending_invoice(
             )
         ).scalar_one()
         assert first.amount == amount
+
+
+# ==============================================
+# TEST REVIEW REFRESHES CACHED ROWS AFTER ANOTHER SESSION SETTLES
+# Ensure review refreshes cached rows after another session settles.
+# ==============================================
 
 
 @pytest.mark.asyncio

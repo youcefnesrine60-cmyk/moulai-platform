@@ -1,3 +1,4 @@
+import { installManualThemeFixture } from './manualThemeFixture';
 import { test, expect, type Page, type TestInfo } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { fr } from '../../src/shared/i18n/fr';
@@ -171,3 +172,6 @@ test('normal build has neither review access nor financial fixture data', async 
     0,
   );
 });
+
+// Visual fixtures request a manual choice; opening policy is checked independently.
+test.beforeEach(async ({ page }) => installManualThemeFixture(page));

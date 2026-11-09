@@ -1,5 +1,99 @@
 # Reproducible local PostgreSQL tests
 
+## Occupied native port — 2026-11-09
+
+The native launcher now tries the two already admitted test ports, **55432 then
+55435**, when `--port` is omitted. It reports the selected alternate explicitly
+and never terminates the existing listener. The minimal command is unchanged:
+
+```powershell
+.\.venv\Scripts\python.exe scripts/run_local_postgres_tests.py --backend native
+```
+
+Use `--port 55435` to pin that approved port. An explicit port is never replaced
+silently. If both native ports are occupied, or the requested one is unavailable,
+the launcher exits with an actionable command error before creating an instance.
+Docker keeps its existing fixed Compose mapping on 55432; there is no implicit
+switch to a port not supported by that mapping.
+
+The database URL, native server port and network allowlist all use the same
+selected port. Database/role, non-superuser privileges, instance marker and
+revision checks are unchanged. A port becoming occupied between the initial
+probe and PostgreSQL startup may still cause a safe startup failure; the launcher
+does not attach to that listener or stop it. This change does not alter which
+schema/profile or tests the command selects.
+
+## Dedicated O2/O3/O4 rehearsals — 2026-11-09
+
+The ordinary `pytest tests` campaign runs offline by default. Historical O2
+and country/enrollment O3/O4 PostgreSQL cases need **their own fresh schema**;
+they must not inherit the general database profile or a retained application URL.
+The shared collection now reports those factory-dependent cases as **NOT RUN**,
+with the exact separate commands. Pure checks in the same modules still run.
+This is not a claim that an unexecuted PostgreSQL scenario passed.
+
+Execute these commands **sequentially**, using the existing installed native
+PostgreSQL binaries and dedicated disposable port 55434:
+
+```powershell
+.\.venv\Scripts\python.exe -I -B scripts/rehearse_country_base.py --billing-country
+.\.venv\Scripts\python.exe -I -B scripts/rehearse_country_base.py --operational-history
+```
+
+The first reconstructs the main chain through O4 and runs the country,
+documents and checkout cases. The second reconstructs O2 for historical audit,
+pricing and food-settlement cases. Each verifies its marker, database, role and
+revision, installs its local network restriction and stops only its own server.
+Neither changes the active review pointer or connects to Neon. A busy port is
+an error, not permission to stop an existing server or choose another target.
+
+Do not manually export `COUNTRY_BASE_TEST_URL` or `MOULAI_O1_TEST_INSTANCE` to
+point at an existing database. The earlier `rehearse_operational_o1.py` remains
+available for its original marked instance contract, but requires port 55433
+to be free. The new `--operational-history` path avoids that retained review port.
+
+Observed targeted results for this correction: **80 passed / 45 explicitly not
+run** in the ordinary selection, **42 passed / zero skipped** in the O4 runner,
+and **6 passed / zero skipped** in the O2 runner. All 45 formerly failing setup
+scenarios were therefore executed separately; the full general suite was not
+repeated. The static main-history contract now checks all 26 revisions and
+each O1 → O2 → O3 → O4 parent link, preserving the distinct test history.
+
+## Current launcher contract — 2026-11-02
+
+The minimal command now selects **main**, reconstructs the versioned bootstrap
+and the 18 principal migrations through **s1a20261028**, then runs the complete
+`database` marker selection. This schema has **61 public tables** and supports
+the current subscription ORM. The historical results below describe older
+deliveries; their legacy schema is not compatible with today's application.
+
+```powershell
+.\.venv\Scripts\python.exe -I -B scripts/run_local_postgres_tests.py --backend native
+.\.venv\Scripts\python.exe -I -B scripts/run_local_postgres_tests.py --backend native --suite catalog
+.\.venv\Scripts\python.exe -I -B scripts/run_local_postgres_tests.py --backend native --suite health-only
+```
+
+Dedicated catalog and Health-Only suites require main. Explicit `--profile
+legacy` is rejected before provisioning, with instructions to use main; the
+historical migration remains intact. No failing tests are marked as skipped.
+The `subscription` profile retains its bounded S1b subscription selection and
+the `k10` profile retains its separate E1 selection. These are sibling histories,
+not interchangeable schema revisions.
+
+K10's exact legacy table inventory is read from its frozen baseline DDL, whose
+SHA-256 is checked before use, plus the manual-payment tables and Alembic version
+table. Later ORM subscription tables no longer distort that comparison. The
+strict E1 catalogue checks, loopback identity controls and network guard remain
+enabled. No historical migration is modified and no `stamp` is used.
+
+All reconstruction and test data remain in newly initialized disposable local
+clusters. Process-local database settings are set to that cluster for FastAPI's
+real startup check; `.env` and permanent database configuration are unchanged.
+Results and full corrected sources are documented in
+[the correction report](../artifacts/postgres-regressions-20261102/rapport.md).
+
+## Historical evidence — before subscription S1
+
 Date: **2026-10-19**. Observed result: **110 executed, 110 passed, zero failures,
 zero setup errors and zero skips** on native PostgreSQL **18.3**. Test duration:
 131.22 seconds. The dedicated server was stopped after execution.
@@ -62,9 +156,11 @@ prefers a running Docker engine, otherwise installed native binaries.
 
 ## Isolation and migrations
 
-- Exact destination: `127.0.0.1:55432`, database/role `moulai_pytest`, asyncpg.
-  DNS hosts, other ports, other databases/users and URL query overrides fail.
-  An occupied port stops provisioning; existing listeners are never terminated.
+- Exact destination: `127.0.0.1` on the selected approved test port, database/role
+  `moulai_pytest`, asyncpg. Native execution admits 55432 or 55435, one per process;
+  Docker retains 55432. DNS hosts, other ports, databases/users and URL query
+  overrides fail. An unavailable explicit port or exhausted candidates stop
+  provisioning; existing listeners are never terminated.
 - Fresh random credentials and instance marker are supplied only to the local
   process. No connection URL or password is included in reports or command-line
   arguments. The temporary bootstrap password file is removed after initdb.

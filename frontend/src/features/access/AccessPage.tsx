@@ -33,6 +33,8 @@ import {
   LoadingPanel,
 } from '../../shared/ui/primitives';
 import styles from './access.module.css';
+import { AccessHelp } from './AccessHelp';
+import { scenarioExplanation } from '../../shared/access/help';
 
 const profiles = [
   'owner',
@@ -49,7 +51,7 @@ type ProfileForm = z.infer<typeof profileSchema>;
 
 /** An explicit local review entry, never an alternative to trusted authentication. */
 function ReviewForm(): ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const adapter = useAdapter();
   const client = useQueryClient();
   const navigate = useNavigate();
@@ -57,11 +59,15 @@ function ReviewForm(): ReactElement {
   const {
     control,
     handleSubmit,
+    watch,
     formState: { isSubmitting, errors },
   } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: { profile: 'owner' },
   });
+  const selectedProfile = watch('profile');
+  const locale =
+    i18n.language === 'ar' ? 'ar' : i18n.language === 'en' ? 'en' : 'fr';
 
   /** Replace all prior review data before establishing the next ephemeral profile. */
   const open = async ({ profile }: ProfileForm): Promise<void> => {
@@ -99,7 +105,7 @@ function ReviewForm(): ReactElement {
               id="review-profile"
               ref={field.ref}
               className={styles.selectTrigger}
-              aria-describedby="review-help"
+              aria-describedby="review-help review-choice"
               aria-invalid={Boolean(errors.profile)}
             >
               <Select.Value />
@@ -134,6 +140,20 @@ function ReviewForm(): ReactElement {
           </Select.Root>
         )}
       />
+      <div id="review-choice" className={styles.choiceHelp}>
+        <p>{scenarioExplanation(selectedProfile, locale)}</p>
+        <details>
+          <summary>{t('options.details')}</summary>
+          <dl>
+            {profiles.map((profile) => (
+              <div key={profile}>
+                <dt>{t('profile.' + profile)}</dt>
+                <dd>{scenarioExplanation(profile, locale)}</dd>
+              </div>
+            ))}
+          </dl>
+        </details>
+      </div>
       {errors.profile && <p role="alert">{t('review.invalid')}</p>}
       {failed && <p role="alert">{t('state.temporary.body')}</p>}
       <Button type="submit" disabled={isSubmitting}>
@@ -146,7 +166,7 @@ function ReviewForm(): ReactElement {
 
 /** No credential fields and no remote login call until Business Integration. */
 export function AccessPage(): ReactElement {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const adapter = useAdapter();
   const session = useSession();
   if (session.isPending) return <LoadingPanel />;
@@ -164,7 +184,13 @@ export function AccessPage(): ReactElement {
       )}
       <header className={styles.header}>
         <Brand prominent />
-        <AppearanceControls />
+        <div
+          className={styles.headerControls}
+          dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
+        >
+          <AccessHelp operational={adapter.mode === 'authenticated-local'} />
+          <AppearanceControls />
+        </div>
       </header>
       <main className={styles.main}>
         <aside className={styles.editorial}>
@@ -189,15 +215,32 @@ export function AccessPage(): ReactElement {
           <p className="eyebrow">{t('access.eyebrow')}</p>
           <h1>{t('access.title')}</h1>
           <p className={styles.description}>{t('access.description')}</p>
-          <Button disabled aria-describedby="connection-status">
+          <Button
+            disabled={adapter.mode !== 'authenticated-local'}
+            onClick={() => {
+              if (adapter.mode === 'authenticated-local')
+                location.assign('/api/web/auth/login');
+            }}
+            aria-describedby="connection-status"
+          >
             {t('access.signin')}
             <ArrowUpRight size={18} aria-hidden="true" />
           </Button>
+          {adapter.mode === 'authenticated-local' && (
+            <a href="/api/web/auth/register">{t('followup.register')}</a>
+          )}
           <p id="connection-status" className={styles.connectionStatus}>
             <LockKeyhole size={16} aria-hidden="true" />
-            {t('access.unavailable')}
+            {t(
+              adapter.mode === 'authenticated-local'
+                ? 'integration.signinHelp'
+                : 'access.unavailable',
+            )}
           </p>
           {adapter.mode === 'synthetic' && <ReviewForm />}
+          {adapter.mode === 'authenticated-local' && (
+            <p>{t('integration.sessionLimit')}</p>
+          )}
           <p className={styles.privacy}>
             <LockKeyhole size={14} aria-hidden="true" />
             {t('access.privacy')}

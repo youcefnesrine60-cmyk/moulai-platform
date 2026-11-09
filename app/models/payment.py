@@ -6,22 +6,26 @@
 # ==============================================
 
 # ==============================================
-# 💳 PAYMENT MODEL
-# نموذج المدفوعات
-# يدير المدفوعات والاشتراكات والمعاملات المالية
+# PAYMENT PERSISTENCE MODEL
+# Map owned payment requests, amounts, settlement state and subscription relationships.
 # ==============================================
 
-"""MoulAI operational module for payment.
+"""Map owned payment requests, amounts, settlement state and subscription relationships."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from sqlalchemy import (
     Column,
     DateTime,
-    Float,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
 )
@@ -31,6 +35,7 @@ from .base import BaseModel
 
 # ==============================================
 # 💳 PAYMENT
+# نموذج المدفوعات
 # ==============================================
 
 
@@ -62,11 +67,17 @@ class Payment(BaseModel):
         subscription: علاقة مع نموذج Subscription
     """
 
+    # ==============================================
+    # PERSISTED FIELDS AND RELATIONSHIPS
+    # Declare this entity's stored fields, integrity metadata and ORM links.
+    # ==============================================
+
     __tablename__ = "payments"
 
-    # ==========================================
+    # ==============================================
     # 🗂️ COLUMNS
-    # ==========================================
+    # Declare the mapped fields and their existing database storage requirements.
+    # ==============================================
 
     owner_id = Column(
         Integer,
@@ -100,7 +111,7 @@ class Payment(BaseModel):
     payment_provider = Column(String(50), nullable=True)
     currency = Column(String(3), nullable=False, default="DZD", server_default="DZD")
     amount = Column(
-        Float,
+        Numeric(24, 8),
         nullable=False,
         comment="المبلغ",
     )
@@ -119,9 +130,10 @@ class Payment(BaseModel):
         comment="تاريخ ووقت الدفع",
     )
 
-    # ==========================================
+    # ==============================================
     # 🔗 RELATIONSHIPS
-    # ==========================================
+    # Declare ORM links to the related persisted entities.
+    # ==============================================
 
     owner = relationship(
         "Owner",
@@ -148,9 +160,10 @@ class Payment(BaseModel):
         # comment="الاشتراك",
     )
 
-    # ==========================================
+    # ==============================================
     # 📝 REPRESENTATION
-    # ==========================================
+    # تمثيل نصي للنموذج
+    # ==============================================
 
     def __repr__(self) -> str:
         """

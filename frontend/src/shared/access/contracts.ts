@@ -7,6 +7,7 @@
 
 import type { ManagementAdapter } from '../business/contracts';
 import type { IntelligenceAdapter } from '../intelligence/contracts';
+import type { DiningAdapter } from '../dining/contracts';
 import type { OfficeAdapter } from '../office/contracts';
 
 /** View-adapter contracts, not a claim that matching public APIs exist. */
@@ -35,7 +36,8 @@ export interface AccessSession {
   readonly subject: string;
   readonly displayName: LocalizedLabel;
   readonly area: 'tenant' | 'platform';
-  readonly source: 'synthetic';
+  readonly source: 'synthetic' | 'authenticated-local';
+  readonly expiresAt?: number;
   readonly platformPermissions: readonly string[];
 }
 
@@ -58,8 +60,8 @@ export interface RestaurantView {
 
 /** Future integration must obtain these projections through verified backend reads. */
 export interface AccessAdapter
-  extends ManagementAdapter, IntelligenceAdapter, OfficeAdapter {
-  readonly mode: 'disconnected' | 'synthetic';
+  extends ManagementAdapter, IntelligenceAdapter, OfficeAdapter, DiningAdapter {
+  readonly mode: 'disconnected' | 'synthetic' | 'authenticated-local';
   getSession(signal: AbortSignal): Promise<AccessSession | null>;
   openReview(profile: ReviewProfile): Promise<void>;
   signOut(): Promise<void>;

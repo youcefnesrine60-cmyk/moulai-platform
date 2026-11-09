@@ -329,11 +329,63 @@ function Stop-MoulaiApplication {
 }
 
 # ==============================================
+# OPEN THE ISOLATED OPERATIONAL REVIEW
+# Delegate ownership, readiness and target attestation to the existing local Python host; never fall back to app.main.
+# ==============================================
+
+function Start-MoulaiOperationalApplication {
+    <#
+    .SYNOPSIS
+        Keep a verified ready local review or start its pinned instance.
+    .DESCRIPTION
+        No instance initialization, migration, environment-file edit or remote
+        connection is performed by this wrapper. Missing preparation fails closed.
+        The foreground Python process owns startup and the actual native exit code.
+    #>
+    [CmdletBinding(PositionalBinding = $false)]
+    [OutputType([int])]
+    param (
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ProjectRoot
+    )
+
+    $runtime = Get-MoulaiRuntime -ProjectRoot $ProjectRoot
+    [string]$launcherPath = Join-Path -Path $runtime.ProjectPath -ChildPath 'scripts\run_operational_local.py'
+    if (-not (Test-Path -LiteralPath $runtime.PythonPath -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $launcherPath -PathType Leaf)) {
+        throw 'Le runtime de la revue locale MoulAI est introuvable.'
+    }
+
+    [string]$previousErrorAction = $ErrorActionPreference
+    Push-Location -LiteralPath $runtime.ProjectPath
+    try {
+        Write-Host 'Revue MoulAI locale intégrée : https://127.0.0.1:5180/access'
+        $ErrorActionPreference = 'Continue'
+        $global:LASTEXITCODE = $null
+        & $runtime.PythonPath -I -B $launcherPath serve --keep-running | Out-Host
+        if ($null -eq $global:LASTEXITCODE) {
+            throw 'Impossible de déterminer le résultat du lanceur local MoulAI.'
+        }
+        [int]$exitCode = $global:LASTEXITCODE
+        if ($exitCode -ne 0) {
+            Write-Warning 'Revue locale non démarrée : vérifier son instance et ses prérequis. Aucun repli vers la base de développement distante.'
+        }
+        return $exitCode
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorAction
+        Pop-Location
+    }
+}
+
+# ==============================================
 # PUBLIC OPERATION CONTRACT
 # ==============================================
 
 Export-ModuleMember -Function @(
     'Get-MoulaiRuntime',
     'Start-MoulaiApplication',
+    'Start-MoulaiOperationalApplication',
     'Stop-MoulaiApplication'
 )

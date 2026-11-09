@@ -2,7 +2,16 @@
 
 The maintained launchers are `run_moulai.ps1`, `start_or_keep_moulai.ps1`, and
 `stop_moulai.ps1`. They share `scripts/MoulAI.Process.psm1`; their isolated tests
-are in `tests/powershell/MoulAI.Process.Tests.ps1`.
+are in `tests/powershell/MoulAI.Process.Tests.ps1` and
+`tests/powershell/MoulAI.Operational.Tests.ps1`. Pester 3.4 must run under
+Windows PowerShell 5.1; it is not compatible with the workspace's PowerShell 7 host.
+
+`start_or_keep_moulai.ps1` defaults to the isolated operational review via
+`scripts/run_operational_local.py serve --keep-running`. Its explicit
+`-LegacyBackend` switch retains the old backend entry. There is no automatic
+fallback between the two targets. The legacy `run_moulai.ps1` and
+`stop_moulai.ps1` still target Uvicorn; the integrated host is stopped through
+its verified `stop-request` file, as documented in `operational-local-launch.md`.
 
 ## Source format
 
@@ -41,8 +50,10 @@ single-quoted strings. Declare `#Requires -Version 5.1` explicitly.
 - Preserve the actual Python exit code. A script-level failure returns `1`;
   keeping an existing server or finding no server to stop returns `0`.
 
-Configuration belongs to the existing central Settings system and the local
-`.env`, not PowerShell literals. The scripts do not perform database migrations,
+Legacy configuration belongs to the existing central Settings system and the local
+`.env`, not PowerShell literals. The operational entry instead attests its protected
+local instance configuration, without using the legacy database target.
+The scripts do not perform database migrations,
 administrative identity changes, Render deployments, or Telegram configuration.
 
 ## Application process ownership

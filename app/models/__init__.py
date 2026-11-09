@@ -6,21 +6,39 @@
 # ==============================================
 
 # ==============================================
-# 📦 MODELS INIT ( MODELS - نماذج SQLAlchemy.)
-# تهيئة مجلد النماذج
+# SQLALCHEMY MODEL REGISTRY
+# Expose mapped models and register their relationships in the shared ORM metadata.
 # ==============================================
 
-"""Package initializer and public module exports.
+"""Expose mapped models and register their relationships in the shared ORM metadata."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from .admin import Admin
 from .admin_log import AdminLog
 from .admin_session import AdminSession
-from .agent import Agent, Channel, Conversation, Message
-from .base import Base, BaseModel, BaseModelWithoutId
+from .agent import (
+    Agent,
+    Channel,
+    Conversation,
+    Message,
+)
+from .base import (
+    Base,
+    BaseModel,
+    BaseModelWithoutId,
+)
 from .branch import Branch
+from .cash_collection import (
+    CashCollection,
+    CashCollectionAttempt,
+)
 from .category import Category
 from .complaint import Complaint
 from .feature_pricing import (
@@ -29,7 +47,15 @@ from .feature_pricing import (
     FeatureUsageCounter,
     FeatureUsageLimit,
 )
-from .loyalty_discount import LoyaltyDiscount, MultiRestaurantDiscount, Promotion
+from .loyalty_discount import (
+    LoyaltyDiscount,
+    MultiRestaurantDiscount,
+    Promotion,
+)
+from .manual_payment import (
+    ManualPaymentAudit,
+    ManualPaymentReceipt,
+)
 from .option_group import OptionGroup
 from .order import Order
 from .order_item import (
@@ -42,10 +68,16 @@ from .owner import Owner
 from .payment import Payment
 from .product import Product
 from .product_option import ProductOption
-from .rbac import Permission, Role
+from .rbac import (
+    Permission,
+    Role,
+)
 from .registration_request import RegistrationRequest
 from .restaurant import Restaurant
-from .restaurant_group import RestaurantBranch, RestaurantGroup
+from .restaurant_group import (
+    RestaurantBranch,
+    RestaurantGroup,
+)
 from .restaurant_metric import RestaurantMetric
 from .restaurant_order_counter import RestaurantOrderCounter
 from .restaurant_payment_setting import RestaurantPaymentSetting
@@ -57,73 +89,83 @@ from .subscription import (
     SubscriptionFeatureRequest,
     SubscriptionPlan,
 )
+from .subscription_pricing import (
+    SubscriptionPricingConfig,
+    SubscriptionPricingSnapshot,
+    SubscriptionReminder,
+)
 from .user import User
-from .manual_payment import ManualPaymentAudit, ManualPaymentReceipt
 
 # ==============================================
 # 📤 EXPORTS
+# Declare the public names intentionally exposed to importing modules.
 # ==============================================
 
 __all__ = [
+    "Admin",
+    "AdminLog",
+    "AdminSession",
+    # Agent
+    "Agent",
     # Base
     "Base",
     "BaseModel",
     "BaseModelWithoutId",
-    # Core
-    "Owner",
-    "Restaurant",
     "Branch",
+    "BranchPricing",
+    "CashCollection",
+    "CashCollectionAttempt",
     "Category",
-    "Product",
+    "Channel",
+    "Complaint",
+    "Conversation",
+    "Feature",
+    # Feature Pricing & Usage
+    "FeaturePricing",
+    "FeatureUsageCounter",
+    "FeatureUsageLimit",
+    # Discounts & Promotions
+    "LoyaltyDiscount",
+    "ManualPaymentAudit",
+    "ManualPaymentReceipt",
+    "Message",
+    "MultiRestaurantDiscount",
     "OptionGroup",
-    "ProductOption",
     # Orders
     "Order",
     "OrderItem",
     "OrderItemOption",
     "OrderPayment",
     "OrderStatusHistory",
-    # Agent
-    "Agent",
-    "Channel",
-    "Conversation",
-    "Message",
-    # Users
-    "User",
-    "Admin",
+    # Core
+    "Owner",
+    # Payments
+    "Payment",
     "Permission",
-    "Role",
-    "AdminLog",
-    "AdminSession",
-    # Subscription
-    "SubscriptionPlan",
-    "Feature",
     "PlanFeature",
-    "Subscription",
-    "SubscriptionFeature",
-    "SubscriptionFeatureRequest",
-    # Feature Pricing & Usage
-    "FeaturePricing",
-    "FeatureUsageLimit",
-    "FeatureUsageCounter",
-    "BranchPricing",
-    # Discounts & Promotions
-    "LoyaltyDiscount",
-    "MultiRestaurantDiscount",
+    "Product",
+    "ProductOption",
     "Promotion",
     # Registration
     "RegistrationRequest",
+    "Restaurant",
+    "RestaurantBranch",
     # Groups
     "RestaurantGroup",
-    "RestaurantBranch",
     # Metrics
     "RestaurantMetric",
     # Order Counter
     "RestaurantOrderCounter",
-    # Payments
-    "Payment",
-    "ManualPaymentAudit",
-    "ManualPaymentReceipt",
     "RestaurantPaymentSetting",
-    "Complaint",
+    "Role",
+    "Subscription",
+    "SubscriptionFeature",
+    "SubscriptionFeatureRequest",
+    # Subscription
+    "SubscriptionPlan",
+    "SubscriptionPricingConfig",
+    "SubscriptionPricingSnapshot",
+    "SubscriptionReminder",
+    # Users
+    "User",
 ]

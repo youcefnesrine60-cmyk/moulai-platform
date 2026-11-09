@@ -10,18 +10,18 @@
 # جلسات المدير - تتبع جلسات تسجيل الدخول
 # ==============================================
 
-"""MoulAI operational module for admin session.
+"""Persist administrator session identities, expiry and non-null activity state.
 
 Part of MoulAI Platform - Agent-as-a-Service.
 """
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     ForeignKey,
     Integer,
     String,
-    Boolean,
 )
 from sqlalchemy.orm import relationship
 
@@ -79,6 +79,7 @@ class AdminSession(BaseModel):
     is_active = Column(
         Boolean,
         default=True,
+        nullable=False,
         comment="حالة الجلسة",
     )
     last_activity = Column(

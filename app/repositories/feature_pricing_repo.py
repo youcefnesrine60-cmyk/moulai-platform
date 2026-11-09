@@ -6,21 +6,29 @@
 # ==============================================
 
 # ==============================================
-# 💰 FEATURE PRICING REPOSITORY
-# عمليات قاعدة البيانات لتسعير الميزات باستخدام SQLAlchemy
-# Async SQLAlchemy Version
+# FEATURE PRICING REPOSITORY
+# Read and update persisted feature tariffs through the repository query architecture.
 # ==============================================
 
-"""MoulAI operational module for feature pricing repo.
+"""Read and update persisted feature tariffs through the repository query architecture."""
 
-Part of MoulAI Platform - Agent-as-a-Service.
-"""
+from __future__ import annotations
+
+# isort: split
+# ==============================================
+# IMPORTS
+# Declare the standard-library, framework and project dependencies used below.
+# ==============================================
 
 from typing import (
     Any,
+    TypeAlias,
 )
 
-from sqlalchemy import select
+from sqlalchemy import (
+    Select,
+    select,
+)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logger import logger
@@ -29,14 +37,17 @@ from app.repositories.base import BaseRepository
 
 # ==============================================
 # 🧩 TYPES
+# Describe shared input, update and result structures for this module.
 # ==============================================
 
-FeaturePricingData = dict[str, Any]
-FeaturePricingUpdateData = dict[str, Any]
-FeaturePricingList = list[FeaturePricing]
+FeaturePricingData: TypeAlias = dict[str, Any]
+FeaturePricingUpdateData: TypeAlias = dict[str, Any]
+FeaturePricingList: TypeAlias = list[FeaturePricing]
+
 
 # ==============================================
 # 💰 FEATURE PRICING REPOSITORY
+# مستودع تسعير الميزات - يوفر عمليات خاصة بتسعير الميزات.
 # ==============================================
 
 
@@ -62,11 +73,13 @@ class FeaturePricingRepository(
     """
 
     # ==============================================
-    #   INIT
+    # INIT
+    # تهيئة مستودع تسعير الميزات.
     # ==============================================
 
     def __init__(
         self,
+        *,
         session: AsyncSession,
     ) -> None:
         """
@@ -77,11 +90,12 @@ class FeaturePricingRepository(
         """
         super().__init__(FeaturePricing, session)
 
-    # ==========================================
+    # ==============================================
     # 🔍 BASE QUERY
-    # ==========================================
+    # بناء الاستعلام الأساسي لتسعير الميزات.
+    # ==============================================
 
-    def _build_base_query(self):
+    def _build_base_query(self) -> Select[tuple[FeaturePricing]]:
         """
         بناء الاستعلام الأساسي لتسعير الميزات.
 
@@ -90,12 +104,14 @@ class FeaturePricingRepository(
         """
         return select(self.model)
 
-    # ==========================================
+    # ==============================================
     # 📖 QUERIES
-    # ==========================================
+    # Read persisted records through the existing repository selection rules.
+    # ==============================================
 
     # ==============================================
     # GET BY FEATURE AND CYCLE
+    # الحصول على تسعير ميزة حسب دورة الفوترة.
     # ==============================================
 
     async def get_by_feature_and_cycle(
@@ -104,6 +120,7 @@ class FeaturePricingRepository(
         feature_id: int,
         billing_cycle: str,
         only_active: bool = True,
+        currency: str = "DZD",
     ) -> FeaturePricing | None:
         """
         الحصول على تسعير ميزة حسب دورة الفوترة.
@@ -120,6 +137,7 @@ class FeaturePricingRepository(
             query = self._build_base_query().where(
                 self.model.feature_id == feature_id,
                 self.model.billing_cycle == billing_cycle,
+                self.model.currency == currency,
             )
 
             if only_active:
@@ -145,6 +163,7 @@ class FeaturePricingRepository(
 
     # ==============================================
     # GET LIST BY FEATURE
+    # الحصول على جميع أسعار ميزة معينة.
     # ==============================================
 
     async def get_list_by_feature(
@@ -184,6 +203,7 @@ class FeaturePricingRepository(
 
     # ==============================================
     # GET ALL ACTIVE
+    # الحصول على جميع أسعار الميزات النشطة.
     # ==============================================
 
     async def get_all_active(
@@ -222,12 +242,14 @@ class FeaturePricingRepository(
             )
             raise
 
-    # ==========================================
+    # ==============================================
     # ✏️ MUTATIONS
-    # ==========================================
+    # Group persistence changes while retaining the caller's transaction contract.
+    # ==============================================
 
     # ==============================================
     # UPDATE PRICE
+    # تحديث سعر ميزة.
     # ==============================================
 
     async def update_price(
@@ -261,6 +283,7 @@ class FeaturePricingRepository(
 
     # ==============================================
     # ACTIVATE
+    # تفعيل تسعير ميزة.
     # ==============================================
 
     async def activate(
@@ -289,6 +312,7 @@ class FeaturePricingRepository(
 
     # ==============================================
     # DEACTIVATE
+    # إلغاء تفعيل تسعير ميزة.
     # ==============================================
 
     async def deactivate(
@@ -315,12 +339,14 @@ class FeaturePricingRepository(
             data={"active": False},
         )
 
-    # ==========================================
+    # ==============================================
     # 📊 STATISTICS
+    # Aggregate persisted counts and values through the existing query paths.
     # ==============================================
 
     # ==============================================
     # COUNT BY FEATURE
+    # حساب عدد أسعار ميزة معينة.
     # ==============================================
 
     async def count_by_feature(
