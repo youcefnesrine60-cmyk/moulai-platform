@@ -210,3 +210,13 @@ html[lang='ar'] {
   color: inherit;
   text-decoration: underline;
 }
+
+/* Keep the remote test designation visible without covering interactive controls. */
+.staging-notice {
+  padding: 0.6rem 1rem;
+  text-align: center;
+  color: var(--text-primary);
+  background: var(--surface-reading);
+  border-block-start: 1px solid var(--border);
+  font-weight: 700;
+}

@@ -65,7 +65,7 @@ export async function ownInvitations(
 ): Promise<StaffInvitation[]> {
   return z
     .array(invitation)
-    .parse(await api.request('/local-d1/dining/employment/invitations'));
+    .parse(await api.request('/api/web/dining/employment/invitations'));
 }
 export async function acceptEmployment(
   api: LocalDiningClient,
@@ -76,7 +76,7 @@ export async function acceptEmployment(
     status: z.literal('pending_owner_activation'),
   }).parse(
     await api.request(
-      `/local-d1/dining/employment/${row.organization_id}/${row.membership_id}/accept`,
+      `/api/web/dining/employment/${row.organization_id}/${row.membership_id}/accept`,
       'POST',
       {},
     ),

@@ -34,7 +34,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security.platform_permissions import TENANT_BILLING_COUNTRY_MANAGE
 from app.core.security.tenant_types import TenantAccessDenied
-from app.integration.config import IntegrationConfig
+from app.integration.host_contract import BrowserHostConfig
 from app.integration.identity import BrowserIdentity
 from app.models.billing_country import BillingCountryRequest
 from app.models.tenant.schema import Organization
@@ -65,7 +65,7 @@ from app.services.business.tenant_foundation import tenant_unit_of_work
 def mount_enrollment_routes(
     *,
     app: FastAPI,
-    configuration: IntegrationConfig,
+    configuration: BrowserHostConfig,
     identity_dep: Depends,
     session_dep: Depends,
 ) -> None:

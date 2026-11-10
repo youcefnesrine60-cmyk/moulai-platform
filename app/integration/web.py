@@ -10,11 +10,9 @@
 # Compose existing tenant and dining services behind one opaque browser session.
 # ==============================================
 
-"""Explicit local factory: no deployed main import, fixtures, worker or external transport."""
+"""Validated local/staging factories, without deployed main, fixtures or workers."""
 
 from __future__ import annotations
-
-import json
 
 # isort: split
 # ==============================================
@@ -22,7 +20,9 @@ import json
 # Projections below require existing database authority; role names grant nothing.
 # ==============================================
 
+import json
 import re
+import ssl
 import time
 from collections import (
     defaultdict,
@@ -34,6 +34,7 @@ from collections.abc import (
     Callable,
 )
 from contextlib import asynccontextmanager
+from ipaddress import ip_address
 from typing import (
     Annotated,
     TypeAlias,
@@ -114,6 +115,7 @@ from app.services.business.saas_pricing_admin import (
     SaasPricingAdministration,
 )
 from app.services.business.tenant_access import TenantAccessService
+from app.staging.config import StagingConfig
 
 JsonView: TypeAlias = dict[str, object]
 
@@ -187,8 +189,11 @@ async def attest_database(
 # ==============================================
 
 
-def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
-    """Mount reviewed business routes only on the explicitly configured local host."""
+def compose_browser_app(*, configuration: IntegrationConfig | StagingConfig) -> FastAPI:
+    """Reuse business routes with distinct, validated local or staging boundaries."""
+    if not isinstance(configuration, (IntegrationConfig, StagingConfig)):
+        raise TypeError("validated_browser_configuration_required")
+    staging = isinstance(configuration, StagingConfig)
     if (
         auth.settings.OIDC_ISSUER != configuration.issuer
         or auth.settings.DATABASE_URL != configuration.database_url
@@ -198,7 +203,10 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
     engine = create_async_engine(
         configuration.database_url,
         hide_parameters=True,
-        connect_args={"ssl": False, "command_timeout": 30},
+        connect_args={
+            "ssl": ssl.create_default_context() if staging else False,
+            "command_timeout": 30,
+        },
     )
     # Preserve the existing business host's explicit-flush transaction contract.
     factory = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
@@ -217,7 +225,16 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         """Attest before accepting traffic and close only resources owned by this host."""
         async with factory() as session:
-            await attest_database(session=session, configuration=configuration)
+            if isinstance(configuration, StagingConfig):
+                await session.run_sync(
+                    lambda sync: configuration.target.attest(
+                        connection=sync.connection(),
+                        migration=False,
+                        require_revision=True,
+                    )
+                )
+            else:
+                await attest_database(session=session, configuration=configuration)
         try:
             yield
         finally:
@@ -225,12 +242,18 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
             await engine.dispose()
 
     app = FastAPI(
-        title="MoulAI — local operational integration",
+        title=(
+            "MoulAI — isolated staging"
+            if staging
+            else "MoulAI — local operational integration"
+        ),
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
         lifespan=lifespan,
     )
+    app.state.browser_provider = provider
+    app.state.browser_engine = engine
     windows: dict[str, deque[float]] = defaultdict(deque)
 
     # ==============================================
@@ -242,7 +265,7 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
     async def local_status() -> dict[str, str]:
         """Identify this isolated host so a second launcher cannot mistake another service for the active review."""
         return {
-            "service": "moulai-operational-local",
+            "service": "moulai-staging" if staging else "moulai-operational-local",
             "instance_id": configuration.instance_id,
             "url": configuration.origin + "/access",
         }
@@ -257,11 +280,30 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
         request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
         """Reject foreign origins, hosts and excess local requests before any mutation."""
-        if (
-            request.client is None
-            or request.client.host != "127.0.0.1"
-            or request.headers.get("host") not in {"127.0.0.1:5582", "127.0.0.1:5180"}
-        ):
+        if staging and request.url.path == "/health" and request.method == "GET":
+            return JSONResponse(
+                {"status": "ready", "environment": "staging", "syntheticOnly": True}
+            )
+        if isinstance(configuration, StagingConfig):
+            try:
+                peer = ip_address(request.client.host) if request.client else None
+            except ValueError:
+                peer = None
+            from urllib.parse import urlsplit
+
+            admitted = (
+                peer is not None
+                and any(peer in network for network in configuration.proxy_networks)
+                and request.headers.get("host") == urlsplit(configuration.origin).netloc
+                and request.headers.get("x-forwarded-proto") == "https"
+            )
+        else:
+            admitted = (
+                request.client is not None
+                and request.client.host == "127.0.0.1"
+                and request.headers.get("host") in {"127.0.0.1:5582", "127.0.0.1:5180"}
+            )
+        if not admitted:
             return JSONResponse({"detail": "Local host required"}, status_code=403)
         origin = request.headers.get("origin")
         if (
@@ -285,6 +327,21 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
                 {"detail": "Local request limit reached"}, status_code=429
             )
         window.append(now)
+        if (
+            staging
+            and request.url.path.startswith("/api/web/")
+            and not request.url.path.startswith("/api/web/auth/")
+            and request.url.path not in {"/api/web/session", "/api/web/local-status"}
+        ):
+            try:
+                request.state.staging_identity = await provider.identity(
+                    identifier=request.cookies.get(COOKIE, "")
+                )
+            except HTTPException as error:
+                return JSONResponse(
+                    {"detail": "Staging tester session required"},
+                    status_code=error.status_code,
+                )
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
         response.headers["Referrer-Policy"] = "no-referrer"
@@ -364,6 +421,9 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
 
     async def identity(request: Request) -> BrowserIdentity:
         """Accept only an opaque secure cookie issued after a completed OIDC exchange."""
+        admitted = getattr(request.state, "staging_identity", None)
+        if isinstance(admitted, BrowserIdentity):
+            return admitted
         return await provider.identity(identifier=request.cookies.get(COOKIE, ""))
 
     identity_dep = Depends(identity)
@@ -471,6 +531,11 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
     @app.get("/api/web/auth/login")
     async def login(request: Request) -> RedirectResponse:
         """Redirect to the actual local provider, using state, nonce and PKCE S256."""
+        if staging and request.url.path.endswith("/register"):
+            raise HTTPException(
+                status_code=403,
+                detail="Staging accounts require explicit tester invitation",
+            )
         url, cookie = provider.begin(
             registration=request.url.path.endswith("/register")
         )
@@ -610,7 +675,7 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
             "subject": person.principal.subject,
             "displayName": localized(value=person.name),
             "area": "platform" if admin is not None else "tenant",
-            "source": "authenticated-local",
+            "source": "authenticated-staging" if staging else "authenticated-local",
             "platformPermissions": sorted(permissions),
             "expiresAt": person.expires_at,
         }
@@ -963,8 +1028,12 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
                         continue
         return {
             "actor": person.name,
-            "identity_provider": "keycloak-local",
-            "persistence": "postgres-local-persistent",
+            "identity_provider": "keycloak-staging" if staging else "keycloak-local",
+            "persistence": (
+                "postgres-staging-persistent"
+                if staging
+                else "postgres-local-persistent"
+            ),
             "scopes": scopes,
             "customer_proofs": {},
         }
@@ -1151,3 +1220,16 @@ def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
         prefix="/api/web",
     )
     return app
+
+
+# ==============================================
+# STRICT LOCAL COMPATIBILITY ENTRY
+# Existing launchers and tests retain their exact local configuration contract.
+# ==============================================
+
+
+def create_operational_app(*, configuration: IntegrationConfig) -> FastAPI:
+    """Keep remote configuration unavailable through the local entry point."""
+    if not isinstance(configuration, IntegrationConfig):
+        raise TypeError("local_integration_configuration_required")
+    return compose_browser_app(configuration=configuration)

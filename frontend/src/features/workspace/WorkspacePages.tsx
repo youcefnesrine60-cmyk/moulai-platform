@@ -5,6 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
+import { isAuthenticatedAccess } from '../../shared/access/contracts';
 import type { ReactElement } from 'react';
 import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
@@ -41,7 +42,7 @@ import styles from './workspace.module.css';
 export function OrganizationsPage(): ReactElement {
   const { t } = useTranslation();
   const query = useOrganizations();
-  const operational = useAdapter().mode === 'authenticated-local';
+  const operational = isAuthenticatedAccess(useAdapter().mode);
   const leave = useLeaveReview();
   if (query.isPending) return <LoadingPanel />;
   if (query.isError)
@@ -189,7 +190,7 @@ export function RestaurantsPage(): ReactElement {
         <h2>{t('restaurants.count', { count: query.data.length })}</h2>
         <Badge tone="test">
           {t(
-            adapter.mode === 'authenticated-local'
+            isAuthenticatedAccess(adapter.mode)
               ? 'integration.persisted'
               : 'review.badge',
           )}
@@ -231,7 +232,7 @@ export function RestaurantsPage(): ReactElement {
           ))}
         </div>
       )}
-      {adapter.mode === 'authenticated-local' ? (
+      {isAuthenticatedAccess(adapter.mode) ? (
         <p>{t('integration.scope')}</p>
       ) : (
         <BoundaryNote />

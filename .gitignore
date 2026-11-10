@@ -113,3 +113,6 @@ artifacts/
 billing-production-preflight*.json
 billing-production-constraint-diagnostics.json
 billing-development-*.json
+
+# Separate staging compilation is generated, never a source or secret store.
+frontend/staging-dist/

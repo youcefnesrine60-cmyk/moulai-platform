@@ -37,3 +37,8 @@ billing-production-constraint-diagnostics.json
 billing-development-*.json
 artifacts
 node_modules
+frontend/staging-dist
+**/node_modules
+**/__pycache__
+frontend/dist
+frontend/.vite

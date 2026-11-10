@@ -36,7 +36,7 @@ describe('opaque public reads and independently controlled visits', () => {
     } as unknown as LocalDiningClient);
     await api.signal(reference, secret, 4);
     expect(request).toHaveBeenCalledWith(
-      '/local-d1/dining/public/presence',
+      '/api/web/dining/public/presence',
       'POST',
       { public_id: reference, party_size: 4 },
       { 'X-Visit-Token': secret },

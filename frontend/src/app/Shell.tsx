@@ -5,6 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
+import { isAuthenticatedAccess } from '../shared/access/contracts';
 import { useState, type ReactElement } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useTranslation } from 'react-i18next';
@@ -43,7 +44,7 @@ export function Sidebar({
   close: () => void;
 }): ReactElement {
   const { t } = useTranslation();
-  const operational = useAdapter().mode === 'authenticated-local';
+  const operational = isAuthenticatedAccess(useAdapter().mode);
   const { organizationId, restaurantId } = useParams();
   const organizations = useOrganizations();
   const session = useSession();
@@ -273,7 +274,7 @@ export function Shell({
           </div>
           <Brand />
           <div className={styles.headerActions}>
-            {adapter.mode === 'authenticated-local' && (
+            {isAuthenticatedAccess(adapter.mode) && (
               <div id="operational-help-slot">
                 {!diningOperational && <AccessHelp operational />}
               </div>

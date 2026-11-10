@@ -5,6 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
+import { isAuthenticatedAccess } from '../../shared/access/contracts';
 import { useState, type ReactElement } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -188,7 +189,7 @@ export function AccessPage(): ReactElement {
           className={styles.headerControls}
           dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
         >
-          <AccessHelp operational={adapter.mode === 'authenticated-local'} />
+          <AccessHelp operational={isAuthenticatedAccess(adapter.mode)} />
           <AppearanceControls />
         </div>
       </header>
@@ -216,9 +217,9 @@ export function AccessPage(): ReactElement {
           <h1>{t('access.title')}</h1>
           <p className={styles.description}>{t('access.description')}</p>
           <Button
-            disabled={adapter.mode !== 'authenticated-local'}
+            disabled={!isAuthenticatedAccess(adapter.mode)}
             onClick={() => {
-              if (adapter.mode === 'authenticated-local')
+              if (isAuthenticatedAccess(adapter.mode))
                 location.assign('/api/web/auth/login');
             }}
             aria-describedby="connection-status"
@@ -232,13 +233,13 @@ export function AccessPage(): ReactElement {
           <p id="connection-status" className={styles.connectionStatus}>
             <LockKeyhole size={16} aria-hidden="true" />
             {t(
-              adapter.mode === 'authenticated-local'
+              isAuthenticatedAccess(adapter.mode)
                 ? 'integration.signinHelp'
                 : 'access.unavailable',
             )}
           </p>
           {adapter.mode === 'synthetic' && <ReviewForm />}
-          {adapter.mode === 'authenticated-local' && (
+          {isAuthenticatedAccess(adapter.mode) && (
             <p>{t('integration.sessionLimit')}</p>
           )}
           <p className={styles.privacy}>

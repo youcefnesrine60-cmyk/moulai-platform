@@ -1,0 +1,64 @@
+# Review artifact only. Importing/syncing this blueprint creates paid services.
+# Do not connect it to the existing moulai-api service or enable automatic sync.
+services:
+  - type: web
+    name: moulai-staging
+    runtime: docker
+    repo: https://github.com/youcefnesrine60-cmyk/moulai-platform.git
+    branch: codex/staging-preparation-20261109
+    dockerfilePath: ./deploy/staging/Dockerfile
+    dockerContext: .
+    autoDeployTrigger: off
+    plan: 0.5c-512mb
+    region: frankfurt
+    healthCheckPath: /health
+    disk:
+      name: moulai-staging-private
+      mountPath: /var/data/moulai-staging
+      sizeGB: 1
+    envVars:
+      - key: MOULAI_STAGING_SYNTHETIC_ONLY
+        value: "true"
+      - key: MOULAI_STAGING_DATABASE_URL
+        sync: false
+      - key: MOULAI_STAGING_OIDC_CLIENT_SECRET
+        sync: false
+      - key: MOULAI_STAGING_SESSION_KEY
+        sync: false
+      - key: MOULAI_STAGING_ORIGIN
+        sync: false
+      - key: MOULAI_STAGING_ISSUER
+        sync: false
+      - key: MOULAI_STAGING_CLIENT_ID
+        sync: false
+      - key: MOULAI_STAGING_AUDIENCE
+        sync: false
+      - key: MOULAI_STAGING_PROXY_CIDRS
+        sync: false
+  - type: web
+    name: moulai-staging-identity
+    runtime: docker
+    repo: https://github.com/youcefnesrine60-cmyk/moulai-platform.git
+    branch: codex/staging-preparation-20261109
+    dockerfilePath: ./deploy/staging/keycloak.Dockerfile
+    dockerContext: .
+    autoDeployTrigger: off
+    plan: 1c-2g
+    region: frankfurt
+    envVars:
+      - key: KC_DB_URL
+        sync: false
+      - key: KC_DB_USERNAME
+        sync: false
+      - key: KC_DB_PASSWORD
+        sync: false
+      - key: KC_HOSTNAME
+        sync: false
+      - key: KC_PROXY_TRUSTED_ADDRESSES
+        sync: false
+      - key: KC_BOOTSTRAP_ADMIN_USERNAME
+        sync: false
+      - key: KC_BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: KC_HTTP_PORT
+        value: "10000"

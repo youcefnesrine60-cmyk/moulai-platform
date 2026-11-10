@@ -29,7 +29,12 @@ const offer = z.object({
   blockers: z.array(z.string()),
   binding_quote: z.literal(false),
   registration_connected: z.boolean(),
-  registration_scope: z.literal('local_fictitious_documents_only').optional(),
+  registration_scope: z
+    .enum([
+      'local_fictitious_documents_only',
+      'isolated_staging_fictitious_documents_only',
+    ])
+    .optional(),
 });
 const pricing = z.object({
   binding_quote: z.literal(false),

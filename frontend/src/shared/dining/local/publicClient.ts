@@ -103,7 +103,7 @@ export class PublicDiningClient {
   constructor(private readonly api = new LocalDiningClient()) {}
   async invoice(reference: string, secret: string): Promise<unknown> {
     return this.api.request(
-      '/local-d1/dining/public/invoice',
+      '/api/web/dining/public/invoice',
       'POST',
       { public_id: publicId(reference) },
       { 'X-Visit-Token': secret },
@@ -111,7 +111,7 @@ export class PublicDiningClient {
   }
   async menu(reference: string, currency?: string): Promise<PublicMenu> {
     return publicMenu.parse(
-      await this.api.request('/local-d1/dining/public/menu', 'POST', {
+      await this.api.request('/api/web/dining/public/menu', 'POST', {
         public_id: publicId(reference),
         ...(currency ? { currency } : {}),
       }),
@@ -120,7 +120,7 @@ export class PublicDiningClient {
   async visit(reference: string, secret: string): Promise<OwnVisit> {
     return ownVisit.parse(
       await this.api.request(
-        '/local-d1/dining/public/visit',
+        '/api/web/dining/public/visit',
         'POST',
         { public_id: publicId(reference) },
         { 'X-Visit-Token': secret },
@@ -138,7 +138,7 @@ export class PublicDiningClient {
       expires_at: z.string(),
     }).parse(
       await this.api.request(
-        '/local-d1/dining/public/presence',
+        '/api/web/dining/public/presence',
         'POST',
         { public_id: publicId(reference), party_size },
         { 'X-Visit-Token': secret },
@@ -161,7 +161,7 @@ export class PublicDiningClient {
       status: z.string(),
     }).parse(
       await this.api.request(
-        '/local-d1/dining/public/orders',
+        '/api/web/dining/public/orders',
         'POST',
         {
           public_id: publicId(reference),
@@ -176,7 +176,7 @@ export class PublicDiningClient {
   }
   async verify(reference: string): Promise<Verification> {
     return verification.parse(
-      await this.api.request('/local-d1/dining/public/verify', 'POST', {
+      await this.api.request('/api/web/dining/public/verify', 'POST', {
         public_id: publicId(reference),
       }),
     );

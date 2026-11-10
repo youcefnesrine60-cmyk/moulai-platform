@@ -43,7 +43,7 @@ from app.core.security.oidc import (
     OIDCPrincipal,
     extract_realm_roles,
 )
-from app.integration.config import IntegrationConfig
+from app.integration.host_contract import BrowserHostConfig
 from app.integration.sessions import BrowserSessions
 
 # ==============================================
@@ -93,14 +93,16 @@ class KeycloakBrowserClient:
     # ==============================================
 
     def __init__(
-        self, *, configuration: IntegrationConfig, sessions: BrowserSessions
+        self, *, configuration: BrowserHostConfig, sessions: BrowserSessions
     ) -> None:
         """Install exact HTTPS trust and no redirect/retry behavior for provider requests."""
         self.configuration = configuration
         self.sessions = sessions
         self.pending: dict[str, LoginAttempt] = {}
         self.http = httpx.AsyncClient(
-            verify=ssl.create_default_context(cafile=str(configuration.ca_file)),
+            verify=ssl.create_default_context(
+                cafile=str(configuration.ca_file) if configuration.ca_file else None
+            ),
             trust_env=False,
             timeout=8,
             follow_redirects=False,
@@ -203,6 +205,7 @@ class KeycloakBrowserClient:
             ):
                 raise ValueError("identity_token_binding_invalid")
             expires = int(claims["exp"])
+            self.require_environment_role(roles=extract_realm_roles(claims=claims))
             identifier = await self.sessions.create(
                 tokens={
                     "access_token": access,
@@ -250,6 +253,7 @@ class KeycloakBrowserClient:
         claims = await auth._verified_access_token_claims(
             credentials=HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
         )
+        self.require_environment_role(roles=extract_realm_roles(claims=claims))
         try:
             response = await self.http.post(
                 self.endpoint + "/token/introspect",
@@ -281,6 +285,19 @@ class KeycloakBrowserClient:
             access_token=token,
             expires_at=int(claims["exp"]),
         )
+
+    # ==============================================
+    # OPTIONAL ENVIRONMENT ADMISSION
+    # A staging tester role grants no tenant, restaurant or financial authority.
+    # ==============================================
+
+    def require_environment_role(self, *, roles: frozenset[str]) -> None:
+        """Refuse uninvited staging identities before storing or using a session."""
+        required = self.configuration.environment_role
+        if required is not None and required not in roles:
+            raise HTTPException(
+                status_code=403, detail="Approved staging tester required"
+            )
 
     # ==============================================
     # LOGOUT

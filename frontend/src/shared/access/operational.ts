@@ -12,15 +12,16 @@ import { type AccessAdapter } from './contracts';
 import { webRequest } from './sessionHttp';
 export { webRequest } from './sessionHttp';
 const label = z.object({ fr: z.string(), en: z.string(), ar: z.string() });
-const session = z.object({
-  issuer: z.string(),
-  subject: z.string(),
-  displayName: label,
-  area: z.enum(['tenant', 'platform']),
-  source: z.literal('authenticated-local'),
-  expiresAt: z.number().int().positive(),
-  platformPermissions: z.array(z.string()),
-});
+const sessionFor = (mode: 'authenticated-local' | 'authenticated-staging') =>
+  z.object({
+    issuer: z.string(),
+    subject: z.string(),
+    displayName: label,
+    area: z.enum(['tenant', 'platform']),
+    source: z.literal(mode),
+    expiresAt: z.number().int().positive(),
+    platformPermissions: z.array(z.string()),
+  });
 const organization = z.object({
   id: z.number().int().positive(),
   name: label,
@@ -36,28 +37,36 @@ const restaurant = z.object({
   city: label,
   active: z.boolean(),
 });
-export const operationalAdapter: AccessAdapter = {
-  ...disconnectedAdapter,
-  mode: 'authenticated-local',
-  async getSession(signal) {
-    return session.nullable().parse(await webRequest('/session', signal));
-  },
-  async signOut() {
-    await webRequest('/auth/logout', undefined, 'POST');
-  },
-  async organizations(signal) {
-    return z
-      .array(organization)
-      .parse(await webRequest('/organizations', signal));
-  },
-  async restaurants(id, signal) {
-    return z
-      .array(restaurant)
-      .parse(await webRequest(`/organizations/${id}/restaurants`, signal));
-  },
-  async restaurant(company, id, signal) {
-    return restaurant.parse(
-      await webRequest(`/organizations/${company}/restaurants/${id}`, signal),
-    );
-  },
-};
+export function createAuthenticatedAdapter(
+  mode: 'authenticated-local' | 'authenticated-staging',
+): AccessAdapter {
+  const session = sessionFor(mode);
+  return {
+    ...disconnectedAdapter,
+    mode,
+    async getSession(signal) {
+      return session.nullable().parse(await webRequest('/session', signal));
+    },
+    async signOut() {
+      await webRequest('/auth/logout', undefined, 'POST');
+    },
+    async organizations(signal) {
+      return z
+        .array(organization)
+        .parse(await webRequest('/organizations', signal));
+    },
+    async restaurants(id, signal) {
+      return z
+        .array(restaurant)
+        .parse(await webRequest(`/organizations/${id}/restaurants`, signal));
+    },
+    async restaurant(company, id, signal) {
+      return restaurant.parse(
+        await webRequest(`/organizations/${company}/restaurants/${id}`, signal),
+      );
+    },
+  };
+}
+export const operationalAdapter = createAuthenticatedAdapter(
+  'authenticated-local',
+);

@@ -91,6 +91,16 @@ class IntegrationConfig:
         return self.directory / "private" / "ca.pem"
 
     # ==============================================
+    # LOCAL ENVIRONMENT AUTHORITY
+    # Existing local identities retain their established admission behavior.
+    # ==============================================
+
+    @property
+    def environment_role(self) -> None:
+        """Require no additional staging realm role for the existing local review."""
+        return None
+
+    # ==============================================
     # LOAD
     # Refuse remote URLs, copied markers or unexpected paths before IO.
     # ==============================================

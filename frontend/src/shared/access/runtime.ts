@@ -11,6 +11,13 @@ import { disconnectedAdapter } from './disconnected';
 /** Rollup removes this review-only import from every production build. */
 export async function createAccessAdapter(): Promise<AccessAdapter> {
   if (
+    import.meta.env.MODE === 'staging' &&
+    globalThis.location.protocol === 'https:'
+  )
+    return (await import('./operational')).createAuthenticatedAdapter(
+      'authenticated-staging',
+    );
+  if (
     import.meta.env.DEV &&
     import.meta.env.MODE === 'operational' &&
     location.hostname === '127.0.0.1'

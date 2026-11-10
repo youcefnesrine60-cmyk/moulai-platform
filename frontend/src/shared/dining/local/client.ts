@@ -7,6 +7,12 @@
 
 import { z } from 'zod';
 import type { DiningOperation, JsonValue } from './operations';
+import { localReviewUrl } from './localReviewTransport';
+
+// Vite replaces this compile-time contract; direct Node recipe imports stay local.
+declare const __MOULAI_STAGING__: boolean;
+const stagingBuild =
+  typeof __MOULAI_STAGING__ !== 'undefined' && __MOULAI_STAGING__;
 
 const id = z.number().int().positive();
 // PostgreSQL Numeric and immutable quote JSON can use exact exponent notation.
@@ -108,13 +114,17 @@ const scope = z.object({
 });
 const session = z.object({
   actor: z.string(),
-  identity_provider: z.enum(['simulated-local-rs256', 'keycloak-local']),
+  identity_provider: z.enum([
+    'simulated-local-rs256',
+    'keycloak-local',
+    'keycloak-staging',
+  ]),
   persistence: z.string().optional(),
   scopes: z.array(scope),
   customer_proofs: z.record(z.string()),
 });
 const snapshot = z.object({
-  source: z.literal('postgres-local'),
+  source: z.enum(['postgres-local', 'postgres-staging']),
   capabilities: z.array(z.string()),
   staff_profiles: z
     .array(
@@ -463,9 +473,12 @@ export type OperationResult = Readonly<Record<string, JsonValue>>;
 export class LocalDiningClient {
   constructor(readonly operational = false) {}
   url(path: string): string {
-    return this.operational
-      ? path.replace(/^\/local-d1(?=\/|$)/, '/api/web')
-      : path;
+    if (stagingBuild) {
+      if (!this.operational || !path.startsWith('/api/web/'))
+        throw new LocalDiningError(403, 'local_review_transport_forbidden');
+      return path;
+    }
+    return this.operational ? path : localReviewUrl(path);
   }
 
   private generation = 0;
@@ -511,18 +524,20 @@ export class LocalDiningClient {
       throw new LocalDiningError(403, 'review_identity_forbidden');
     this.generation++;
     this.identity = null;
-    await this.request('/local-d1/session', 'POST', { actor });
+    await this.request('/api/web/dining-session', 'POST', { actor });
     return this.currentSession();
   }
   async currentSession(): Promise<LocalSession> {
     this.identity = session.parse(
-      await this.request(
-        this.operational ? '/api/web/dining-session' : '/local-d1/session',
-      ),
+      await this.request('/api/web/dining-session'),
     );
     if (
       this.identity.identity_provider !==
-      (this.operational ? 'keycloak-local' : 'simulated-local-rs256')
+      (this.operational
+        ? stagingBuild
+          ? 'keycloak-staging'
+          : 'keycloak-local'
+        : 'simulated-local-rs256')
     )
       throw new LocalDiningError(401, 'identity_provider_mismatch');
     return this.identity;
@@ -531,17 +546,17 @@ export class LocalDiningClient {
     this.generation++;
     this.identity = null;
     await this.request(
-      this.operational ? '/api/web/auth/logout' : '/local-d1/session',
+      '/api/web/auth/logout',
       this.operational ? 'POST' : 'DELETE',
     );
   }
   root(scope: LocalScope): string {
-    return `/local-d1/organizations/${scope.organization_id}/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/dining`;
+    return `/api/web/organizations/${scope.organization_id}/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/dining`;
   }
   async workspace(scope: LocalScope): Promise<Snapshot> {
     const path =
       this.identity?.actor === 'customer'
-        ? `/local-d1/dining/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/customer-workspace`
+        ? `/api/web/dining/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/customer-workspace`
         : this.root(scope) + '/workspace';
     return snapshot.parse(await this.request(path));
   }
@@ -598,7 +613,7 @@ export class LocalDiningClient {
     digest: string,
   ): Promise<OperationResult> {
     return (await this.request(
-      `/local-d1/dining/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/quotes/${quoteId}/accept`,
+      `/api/web/dining/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/quotes/${quoteId}/accept`,
       'POST',
       { digest },
     )) as OperationResult;
@@ -609,7 +624,7 @@ export class LocalDiningClient {
     reason: string,
   ): Promise<OperationResult> {
     return (await this.request(
-      `/local-d1/dining/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/requests/${requestId}/cancellation-request`,
+      `/api/web/dining/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/requests/${requestId}/cancellation-request`,
       'POST',
       { reason },
     )) as OperationResult;
@@ -617,7 +632,7 @@ export class LocalDiningClient {
   printUrl(scope: LocalScope, requestId: number, locale: string): string {
     return this.url(
       (this.identity?.actor === 'customer'
-        ? `/local-d1/dining/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/requests/${requestId}/confirmation`
+        ? `/api/web/dining/restaurants/${scope.restaurant_id}/branches/${scope.branch_id}/requests/${requestId}/confirmation`
         : this.root(scope) + `/requests/${requestId}/confirmation`) +
         `?locale=${encodeURIComponent(locale)}`,
     );

@@ -29,10 +29,12 @@ import { ownInvoice } from '../../../shared/dining/local/settlement';
 
 /** Browser-only public reader: staff cookies never become a visitor's authority. */
 function PublicDiningContent({
-  operational = false,
+  operational: requestedOperational = false,
 }: {
   operational?: boolean;
 }) {
+  const operational =
+    import.meta.env.MODE === 'staging' || requestedOperational;
   const { t, i18n } = useTranslation();
   const api = useMemo(
     () => new PublicDiningClient(new LocalDiningClient(operational)),

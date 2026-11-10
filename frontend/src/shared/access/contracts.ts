@@ -36,7 +36,8 @@ export interface AccessSession {
   readonly subject: string;
   readonly displayName: LocalizedLabel;
   readonly area: 'tenant' | 'platform';
-  readonly source: 'synthetic' | 'authenticated-local';
+  readonly source:
+    'synthetic' | 'authenticated-local' | 'authenticated-staging';
   readonly expiresAt?: number;
   readonly platformPermissions: readonly string[];
 }
@@ -61,7 +62,11 @@ export interface RestaurantView {
 /** Future integration must obtain these projections through verified backend reads. */
 export interface AccessAdapter
   extends ManagementAdapter, IntelligenceAdapter, OfficeAdapter, DiningAdapter {
-  readonly mode: 'disconnected' | 'synthetic' | 'authenticated-local';
+  readonly mode:
+    | 'disconnected'
+    | 'synthetic'
+    | 'authenticated-local'
+    | 'authenticated-staging';
   getSession(signal: AbortSignal): Promise<AccessSession | null>;
   openReview(profile: ReviewProfile): Promise<void>;
   signOut(): Promise<void>;
@@ -83,4 +88,9 @@ export class AccessError extends Error {
     super(code);
     this.name = 'AccessError';
   }
+}
+
+/** Trusted server-session modes; neither permits selecting a test role. */
+export function isAuthenticatedAccess(mode: AccessAdapter['mode']): boolean {
+  return mode === 'authenticated-local' || mode === 'authenticated-staging';
 }

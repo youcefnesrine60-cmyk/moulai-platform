@@ -14,6 +14,8 @@
 
 from __future__ import annotations
 
+import os
+
 # isort: split
 # ==============================================
 # CLOSED READ CONTRACTS
@@ -146,7 +148,11 @@ async def available_offer(*, session: AsyncSession, restaurant_id: int) -> JsonO
             text("SELECT version_num FROM public.alembic_version")
         )
         == "o420261108",
-        "registration_scope": "local_fictitious_documents_only",
+        "registration_scope": (
+            "isolated_staging_fictitious_documents_only"
+            if os.environ.get("APP_ENV") == "staging"
+            else "local_fictitious_documents_only"
+        ),
     }
 
 

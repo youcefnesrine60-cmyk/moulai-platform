@@ -76,9 +76,9 @@ const entries = [
   ],
   [
     'followup.register',
-    'Créer mon compte avec Keycloak local',
-    'Create my account with local Keycloak',
-    'إنشاء حسابي عبر Keycloak المحلي',
+    'Créer mon compte avec Keycloak de test',
+    'Create my account with test Keycloak',
+    'إنشاء حسابي عبر Keycloak التجريبي',
   ],
   [
     'followup.saveDraft',
@@ -100,9 +100,9 @@ const entries = [
   ],
   [
     'followup.draftInfo',
-    'Texte du dossier uniquement, chiffré sur le serveur local et lié à votre compte. Aucun mot de passe, justificatif ou consentement. Reprise explicite après vérification de votre identité ; aucune soumission automatique.',
-    'Enrollment text only, encrypted on the local server and bound to your account. No password, evidence file or consent. Explicit recovery after identity verification; never automatic submission.',
-    'يُحفظ نص استمارة التسجيل فقط، مشفرًا على الخادم المحلي ومرتبطًا بحسابك. لا تُحفظ كلمات المرور أو الوثائق أو الموافقات. تستعيد المسودة بنفسك بعد التحقق من هويتك، ولا تُرسل تلقائيًا.',
+    'Texte du dossier uniquement, chiffré sur le serveur de test et lié à votre compte. Aucun mot de passe, justificatif ou consentement. Reprise explicite après vérification de votre identité ; aucune soumission automatique.',
+    'Enrollment text only, encrypted on the test server and bound to your account. No password, evidence file or consent. Explicit recovery after identity verification; never automatic submission.',
+    'يُحفظ نص استمارة التسجيل فقط، مشفرًا على خادم الاختبار ومرتبطًا بحسابك. لا تُحفظ كلمات المرور أو الوثائق أو الموافقات. تستعيد المسودة بنفسك بعد التحقق من هويتك، ولا تُرسل تلقائيًا.',
   ],
   [
     'followup.paymentRate',

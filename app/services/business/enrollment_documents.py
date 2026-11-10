@@ -22,11 +22,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from datetime import (
     datetime,
     timezone,
 )
+from pathlib import Path
 from typing import Literal
 
 from sqlalchemy import text
@@ -58,6 +60,20 @@ WARNINGS = {
 
 async def require_document_rehearsal(*, session: AsyncSession, marker: str) -> None:
     """Refuse production, an unknown marker, role, database, address, port or migration revision."""
+    if settings.APP_ENV == "staging":
+        from app.staging.target import StagingTarget
+
+        if os.environ.get("MOULAI_STAGING_SYNTHETIC_ONLY") != "true":
+            raise ValueError("fictitious_enrollment_documents_local_only")
+        target = StagingTarget.load(path=Path(os.environ["MOULAI_STAGING_TARGET_FILE"]))
+        if marker != target.instance_id:
+            raise ValueError("enrollment_local_marker_required")
+        await session.run_sync(
+            lambda sync: target.attest(
+                connection=sync.connection(), migration=False, require_revision=True
+            )
+        )
+        return
     if settings.APP_ENV not in {"development", "test"}:
         raise ValueError("fictitious_enrollment_documents_local_only")
     if re.fullmatch(r"[0-9a-f]{32}", marker) is None:

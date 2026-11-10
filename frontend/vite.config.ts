@@ -8,7 +8,7 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 import { readFileSync } from 'node:fs';
-import { createLogger, type ProxyOptions } from 'vite';
+import { createLogger, type Plugin, type ProxyOptions } from 'vite';
 import { redactLocalMessage } from './src/shared/access/logSafety.ts';
 import { resolve, sep } from 'node:path';
 
@@ -24,6 +24,11 @@ export default defineConfig(({ command, mode }) => {
     mode === 'operational'
       ? resolve(process.env.MOULAI_OPERATIONAL_DIR ?? '')
       : null;
+  if (mode === 'staging' && command !== 'build') {
+    throw new Error(
+      'Staging requires its compiled authenticated host, not a Vite development server.',
+    );
+  }
   const ownedRoot = resolve('../artifacts/operational-local') + sep;
   if (instance && !instance.startsWith(ownedRoot))
     throw new Error('Explicit owned operational instance required.');
@@ -34,9 +39,28 @@ export default defineConfig(({ command, mode }) => {
       write(redactLocalMessage(message), options);
   }
   return {
+    define: { __MOULAI_STAGING__: JSON.stringify(mode === 'staging') },
     ...(mode === 'operational' ? { customLogger: safeLogger } : {}),
     plugins: [
       react(),
+      ...(mode === 'staging'
+        ? [
+            {
+              name: 'moulai-staging-build-identity',
+              generateBundle() {
+                this.emitFile({
+                  type: 'asset' as const,
+                  fileName: 'staging-build.json',
+                  source: JSON.stringify({
+                    mode: 'staging',
+                    syntheticOnly: true,
+                    fixtureAdapterIncluded: false,
+                  }),
+                });
+              },
+            } satisfies Plugin,
+          ]
+        : []),
       {
         name: 'moulai-appearance-before-paint',
         transformIndexHtml: {
@@ -90,7 +114,10 @@ export default defineConfig(({ command, mode }) => {
         },
       },
     ],
-    build: { target: 'es2022' },
+    build: {
+      target: 'es2022',
+      ...(mode === 'staging' ? { outDir: 'staging-dist' } : {}),
+    },
     envDir: false,
     server: {
       host: '127.0.0.1',

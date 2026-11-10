@@ -1,0 +1,20 @@
+{
+  "source": "Executed frozen main-bootstrap-v1 and unchanged main Alembic chain; typed literal compilation",
+  "no_stamp": true,
+  "remote_rehearsal": "Neon MCP on newly created synthetic-only project",
+  "files": [
+    {
+      "path": "deploy/staging/migrations/from-empty-to-s1a.sql",
+      "sha256": "949a20a4fea8d90295305efc6491612c48123e3b5024370a16967d67d1c8352c",
+      "source_statements": 391,
+      "rehearsed_source_sha256": "68152123b30d8a2c72c318e5d2e9b7f4f6abc04df33d58fea37df3414825be72"
+    },
+    {
+      "path": "deploy/staging/migrations/from-s1a-to-o4.sql",
+      "sha256": "7ada60ce2a6ca0dbc87568c1e1eb40c8061181a1563c563ff4c8aaa38c979f31",
+      "source_statements": 141,
+      "rehearsed_source_sha256": "7fd9d5e2871bbd8273bfd9e6e71f6ad35f20761ce9e153f24e6dca7f53a723c4"
+    }
+  ],
+  "deployment_formatting": "Trailing line whitespace removed only; whitespace-token stream identical to rehearsed guarded SQL."
+}

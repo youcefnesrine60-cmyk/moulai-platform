@@ -1,0 +1,10 @@
+{
+  "project_id": "sparkling-rice-23028300",
+  "branch_id": "br-lucky-smoke-b9edyxoe",
+  "endpoint_id": "ep-odd-wildflower-b9wacgg0",
+  "host": "ep-odd-wildflower-b9wacgg0.c-7.eu-central-1.aws.neon.tech",
+  "database": "moulai_staging_rehearsal",
+  "migrator_role": "moulai_staging_migrator",
+  "runtime_role": "moulai_staging_app",
+  "instance_id": "bf4de394885f4d208b018f5056366f59"
+}

@@ -9,9 +9,9 @@
 const rows = [
   [
     'integration.publicNotice',
-    'Environnement de développement isolé : produits et fonds de recette explicitement fictifs, actions persistées dans PostgreSQL local, personnel authentifié par Keycloak local. Aucun envoi externe ni paiement réel.',
-    'Isolated development environment: explicitly fictional test products and funds, actions persisted in local PostgreSQL, staff authenticated by local Keycloak. No external delivery or real payment.',
-    'بيئة تطوير معزولة: المنتجات والأموال التجريبية وهمية ومعلنة، وتُحفظ الإجراءات في PostgreSQL محلي، مع توثيق هوية العاملين عبر Keycloak محلي. لا إرسال خارجي ولا دفع حقيقي.',
+    'Environnement de développement isolé : produits et fonds de recette explicitement fictifs, actions persistées dans PostgreSQL de test, personnel authentifié par Keycloak de test. Aucun envoi externe ni paiement réel.',
+    'Isolated development environment: explicitly fictional test products and funds, actions persisted in test PostgreSQL, staff authenticated by test Keycloak. No external delivery or real payment.',
+    'بيئة تطوير معزولة: المنتجات والأموال التجريبية وهمية ومعلنة، وتُحفظ الإجراءات في PostgreSQL تجريبي، مع توثيق هوية العاملين عبر Keycloak محلي. لا إرسال خارجي ولا دفع حقيقي.',
   ],
   [
     'integration.sessionLimit',
@@ -412,9 +412,9 @@ const rows = [
   ],
   [
     'integration.signinHelp',
-    'Connexion au Keycloak local. Aucun choix de profil fictif ; vos rattachements sont vérifiés côté serveur.',
-    'Sign in through local Keycloak. No fictional profile selector; memberships are server-verified.',
-    'سجّل الدخول عبر Keycloak المحلي دون اختيار شخصية اختبار؛ يتحقق الخادم من ارتباطاتك.',
+    'Connexion au Keycloak de test. Aucun choix de profil fictif ; vos rattachements sont vérifiés côté serveur.',
+    'Sign in through test Keycloak. No fictional profile selector; memberships are server-verified.',
+    'سجّل الدخول عبر Keycloak التجريبي دون اختيار شخصية اختبار؛ يتحقق الخادم من ارتباطاتك.',
   ],
   [
     'integration.scope',

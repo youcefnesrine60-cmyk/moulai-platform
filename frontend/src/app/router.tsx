@@ -39,20 +39,20 @@ export const routes: RouteObject[] = [
     ErrorBoundary: RouteRecovery,
     HydrateFallback: LoadingPanel,
     children: [
-      ...(import.meta.env.DEV &&
-      ['dining', 'operational'].includes(import.meta.env.MODE)
+      ...(import.meta.env.MODE === 'staging' ||
+      (import.meta.env.DEV &&
+        ['dining', 'operational'].includes(import.meta.env.MODE))
         ? [
             ...['/menu', '/verify-document'].map((path) => ({
               path,
               lazy: async () => ({
-                Component:
-                  import.meta.env.MODE === 'operational'
-                    ? (
-                        await import('../features/dining/local/PublicDiningPage')
-                      ).IntegratedPublicDiningPage
-                    : (
-                        await import('../features/dining/local/PublicDiningPage')
-                      ).PublicDiningPage,
+                Component: ['staging', 'operational'].includes(
+                  import.meta.env.MODE,
+                )
+                  ? (await import('../features/dining/local/PublicDiningPage'))
+                      .IntegratedPublicDiningPage
+                  : (await import('../features/dining/local/PublicDiningPage'))
+                      .PublicDiningPage,
               }),
             })),
           ]
@@ -63,7 +63,7 @@ export const routes: RouteObject[] = [
               path: '/dining-local',
               lazy: async () => ({
                 Component: (
-                  await import('../features/dining/local/LocalDiningPage')
+                  await import('../features/dining/local/DiningWorkspace')
                 ).LocalDiningPage,
               }),
             },
@@ -82,7 +82,8 @@ export const routes: RouteObject[] = [
           {
             element: <Shell />,
             children: [
-              ...(import.meta.env.DEV && import.meta.env.MODE === 'operational'
+              ...(import.meta.env.MODE === 'staging' ||
+              (import.meta.env.DEV && import.meta.env.MODE === 'operational')
                 ? [
                     {
                       path: '/workspace/enrollment',
@@ -122,8 +123,9 @@ export const routes: RouteObject[] = [
                 path: '/workspace/organizations/:organizationId/restaurants/:restaurantId',
                 lazy: async () => ({
                   Component:
-                    import.meta.env.DEV &&
-                    import.meta.env.MODE === 'operational'
+                    import.meta.env.MODE === 'staging' ||
+                    (import.meta.env.DEV &&
+                      import.meta.env.MODE === 'operational')
                       ? (
                           await import('../features/integration/OperationalPages')
                         ).OperationalRestaurantFrame
@@ -131,8 +133,9 @@ export const routes: RouteObject[] = [
                           .RestaurantFrame,
                 }),
                 children: [
-                  ...(import.meta.env.DEV &&
-                  import.meta.env.MODE === 'operational'
+                  ...(import.meta.env.MODE === 'staging' ||
+                  (import.meta.env.DEV &&
+                    import.meta.env.MODE === 'operational')
                     ? [
                         {
                           path: 'offer',
@@ -148,10 +151,11 @@ export const routes: RouteObject[] = [
                     path: 'tables',
                     lazy: async () => ({
                       Component:
-                        import.meta.env.DEV &&
-                        import.meta.env.MODE === 'operational'
+                        import.meta.env.MODE === 'staging' ||
+                        (import.meta.env.DEV &&
+                          import.meta.env.MODE === 'operational')
                           ? (
-                              await import('../features/dining/local/LocalDiningPage')
+                              await import('../features/dining/local/DiningWorkspace')
                             ).IntegratedDiningPage
                           : (await import('../features/dining/DiningPage'))
                               .DiningPage,
@@ -274,7 +278,8 @@ export const routes: RouteObject[] = [
           {
             element: <Shell platform />,
             children: [
-              ...(import.meta.env.DEV && import.meta.env.MODE === 'operational'
+              ...(import.meta.env.MODE === 'staging' ||
+              (import.meta.env.DEV && import.meta.env.MODE === 'operational')
                 ? [
                     {
                       path: '/platform/billing-countries',
@@ -330,8 +335,9 @@ export const routes: RouteObject[] = [
                 path: '/platform',
                 lazy: async () => ({
                   Component:
-                    import.meta.env.DEV &&
-                    import.meta.env.MODE === 'operational'
+                    import.meta.env.MODE === 'staging' ||
+                    (import.meta.env.DEV &&
+                      import.meta.env.MODE === 'operational')
                       ? (
                           await import('../features/integration/OperationalPages')
                         ).OperationalPlatformPage

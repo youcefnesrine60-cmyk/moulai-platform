@@ -5,6 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
+import { isAuthenticatedAccess } from '../shared/access/contracts';
 import {
   createContext,
   useEffect,
@@ -45,8 +46,9 @@ export function AccessProvider({
   }, [client]);
   return (
     <AdapterContext.Provider value={adapter}>
+      {adapter.mode === 'authenticated-staging' && <StagingNotice />}
       {children}
-      {adapter.mode === 'authenticated-local' && <SessionWarning />}
+      {isAuthenticatedAccess(adapter.mode) && <SessionWarning />}
     </AdapterContext.Provider>
   );
 }
@@ -57,13 +59,28 @@ export function useAdapter(): AccessAdapter {
   return adapter;
 }
 
+/** Remote acceptance is synthetic and does not certify production readiness. */
+function StagingNotice(): ReactElement {
+  const { i18n } = useTranslation();
+  const label = i18n.language.startsWith('ar')
+    ? 'بيئة اختبار بعيدة معزولة — بيانات اصطناعية فقط — ليست بيئة إنتاج'
+    : i18n.language.startsWith('en')
+      ? 'Isolated remote staging — synthetic data only — not production'
+      : 'Staging distant isolé — données fictives uniquement — hors production';
+  return (
+    <aside className="staging-notice" role="status">
+      {label}
+    </aside>
+  );
+}
+
 export function useSession() {
   const adapter = useAdapter();
   return useQuery({
     queryKey: sessionKey,
     queryFn: ({ signal }) => adapter.getSession(signal),
-    staleTime: adapter.mode === 'authenticated-local' ? 0 : Infinity,
-    refetchInterval: adapter.mode === 'authenticated-local' ? 30000 : false,
+    staleTime: isAuthenticatedAccess(adapter.mode) ? 0 : Infinity,
+    refetchInterval: isAuthenticatedAccess(adapter.mode) ? 30000 : false,
     retry: false,
   });
 }
