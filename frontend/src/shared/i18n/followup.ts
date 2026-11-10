@@ -63,10 +63,22 @@ const entries = [
     'تنتهي الجلسة خلال {{seconds}} ثانية.',
   ],
   [
-    'followup.sessionDraft',
-    'Enregistrez le brouillon du dossier avant de vous reconnecter. Les fichiers et validations financières ne sont pas récupérés. Aucune action ne sera renvoyée automatiquement.',
-    'Save the enrollment draft before reconnecting. Files and financial approvals are not recovered. No action will be resubmitted automatically.',
-    'احفظ مسودة التسجيل قبل تسجيل الدخول مجددًا. لا تُستعاد الملفات أو الموافقات المالية، ولن يُعاد تنفيذ أي إجراء تلقائيًا.',
+    'followup.sessionDraftLocal',
+    'Revue locale : le dossier d’inscription permet une sauvegarde volontaire de ses champs texte pendant 30 minutes. Après reconnexion au même compte, restaurez-le explicitement. Fichiers, consentements et autres saisies non enregistrées ne sont pas restaurés. Identité, périmètre et droits sont revérifiés ; aucune opération ne sera renvoyée automatiquement.',
+    'Local review: enrollment text can be saved explicitly for 30 minutes and restored manually after signing in to the same account. Files, consents and other unsaved forms are not restored. Identity, scope and permissions are checked again; no operation is replayed automatically.',
+    'في المراجعة المحلية، يمكنك حفظ حقول التسجيل النصية بنفسك لمدة 30 دقيقة، ثم استعادتها بعد الدخول إلى الحساب نفسه. لا تُستعاد الملفات أو الموافقات أو المدخلات الأخرى غير المحفوظة. يُعاد التحقق من الهوية ونطاق الوصول والصلاحيات، ولا يُنفّذ أي إجراء تلقائيًا.',
+  ],
+  [
+    'followup.sessionDraftStaging',
+    'Staging : la reprise des saisies après reconnexion n’est pas encore vérifiée. Les champs non enregistrés, fichiers et consentements doivent être saisis de nouveau. Les dossiers déjà enregistrés sont relus après contrôle de l’identité et des droits ; aucune opération sensible ne sera renvoyée automatiquement.',
+    'Staging: recovery of unsaved input after signing in is not yet verified. Re-enter unsaved fields, files and consents. Persisted records are read again after identity and permission checks; sensitive operations are never replayed automatically.',
+    'في بيئة الاختبار البعيدة، لم تُتحقق بعد استعادة المدخلات بعد الدخول مجددًا. أعد إدخال الحقول والملفات والموافقات غير المحفوظة. تُقرأ السجلات المحفوظة بعد التحقق من الهوية والصلاحيات، ولا تُعاد العمليات الحساسة تلقائيًا.',
+  ],
+  [
+    'followup.draftUnavailableStaging',
+    'La sauvegarde et la restauration du brouillon ne sont pas proposées dans staging avant leur vérification. Les fichiers et consentements ne sont jamais inclus dans un brouillon.',
+    'Draft save and recovery are not offered in staging until verified. Files and consents are never part of a draft.',
+    'حفظ المسودة واستعادتها غير متاحين في بيئة الاختبار البعيدة إلى حين التحقق منهما. لا تشمل المسودة الملفات أو الموافقات مطلقًا.',
   ],
   [
     'followup.reconnect',
@@ -100,9 +112,9 @@ const entries = [
   ],
   [
     'followup.draftInfo',
-    'Texte du dossier uniquement, chiffré sur le serveur de test et lié à votre compte. Aucun mot de passe, justificatif ou consentement. Reprise explicite après vérification de votre identité ; aucune soumission automatique.',
-    'Enrollment text only, encrypted on the test server and bound to your account. No password, evidence file or consent. Explicit recovery after identity verification; never automatic submission.',
-    'يُحفظ نص استمارة التسجيل فقط، مشفرًا على خادم الاختبار ومرتبطًا بحسابك. لا تُحفظ كلمات المرور أو الوثائق أو الموافقات. تستعيد المسودة بنفسك بعد التحقق من هويتك، ولا تُرسل تلقائيًا.',
+    'Sauvegarde volontaire locale pendant 30 minutes : entreprise, référence d’entité, nom, téléphone, courriel, établissement et première succursale. Texte chiffré lié au même compte, sans mot de passe, fichier ni consentement. Restauration sur clic après vérification des droits ; aucune soumission automatique. Un brouillon expiré n’est plus accessible et sera purgé au prochain accès.',
+    'Explicit local save for 30 minutes: company, entity reference, name, phone, email, establishment and first branch. Encrypted text tied to the same account, without passwords, files or consents. Restore by clicking after access checks; never submit automatically. Expired drafts are inaccessible and purged at the next access.',
+    'الحفظ المحلي اختياري لمدة 30 دقيقة ويشمل اسم المؤسسة ومرجعها واسم المسؤول وهاتفه وبريده واسم المطعم والفرع الأول. يُشفّر النص ويرتبط بالحساب نفسه، دون كلمات مرور أو ملفات أو موافقات. تُستعاد المسودة بطلب منك بعد التحقق من صلاحياتك ولا تُرسل تلقائيًا. تصبح المسودة المنتهية غير متاحة وتُحذف عند الوصول التالي.',
   ],
   [
     'followup.paymentRate',

@@ -33,6 +33,7 @@ import {
 } from './access';
 import { Brand, AppearanceControls } from '../shared/ui/primitives';
 import styles from './shell.module.css';
+import headerLayout from '../shared/ui/header-layout.module.css';
 import { AccessHelp } from '../features/access/AccessHelp';
 
 /** Shared navigation with distinct platform and company affordances. */
@@ -202,9 +203,14 @@ export function Shell({
           <div className={styles.reviewBanner}>{t('review.banner')}</div>
         )}
         <header
-          className={`${styles.header} ${diningOperational ? styles.operationalHeader : ''}`}
+          className={`${styles.header} ${headerLayout.frame} ${diningOperational ? styles.operationalHeader : ''}`}
         >
-          <div className={styles.breadcrumb}>
+          <div id="operational-help-slot" data-header-help>
+            {!diningOperational && (
+              <AccessHelp operational={isAuthenticatedAccess(adapter.mode)} />
+            )}
+          </div>
+          <div className={styles.breadcrumb} data-header-context>
             <Dialog.Root open={open} onOpenChange={setOpen}>
               <Dialog.Trigger
                 className={styles.menuButton}
@@ -272,13 +278,10 @@ export function Shell({
               </>
             )}
           </div>
-          <Brand />
-          <div className={styles.headerActions}>
-            {isAuthenticatedAccess(adapter.mode) && (
-              <div id="operational-help-slot">
-                {!diningOperational && <AccessHelp operational />}
-              </div>
-            )}
+          <div data-header-brand>
+            <Brand />
+          </div>
+          <div className={styles.headerActions} data-header-controls>
             <AppearanceControls />
             <span
               className={styles.accountIcon}

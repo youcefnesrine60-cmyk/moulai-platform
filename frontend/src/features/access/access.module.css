@@ -20,22 +20,12 @@
 .header {
   direction: ltr;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 420px) minmax(0, 1fr);
   align-items: center;
   gap: 8px;
   padding: 8px 24px;
   background: var(--surface-header);
   border-block-end: 1px solid var(--border);
   backdrop-filter: blur(4px);
-}
-.header > :first-child {
-  grid-column: 2;
-  min-inline-size: 0;
-}
-.header > :last-child {
-  grid-column: 3;
-  justify-self: end;
-  align-self: start;
 }
 .headerControls {
   display: grid;
@@ -345,22 +335,6 @@
   }
   .serviceCapabilities {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .header {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-  }
-  .header > :first-child,
-  .header > :last-child {
-    grid-column: 1;
-    justify-self: center;
-  }
-  .header > :first-child {
-    grid-row: 2;
-  }
-  .header > :last-child {
-    grid-row: 1;
-    justify-self: end;
   }
   .main {
     gap: 28px;

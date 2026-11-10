@@ -15,7 +15,7 @@ export const ar: Record<keyof typeof fr, string> & Record<string, string> = {
   'theme.auto': 'تلقائي',
   'theme.dark': 'داكن',
   'theme.system': 'تفضيل النظام',
-  'app.title': 'MoulAI™ — مساحة الإدارة',
+  'app.title': 'MoulAI™',
   'brand.tagline': 'لكل نشاط «مولاي» الخاص به',
   'access.serviceTitle': 'Agent-as-a-Service',
   'access.serviceLead': 'ذكاء يعمل من أجلك',

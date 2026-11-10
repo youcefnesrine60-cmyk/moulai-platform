@@ -18,8 +18,8 @@ describe.each(['fr', 'en', 'ar'] as const)(
       const buttons = within(nav).getAllByRole('button');
       expect(buttons).toHaveLength(2);
       for (const [index, name] of [
-        'Icon-help-MoulAI.png',
-        'Icon-Assistant-MoulAI.png',
+        'Icon-help-MoulAI(2).png',
+        'Icon-Assistant-MoulAI(2).png',
       ].entries()) {
         const button = buttons[index]!;
         expect(button.textContent).toBe('');

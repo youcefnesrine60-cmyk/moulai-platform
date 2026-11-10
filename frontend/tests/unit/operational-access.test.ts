@@ -19,6 +19,14 @@ import {
 
 afterEach(() => vi.unstubAllGlobals());
 describe('authenticated local adapter', () => {
+  it('redacts credential headers in browser API diagnostics', () => {
+    const message = redactLocalMessage(
+      ' - Cookie: __Secure-moulai-session=offline-fixture-secret\n - Authorization: Bearer offline-fixture-token\n - Set-Cookie: another=offline-fixture-cookie',
+    );
+    expect(message).not.toContain('offline-fixture');
+    expect(message).toContain('Cookie: [REDACTED]');
+    expect(message).toContain('Authorization: [REDACTED]');
+  });
   it('uses explicit UTC dates and preserves an unchanged precise persisted instant', () => {
     expect(campaignDateValue('2027-03-28T02:30', null)).toBe(
       '2027-03-28T02:30:00.000Z',

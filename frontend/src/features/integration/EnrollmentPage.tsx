@@ -391,6 +391,7 @@ export function EnrollmentPage() {
     retry: false,
   });
   const draftForm = useRef<HTMLFormElement>(null);
+  const localDraft = session.data?.source === 'authenticated-local';
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
     [error, setError] = useState(false),
@@ -450,73 +451,82 @@ export function EnrollmentPage() {
                   ]),
                 ),
               );
-              await enrollmentRequest('/enrollment-draft', 'DELETE');
+              if (localDraft)
+                await enrollmentRequest('/enrollment-draft', 'DELETE');
             });
           }}
         >
-          <p>{t('followup.draftInfo')}</p>
-          <div>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={busy}
-              onClick={() =>
-                void operation(async () => {
-                  if (!draftForm.current) return;
-                  const data = new FormData(draftForm.current);
-                  await enrollmentRequest(
-                    '/enrollment-draft',
-                    'PUT',
-                    Object.fromEntries(
-                      fields.map((field) => [
-                        field,
-                        String(data.get(field) ?? ''),
-                      ]),
-                    ),
-                  );
-                })
-              }
-            >
-              {t('followup.saveDraft')}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={busy}
-              onClick={() =>
-                void operation(async () => {
-                  const saved = z
-                    .object({
-                      fields: z.record(z.string()),
-                      expires_at: z.number(),
-                    })
-                    .nullable()
-                    .parse(await enrollmentRequest('/enrollment-draft'));
-                  if (!saved || !draftForm.current)
-                    throw new Error('enrollment_draft_unavailable');
-                  for (const field of fields) {
-                    const input = draftForm.current.elements.namedItem(field);
-                    if (input instanceof HTMLInputElement)
-                      input.value = saved.fields[field] ?? '';
-                  }
-                })
-              }
-            >
-              {t('followup.restoreDraft')}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={busy}
-              onClick={() =>
-                void operation(async () => {
-                  await enrollmentRequest('/enrollment-draft', 'DELETE');
-                })
-              }
-            >
-              {t('followup.deleteDraft')}
-            </Button>
-          </div>
+          <p>
+            {t(
+              localDraft
+                ? 'followup.draftInfo'
+                : 'followup.draftUnavailableStaging',
+            )}
+          </p>
+          {localDraft && (
+            <div>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={busy}
+                onClick={() =>
+                  void operation(async () => {
+                    if (!draftForm.current) return;
+                    const data = new FormData(draftForm.current);
+                    await enrollmentRequest(
+                      '/enrollment-draft',
+                      'PUT',
+                      Object.fromEntries(
+                        fields.map((field) => [
+                          field,
+                          String(data.get(field) ?? ''),
+                        ]),
+                      ),
+                    );
+                  })
+                }
+              >
+                {t('followup.saveDraft')}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={busy}
+                onClick={() =>
+                  void operation(async () => {
+                    const saved = z
+                      .object({
+                        fields: z.record(z.string()),
+                        expires_at: z.number(),
+                      })
+                      .nullable()
+                      .parse(await enrollmentRequest('/enrollment-draft'));
+                    if (!saved || !draftForm.current)
+                      throw new Error('enrollment_draft_unavailable');
+                    for (const field of fields) {
+                      const input = draftForm.current.elements.namedItem(field);
+                      if (input instanceof HTMLInputElement)
+                        input.value = saved.fields[field] ?? '';
+                    }
+                  })
+                }
+              >
+                {t('followup.restoreDraft')}
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={busy}
+                onClick={() =>
+                  void operation(async () => {
+                    await enrollmentRequest('/enrollment-draft', 'DELETE');
+                  })
+                }
+              >
+                {t('followup.deleteDraft')}
+              </Button>
+            </div>
+          )}
           {fields.map((field) => (
             <label key={field}>
               {t('o3.' + field)}

@@ -12,7 +12,7 @@ export const fr = {
   'theme.auto': 'Automatique',
   'theme.dark': 'Sombre',
   'theme.system': 'Préférence système',
-  'app.title': 'MoulAI™ — Espace de gestion',
+  'app.title': 'MoulAI™',
   'brand.tagline': 'Pour chaque activité, son propre MoulAI.',
   'review.banner':
     'Revue locale · données synthétiques · aucun service connecté',

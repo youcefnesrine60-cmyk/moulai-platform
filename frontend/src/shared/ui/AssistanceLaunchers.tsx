@@ -32,14 +32,14 @@ export function AssistanceLaunchers({
         [
           [
             'guide',
-            'Icon-help-MoulAI.png',
+            'Icon-help-MoulAI(2).png',
             'help.open',
             'help.tooltip',
             onHelp,
           ],
           [
             'assistant',
-            'Icon-Assistant-MoulAI.png',
+            'Icon-Assistant-MoulAI(2).png',
             'help.assistant',
             'help.assistant',
             onAssistant,

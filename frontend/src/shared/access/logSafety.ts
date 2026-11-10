@@ -9,6 +9,10 @@
 export function redactLocalMessage(message: string): string {
   return message
     .replace(
+      /((?:authorization|proxy-authorization|cookie|set-cookie)\s*:)[^\r\n]*/gi,
+      '$1 [REDACTED]',
+    )
+    .replace(
       /((?:https?:\/\/[^\s?#'"<>]+|\/(?:api\/web\/auth|realms\/)[^\s?#'"<>]*))[?#][^\s'"<>]*/g,
       '$1?[REDACTED]',
     )

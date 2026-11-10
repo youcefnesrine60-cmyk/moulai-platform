@@ -440,7 +440,7 @@ function FundsReview({
     }
   }
   return (
-    <article className={styles.record}>
+    <article className={styles.record} data-saas-payment-id={row.id}>
       <h2>{row.restaurant_name}</h2>
       <p>
         <bdi>

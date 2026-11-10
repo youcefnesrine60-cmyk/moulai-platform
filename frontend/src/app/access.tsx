@@ -163,7 +163,13 @@ export function SessionWarning(): ReactElement | null {
       <strong>
         {t('followup.session', { seconds: Math.max(0, remaining) })}
       </strong>
-      <p>{t('followup.sessionDraft')}</p>
+      <p>
+        {t(
+          session.data.source === 'authenticated-local'
+            ? 'followup.sessionDraftLocal'
+            : 'followup.sessionDraftStaging',
+        )}
+      </p>
       <a href="/api/web/auth/login">{t('followup.reconnect')}</a>
     </aside>
   );

@@ -11,13 +11,47 @@ import {
   enrollmentRequest,
 } from '../../src/features/integration/EnrollmentPage';
 
+const sessionFixture = vi.hoisted(() => ({ source: 'authenticated-local' }));
 vi.mock('../../src/app/access', () => ({
   identityKey: () => ['local-test-account'],
-  useSession: () => ({ data: { subject: 'local-test-account' } }),
+  useSession: () => ({
+    data: { subject: 'local-test-account', source: sessionFixture.source },
+  }),
 }));
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  sessionFixture.source = 'authenticated-local';
+});
 
 describe('explicit local enrollment documents', () => {
+  it.each(['fr', 'en', 'ar'])(
+    'does not advertise unverified staging drafts in %s',
+    async (locale) => {
+      sessionFixture.source = 'authenticated-staging';
+      await i18n.changeLanguage(locale);
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('null')));
+      render(
+        <MemoryRouter>
+          <QueryClientProvider
+            client={
+              new QueryClient({ defaultOptions: { queries: { retry: false } } })
+            }
+          >
+            <EnrollmentPage />
+          </QueryClientProvider>
+        </MemoryRouter>,
+      );
+      expect(
+        await screen.findByText(i18n.t('followup.draftUnavailableStaging')),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole('button', { name: i18n.t('followup.saveDraft') }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: i18n.t('followup.restoreDraft') }),
+      ).not.toBeInTheDocument();
+    },
+  );
   it('keeps the same translated keys in FR, EN and AR', () => {
     expect(Object.keys(o3.fr).sort()).toEqual(Object.keys(o3.en).sort());
     expect(Object.keys(o3.fr).sort()).toEqual(Object.keys(o3.ar).sort());

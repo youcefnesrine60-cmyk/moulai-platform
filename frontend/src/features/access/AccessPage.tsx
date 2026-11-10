@@ -34,6 +34,7 @@ import {
   LoadingPanel,
 } from '../../shared/ui/primitives';
 import styles from './access.module.css';
+import headerLayout from '../../shared/ui/header-layout.module.css';
 import { AccessHelp } from './AccessHelp';
 import { scenarioExplanation } from '../../shared/access/help';
 
@@ -183,13 +184,18 @@ export function AccessPage(): ReactElement {
       {adapter.mode === 'synthetic' && (
         <div className={styles.reviewBanner}>{t('review.banner')}</div>
       )}
-      <header className={styles.header}>
-        <Brand prominent />
+      <header className={`${styles.header} ${headerLayout.frame}`}>
+        <div data-header-help>
+          <AccessHelp operational={isAuthenticatedAccess(adapter.mode)} />
+        </div>
+        <div data-header-brand>
+          <Brand prominent />
+        </div>
         <div
           className={styles.headerControls}
+          data-header-controls
           dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}
         >
-          <AccessHelp operational={isAuthenticatedAccess(adapter.mode)} />
           <AppearanceControls />
         </div>
       </header>

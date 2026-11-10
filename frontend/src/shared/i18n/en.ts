@@ -145,5 +145,5 @@ export const en: Record<keyof typeof fr, string> = {
   'theme.auto': 'Automatic',
   'theme.dark': 'Dark',
   'theme.system': 'System preference',
-  'app.title': 'MoulAI™ — Management workspace',
+  'app.title': 'MoulAI™',
 };

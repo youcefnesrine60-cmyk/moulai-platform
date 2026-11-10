@@ -1,0 +1,57 @@
+/* ==============================================
+ * MoulAI™ Platform - Agent-as-a-Service
+ * Author: Youcef Nesrine
+ * License: CC BY-NC-ND 4.0
+ * Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
+ * ============================================== */
+
+/* Shared physical positions: help left, official brand centered, preferences right. */
+.frame {
+  direction: ltr;
+  display: grid;
+  grid-template-columns: minmax(128px, 1fr) minmax(0, 420px) minmax(128px, 1fr);
+  grid-template-areas: 'help brand controls';
+  align-items: center;
+  gap: 8px;
+}
+.frame:has(> [data-header-context]) {
+  grid-template-areas: 'help brand controls' 'context context context';
+}
+.frame > [data-header-help] {
+  grid-area: help;
+  justify-self: start;
+  align-self: start;
+  min-inline-size: 0;
+}
+.frame > [data-header-brand] {
+  grid-area: brand;
+  justify-self: center;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+}
+.frame > [data-header-controls] {
+  grid-area: controls;
+  justify-self: end;
+  align-self: start;
+  min-inline-size: 0;
+}
+.frame > [data-header-context] {
+  grid-area: context;
+}
+@media (max-width: 1100px) {
+  .frame {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: 'help controls' 'brand brand';
+  }
+  .frame:has(> [data-header-context]) {
+    grid-template-areas: 'help controls' 'brand brand' 'context context';
+  }
+}
+@media (max-width: 350px) {
+  .frame {
+    grid-template-areas: 'help help' 'controls controls' 'brand brand';
+  }
+  .frame:has(> [data-header-context]) {
+    grid-template-areas: 'help help' 'controls controls' 'brand brand' 'context context';
+  }
+}
