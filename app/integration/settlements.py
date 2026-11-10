@@ -187,7 +187,11 @@ async def record_settlement(
 async def own_invoice(
     *, session: AsyncSession, public_id: str, token: str
 ) -> JsonObject:
-    """Allow the same visitor to read their finalized balance after departure, without reopening ordering."""
+    """Read the visitor's finalized balance and frozen lines after departure.
+
+    The existing visit proof remains mandatory. Return only customer-readable
+    snapshot fields; exclude source reconciliation, authors and provenance.
+    """
     async with tenant_unit_of_work(session=session):
         public = PublicDiningService(session=session)
         link, repo = await public._target(public_id=public_id, write=False)
@@ -207,4 +211,29 @@ async def own_invoice(
         )
         if invoice is None:
             return {"status": "not_issued"}
-        return await invoice_balance(session=session, invoice=invoice)
+
+        # ==============================================
+        # IMMUTABLE CUSTOMER PRESENTATION
+        # Reuse the finalized snapshot rather than today's catalogue or staff-only reconciliation evidence.
+        # ==============================================
+
+        result = await invoice_balance(session=session, invoice=invoice)
+        result.update(
+            {
+                "revision": invoice.revision,
+                "finalized_at": (
+                    invoice.finalized_at.isoformat()
+                    + ("Z" if invoice.finalized_at.tzinfo is None else "")
+                    if invoice.finalized_at is not None
+                    else None
+                ),
+                "lines": [
+                    {
+                        key: line[key]
+                        for key in ("description", "quantity", "unit_price", "amount")
+                    }
+                    for line in invoice.lines
+                ],
+            }
+        )
+        return result

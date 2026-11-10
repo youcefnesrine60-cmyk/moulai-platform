@@ -530,8 +530,8 @@
 .accessBar,
 .sectionIntro {
   background: var(--surface-panel);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
 }
@@ -616,6 +616,89 @@
   gap: 8px;
   align-content: start;
   min-inline-size: 0;
+}
+.publicPage {
+  --surface-panel: var(--surface-work);
+  --surface-reading: var(--surface-work);
+}
+.printBrand {
+  display: none;
+}
+.invoiceLines {
+  overflow-x: auto;
+  margin-block: 16px;
+}
+.invoiceLines table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  text-align: start;
+  min-inline-size: 480px;
+  table-layout: fixed;
+}
+.invoiceLines th:first-child {
+  inline-size: 40%;
+}
+.invoiceLines th,
+.invoiceLines td {
+  padding: 10px;
+  border-block-end: 1px solid var(--border-strong);
+  text-align: start;
+  vertical-align: top;
+}
+@media print {
+  :global(html),
+  :global(body) {
+    background: white !important;
+    color: #111 !important;
+  }
+  .printBrand {
+    display: block;
+    inline-size: 210px;
+    block-size: auto;
+    max-inline-size: 100%;
+    margin-block-end: 16px;
+  }
+  :global([data-gateway]),
+  :global(.session-warning) {
+    display: none !important;
+  }
+  .publicPage:has([data-print-invoice]) > :not([data-print-invoice]),
+  .publicPage [data-print-control] {
+    display: none !important;
+  }
+  .publicPage {
+    padding: 0;
+    max-inline-size: 100%;
+    color: #111;
+    background: white;
+  }
+  .publicPage [data-print-invoice] {
+    color: #111;
+    background: white;
+    border: 1px solid #333;
+    box-shadow: none;
+    break-inside: avoid;
+  }
+  .invoiceLines {
+    overflow: visible;
+  }
+  .invoiceLines table {
+    min-inline-size: 0;
+  }
+  .invoiceLines th {
+    font-size: 12px;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+  .invoiceLines td {
+    font-size: 13px;
+  }
+  .invoiceLines th,
+  .invoiceLines td {
+    padding: 6px;
+    border-color: #777;
+    overflow-wrap: anywhere;
+  }
 }
 .elementLabel {
   position: relative;

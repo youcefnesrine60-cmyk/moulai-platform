@@ -261,7 +261,7 @@ test('production build stays disconnected and contains no synthetic review contr
     page.getByRole('heading', { name: 'Bienvenue dans votre espace.' }),
   ).toBeVisible();
   await expect(
-    page.getByRole('button', { name: 'Continuer avec Keycloak' }),
+    page.getByRole('button', { name: 'Se connecter' }),
   ).toBeDisabled();
   await expect(
     page.getByRole('button', { name: 'Ouvrir la revue locale' }),

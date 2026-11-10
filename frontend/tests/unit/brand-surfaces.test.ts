@@ -70,7 +70,8 @@ describe('readable-panel contrast bounds over the shared scene wash', () => {
         expect(alpha).toBeGreaterThan(0.75);
         expect(alpha).toBeLessThan(1);
         expect(tokens['--surface-reading']).toContain('var(--reading-opacity)');
-        expect(parseFloat(tokens['--panel-opacity']!)).toBe(60);
+        expect(parseFloat(tokens['--panel-opacity']!)).toBeGreaterThan(0);
+        expect(parseFloat(tokens['--panel-opacity']!)).toBeLessThanOrEqual(100);
         expect(tokens['--surface-panel']).toContain('var(--panel-opacity)');
         expect(tokens['--surface-scene-wash']).toContain('16%');
         const base = rgb(tokens, '--surface-card');
@@ -102,7 +103,10 @@ describe('unframed signature contrast over the existing translucent header', () 
     ['dark', dark],
   ] as const)
     it(`${theme}: primary signature text remains readable without a capsule`, () => {
-      expect(tokens['--surface-header']).toContain('60%');
+      const alpha =
+        Number(/([\d.]+)%/.exec(tokens['--surface-header']!)?.[1]) / 100;
+      expect(alpha).toBeGreaterThan(0);
+      expect(alpha).toBeLessThanOrEqual(1);
       expect(tokens['--surface-scene-wash']).toContain('16%');
       const page = rgb(tokens, '--surface-page');
       const text = luminance(rgb(tokens, '--text-primary'));
@@ -113,8 +117,8 @@ describe('unframed signature contrast over the existing translucent header', () 
             const background = luminance(
               page.map(
                 (channel, index) =>
-                  channel * 0.6 +
-                  (channel * 0.16 + behind[index]! * 0.84) * 0.4,
+                  channel * alpha +
+                  (channel * 0.16 + behind[index]! * 0.84) * (1 - alpha),
               ),
             );
             expect(

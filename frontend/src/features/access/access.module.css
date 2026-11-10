@@ -54,7 +54,7 @@
   position: relative;
   isolation: isolate;
   flex: 1;
-  padding: 48px max(5vw, calc((100vw - 1440px) / 2)) 56px;
+  padding: 28px max(5vw, calc((100vw - 1440px) / 2)) 40px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
   gap: var(--space-6) clamp(48px, 10vw, 180px);
@@ -123,7 +123,7 @@
 .entry {
   max-inline-size: 460px;
   inline-size: 100%;
-  padding: var(--space-6);
+  padding: clamp(24px, 2vw, 32px);
   background: var(--surface-reading);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -131,17 +131,42 @@
   backdrop-filter: blur(4px);
 }
 .entry h1 {
-  font-size: 34px;
+  font-size: clamp(26px, 2.2vw, 32px);
+  margin-block-start: var(--space-3);
 }
 .description {
   color: var(--text-secondary);
   font-size: 14px;
-  margin-block-end: 29px;
+  margin-block-end: 20px;
   line-height: 1.8;
 }
 .entry > button {
   inline-size: 100%;
   justify-content: space-between;
+}
+.register {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: var(--control-height);
+  margin-block-start: var(--space-3);
+  padding: 10px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  font-size: var(--text-control);
+  font-weight: var(--weight-semibold);
+}
+.register:hover {
+  background: var(--surface-muted);
+}
+.sessionInfo {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-small);
+  color: var(--text-secondary);
+}
+.entry .sessionInfo > p {
+  margin-block-end: var(--space-2);
 }
 .connectionStatus {
   display: flex;

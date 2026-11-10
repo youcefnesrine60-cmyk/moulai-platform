@@ -12,6 +12,8 @@ import { d1Fr } from '../src/shared/i18n/d1.fr.ts';
 import { serviceFr } from '../src/shared/i18n/diningService.ts';
 import fs from 'node:fs';
 import path from 'node:path';
+import AxeBuilder from '@axe-core/playwright';
+import { roundedCents } from './exactAcceptanceMoney.mjs';
 import {
   launch,
   login,
@@ -32,9 +34,11 @@ import {
 } from './operationalHarness.mjs';
 const output = path.join(
   root,
-  process.argv.includes('--staging-followup')
-    ? 'artifacts/staging-local-followup-20261110/restaurant'
-    : 'artifacts/operational-followup-20261109/dining-o4',
+  process.argv.includes('--interface-quality')
+    ? 'artifacts/interface-consolidation-20261110/restaurant'
+    : process.argv.includes('--staging-followup')
+      ? 'artifacts/staging-local-followup-20261110/restaurant'
+      : 'artifacts/operational-followup-20261109/dining-o4',
 );
 fs.mkdirSync(output, { recursive: true });
 const browser = await launch(),
@@ -330,6 +334,13 @@ try {
   await guest
     .getByLabel(product.name + ' — ' + text('quantity'), { exact: true })
     .fill('2');
+  if (process.argv.includes('--interface-quality')) {
+    await guest.setViewportSize({ width: 390, height: 844 });
+    await guest.screenshot({
+      path: path.join(output, 'cart-mobile-before-request.png'),
+      fullPage: true,
+    });
+  }
   let firstOrderId;
   await guest.route(
     '**/api/web/dining/public/orders',
@@ -496,10 +507,53 @@ try {
   await guest.getByTestId('own-invoice').waitFor();
   assert.match(
     await guest.getByTestId('own-invoice').innerText(),
-    /0[.]00000000/,
+    /(?:^|\s)0(?:[.]0+)?\s+DZD/,
   );
   await guest.reload();
   await guest.getByTestId('own-invoice').waitFor();
+  if (process.argv.includes('--interface-quality')) {
+    const projection = await guest.evaluate(async (publicId) => {
+      const response = await fetch('/api/web/dining/public/invoice', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Visit-Token': sessionStorage.getItem('moulai-visit:' + publicId),
+        },
+        body: JSON.stringify({ public_id: publicId }),
+      });
+      return { status: response.status, data: await response.json() };
+    }, link.public_id);
+    assert.equal(projection.status, 200);
+    assert.equal(projection.data.invoice_id, invoiceId);
+    assert.equal(projection.data.balance, '0.00000000');
+    assert(projection.data.finalized_at && projection.data.revision);
+    assert.equal(projection.data.lines.length, 1);
+    assert.equal(projection.data.lines[0].description, product.name);
+    assert.equal(Number(projection.data.lines[0].quantity), 2);
+    assert.equal(roundedCents(projection.data.lines[0].amount), 120000n);
+    for (const line of projection.data.lines)
+      assert.deepEqual(Object.keys(line).sort(), [
+        'amount',
+        'description',
+        'quantity',
+        'unit_price',
+      ]);
+    assert(
+      !('provenance' in projection.data) &&
+        !('finalized_by' in projection.data),
+    );
+    await guest
+      .getByTestId('own-invoice')
+      .locator('table tbody tr')
+      .last()
+      .waitFor();
+    mark('own-frozen-invoice-projection-without-staff-provenance', {
+      lines: projection.data.lines.length,
+      revision: projection.data.revision,
+      timestampFromServer: true,
+    });
+  }
   mark('final-invoice-and-single-verified-local-ledger-receipt', {
     invoiceId,
     settlementId: recorded.settlement_id,
@@ -558,8 +612,36 @@ try {
           fullPage: true,
           animations: 'disabled',
         });
+        if (process.argv.includes('--interface-quality') && size === 'mobile') {
+          const accessibility = await new AxeBuilder({ page: guest })
+            .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+            .analyze();
+          const receipt = {
+            violations: accessibility.violations.map((row) => ({
+              id: row.id,
+              targets: row.nodes.map((node) => node.target),
+            })),
+            incomplete: accessibility.incomplete.map((row) => row.id),
+          };
+          fs.writeFileSync(
+            path.join(output, `accessibility-${locale}-${theme}.json`),
+            JSON.stringify(receipt, null, 2),
+          );
+          assert.equal(accessibility.violations.length, 0);
+        }
         captures.push(file);
       }
+    if (process.argv.includes('--interface-quality')) {
+      await guest.emulateMedia({ media: 'print' });
+      await guest
+        .locator('[data-print-invoice] img')
+        .evaluate((image) => image.decode());
+      await guest.screenshot({
+        path: path.join(output, `print-${locale}.png`),
+        fullPage: true,
+      });
+      await guest.emulateMedia({ media: 'screen' });
+    }
   }
   const previous = path.join(output, 'dining-journey.json');
   if (fs.existsSync(previous))

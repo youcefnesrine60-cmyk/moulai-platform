@@ -55,9 +55,7 @@ async function context() {
 async function login(c, username) {
   const page = await c.newPage();
   await page.goto('https://127.0.0.1:5180/access');
-  await page
-    .getByRole('button', { name: 'Continuer avec Keycloak', exact: true })
-    .click();
+  await page.getByRole('button', { name: 'Se connecter', exact: true }).click();
   await page.locator('#username').fill(username);
   await page.locator('#password').fill(accounts[username].password);
   await page.locator('#kc-login').click();

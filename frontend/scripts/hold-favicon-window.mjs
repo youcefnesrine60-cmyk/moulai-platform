@@ -32,7 +32,7 @@ try {
   const page = await (await newContext(browser)).newPage();
   await page.goto(origin + '/access');
   await page
-    .getByRole('button', { name: 'Continuer avec Keycloak', exact: true })
+    .getByRole('button', { name: 'Se connecter', exact: true })
     .waitFor();
   const icons = await page.locator('link[rel="icon"]').evaluateAll((elements) =>
     elements.map((e) => ({
@@ -63,7 +63,7 @@ try {
   const fresh = await (await newContext(browser)).newPage();
   await fresh.goto(origin + '/access');
   await fresh
-    .getByRole('button', { name: 'Continuer avec Keycloak', exact: true })
+    .getByRole('button', { name: 'Se connecter', exact: true })
     .waitFor();
   await fresh.bringToFront();
   fs.writeFileSync(

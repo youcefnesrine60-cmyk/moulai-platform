@@ -178,6 +178,7 @@ def mount_saas_payment_routes(
                         SubscriptionPricingSnapshot.pricing,
                         Subscription.starts_at,
                         Subscription.expires_at,
+                        Subscription.status.label("subscription_status"),
                     )
                     .outerjoin(
                         ManualPaymentReceipt,
@@ -205,6 +206,7 @@ def mount_saas_payment_routes(
                     "status": row.status,
                     "method": row.payment_method,
                     "receipt_status": row.review_status,
+                    "subscription_status": row.subscription_status,
                     "retained_country": (row.parameters or {})
                     .get("base_selection", {})
                     .get("country_code"),

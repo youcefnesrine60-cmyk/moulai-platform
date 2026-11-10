@@ -15,6 +15,7 @@ import { webRequest } from '../../shared/access/operational';
 import { Button, ErrorPanel, LoadingPanel } from '../../shared/ui/primitives';
 import styles from './integration.module.css';
 import { PricingHistory } from './PricingHistory';
+import { useUnsavedChanges } from '../../shared/ui/UnsavedChanges';
 const settings = z.object({
   days: z.array(z.number().int().nonnegative()),
   sha256: z.string(),
@@ -36,6 +37,7 @@ export function ReminderEditor() {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(false),
     [saved, setSaved] = useState(false);
+  useUnsavedChanges(Boolean(days || reason));
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!query.data) return;

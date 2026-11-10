@@ -29,6 +29,7 @@ import { shortReference } from '../../../shared/dining/referenceValue';
 import { HelpLink } from './HelpLink';
 import { ElementHelp } from './ElementHelp';
 import { OptionHelp } from './OptionHelp';
+import { useUnsavedChanges } from '../../../shared/ui/UnsavedChanges';
 
 const BranchTimezone = createContext('UTC');
 const CurrentForm = createContext<FormContext | null>(null);
@@ -101,6 +102,8 @@ export function FormBox({
     }[operation] ??
     'save';
   const [failed, setFailed] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  useUnsavedChanges(dirty);
   const [saved, setSaved] = useState(false);
   const [failures, setFailures] = useState(0);
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -110,6 +113,7 @@ export function FormBox({
     void context.run(async () => {
       try {
         const result = await submit();
+        setDirty(false);
         setSaved(true);
         setFailures(0);
         return result;
@@ -130,6 +134,10 @@ export function FormBox({
             data-operation={operation}
             data-help-title={title}
             onSubmit={onSubmit}
+            onChange={() => {
+              setDirty(true);
+              setSaved(false);
+            }}
           >
             <fieldset
               disabled={context.busy}
@@ -201,6 +209,7 @@ export function Field({
     <div className={styles.fieldControl}>
       <div className={styles.elementLabel}>
         <label htmlFor={id}>{t(`d1.${label}`)}</label>
+        <small>{t(required ? 'quality.required' : 'quality.optional')}</small>
         <ElementHelp targetId={id} labelKey={label} />
       </div>
       <input
@@ -237,6 +246,7 @@ export function Text({
     <div className={styles.fieldControl}>
       <div className={styles.elementLabel}>
         <label htmlFor={id}>{t(`d1.${label}`)}</label>
+        <small>{t(required ? 'quality.required' : 'quality.optional')}</small>
         <ElementHelp targetId={id} labelKey={label} />
       </div>
       <textarea

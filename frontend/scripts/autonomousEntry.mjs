@@ -66,7 +66,7 @@ export async function prepareOwner(
     await page.goto(origin + '/access');
     await page
       .getByRole('link', {
-        name: 'Créer mon compte avec Keycloak de test',
+        name: 'Créer mon compte',
         exact: true,
       })
       .click();

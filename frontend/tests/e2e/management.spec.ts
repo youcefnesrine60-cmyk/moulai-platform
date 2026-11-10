@@ -454,7 +454,7 @@ test('normal build refuses direct management entry without a review or live sign
     await page.goto(`http://127.0.0.1:4173${path}`);
     await expect(page).toHaveURL('http://127.0.0.1:4173/access');
     await expect(
-      page.getByRole('button', { name: 'Continuer avec Keycloak' }),
+      page.getByRole('button', { name: 'Se connecter' }),
     ).toBeDisabled();
     await expect(
       page.getByRole('button', { name: 'Ouvrir la revue locale' }),

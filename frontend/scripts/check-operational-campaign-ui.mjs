@@ -64,9 +64,7 @@ async function submitForm(button) {
 }
 try {
   await page.goto('https://127.0.0.1:5180/access');
-  await page
-    .getByRole('button', { name: 'Continuer avec Keycloak', exact: true })
-    .click();
+  await page.getByRole('button', { name: 'Se connecter', exact: true }).click();
   await page.locator('#username').fill('platform-admin');
   await page.locator('#password').fill(accounts['platform-admin'].password);
   await page.locator('#kc-login').click();

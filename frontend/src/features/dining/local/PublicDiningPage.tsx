@@ -26,6 +26,12 @@ import {
 import styles from './local.module.css';
 import { LocalDiningClient } from '../../../shared/dining/local/client';
 import { ownInvoice } from '../../../shared/dining/local/settlement';
+import { cartSubtotal } from '../../../shared/dining/cartPresentation';
+import { ExactAmount } from '../../../shared/ui/ExactAmount';
+import {
+  useUnsavedChanges,
+  useViewChange,
+} from '../../../shared/ui/UnsavedChanges';
 
 /** Browser-only public reader: staff cookies never become a visitor's authority. */
 function PublicDiningContent({
@@ -113,6 +119,9 @@ function PublicDiningContent({
         product_id: row.product_id,
         quantity: Number(cart[row.product_id]),
       })) ?? [];
+  const subtotal = menu ? cartSubtotal(menu, cart) : null;
+  useUnsavedChanges(Object.values(cart).some((value) => Number(value) !== 0));
+  const changeView = useViewChange();
   return (
     <BrandCanvas>
       <main
@@ -130,7 +139,12 @@ function PublicDiningContent({
         <p>
           {t(operational ? 'integration.publicNotice' : 'd1.publicLocalNotice')}
         </p>
-        {error && <p role="alert">{t('d1.publicUnavailable')}</p>}
+        {busy && <p role="status">{t('quality.processing')}</p>}
+        {error && (
+          <p role="alert">
+            {t('d1.publicUnavailable')} {t('quality.uncertain')}
+          </p>
+        )}
         <div className={styles.row}>
           <Button disabled={busy} onClick={() => void run(load)}>
             {t('d1.refresh')}
@@ -143,11 +157,14 @@ function PublicDiningContent({
                 value={menu.currency ?? ''}
                 disabled={busy}
                 onChange={(e) => {
-                  setCurrency(e.target.value);
-                  setMenu(null);
-                  setVisit(null);
-                  setCart({});
-                  orderKey.current = freshVisitSecret();
+                  const next = e.target.value;
+                  changeView(() => {
+                    setCurrency(next);
+                    setMenu(null);
+                    setVisit(null);
+                    setCart({});
+                    orderKey.current = freshVisitSecret();
+                  });
                 }}
               >
                 <option value="">{t('d1.choose')}</option>
@@ -275,34 +292,63 @@ function PublicDiningContent({
                   </form>
                 )}
                 {visit.status === 'active' && (
-                  <Button
-                    disabled={
-                      busy ||
-                      !entries.length ||
-                      entries.some(
-                        (row) =>
-                          !Number.isInteger(row.quantity) ||
-                          row.quantity < 1 ||
-                          row.quantity > 100,
-                      )
-                    }
-                    onClick={() =>
-                      void run(async () => {
-                        await api.order(
-                          reference,
-                          visitSecret(reference),
-                          menu,
-                          orderKey.current,
-                          entries,
-                        );
-                        await load();
-                        setCart({});
-                        orderKey.current = freshVisitSecret();
-                      })
-                    }
+                  <section
+                    aria-label={t('quality.cart')}
+                    className={styles.card}
                   >
-                    {t('d1.requestFood')}
-                  </Button>
+                    <h3>{t('quality.cart')}</h3>
+                    <p>{t('quality.cartReview')}</p>
+                    <ul>
+                      {entries.map((entry) => (
+                        <li key={entry.product_id}>
+                          {
+                            menu.products.find(
+                              (product) =>
+                                product.product_id === entry.product_id,
+                            )?.name
+                          }{' '}
+                          · {entry.quantity}
+                        </li>
+                      ))}
+                    </ul>
+                    {subtotal !== null && (
+                      <p>
+                        {t('quality.subtotal')}:{' '}
+                        <ExactAmount
+                          value={subtotal}
+                          currency={menu.currency}
+                        />
+                      </p>
+                    )}
+                    <Button
+                      disabled={
+                        busy ||
+                        !entries.length ||
+                        entries.some(
+                          (row) =>
+                            !Number.isInteger(row.quantity) ||
+                            row.quantity < 1 ||
+                            row.quantity > 100,
+                        )
+                      }
+                      onClick={() =>
+                        void run(async () => {
+                          await api.order(
+                            reference,
+                            visitSecret(reference),
+                            menu,
+                            orderKey.current,
+                            entries,
+                          );
+                          await load();
+                          setCart({});
+                          orderKey.current = freshVisitSecret();
+                        })
+                      }
+                    >
+                      {t('d1.requestFood')}
+                    </Button>
+                  </section>
                 )}
                 {visit.orders.map((order) => (
                   <article key={order.order_id}>
@@ -329,34 +375,129 @@ function PublicDiningContent({
         )}
         {invoiceError && <p role="alert">{t('d1.invoiceUnavailable')}</p>}
         {invoice && 'balance' in invoice && (
-          <section className={styles.card} data-testid="own-invoice">
+          <section
+            className={styles.card}
+            data-testid="own-invoice"
+            data-print-invoice
+          >
+            <img
+              className={styles.printBrand}
+              src="/brand/moulai-logo-light01.png"
+              alt="MoulAI™"
+              width={2172}
+              height={724}
+              loading="lazy"
+            />
             <h2>
-              {t('d1.invoice')} #{invoice.invoice_id}
+              {t('d1.invoice')} <bdi dir="ltr">#{invoice.invoice_id}</bdi>
             </h2>
+            <p>{t('quality.syntheticDocument')}</p>
+            {menu && (
+              <p>
+                <bdi>{menu.restaurant}</bdi> · <bdi>{menu.branch}</bdi> ·{' '}
+                {t('d1.table')} <bdi>{menu.table.code}</bdi>
+              </p>
+            )}
+            {invoice.finalized_at && (
+              <p>
+                {t('quality.finalizedAt')}:{' '}
+                <bdi>
+                  <time dateTime={invoice.finalized_at}>
+                    {new Date(invoice.finalized_at).toLocaleString(
+                      i18n.language,
+                      { timeZone: 'UTC' },
+                    )}
+                  </time>
+                </bdi>
+              </p>
+            )}
+            {invoice.lines && (
+              <div
+                className={styles.invoiceLines}
+                role="region"
+                aria-label={t('d1.invoice')}
+                tabIndex={0}
+              >
+                <table>
+                  <caption>
+                    {t('d1.invoice')} <bdi dir="ltr">#{invoice.invoice_id}</bdi>
+                  </caption>
+                  <thead>
+                    <tr>
+                      {[
+                        'd1.description',
+                        'd1.quantity',
+                        'quality.unitPrice',
+                        'd1.amount',
+                      ].map((key) => (
+                        <th scope="col" key={key}>
+                          {t(key)}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {invoice.lines.map((line, index) => (
+                      <tr key={index}>
+                        <td>{line.description}</td>
+                        <td>
+                          <ExactAmount value={line.quantity} />
+                        </td>
+                        <td>
+                          <ExactAmount
+                            value={line.unit_price}
+                            currency={invoice.currency}
+                          />
+                        </td>
+                        <td>
+                          <ExactAmount
+                            value={line.amount}
+                            currency={invoice.currency}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
             <p>
               {t('d1.invoiceTotal')}:{' '}
-              <bdi>
-                {invoice.total} {invoice.currency}
-              </bdi>
+              <ExactAmount value={invoice.total} currency={invoice.currency} />
             </p>
             <p>
               {t('d1.advance')}:{' '}
-              <bdi>
-                {invoice.advance} {invoice.currency}
-              </bdi>
+              <ExactAmount
+                value={invoice.advance}
+                currency={invoice.currency}
+              />
             </p>
             <p>
               {t('d1.recordedPayment')}:{' '}
-              <bdi>
-                {invoice.paid} {invoice.currency}
-              </bdi>
+              <ExactAmount value={invoice.paid} currency={invoice.currency} />
             </p>
             <p>
               {t('d1.balance')}:{' '}
-              <bdi>
-                {invoice.balance} {invoice.currency}
-              </bdi>
+              <ExactAmount
+                value={invoice.balance}
+                currency={invoice.currency}
+              />
             </p>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => window.print()}
+              data-print-control
+            >
+              {t(
+                invoice.lines && invoice.finalized_at
+                  ? 'quality.printDetailedInvoice'
+                  : 'quality.printInvoice',
+              )}
+            </Button>
+            {(!invoice.lines || !invoice.finalized_at) && (
+              <p>{t('quality.invoiceSummary')}</p>
+            )}
           </section>
         )}
       </main>

@@ -218,7 +218,7 @@ test('normal build stays disconnected, uses the effective Gateway and retains pa
     page.getByRole('button', { name: 'Ouvrir la revue locale' }),
   ).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: 'Continuer avec Keycloak' }),
+    page.getByRole('button', { name: 'Se connecter' }),
   ).toBeDisabled();
   await page.emulateMedia({ colorScheme: 'light' });
   await gateway(page, 'light');

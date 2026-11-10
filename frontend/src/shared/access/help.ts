@@ -1,7 +1,7 @@
 // MoulAI™ — versioned access documentation derived from the disconnected and review adapters.
 import type { Locale } from './contracts';
 type Copy = readonly [string, string, string];
-export const ACCESS_HELP_VERSION = 'access-help-2026-11-07.1';
+export const ACCESS_HELP_VERSION = 'access-help-2026-11-10.1';
 const index = { fr: 0, en: 1, ar: 2 } as const;
 const copy = (text: Copy, locale: Locale) => text[index[locale]];
 export const accessScenarios: Record<string, Copy> = {
@@ -138,9 +138,9 @@ const operationalSections: readonly { title: Copy; body: Copy }[] = [
       'النطاق التشغيلي المتاح',
     ],
     body: [
-      'Le lot 1 raccorde l’identité, les établissements et Tables et réservations. Les tarifs SaaS, l’inscription complète, le parcours client et les autres modules restent suivis dans les lots suivants. Les transports externes et l’IA ne sont pas activés.',
-      'Lot 1 connects identity, establishments and Tables and reservations. SaaS pricing, complete enrollment, customer flows and other modules remain in subsequent lots. External transports and AI are not activated.',
-      'تربط الدفعة الأولى الهوية والمؤسسات ووحدة الطاولات والحجوزات. التسعير والاشتراك ومسار الزبون وبقية الوحدات ضمن الدفعات التالية. لا خدمات نقل خارجية أو ذكاء اصطناعي مفعّلة.',
+      'La revue locale raccorde l’identité, les établissements, les tables, le parcours client et l’abonnement SaaS avec documents et fonds fictifs. Les comptes et autorisations sont vérifiés côté serveur. Le staging fermé ne propose pas l’inscription autonome ni le même accès QR public. Les autres modules non raccordés restent indisponibles ; aucun transport externe ni fournisseur IA n’est activé.',
+      'Local review connects identity, establishments, tables, customer flows and SaaS subscriptions with fictitious documents and funds. The server checks accounts and permissions. Closed staging does not offer self-registration or the same public QR access. Unconnected modules remain unavailable; no external transport or AI provider is activated.',
+      'تربط المراجعة المحلية الهوية والمؤسسات والطاولات ومسار الزبون واشتراك المنصة بوثائق وأموال وهمية. يتحقق الخادم من الحسابات والصلاحيات. لا تتيح بيئة الاختبار البعيدة المغلقة إنشاء الحساب ذاتيًا أو الوصول العام نفسه عبر QR. الوحدات غير المربوطة تبقى غير متاحة، ولا خدمة اتصال خارجية أو مزوّد ذكاء اصطناعي مفعّل.',
     ],
   },
 ];

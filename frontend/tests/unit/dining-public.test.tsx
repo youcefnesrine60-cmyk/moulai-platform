@@ -13,12 +13,94 @@ import {
 } from '../../src/shared/i18n/diningService';
 import { localSections } from '../../src/features/dining/local/navigation';
 import type { LocalDiningClient } from '../../src/shared/dining/local/client';
+import { cartSubtotal } from '../../src/shared/dining/cartPresentation';
+import { publicMenu } from '../../src/shared/dining/local/publicClient';
+import { ownInvoice } from '../../src/shared/dining/local/settlement';
 
 afterEach(() => {
   vi.restoreAllMocks();
   sessionStorage.clear();
 });
 describe('opaque public reads and independently controlled visits', () => {
+  it('reads frozen invoice strings and excludes administrative metadata from the UI contract', () => {
+    const result = ownInvoice.parse({
+      status: 'finalized',
+      invoice_id: 1,
+      currency: 'DZD',
+      total: '1200.00000000',
+      advance: '0.00000000',
+      paid: '1200.00000000',
+      balance: '0.00000000',
+      settlement_id: 1,
+      finalized_at: '2026-11-10T12:00:00Z',
+      revision: 2,
+      provenance: { secret: 'synthetic private diagnostic' },
+      lines: [
+        {
+          description: 'Snapshot name',
+          quantity: '2',
+          unit_price: '600',
+          amount: '1200',
+          source_reference: 'PRIVATE',
+        },
+      ],
+    });
+    expect('lines' in result && result.lines?.[0]).toEqual({
+      description: 'Snapshot name',
+      quantity: '2',
+      unit_price: '600',
+      amount: '1200',
+    });
+    expect(result).not.toHaveProperty('provenance');
+  });
+  it('shows an exact indicative basket without inventing a payable amount or currency', () => {
+    const names = { fr: 'Test', en: 'Test', ar: 'اختبار' };
+    const menu = publicMenu.parse({
+      reference: 'a'.repeat(43),
+      restaurant: 'Test',
+      branch: 'Test',
+      currency: 'DZD',
+      precision: 2,
+      currencies: ['DZD'],
+      menu_digest: 'a'.repeat(64),
+      scan_confirms_presence: false,
+      availability_certified: false,
+      table: {
+        code: '1',
+        floor: null,
+        room: null,
+        physical_state: null,
+        zone: names,
+        location: names,
+      },
+      products: [
+        {
+          product_id: 1,
+          name: 'A',
+          unit_price: '0.10',
+          tariff_id: 1,
+          orderable: true,
+        },
+        {
+          product_id: 2,
+          name: 'B',
+          unit_price: '0.20',
+          tariff_id: 2,
+          orderable: true,
+        },
+      ],
+    });
+    expect(cartSubtotal(menu, { 1: '2', 2: '1' })).toBe('0.40');
+    expect(cartSubtotal(menu, { 1: '1.5' })).toBeNull();
+    expect(cartSubtotal(menu, { 1: '101' })).toBeNull();
+    expect(cartSubtotal({ ...menu, currency: null }, { 1: '1' })).toBeNull();
+    expect(
+      cartSubtotal(
+        { ...menu, products: [{ ...menu.products[0]!, unit_price: null }] },
+        { 1: '1' },
+      ),
+    ).toBeNull();
+  });
   it('uses a unique per-tab secret that never equals the public QR or enters the URL', async () => {
     const reference = 'a'.repeat(43),
       secret = visitSecret(reference);

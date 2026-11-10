@@ -6,7 +6,7 @@
 // ==============================================
 
 // Explicit local enrollment; all authority, eligibility and accepted versions are checked by the server.
-import { useRef, useState, type FormEvent } from 'react';
+import { useId, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { identityKey, useSession } from '../../app/access';
 import { Button, LoadingPanel } from '../../shared/ui/primitives';
 import styles from './integration.module.css';
+import { useUnsavedChanges } from '../../shared/ui/UnsavedChanges';
 
 const dossierSchema = z.object({
   id: z.number(),
@@ -143,6 +144,8 @@ export function BillingCountryPanel({
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
     [error, setError] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  useUnsavedChanges(dirty);
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (!file || !synthetic || !query.data) return;
@@ -169,6 +172,7 @@ export function BillingCountryPanel({
         expected_revision: query.data.revision,
         idempotency_key: crypto.randomUUID(),
       });
+      setDirty(false);
       setMessage('saved');
       setError(false);
       await query.refetch();
@@ -218,6 +222,7 @@ export function BillingCountryPanel({
             ))}
             <form
               className={styles.form}
+              onChange={() => setDirty(true)}
               onSubmit={(event) => void submit(event)}
             >
               <label>
@@ -304,6 +309,7 @@ function DocumentCard({ document }: { document: PresentedDocument }) {
     [saved, setSaved] = useState(document.response !== null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState('');
+  useUnsavedChanges(!saved && choice !== '');
   const label =
     document.response_kind === 'acceptance'
       ? 'o3.accept'
@@ -391,6 +397,9 @@ export function EnrollmentPage() {
     retry: false,
   });
   const draftForm = useRef<HTMLFormElement>(null);
+  const formId = useId();
+  const [dirty, setDirty] = useState(false);
+  useUnsavedChanges(dirty);
   const localDraft = session.data?.source === 'authenticated-local';
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
@@ -436,6 +445,7 @@ export function EnrollmentPage() {
       ) : !query.data ? (
         <form
           ref={draftForm}
+          onChange={() => setDirty(true)}
           className={styles.form}
           onSubmit={(event) => {
             event.preventDefault();
@@ -451,6 +461,7 @@ export function EnrollmentPage() {
                   ]),
                 ),
               );
+              setDirty(false);
               if (localDraft)
                 await enrollmentRequest('/enrollment-draft', 'DELETE');
             });
@@ -508,6 +519,7 @@ export function EnrollmentPage() {
                       if (input instanceof HTMLInputElement)
                         input.value = saved.fields[field] ?? '';
                     }
+                    setDirty(true);
                   })
                 }
               >
@@ -529,8 +541,13 @@ export function EnrollmentPage() {
           )}
           {fields.map((field) => (
             <label key={field}>
-              {t('o3.' + field)}
+              <span id={formId + field}>{t('o3.' + field)}</span>
+              <small id={formId + field + '-requirement'}>
+                {t(field === 'email' ? 'quality.optional' : 'quality.required')}
+              </small>
               <input
+                aria-labelledby={formId + field}
+                aria-describedby={formId + field + '-requirement'}
                 name={field}
                 type={field === 'email' ? 'email' : 'text'}
                 minLength={

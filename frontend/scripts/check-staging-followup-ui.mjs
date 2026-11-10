@@ -18,9 +18,15 @@ import {
   root,
 } from './operationalHarness.mjs';
 
+const receiptPhase = process.argv
+  .find((value) => value.startsWith('--receipt='))
+  ?.split('=')[1];
+assert(!receiptPhase || ['before', 'after'].includes(receiptPhase));
 const output = path.join(
   root,
-  'artifacts/staging-local-followup-20261110/captures',
+  receiptPhase
+    ? `artifacts/interface-consolidation-20261110/${receiptPhase}`
+    : 'artifacts/staging-local-followup-20261110/captures',
 );
 fs.mkdirSync(output, { recursive: true });
 const browser = await launch();

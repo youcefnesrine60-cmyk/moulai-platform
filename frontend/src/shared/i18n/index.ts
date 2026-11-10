@@ -35,6 +35,7 @@ import { assistanceV2 } from './assistanceV2';
 import { integration } from './integration';
 import { o3 } from './o3';
 import { followup } from './followup';
+import { interfaceQuality } from './interfaceQuality';
 import type { Locale, LocalizedLabel } from '../access/contracts';
 
 /** Store only a language preference; identities and tenant data stay in memory. */
@@ -65,6 +66,7 @@ await i18n.use(initReactI18next).init({
         ...integration.fr,
         ...o3.fr,
         ...followup.fr,
+        ...interfaceQuality.fr,
       },
     },
     ar: {
@@ -83,6 +85,7 @@ await i18n.use(initReactI18next).init({
         ...integration.ar,
         ...o3.ar,
         ...followup.ar,
+        ...interfaceQuality.ar,
       },
     },
     en: {
@@ -101,6 +104,7 @@ await i18n.use(initReactI18next).init({
         ...integration.en,
         ...o3.en,
         ...followup.en,
+        ...interfaceQuality.en,
       },
     },
   },

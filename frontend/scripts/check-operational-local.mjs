@@ -81,7 +81,7 @@ try {
     phase = username + ':access';
     await page.goto('https://127.0.0.1:5180/access');
     await page
-      .getByRole('button', { name: 'Continuer avec Keycloak', exact: true })
+      .getByRole('button', { name: 'Se connecter', exact: true })
       .click();
     phase = username + ':login';
     await page.locator('#username').fill(username);

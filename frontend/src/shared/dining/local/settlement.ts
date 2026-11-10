@@ -18,6 +18,19 @@ export const invoiceBalance = z.object({
   settlement_id: z.number().int().positive().nullable(),
 });
 export const ownInvoice = z.union([
-  invoiceBalance,
+  invoiceBalance.extend({
+    revision: z.number().int().positive().optional(),
+    finalized_at: z.string().datetime({ offset: true }).nullable().optional(),
+    lines: z
+      .array(
+        z.object({
+          description: z.string(),
+          quantity: z.string().regex(/^\d+(?:\.\d+)?$/),
+          unit_price: z.string().regex(/^\d+(?:\.\d+)?$/),
+          amount: z.string().regex(/^\d+(?:\.\d+)?$/),
+        }),
+      )
+      .optional(),
+  }),
   z.object({ status: z.literal('not_issued') }),
 ]);

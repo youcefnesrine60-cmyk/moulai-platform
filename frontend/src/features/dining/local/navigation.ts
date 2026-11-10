@@ -50,3 +50,14 @@ export function localSections(capabilities: readonly string[]): string[] {
       : []),
   ];
 }
+
+/** Choose a useful view from explicit capabilities; never infer or grant a permission from a role title. */
+export function preferredSection(capabilities: readonly string[]): string {
+  if (capabilities.includes('configure') || capabilities.includes('service'))
+    return 'planning';
+  if (capabilities.includes('orders.prepare')) return 'visits';
+  if (capabilities.includes('finance.read')) return 'finance';
+  if (capabilities.includes('orders.read') || capabilities.includes('collect'))
+    return 'visits';
+  return 'planning';
+}

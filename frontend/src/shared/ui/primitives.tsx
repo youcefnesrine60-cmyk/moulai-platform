@@ -45,6 +45,8 @@ export function Brand({
           alt="MoulAI™"
           width={2172}
           height={724}
+          decoding="async"
+          fetchPriority="high"
         />
       </span>
       <span className={styles.brandTagline} dir={i18n.dir()}>
@@ -61,7 +63,7 @@ export function Button({
   className = '',
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'primary' | 'secondary' | 'quiet';
+  variant?: 'primary' | 'secondary' | 'quiet' | 'danger';
   children: ReactNode;
 }): ReactElement {
   return (

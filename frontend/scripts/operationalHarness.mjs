@@ -40,10 +40,11 @@ export const screen =
 export async function launch() {
   return chromium.launch({ headless: true });
 }
-export async function newContext(browser) {
+export async function newContext(browser, viewport, density = 1) {
   const context = await browser.newContext({
     ignoreHTTPSErrors: false,
     locale: 'fr-FR',
+    ...(viewport ? { viewport, deviceScaleFactor: density } : {}),
   });
   await context.route('**/*', (r) =>
     [origin, 'https://127.0.0.1:8444'].includes(
@@ -58,9 +59,7 @@ export async function login(browser, username) {
   const context = await newContext(browser),
     page = await context.newPage();
   await page.goto(origin + '/access');
-  await page
-    .getByRole('button', { name: 'Continuer avec Keycloak', exact: true })
-    .click();
+  await page.getByRole('button', { name: 'Se connecter', exact: true }).click();
   await page.locator('#username').fill(username);
   await page.locator('#password').fill(accounts[username].password);
   await page.locator('#kc-login').click();

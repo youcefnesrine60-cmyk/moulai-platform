@@ -56,7 +56,7 @@
   color: var(--sidebar-muted);
 }
 .button {
-  min-block-size: 44px;
+  min-block-size: var(--control-height);
   border: 1px solid transparent;
   padding: 11px 17px;
   display: inline-flex;
@@ -64,7 +64,7 @@
   align-items: center;
   gap: 12px;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: var(--text-control);
   font-weight: var(--weight-semibold);
   /* Text and surfaces switch together; color interpolation breaks theme contrast. */
   transition: box-shadow 0.15s;
@@ -78,7 +78,7 @@
 }
 .secondary {
   background: var(--surface-card);
-  border-color: var(--border);
+  border-color: var(--border-strong);
   color: var(--text-primary);
 }
 .secondary:hover:not(:disabled) {
@@ -88,9 +88,56 @@
   background: transparent;
   color: var(--text-secondary);
 }
+.danger {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-border);
+}
+.danger:hover:not(:disabled) {
+  box-shadow: 0 0 0 1px var(--danger-border);
+}
 .button:disabled {
   background: var(--disabled-bg);
   color: var(--disabled-text);
+}
+.disclosure {
+  text-align: start;
+}
+.disclosure summary {
+  min-block-size: var(--control-height);
+  padding-block: 10px;
+  cursor: pointer;
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.disclosure p {
+  font-size: var(--text-small);
+  color: var(--text-secondary);
+}
+.guardOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  background: var(--overlay);
+}
+.guardDialog {
+  position: fixed;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  inline-size: min(560px, calc(100vw - 32px));
+  max-block-size: calc(100dvh - 32px);
+  overflow: auto;
+  z-index: 161;
+  padding: var(--space-5);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+:global(html[dir='rtl']) .guardDialog {
+  transform: translate(50%, -50%);
 }
 .appearance {
   display: flex;

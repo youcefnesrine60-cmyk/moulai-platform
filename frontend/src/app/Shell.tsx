@@ -101,6 +101,7 @@ export function Sidebar({
           <p className={styles.sectionLabel}>{t('nav.management')}</p>
         )}
         {!platform &&
+          !operational &&
           operations
             .filter(([permission]) => current?.permissions.includes(permission))
             .map(([, label, Icon]) =>
@@ -131,13 +132,80 @@ export function Sidebar({
                 </div>
               ),
             )}
+        {!platform && operational && current && restaurantId && (
+          <>
+            <p className={styles.sectionLabel}>{t('quality.operations')}</p>
+            <NavLink
+              to={`/workspace/organizations/${current.id}/restaurants/${restaurantId}/tables`}
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.navActive : ''}`
+              }
+              onClick={close}
+            >
+              {t('dining.title')}
+            </NavLink>
+            <p className={styles.sectionLabel}>{t('quality.people')}</p>
+            <NavLink
+              to="/workspace/invitations"
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.navActive : ''}`
+              }
+              onClick={close}
+            >
+              {t('integration.invitations')}
+            </NavLink>
+            {current.permissions.includes('tenant.billing.read') && (
+              <>
+                <p className={styles.sectionLabel}>
+                  {t('quality.subscription')}
+                </p>
+                <NavLink
+                  to={`/workspace/organizations/${current.id}/restaurants/${restaurantId}/offer`}
+                  className={({ isActive }) =>
+                    `${styles.navLink} ${isActive ? styles.navActive : ''}`
+                  }
+                  onClick={close}
+                >
+                  {t('offer.title')}
+                </NavLink>
+              </>
+            )}
+          </>
+        )}
+        {platform &&
+          operational &&
+          [
+            [
+              'tenant.billing_country.manage',
+              'o3.reviewTitle',
+              '/platform/billing-countries',
+            ],
+            ['payments.review', 'o3.paymentReview', '/platform/saas-payments'],
+          ]
+            .filter(([permission]) =>
+              session.data?.platformPermissions.includes(permission!),
+            )
+            .map(([, label, to]) => (
+              <NavLink
+                key={to}
+                to={to!}
+                className={({ isActive }) =>
+                  `${styles.navLink} ${isActive ? styles.navActive : ''}`
+                }
+                onClick={close}
+              >
+                {t(label!)}
+              </NavLink>
+            ))}
         {platform &&
           operational &&
           session.data?.platformPermissions.includes(
             'subscriptions.pricing.manage',
           ) && (
             <NavLink
-              className={styles.navLink ?? ''}
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.navActive : ''}`
+              }
               to="/platform/pricing"
               onClick={close}
             >
@@ -190,6 +258,19 @@ export function Shell({
   const diningOperational = location.pathname.endsWith('/tables');
   const adapter = useAdapter();
   const atWorkspace = location.pathname === '/workspace';
+  const integratedLabel = location.pathname.endsWith('/offer')
+    ? 'offer.title'
+    : location.pathname === '/workspace/enrollment'
+      ? 'o3.title'
+      : location.pathname === '/workspace/invitations'
+        ? 'integration.invitations'
+        : location.pathname === '/platform/billing-countries'
+          ? 'o3.reviewTitle'
+          : location.pathname === '/platform/saas-payments'
+            ? 'o3.paymentReview'
+            : location.pathname === '/platform/pricing'
+              ? 'pricing.campaigns'
+              : null;
   return (
     <div className={styles.frame}>
       <a className={styles.skip} href="#main-content">
@@ -207,7 +288,10 @@ export function Shell({
         >
           <div id="operational-help-slot" data-header-help>
             {!diningOperational && (
-              <AccessHelp operational={isAuthenticatedAccess(adapter.mode)} />
+              <AccessHelp
+                operational={isAuthenticatedAccess(adapter.mode)}
+                staging={adapter.mode === 'authenticated-staging'}
+              />
             )}
           </div>
           <div className={styles.breadcrumb} data-header-context>
@@ -245,37 +329,48 @@ export function Shell({
             <Link to={platform ? '/platform' : '/workspace'}>
               {t(platform ? 'nav.platformArea' : 'nav.tenantArea')}
             </Link>
-            {!platform && (
+            {integratedLabel ? (
               <>
                 <ChevronRight
                   className="directional"
                   size={14}
                   aria-hidden="true"
                 />
-                <span>
-                  {t(
-                    atWorkspace
-                      ? 'nav.workspace'
-                      : location.pathname.includes('/catalogue')
-                        ? 'nav.catalogue'
-                        : location.pathname.includes('/orders')
-                          ? 'nav.orders'
-                          : location.pathname.includes('/agents')
-                            ? 'nav.agents'
-                            : location.pathname.includes('/channels')
-                              ? 'nav.channels'
-                              : location.pathname.includes('/conversations')
-                                ? 'nav.conversations'
-                                : location.pathname.includes('/reports')
-                                  ? 'nav.reports'
-                                  : location.pathname.includes('/billing')
-                                    ? 'nav.billing'
-                                    : diningOperational
-                                      ? 'dining.title'
-                                      : 'nav.restaurants',
-                  )}
-                </span>
+                <span aria-current="page">{t(integratedLabel)}</span>
               </>
+            ) : (
+              !platform && (
+                <>
+                  <ChevronRight
+                    className="directional"
+                    size={14}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {t(
+                      atWorkspace
+                        ? 'nav.workspace'
+                        : location.pathname.includes('/catalogue')
+                          ? 'nav.catalogue'
+                          : location.pathname.includes('/orders')
+                            ? 'nav.orders'
+                            : location.pathname.includes('/agents')
+                              ? 'nav.agents'
+                              : location.pathname.includes('/channels')
+                                ? 'nav.channels'
+                                : location.pathname.includes('/conversations')
+                                  ? 'nav.conversations'
+                                  : location.pathname.includes('/reports')
+                                    ? 'nav.reports'
+                                    : location.pathname.includes('/billing')
+                                      ? 'nav.billing'
+                                      : diningOperational
+                                        ? 'dining.title'
+                                        : 'nav.restaurants',
+                    )}
+                  </span>
+                </>
+              )
             )}
           </div>
           <div data-header-brand>

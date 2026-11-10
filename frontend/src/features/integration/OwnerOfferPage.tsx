@@ -17,6 +17,7 @@ import { Button, ErrorPanel, LoadingPanel } from '../../shared/ui/primitives';
 import styles from './integration.module.css';
 import { BillingCountryPanel } from './EnrollmentPage';
 import { SaasPayments } from './SaasPayments';
+import { ExactAmount } from '../../shared/ui/ExactAmount';
 
 const offer = z.object({
   base_reference: z.string().nullable(),
@@ -53,7 +54,7 @@ const amountKeys = [
 ] as const;
 
 export function OwnerOfferPage() {
-  const { t } = useTranslation(),
+  const { t, i18n } = useTranslation(),
     selection = useSelection(),
     session = useSession();
   const root = `/organizations/${selection.organizationId}/restaurants/${selection.restaurantId}/offer`;
@@ -69,11 +70,13 @@ export function OwnerOfferPage() {
     [busy, setBusy] = useState(false),
     [result, setResult] = useState<z.infer<typeof pricing> | null>(null),
     [failed, setFailed] = useState(false);
+  const [resultCurrency, setResultCurrency] = useState<string | null>(null);
   async function simulate(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     setFailed(false);
     setResult(null);
+    setResultCurrency(currency || query.data?.currency || null);
     try {
       setResult(
         pricing.parse(
@@ -129,7 +132,11 @@ export function OwnerOfferPage() {
           <select
             required
             value={currency || query.data.currency || ''}
-            onChange={(event) => setCurrency(event.target.value)}
+            onChange={(event) => {
+              setResult(null);
+              setCurrency(event.target.value);
+            }}
+            disabled={busy}
           >
             <option value="">{t('offer.choose')}</option>
             {query.data.currencies.map((value) => (
@@ -143,7 +150,10 @@ export function OwnerOfferPage() {
           {t('offer.plan')}
           <select
             value={plan}
-            onChange={(e) => setPlan(e.target.value)}
+            onChange={(e) => {
+              setResult(null);
+              setPlan(e.target.value);
+            }}
             required
             disabled={busy || !query.data.plans.length}
           >
@@ -159,7 +169,10 @@ export function OwnerOfferPage() {
           {t('offer.cycle')}
           <select
             value={cycle}
-            onChange={(e) => setCycle(e.target.value)}
+            onChange={(e) => {
+              setResult(null);
+              setCycle(e.target.value);
+            }}
             disabled={busy}
           >
             {['monthly', 'quarterly', 'semiannual', 'yearly'].map((c) => (
@@ -173,7 +186,10 @@ export function OwnerOfferPage() {
           {t('offer.method')}
           <select
             value={method}
-            onChange={(e) => setMethod(e.target.value)}
+            onChange={(e) => {
+              setResult(null);
+              setMethod(e.target.value);
+            }}
             disabled={busy}
           >
             <option value="electronic">{t('offer.electronic')}</option>
@@ -193,7 +209,8 @@ export function OwnerOfferPage() {
       </form>
       {failed && <p role="alert">{t('offer.blocked')}</p>}
       {result && (
-        <div>
+        <section aria-label={t('quality.simulation')}>
+          <p role="status">{t('quality.simulation')}</p>
           <p>
             {t('followup.paymentRate')}:{' '}
             <bdi>
@@ -210,7 +227,7 @@ export function OwnerOfferPage() {
                 (result.pricing.parameters as Record<string, unknown>)?.B ??
                   '—',
               )}{' '}
-              {currency || query.data.currency}
+              {resultCurrency}
             </bdi>
           </p>
           <dl>
@@ -218,10 +235,21 @@ export function OwnerOfferPage() {
               <div key={key}>
                 <dt>{t('offer.' + key)}</dt>
                 <dd>
-                  <bdi>
-                    {String(result.pricing[key])}{' '}
-                    {currency || query.data.currency}
-                  </bdi>
+                  {key.endsWith('_discount') ? (
+                    <bdi>
+                      {new Intl.NumberFormat(i18n.language, {
+                        style: 'percent',
+                        maximumFractionDigits: 3,
+                      }).format(Number(result.pricing[key]))}
+                    </bdi>
+                  ) : (
+                    <ExactAmount
+                      value={String(result.pricing[key] ?? '—')}
+                      currency={
+                        key === 'restaurant_score' ? null : resultCurrency
+                      }
+                    />
+                  )}
                 </dd>
               </div>
             ))}
@@ -232,7 +260,7 @@ export function OwnerOfferPage() {
               {JSON.stringify(result.pricing.parameters, null, 2)}
             </pre>
           </details>
-        </div>
+        </section>
       )}
       {selection.organizationId !== null && selection.restaurantId !== null && (
         <SaasPayments

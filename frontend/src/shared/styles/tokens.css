@@ -30,7 +30,7 @@
     var(--surface-card) var(--panel-opacity),
     transparent
   );
-  --surface-header: color-mix(in srgb, var(--surface-page) 40%, transparent);
+  --surface-header: color-mix(in srgb, var(--surface-page) 60%, transparent);
   --surface-scene-wash: color-mix(
     in srgb,
     var(--surface-page) 16%,
@@ -104,6 +104,15 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
+  --content-max: 1280px;
+  --content-gutter: clamp(16px, 3vw, 40px);
+  --control-height: 44px;
+  --text-control: 14px;
+  --text-small: 13px;
+  --surface-work: var(--surface-card);
+  --danger-bg: var(--dining-alert-bg);
+  --danger-text: var(--dining-alert-text);
+  --danger-border: var(--dining-alert-border);
   --weight-body: 400;
   --weight-medium: 500;
   --weight-semibold: 600;

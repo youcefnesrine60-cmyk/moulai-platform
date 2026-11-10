@@ -171,15 +171,16 @@
   place-items: center;
 }
 .content {
-  padding: 48px 48px 60px;
-  max-inline-size: 1280px;
+  --surface-panel: var(--surface-work);
+  --surface-reading: var(--surface-work);
+  padding: var(--content-gutter);
+  max-inline-size: var(--content-max);
   inline-size: 100%;
   margin-inline: auto;
   outline: none;
-  background: var(--surface-reading);
+  background: var(--surface-work);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(4px);
   margin-block: 28px;
 }
 .footer {

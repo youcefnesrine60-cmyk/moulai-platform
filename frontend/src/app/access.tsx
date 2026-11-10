@@ -22,6 +22,7 @@ import {
   type AccessSession,
 } from '../shared/access/contracts';
 import { useTranslation } from 'react-i18next';
+import { SessionInformation } from '../shared/ui/SessionInformation';
 import { ErrorPanel, LoadingPanel } from '../shared/ui/primitives';
 
 const AdapterContext = createContext<AccessAdapter | null>(null);
@@ -163,13 +164,9 @@ export function SessionWarning(): ReactElement | null {
       <strong>
         {t('followup.session', { seconds: Math.max(0, remaining) })}
       </strong>
-      <p>
-        {t(
-          session.data.source === 'authenticated-local'
-            ? 'followup.sessionDraftLocal'
-            : 'followup.sessionDraftStaging',
-        )}
-      </p>
+      <SessionInformation
+        local={session.data.source === 'authenticated-local'}
+      />
       <a href="/api/web/auth/login">{t('followup.reconnect')}</a>
     </aside>
   );

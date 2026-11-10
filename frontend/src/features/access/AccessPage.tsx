@@ -32,7 +32,9 @@ import {
   ForwardArrow,
   AppearanceControls,
   LoadingPanel,
+  Badge,
 } from '../../shared/ui/primitives';
+import { SessionInformation } from '../../shared/ui/SessionInformation';
 import styles from './access.module.css';
 import headerLayout from '../../shared/ui/header-layout.module.css';
 import { AccessHelp } from './AccessHelp';
@@ -166,7 +168,7 @@ function ReviewForm(): ReactElement {
   );
 }
 
-/** No credential fields and no remote login call until Business Integration. */
+/** Real identity entry stays distinct from the explicitly labelled synthetic review. */
 export function AccessPage(): ReactElement {
   const { t, i18n } = useTranslation();
   const adapter = useAdapter();
@@ -186,7 +188,10 @@ export function AccessPage(): ReactElement {
       )}
       <header className={`${styles.header} ${headerLayout.frame}`}>
         <div data-header-help>
-          <AccessHelp operational={isAuthenticatedAccess(adapter.mode)} />
+          <AccessHelp
+            operational={isAuthenticatedAccess(adapter.mode)}
+            staging={adapter.mode === 'authenticated-staging'}
+          />
         </div>
         <div data-header-brand>
           <Brand prominent />
@@ -219,6 +224,9 @@ export function AccessPage(): ReactElement {
           </div>
         </aside>
         <section className={styles.entry}>
+          {adapter.mode !== 'disconnected' && (
+            <Badge tone="test">{t('quality.test')}</Badge>
+          )}
           <p className="eyebrow">{t('access.eyebrow')}</p>
           <h1>{t('access.title')}</h1>
           <p className={styles.description}>{t('access.description')}</p>
@@ -234,19 +242,31 @@ export function AccessPage(): ReactElement {
             <ArrowUpRight size={18} aria-hidden="true" />
           </Button>
           {adapter.mode === 'authenticated-local' && (
-            <a href="/api/web/auth/register">{t('followup.register')}</a>
+            <a className={styles.register} href="/api/web/auth/register">
+              {t('followup.register')}
+            </a>
           )}
-          <p id="connection-status" className={styles.connectionStatus}>
-            <LockKeyhole size={16} aria-hidden="true" />
-            {t(
-              isAuthenticatedAccess(adapter.mode)
-                ? 'integration.signinHelp'
-                : 'access.unavailable',
-            )}
-          </p>
+          {!isAuthenticatedAccess(adapter.mode) && (
+            <p id="connection-status" className={styles.connectionStatus}>
+              {t('access.unavailable')}
+            </p>
+          )}
+          {isAuthenticatedAccess(adapter.mode) && (
+            <span id="connection-status" className="sr-only">
+              {t('quality.identity')}
+            </span>
+          )}
           {adapter.mode === 'synthetic' && <ReviewForm />}
           {isAuthenticatedAccess(adapter.mode) && (
-            <p>{t('integration.sessionLimit')}</p>
+            <div className={styles.sessionInfo}>
+              <p>{t('integration.sessionLimit')}</p>
+              {adapter.mode === 'authenticated-staging' && (
+                <p>{t('quality.noPublicRegistration')}</p>
+              )}
+              <SessionInformation
+                local={adapter.mode === 'authenticated-local'}
+              />
+            </div>
           )}
           <p className={styles.privacy}>
             <LockKeyhole size={14} aria-hidden="true" />

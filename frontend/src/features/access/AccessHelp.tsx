@@ -16,7 +16,14 @@ import {
 } from '../dining/local/AssistantConversation';
 import styles from '../dining/local/assistance.module.css';
 import { VoiceControls } from '../dining/local/VoiceControls';
-export function AccessHelp({ operational = false }: { operational?: boolean }) {
+import { SessionInformation } from '../../shared/ui/SessionInformation';
+export function AccessHelp({
+  operational = false,
+  staging = false,
+}: {
+  operational?: boolean;
+  staging?: boolean;
+}) {
   const { t, i18n } = useTranslation();
   const locale =
     i18n.language === 'ar' ? 'ar' : i18n.language === 'en' ? 'en' : 'fr';
@@ -73,6 +80,7 @@ export function AccessHelp({ operational = false }: { operational?: boolean }) {
               />
             ) : (
               <>
+                {operational && <SessionInformation local={!staging} />}
                 <div data-guide-version={ACCESS_HELP_VERSION}>
                   {accessDocumentation(locale, operational).map((section) => (
                     <section key={section.title} className={styles.box}>

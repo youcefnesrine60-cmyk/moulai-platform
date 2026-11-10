@@ -16,6 +16,7 @@ import {
   type Planning,
   type OperationResult,
 } from '../../../shared/dining/local/client';
+import { localSections, preferredSection } from './navigation';
 
 /** Fence reads and submissions by identity/scope; server permissions remain authoritative. */
 export function useWorkspace({
@@ -40,7 +41,17 @@ export function useWorkspace({
   const [success, setSuccess] = useState(false);
   const [committedStale, setCommittedStale] = useState(false);
   const [result, setResult] = useState<OperationResult | null>(null);
-  const [tab, setTab] = useState('planning');
+  const [tab, setSelectedTab] = useState('planning');
+  const setTab = (value: string) => {
+    setSelectedTab(value);
+    const params = new URLSearchParams(location.search);
+    params.set('section', value);
+    history.replaceState(
+      history.state,
+      '',
+      location.pathname + '?' + params.toString(),
+    );
+  };
   const epoch = useRef(0);
   const planningRead = useRef(0);
   const locked = useRef(false);
@@ -98,7 +109,7 @@ export function useWorkspace({
     setScope(
       next.scopes.find((row) => String(row.branch_id) === candidate) ?? null,
     );
-    setTab('planning');
+    setSelectedTab('planning');
   };
   useEffect(() => {
     let current = true;
@@ -158,6 +169,17 @@ export function useWorkspace({
   ) => {
     const next = await api.workspace(selected);
     if (expectedEpoch !== epoch.current) return;
+    if (!data) {
+      const selectedSection = new URLSearchParams(location.search).get(
+        'section',
+      );
+      setSelectedTab(
+        selectedSection &&
+          localSections(next.capabilities).includes(selectedSection)
+          ? selectedSection
+          : preferredSection(next.capabilities),
+      );
+    }
     setData(next);
     window.moulaiTheme?.setContextTimezone?.(
       next.policy?.timezone ?? null,
@@ -170,8 +192,10 @@ export function useWorkspace({
         month: '2-digit',
         day: '2-digit',
       }).formatToParts(new Date(next.server_time ?? Date.now()));
+      const urlDay = new URLSearchParams(location.search).get('date');
       const selectedDay =
         visibleDay.current ||
+        (urlDay && /^\d{4}-\d{2}-\d{2}$/.test(urlDay) ? urlDay : '') ||
         ['year', 'month', 'day']
           .map((kind) => parts.find((part) => part.type === kind)?.value ?? '')
           .join('-');
@@ -238,7 +262,7 @@ export function useWorkspace({
     clear();
     window.moulaiTheme?.setContextTimezone?.(null, null);
     setScope(next);
-    setTab('planning');
+    setSelectedTab('planning');
     history.replaceState(
       null,
       '',
@@ -246,6 +270,14 @@ export function useWorkspace({
     );
   };
   const selectDay = (value: string) => {
+    const params = new URLSearchParams(location.search);
+    if (value) params.set('date', value);
+    else params.delete('date');
+    history.replaceState(
+      history.state,
+      '',
+      location.pathname + '?' + params.toString(),
+    );
     visibleDay.current = value;
     setDay(value);
     setPlanning(null);

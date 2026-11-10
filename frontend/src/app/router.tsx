@@ -12,14 +12,19 @@ import { ErrorPanel, LoadingPanel } from '../shared/ui/primitives';
 import { RequireSession, useLeaveReview } from './access';
 import { Shell } from './Shell';
 import { RouteRecovery } from '../shared/ui/RenderRecovery';
+import { UnsavedChangesProvider } from '../shared/ui/UnsavedChanges';
 
 /** Restore keyboard context when a navigation replaces the current main view. */
 function NavigationFocus(): ReactElement {
   const { pathname } = useLocation();
   useEffect(() => {
-    document.getElementById('main-content')?.focus();
+    document.getElementById('main-content')?.focus({ preventScroll: true });
   }, [pathname]);
-  return <Outlet />;
+  return (
+    <UnsavedChangesProvider>
+      <Outlet />
+    </UnsavedChangesProvider>
+  );
 }
 
 function NotFound(): ReactElement {

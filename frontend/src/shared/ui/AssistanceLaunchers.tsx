@@ -60,6 +60,7 @@ export function AssistanceLaunchers({
               src={`/brand/${file}`}
               width={48}
               height={48}
+              decoding="async"
               alt=""
               aria-hidden="true"
               draggable={false}

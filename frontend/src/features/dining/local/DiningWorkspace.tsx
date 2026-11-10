@@ -76,6 +76,7 @@ import { HelpLink } from './HelpLink';
 import { HistoryPanel } from './HistoryPanel';
 import { ElementHelp } from './ElementHelp';
 import { SettlementForm } from './SettlementForm';
+import { useViewChange } from '../../../shared/ui/UnsavedChanges';
 
 function DataTable({
   label,
@@ -148,6 +149,7 @@ function DiningWorkspace({
   const operational =
     import.meta.env.MODE === 'staging' || requestedOperational;
   const { t, i18n } = useTranslation();
+  const changeView = useViewChange();
   const openId = useId(),
     closeId = useId();
   const {
@@ -230,7 +232,7 @@ function DiningWorkspace({
           }
           aria-pressed={activeTab === name}
           disabled={!data || busy}
-          onClick={() => setTab(name)}
+          onClick={() => changeView(() => setTab(name))}
         >
           {t(`d1.section_${name}`)}
         </button>
@@ -434,7 +436,7 @@ function DiningWorkspace({
                     label="authorizedBranch"
                     name="branch"
                     value={scope ? String(scope.branch_id) : ''}
-                    set={changeScope}
+                    set={(value) => changeView(() => changeScope(value))}
                     disabled={busy}
                     options={session.scopes.map((row) => ({
                       value: String(row.branch_id),

@@ -346,6 +346,33 @@ async def test_country_checkout_and_manual_activation_are_single(
             == 6
         )
 
+    # ==============================================
+    # DISTINCT OWNED SERVICE-PERIOD PROJECTION
+    # A paid invoice and an approved receipt must not be confused with an inferred active period.
+    # ==============================================
+
+    async def owner_identity() -> BrowserIdentity:
+        """Reuse the authenticated synthetic owner with real tenant permission checks."""
+        return BrowserIdentity(
+            principal=principal,
+            name="Disposable owner",
+            access_token="OFFLINE-NO-PROVIDER",
+        )
+
+    app.dependency_overrides[queue_identity] = owner_identity
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://offline-route"
+    ) as client:
+        response = await client.get(
+            f"/api/web/organizations/{organization}/restaurants/{restaurant_id}/saas-payments"
+        )
+        assert response.status_code == 200
+        saved = next(row for row in response.json() if row["id"] == invoice.id)
+        assert saved["status"] == "paid"
+        assert saved["receipt_status"] == "approved"
+        assert saved["subscription_status"] == "active"
+        assert saved["amount"] == str(invoice.amount)
+
 
 # ==============================================
 # OBSOLETE DOCUMENTS DO NOT TRANSFER ACCEPTANCE

@@ -48,9 +48,7 @@ describe('browser access composition', () => {
         name: 'Bienvenue dans votre espace.',
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Continuer avec Keycloak' }),
-    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Se connecter' })).toBeDisabled();
     expect(
       screen.queryByRole('button', { name: 'Ouvrir la revue locale' }),
     ).not.toBeInTheDocument();
