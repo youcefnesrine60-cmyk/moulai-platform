@@ -10,6 +10,12 @@ import { chromium } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
+// Node APIRequestContext and Chromium both verify TLS; the former needs explicit OS trust.
+assert.equal(
+  process.env.NODE_USE_SYSTEM_CA,
+  '1',
+  'Start Node with NODE_USE_SYSTEM_CA=1; never bypass TLS errors.',
+);
 export const root = path.resolve(import.meta.dirname, '../..');
 const id = '3fb5f85a6cc94868acaf7d95b3777a16';
 const directory = path.join(root, 'artifacts/operational-local', id);
@@ -36,7 +42,7 @@ export async function launch() {
 }
 export async function newContext(browser) {
   const context = await browser.newContext({
-    ignoreHTTPSErrors: true,
+    ignoreHTTPSErrors: false,
     locale: 'fr-FR',
   });
   await context.route('**/*', (r) =>

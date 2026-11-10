@@ -97,8 +97,8 @@ async def check() -> None:
                             (frontend / "brand" / name).read_bytes()
                         ).hexdigest()
                         for name in [
-                            "Icon-help-MoulAI.png",
-                            "Icon-Assistant-MoulAI.png",
+                            "Icon-help-MoulAI(2).png",
+                            "Icon-Assistant-MoulAI(2).png",
                             "GateWay.ico",
                             "GateWay.png",
                         ]

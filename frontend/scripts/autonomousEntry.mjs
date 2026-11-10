@@ -18,11 +18,16 @@ import {
   checked,
 } from './operationalHarness.mjs';
 
-export async function prepareOwner(browser) {
-  const output = path.join(
-    root,
-    'artifacts/operational-followup-20261109/autonomous',
-  );
+export async function prepareOwner(
+  browser,
+  {
+    output = path.join(
+      root,
+      'artifacts/operational-followup-20261109/autonomous',
+    ),
+    exerciseExpiry = true,
+  } = {},
+) {
   fs.mkdirSync(output, { recursive: true });
   const name = 'self-' + crypto.randomUUID().replaceAll('-', '').slice(0, 12);
   const password = crypto.randomBytes(24).toString('base64url');
@@ -61,7 +66,7 @@ export async function prepareOwner(browser) {
     await page.goto(origin + '/access');
     await page
       .getByRole('link', {
-        name: 'Créer mon compte avec Keycloak local',
+        name: 'Créer mon compte avec Keycloak de test',
         exact: true,
       })
       .click();
@@ -123,6 +128,7 @@ export async function prepareOwner(browser) {
   await duplicate.context().close();
   checks.push({ step: 'duplicate-provider-account-refused', status: 'PASS' });
   persist('RUNNING');
+  if (!exerciseExpiry) return owner;
   await owner
     .getByRole('link', {
       name: 'Créer mon entreprise et mon premier établissement',

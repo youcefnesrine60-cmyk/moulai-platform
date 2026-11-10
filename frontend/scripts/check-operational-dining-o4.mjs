@@ -32,7 +32,9 @@ import {
 } from './operationalHarness.mjs';
 const output = path.join(
   root,
-  'artifacts/operational-followup-20261109/dining-o4',
+  process.argv.includes('--staging-followup')
+    ? 'artifacts/staging-local-followup-20261110/restaurant'
+    : 'artifacts/operational-followup-20261109/dining-o4',
 );
 fs.mkdirSync(output, { recursive: true });
 const browser = await launch(),

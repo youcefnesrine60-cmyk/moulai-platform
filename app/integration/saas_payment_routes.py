@@ -339,10 +339,6 @@ def mount_saas_payment_routes(
                         Payment.status,
                         Restaurant.name,
                         ManualPaymentReceipt.review_status,
-                        SubscriptionPricingSnapshot.parameters,
-                        SubscriptionPricingSnapshot.pricing,
-                        Subscription.starts_at,
-                        Subscription.expires_at,
                         ManualPaymentReceipt.transaction_reference,
                     )
                     .join(Restaurant, Restaurant.id == Payment.restaurant_id)

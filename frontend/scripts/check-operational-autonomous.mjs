@@ -9,6 +9,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import {
   launch,
   login,
@@ -18,11 +19,15 @@ import {
   checked,
 } from './operationalHarness.mjs';
 import { prepareOwner } from './autonomousEntry.mjs';
+import { completeSaasRecipe } from './saasAcceptance.mjs';
 
+const followup = process.argv.includes('--staging-followup');
 const financeScenario = process.argv.includes('--finance-scenario');
 const output = path.join(
   root,
-  'artifacts/operational-followup-20261109/autonomous',
+  followup
+    ? 'artifacts/staging-local-followup-20261110/business'
+    : 'artifacts/operational-followup-20261109/autonomous',
   ...(financeScenario ? ['finance-enrollment'] : []),
 );
 fs.mkdirSync(output, { recursive: true });
@@ -69,7 +74,10 @@ async function submitted(page, pathSuffix, action, expected = 200) {
   return data;
 }
 try {
-  owner = await prepareOwner(browser);
+  owner = await prepareOwner(
+    browser,
+    followup ? { output, exerciseExpiry: !financeScenario } : {},
+  );
   phase = 'main-interface-entry';
   await owner
     .getByRole('link', {
@@ -417,11 +425,34 @@ try {
     repeatedSameResult: true,
     reloadPersisted: true,
   });
+  if (followup && financeScenario) {
+    const identity = checked(await request(owner, '/api/web/session'));
+    fs.writeFileSync(
+      path.join(output, 'clock-target.json'),
+      JSON.stringify({
+        ...finalized,
+        subject: identity.subject,
+        syntheticOnly: true,
+      }),
+    );
+    execFileSync(
+      path.join(root, '.venv/Scripts/python.exe'),
+      [
+        '-I',
+        '-B',
+        path.join(root, 'scripts/prepare_followup_billing_boundary.py'),
+        '--advance-fictitious-trial',
+      ],
+      { cwd: root, stdio: ['ignore', 'pipe', 'pipe'] },
+    );
+  }
+  if (followup) await completeSaasRecipe({ browser, owner, finalized, output });
   persist('PASS', {
     companyCreatedByCLI: false,
     completed: finalized,
-    scope:
-      'authenticated local enrollment, country and documents; paid subscription journey assessed separately',
+    scope: followup
+      ? 'same UI-created authenticated account: enrollment, country, trial, fictitious payment and renewal'
+      : 'authenticated local enrollment, country and documents; paid subscription journey assessed separately',
   });
   console.log(
     JSON.stringify({

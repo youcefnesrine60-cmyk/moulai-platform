@@ -21,6 +21,7 @@ from __future__ import annotations
 # ==============================================
 
 import os
+from collections.abc import AsyncIterator
 from datetime import (
     datetime,
     timedelta,
@@ -30,6 +31,14 @@ from decimal import Decimal
 from uuid import uuid4
 
 import pytest
+from fastapi import (
+    Depends,
+    FastAPI,
+)
+from httpx import (
+    ASGITransport,
+    AsyncClient,
+)
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -45,6 +54,8 @@ from test_billing_country_postgres import (
 from test_billing_country_postgres import factory as factory  # noqa: PLC0414  # isort: skip  # fmt: skip
 
 from app.core.config import settings
+from app.integration.identity import BrowserIdentity
+from app.integration.saas_payment_routes import mount_saas_payment_routes
 from app.models.admin import Admin
 from app.models.billing_country import EnrollmentDocument
 from app.models.restaurant import Restaurant
@@ -238,6 +249,57 @@ async def test_country_checkout_and_manual_activation_are_single(
             media_type="application/pdf",
         )
     payment_reviewer = await reviewer(factory=factory, permission="payments.review")
+
+    # ==============================================
+    # REAL HTTP QUEUE WITH MULTIPLE PERSISTED PRICING RECORDS
+    # A receipt must occur once even when unrelated subscriptions and snapshots exist.
+    # ==============================================
+
+    app = FastAPI()
+
+    # ==============================================
+    # INJECTED TEST IDENTITY
+    # Signature verification is outside this route test; database authority stays real.
+    # ==============================================
+
+    async def queue_identity() -> BrowserIdentity:
+        """Supply the test principal; the actual route still checks its database permission."""
+        return BrowserIdentity(
+            principal=payment_reviewer,
+            name="Disposable reviewer",
+            access_token="OFFLINE-NO-PROVIDER",
+        )
+
+    # ==============================================
+    # INDEPENDENT DATABASE SESSION
+    # The HTTP request cannot inherit an external rollback-only test transaction.
+    # ==============================================
+
+    async def queue_sessions() -> AsyncIterator[AsyncSession]:
+        """Observe committed checkout data from independent real sessions."""
+        async with factory() as queue_session:
+            yield queue_session
+
+    mount_saas_payment_routes(
+        app=app,
+        identity_dep=Depends(queue_identity),
+        session_dep=Depends(queue_sessions),
+    )
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://offline-route"
+    ) as client:
+        response = await client.get("/api/web/platform/saas-payments")
+        assert response.status_code == 200
+        queue = response.json()
+        identifiers = [record["id"] for record in queue]
+        assert len(identifiers) == len(set(identifiers))
+        assert identifiers.count(invoice.id) == 1
+        entry = next(record for record in queue if record["id"] == invoice.id)
+        assert entry["currency"] == "DZD"
+        assert entry["status"] == "pending"
+        assert entry["receipt_status"] == "pending"
+        assert "parameters" not in entry and "pricing" not in entry
+
     async with factory() as session:
         reviewer_id = await session.scalar(
             base_select(Admin)
