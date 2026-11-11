@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { identityKey, useSession } from '../../app/access';
 import { Button, LoadingPanel } from '../../shared/ui/primitives';
 import { ExactAmount } from '../../shared/ui/ExactAmount';
+import { BrandLogo } from '../../shared/ui/BrandLogo';
 import { CopyDocumentFact, DocumentDate } from '../../shared/ui/DocumentFacts';
 import { useUnsavedChanges } from '../../shared/ui/UnsavedChanges';
 import { enrollmentRequest } from './EnrollmentPage';
@@ -97,7 +98,7 @@ export function SaasDocumentContent({
       data-saas-printable
       dir={document.documentElement.dir || 'ltr'}
     >
-      <img className={styles.logo} src="/brand/moulai-logo.png" alt="MoulAI™" />
+      <BrandLogo className={styles.logo} />
       <h1>{t('saasDoc.final')}</h1>
       <p className={styles.warning}>{t('saasDoc.fake')}</p>
       <h2>
@@ -229,7 +230,7 @@ function OwnedDocumentContent({
     </>
   ) : (
     <article className={styles.sheet} data-saas-printable>
-      <img className={styles.logo} src="/brand/moulai-logo.png" alt="MoulAI™" />
+      <BrandLogo className={styles.logo} />
       <h1>
         {t(
           data.payment.status === 'pending'

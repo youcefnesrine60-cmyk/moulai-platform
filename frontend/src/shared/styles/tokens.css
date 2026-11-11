@@ -229,3 +229,12 @@ html[lang='ar'] {
   border-block-start: 1px solid var(--border);
   font-weight: 700;
 }
+
+/* Printed documents use white paper, including the browser's page-margin canvas.
+   Override the device theme's inline color-scheme only during printing. */
+@media print {
+  :root,
+  body {
+    color-scheme: light !important;
+  }
+}

@@ -118,3 +118,4 @@ or reviewing retired tools; recorded results remain tied to their original
 source state and verification scope.
 
 - [O5 presentation and isolated staging preparation](o5-polish-staging-20261111.md): approved dark artwork, transparent favicon, documentary reading, legacy continuity and O5-aware local recovery; remaining integration work stays explicit.
+- [Surface-aware document logos](document-logo-surfaces-20261111.md): shared screen/print artwork, white PDF paper from both themes, local captures and evidence limits.

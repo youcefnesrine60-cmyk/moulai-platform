@@ -11,6 +11,7 @@ import { useLocation } from 'react-router';
 import { flushSync } from 'react-dom';
 import { InvoiceDocument } from './InvoiceDocument';
 import { BrandCanvas } from '../../../shared/ui/BrandCanvas';
+import { BrandLogo } from '../../../shared/ui/BrandLogo';
 import {
   AppearanceControls,
   Brand,
@@ -410,14 +411,7 @@ function PublicDiningContent({
             data-testid="own-invoice"
             data-print-invoice
           >
-            <img
-              className={styles.printBrand}
-              src="/brand/moulai-logo-light01.png"
-              alt="MoulAI™"
-              width={2172}
-              height={724}
-              loading="lazy"
-            />
+            <BrandLogo className={styles.printBrand} />
             <h2>
               {t('d1.invoice')} <bdi dir="ltr">#{invoice.invoice_id}</bdi>
             </h2>

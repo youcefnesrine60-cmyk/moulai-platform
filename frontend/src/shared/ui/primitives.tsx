@@ -21,7 +21,7 @@ import * as Select from '@radix-ui/react-select';
 import { AccessError } from '../access/contracts';
 import { useTheme } from '../theme';
 import styles from './ui.module.css';
-import { brandArtwork } from './brandArtwork';
+import { BrandLogo } from './BrandLogo';
 
 /** Use the supplied transparent theme-specific artwork without altering its pixels. */
 export function Brand({
@@ -32,23 +32,13 @@ export function Brand({
   prominent?: boolean;
 }): ReactElement {
   const { t, i18n } = useTranslation();
-  const { theme } = useTheme();
   return (
     <div
       className={`${styles.brand} ${inverse ? styles.inverse : ''} ${prominent ? styles.prominent : ''}`}
       data-brand-size={prominent ? 'prominent' : 'compact'}
     >
       <span className={styles.brandArtwork} dir="ltr">
-        <img
-          className={styles.brandLogo}
-          key={theme}
-          src={brandArtwork[theme].src}
-          alt="MoulAI™"
-          width={brandArtwork[theme].width}
-          height={brandArtwork[theme].height}
-          decoding="async"
-          fetchPriority="high"
-        />
+        <BrandLogo className={styles.brandLogo} priority />
       </span>
       <span className={styles.brandTagline} dir={i18n.dir()}>
         {t('brand.tagline')}

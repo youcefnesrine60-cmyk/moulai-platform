@@ -5,7 +5,7 @@
 // Copyright (c) 2026 Youcef Nesrine. All Rights Reserved.
 // ==============================================
 
-// Centralize approved screen artwork. White printable documents retain their own approved light artwork.
+// Approved originals shared by headers, cards and documents; BrandLogo explicitly selects light artwork for print.
 export const brandArtwork = {
   light: { src: '/brand/moulai-logo-light01.png', width: 2172, height: 724 },
   dark: {

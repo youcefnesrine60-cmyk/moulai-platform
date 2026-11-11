@@ -622,7 +622,11 @@
   --surface-reading: var(--surface-work);
 }
 .printBrand {
-  display: none;
+  display: block;
+  inline-size: 180px;
+  block-size: auto;
+  max-inline-size: 100%;
+  margin-block-end: 10px;
 }
 .invoiceLines {
   overflow-x: auto;
