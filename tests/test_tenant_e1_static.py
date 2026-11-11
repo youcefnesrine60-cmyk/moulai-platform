@@ -7,7 +7,7 @@
 
 # ==============================================
 # E1 STATIC MIGRATION CONTRACTS
-# Verify compiled tenant protections and preserve E1 ancestry through S1, dining and O4.
+# Verify compiled tenant protections and preserve E1 ancestry through S1, dining and O5.
 # ==============================================
 
 """E1 static safety contracts: real compilation, zero database or SQLite IO."""
@@ -231,12 +231,12 @@ def test_existing_extensions_are_nullable_only(
     [
         (
             "alembic",
-            {"o420261108"},
+            {"o520261111"},
             "s1a20261028",
             "e1a92b200001",
             "e1a92b200001",
             "c413b7918a20",
-            26,
+            27,
         ),
         (
             "alembic_test",
@@ -271,6 +271,7 @@ def test_histories_have_distinct_reviewed_parents(
         assert graph["o220261108"] == "o120261108"
         assert graph["o320261108"] == "o220261108"
         assert graph["o420261108"] == "o320261108"
+        assert graph["o520261111"] == "o420261108"
     assert graph[s1_revision] == s1_parent
     assert graph[e1_revision] == e1_parent
     other_e1 = "e1b92b200001" if directory == "alembic" else "e1a92b200001"

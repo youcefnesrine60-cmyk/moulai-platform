@@ -346,10 +346,15 @@ async def test_decimal_entire_chain_and_currency_precision(
     """Verify decimal entire chain and currency precision."""
 
     g = graph
+    config = await g.s.get(SubscriptionPricingConfig, 1)
+    assert config is not None
     await g.s.execute(
         update(SubscriptionPricingConfig).values(
             base_price=0,
             policies={
+                # This case changes currency precision, not the approved payment
+                # adjustment or reminder configuration prepared by seed_graph.
+                **config.policies,
                 "currencies": {"DZD": {"decimals": 2}, "JPY": {"decimals": 0}},
                 "currency_bases": {"JPY": "1000"},
                 "reminder_days": [14, 7, 1, 0],
@@ -404,6 +409,19 @@ async def test_decimal_entire_chain_and_currency_precision(
         await pricing.calculate_subscription_pricing(
             **(common | {"payment_method": "unknown"})
         )
+    # Removing the persisted rates must still block quotation: this fixture
+    # correction must not introduce a default or weaken the configuration guard.
+    await g.s.execute(
+        update(SubscriptionPricingConfig).values(
+            policies={
+                key: value
+                for key, value in config.policies.items()
+                if key != "payment_adjustment_rates"
+            }
+        )
+    )
+    with pytest.raises(ValueError, match="^payment_adjustment_configuration_missing$"):
+        await pricing.calculate_subscription_pricing(**common)
 
 
 # ==============================================

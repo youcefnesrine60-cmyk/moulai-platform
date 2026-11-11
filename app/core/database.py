@@ -47,6 +47,7 @@ from app.core.health_only import (
     install_health_only_database_guard,
 )
 from app.core.logger import logger
+from app.core.schema_compatibility import historical_schema_compatibility
 from app.core.test_database import (
     UnsafeTestDatabaseError,
     isolated_connection_arguments,
@@ -224,18 +225,39 @@ def _validate_schema(connection: Connection) -> None:
     """Require migrated tables and columns; startup never performs schema writes."""
     inspector = inspect(connection)
     installed_tables = set(inspector.get_table_names())
+    # ==============================================
+    # REVISION-BOUND RETAINED AUDIT REQUIREMENT
+    # The shared AdminLog mapper remains readable on the historical S1 schemas.
+    # Require O1's retained actor columns everywhere except exact pre-O1 revisions;
+    # unknown, absent or ambiguous revision labels cannot waive this requirement.
+    # ==============================================
+
+    revisions: set[str] = set()
+    if "alembic_version" in installed_tables:
+        revisions = set(
+            connection.execute(
+                text("SELECT version_num FROM alembic_version")
+            ).scalars()
+        )
+    compatibility = historical_schema_compatibility(revisions=frozenset(revisions))
     missing: list[str] = []
     for table in Base.metadata.sorted_tables:
+        # Importing a later feature during test collection cannot upgrade an
+        # explicitly older schema. Each feature still requires its own migrated storage.
+        if table.name in compatibility.tables_not_yet_introduced:
+            continue
         if table.name not in installed_tables:
             missing.append(table.name)
             continue
         installed_columns = {
             column["name"] for column in inspector.get_columns(table.name)
         }
+        required_columns = {column.name for column in table.columns}
+        if table.name == "admin_logs" and compatibility.retained_actor_required:
+            required_columns.update({"actor_admin_id", "actor_name", "actor_subject"})
         missing.extend(
-            f"{table.name}.{column.name}"
-            for column in table.columns
-            if column.name not in installed_columns
+            f"{table.name}.{name}"
+            for name in sorted(required_columns - installed_columns)
         )
     if missing:
         logger.error(
@@ -359,7 +381,7 @@ async def check_db_connection() -> bool:
             await conn.execute(text("SELECT 1"))
         logger.info("database_connection_check_successful")
         return True
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001  # Health probes report unavailability.
         logger.exception(
             "database_connection_check_failed",
             extra={"error": str(e)},
@@ -372,17 +394,15 @@ async def check_db_connection() -> bool:
 # ==============================================
 
 __all__ = [
-    # Base
-    "Base",
-    # Engine
-    "engine",
-    # Session
+    # Shared metadata and session factory.
     "AsyncSessionLocal",
-    # Functions
+    "Base",
+    # Connection lifecycle and dependency helpers.
+    "check_db_connection",
+    "close_db",
+    "drop_db",
+    "engine",
     "get_db",
     "get_session",
     "init_db",
-    "drop_db",
-    "close_db",
-    "check_db_connection",
 ]

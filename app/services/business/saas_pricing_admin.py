@@ -37,6 +37,7 @@ from pydantic import (
 )
 from sqlalchemy import (
     Select,
+    literal_column,
     select,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -179,6 +180,16 @@ class SaasPricingAdministration:
             rows = (
                 await self.session.execute(
                     base_select(AdminLog)
+                    .with_only_columns(
+                        AdminLog.id,
+                        literal_column("admin_logs.actor_admin_id").label(
+                            "actor_admin_id"
+                        ),
+                        literal_column("admin_logs.actor_name").label("actor_name"),
+                        AdminLog.action,
+                        AdminLog.timestamp,
+                        AdminLog.details,
+                    )
                     .where(target)
                     .order_by(AdminLog.id.desc())
                     .limit(100)
@@ -197,7 +208,7 @@ class SaasPricingAdministration:
                         row.details
                     ),
                 }
-                for (row,) in rows
+                for row in rows
             ]
 
     # ==============================================

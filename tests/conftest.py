@@ -604,9 +604,13 @@ async def cleanup_test_database(
                         )
                     ).scalars()
                 )
-                expected_tables = set(Base.metadata.tables) | {"alembic_version"}
-                if local_configuration.PROFILE not in {"subscription", "main"}:
-                    expected_tables -= {
+                # Use the hash-checked historical inventory, not mutable ORM
+                # metadata populated by later O3/O4/O5 imports during collection.
+                from scripts.run_local_postgres_tests import legacy_schema_tables
+
+                expected_tables = legacy_schema_tables()
+                if local_configuration.PROFILE in {"subscription", "main"}:
+                    expected_tables |= {
                         "subscription_pricing_config",
                         "subscription_pricing_snapshots",
                         "subscription_reminders",

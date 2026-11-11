@@ -10,16 +10,17 @@
 # سجل أنشطة المدير
 # ==============================================
 
-"""Map retained administrative decisions and their immutable actor snapshots.
+"""Map the shared administrative log columns available before and after O1.
 
 The nullable live administrator link may disappear through ON DELETE SET NULL.
-Actor identity, timestamp and decision details remain stored under O1 guards.
+O1 actor snapshots are read through explicit projections: legacy ORM reads must
+not request columns absent from the historical S1a and dining profiles. Database
+guards retain the actor snapshots and decision details on migrated installations.
 """
 
 from sqlalchemy import (
     Column,
     DateTime,
-    FetchedValue,
     ForeignKey,
     Integer,
     String,
@@ -61,14 +62,6 @@ class AdminLog(BaseModel):
         nullable=True,
         comment="معرف المدير",
     )
-    # ==========================================
-    # RETAINED ACTOR SNAPSHOT
-    # The database captures these values on insertion, independently of future account changes.
-    # ==========================================
-
-    actor_admin_id = Column(Integer, nullable=False, server_default=FetchedValue())
-    actor_name = Column(String(255), nullable=True, server_default=FetchedValue())
-    actor_subject = Column(String(255), nullable=True, server_default=FetchedValue())
     action = Column(
         String(50),
         nullable=False,

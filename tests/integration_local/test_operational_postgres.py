@@ -243,7 +243,15 @@ async def test_administrator_deactivation_and_deletion_retain_history(
             .values(is_active=False, full_name="Renamed inactive account")
         )
     async with factory() as observer:
-        audit = await observer.get(AdminLog, identifier)
+        audit = (
+            (
+                await observer.execute(
+                    text("SELECT * FROM admin_logs WHERE id=:id"), {"id": identifier}
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
         assert audit is not None and audit.actor_admin_id == actor
         assert (
             audit.actor_name == "Original local author"
@@ -259,7 +267,15 @@ async def test_administrator_deactivation_and_deletion_retain_history(
             assert admin is not None and len(admin.logs) == 1
             await session.delete(admin)
     async with factory() as observer:
-        audit = await observer.get(AdminLog, identifier)
+        audit = (
+            (
+                await observer.execute(
+                    text("SELECT * FROM admin_logs WHERE id=:id"), {"id": identifier}
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
         assert audit is not None and audit.admin_id is None
         assert (
             audit.actor_admin_id == actor
