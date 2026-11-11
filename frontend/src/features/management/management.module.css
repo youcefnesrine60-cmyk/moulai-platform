@@ -529,3 +529,19 @@
     grid-column: span 12;
   }
 }
+.restaurantNavigation {
+  margin-block-end: 12px;
+}
+.restaurantNavigation > summary {
+  cursor: pointer;
+  min-block-size: 44px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  background: var(--surface-work);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+.restaurantNavigation > summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}

@@ -101,9 +101,13 @@ export function visitSecret(publicReference: string): string {
 }
 export class PublicDiningClient {
   constructor(private readonly api = new LocalDiningClient()) {}
-  async invoice(reference: string, secret: string): Promise<unknown> {
+  async invoice(
+    reference: string,
+    secret: string,
+    locale: 'fr' | 'en' | 'ar' = 'fr',
+  ): Promise<unknown> {
     return this.api.request(
-      '/api/web/dining/public/invoice',
+      '/api/web/dining/public/invoice?locale=' + locale,
       'POST',
       { public_id: publicId(reference) },
       { 'X-Visit-Token': secret },

@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { redactLocalMessage } from '../src/shared/access/logSafety.ts';
 import { d1Fr } from '../src/shared/i18n/d1.fr.ts';
 import { serviceFr } from '../src/shared/i18n/diningService.ts';
+import { interfaceQuality } from '../src/shared/i18n/interfaceQuality.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
@@ -34,16 +35,19 @@ import {
 } from './operationalHarness.mjs';
 const output = path.join(
   root,
-  process.argv.includes('--interface-quality')
-    ? 'artifacts/interface-consolidation-20261110/restaurant'
-    : process.argv.includes('--staging-followup')
-      ? 'artifacts/staging-local-followup-20261110/restaurant'
-      : 'artifacts/operational-followup-20261109/dining-o4',
+  process.argv.includes('--documents')
+    ? 'artifacts/interface-documents-20261110/restaurant'
+    : process.argv.includes('--interface-quality')
+      ? 'artifacts/interface-consolidation-20261110/restaurant'
+      : process.argv.includes('--staging-followup')
+        ? 'artifacts/staging-local-followup-20261110/restaurant'
+        : 'artifacts/operational-followup-20261109/dining-o4',
 );
 fs.mkdirSync(output, { recursive: true });
 const browser = await launch(),
   results = [];
-const text = (key) => ({ ...d1Fr, ...serviceFr })['d1.' + key];
+const text = (key) =>
+  ({ ...d1Fr, ...serviceFr, ...interfaceQuality.fr })['d1.' + key];
 let phase = 'owner-connection';
 const mark = (label, values = {}) =>
   results.push({ label, status: 'PASS', ...values });
@@ -436,6 +440,104 @@ try {
   const finalize = await form(finance, 'finalize_invoice');
   await finalize.locator('[name="invoice"]').selectOption(String(invoiceId));
   await save(finance, finalize);
+  let issuedDocument;
+  let frozenBeforePayment;
+  const ownInvoiceView = async () =>
+    guest.evaluate(async (publicId) => {
+      const response = await fetch('/api/web/dining/public/invoice?locale=fr', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Visit-Token': sessionStorage.getItem('moulai-visit:' + publicId),
+        },
+        body: JSON.stringify({ public_id: publicId }),
+      });
+      return { status: response.status, data: await response.json() };
+    }, link.public_id);
+  if (process.argv.includes('--documents')) {
+    phase = 'explicit-human-invoice-document-issuance';
+    const unissued = await ownInvoiceView();
+    assert.equal(unissued.status, 200);
+    assert.equal(unissued.data.document.status, 'unissued');
+    assert(!('qr_svg' in unissued.data.document));
+    frozenBeforePayment = unissued.data.lines;
+    checked(
+      await request(service, route + '/public-links', {
+        operation: 'issue',
+        kind: 'food_invoice',
+        resource_id: invoiceId,
+        public_physical_state: false,
+        reason: 'LOCAL TEST ONLY',
+      }),
+      403,
+    );
+    await tab(finance, text('section_visits'));
+    const documentForm = await form(finance, 'public_link');
+    await documentForm
+      .locator('[name="document_kind"]')
+      .selectOption('food_invoice');
+    await documentForm
+      .locator('[name="document_resource"]')
+      .selectOption(String(invoiceId));
+    issuedDocument = await save(finance, documentForm);
+    const issued = await ownInvoiceView();
+    assert.equal(issued.data.document.status, 'issued');
+    assert.equal(issued.data.document.reference, issuedDocument.reference);
+    assert.equal(issued.data.document.version, issuedDocument.version);
+    assert.equal(
+      new URL(issued.data.document.url).hash,
+      '#' + issuedDocument.public_id,
+    );
+    assert.notEqual(issuedDocument.public_id, link.public_id);
+    const noVisitSecret = await guest.evaluate(
+      (url) =>
+        !url.includes(
+          sessionStorage.getItem('moulai-visit:' + location.hash.slice(1)),
+        ),
+      issued.data.document.url,
+    );
+    assert(noVisitSecret);
+    const exported = await finance.request.get(
+      origin +
+        route +
+        '/public-links/' +
+        issuedDocument.identifier +
+        '/qr?locale=fr',
+    );
+    assert.equal(exported.status(), 200);
+    assert.equal(await exported.text(), issued.data.document.qr_svg);
+    const verification = checked(
+      await request(guest, '/api/web/dining/public/verify', {
+        public_id: issuedDocument.public_id,
+      }),
+    );
+    assert.equal(verification.status, 'valid');
+    assert.equal(verification.kind, 'food_invoice');
+    assert.equal(verification.reference, issuedDocument.reference);
+    const invalid = checked(
+      await request(guest, '/api/web/dining/public/verify', {
+        public_id: 'Z'.repeat(43),
+      }),
+    );
+    assert.equal(invalid.status, 'invalid');
+    checked(
+      await request(
+        guest,
+        '/api/web/dining/public/invoice',
+        { public_id: issuedDocument.public_id },
+        { 'X-Visit-Token': 'A'.repeat(43) },
+      ),
+      409,
+    );
+    mark('exact-invoice-QR-reuses-human-issuance-and-encoder', {
+      permissionRefused: 403,
+      publicVerification: 'valid and matching invoice document',
+      svgMatchesAuthorizedExport: true,
+      independentQrDecoding: 'NOT PERFORMED',
+      physicalPhoneScan: 'NOT PERFORMED',
+    });
+    await tab(finance, text('section_finance'));
+  }
   checked(
     await request(service, route + `/invoices/${invoiceId}/balance`),
     403,
@@ -511,6 +613,18 @@ try {
   );
   await guest.reload();
   await guest.getByTestId('own-invoice').waitFor();
+  if (process.argv.includes('--documents')) {
+    const afterPayment = await ownInvoiceView();
+    assert.deepEqual(afterPayment.data.lines, frozenBeforePayment);
+    assert.equal(
+      afterPayment.data.document.reference,
+      issuedDocument.reference,
+    );
+    assert.equal(afterPayment.data.balance, '0.00000000');
+    mark(
+      'payment-changes-balance-without-rewriting-invoice-or-issued-reference',
+    );
+  }
   if (process.argv.includes('--interface-quality')) {
     const projection = await guest.evaluate(async (publicId) => {
       const response = await fetch('/api/web/dining/public/invoice', {
@@ -635,13 +749,119 @@ try {
       await guest.emulateMedia({ media: 'print' });
       await guest
         .locator('[data-print-invoice] img')
+        .first()
         .evaluate((image) => image.decode());
       await guest.screenshot({
         path: path.join(output, `print-${locale}.png`),
         fullPage: true,
       });
+      if (process.argv.includes('--documents')) {
+        const printableSnapshot = await guest.evaluate(
+          async ({ publicId, locale }) => {
+            const response = await fetch(
+              '/api/web/dining/public/invoice?locale=' + locale,
+              {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Visit-Token': sessionStorage.getItem(
+                    'moulai-visit:' + publicId,
+                  ),
+                },
+                body: JSON.stringify({ public_id: publicId }),
+              },
+            );
+            return { status: response.status, invoice: await response.json() };
+          },
+          { publicId: link.public_id, locale },
+        );
+        assert.equal(printableSnapshot.status, 200);
+        fs.writeFileSync(
+          path.join(output, `print-snapshot-${locale}.json`),
+          JSON.stringify(
+            {
+              source:
+                'actual authorized local visit read; no visit credential retained',
+              ...printableSnapshot,
+            },
+            null,
+            2,
+          ),
+        );
+        await guest.pdf({
+          path: path.join(output, `invoice-${locale}.pdf`),
+          format: 'A4',
+          preferCSSPageSize: true,
+          printBackground: true,
+          tagged: true,
+        });
+      }
       await guest.emulateMedia({ media: 'screen' });
     }
+  }
+  if (process.argv.includes('--documents')) {
+    phase = 'invalidated-emission-and-checked-print';
+    await guest.evaluate(() => {
+      window.__localPrintCalls = 0;
+      window.print = () => {
+        window.__localPrintCalls++;
+      };
+    });
+    checked(
+      await request(finance, route + '/public-links', {
+        operation: 'disable',
+        kind: 'food_invoice',
+        resource_id: invoiceId,
+        public_physical_state: false,
+        reason: 'LOCAL invalidation proof, no financial change',
+      }),
+    );
+    const invalidated = checked(
+      await request(guest, '/api/web/dining/public/verify', {
+        public_id: issuedDocument.public_id,
+      }),
+    );
+    assert.equal(invalidated.status, 'invalidated');
+    const readAgain = await ownInvoiceView();
+    assert.equal(readAgain.data.document.status, 'invalidated');
+    assert(
+      !('url' in readAgain.data.document) &&
+        !('qr_svg' in readAgain.data.document),
+    );
+    await guest.getByTestId('own-invoice').getByRole('button').click();
+    await guest.waitForFunction(() => window.__localPrintCalls === 1);
+    assert.equal(
+      await guest
+        .getByTestId('own-invoice')
+        .locator('img[alt*="QR"], img[alt*="رمز"]')
+        .count(),
+      0,
+    );
+    await guest.screenshot({
+      path: path.join(output, 'invoice-invalidated.png'),
+      fullPage: true,
+    });
+    let reads = 0;
+    await guest.route('**/api/web/dining/public/invoice*', (r) => {
+      reads++;
+      return r.fulfill({
+        status: 503,
+        contentType: 'application/json',
+        body: '{}',
+      });
+    });
+    await guest.getByTestId('own-invoice').getByRole('button').click();
+    await guest.getByRole('alert').waitFor();
+    assert.equal(await guest.evaluate(() => window.__localPrintCalls), 1);
+    assert.equal(reads, 1);
+    assert.equal(
+      await guest.getByTestId('own-invoice').locator('table tbody tr').count(),
+      1,
+    );
+    mark('disabled-QR-live-rejection-and-read-before-print-no-blind-retry', {
+      financialWrites: 0,
+      invoicePreservedOnReadFailure: true,
+    });
   }
   const previous = path.join(output, 'dining-journey.json');
   if (fs.existsSync(previous))

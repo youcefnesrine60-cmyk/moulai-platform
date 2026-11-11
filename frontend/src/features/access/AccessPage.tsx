@@ -225,7 +225,9 @@ export function AccessPage(): ReactElement {
         </aside>
         <section className={styles.entry}>
           {adapter.mode !== 'disconnected' && (
-            <Badge tone="test">{t('quality.test')}</Badge>
+            <div className={styles.testBadge}>
+              <Badge tone="test">{t('quality.test')}</Badge>
+            </div>
           )}
           <p className="eyebrow">{t('access.eyebrow')}</p>
           <h1>{t('access.title')}</h1>

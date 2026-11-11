@@ -8,6 +8,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
+import { flushSync } from 'react-dom';
+import { InvoiceDocument } from './InvoiceDocument';
 import { BrandCanvas } from '../../../shared/ui/BrandCanvas';
 import {
   AppearanceControls,
@@ -81,7 +83,7 @@ function PublicDiningContent({
       try {
         setInvoice(
           ownInvoice.parse(
-            await api.invoice(reference, visitSecret(reference)),
+            await api.invoice(reference, visitSecret(reference), locale),
           ),
         );
       } catch {
@@ -111,7 +113,27 @@ function PublicDiningContent({
     if (value && ['fr', 'en', 'ar'].includes(value))
       void i18n.changeLanguage(value);
     void run(load);
-  }, [reference, verify, currency]);
+  }, [reference, verify, currency, locale]);
+  /** Re-read validity and settlement facts before printing; never replay a business operation. */
+  const printInvoice = async () => {
+    if (locked.current) return;
+    locked.current = true;
+    setBusy(true);
+    setInvoiceError(false);
+    try {
+      const current = ownInvoice.parse(
+        await api.invoice(reference, visitSecret(reference), locale),
+      );
+      flushSync(() => setInvoice(current));
+      if ('balance' in current) window.print();
+      else setInvoiceError(true);
+    } catch {
+      setInvoiceError(true);
+    } finally {
+      locked.current = false;
+      setBusy(false);
+    }
+  };
   const entries =
     menu?.products
       .filter((row) => row.orderable && Number(cart[row.product_id]) > 0)
@@ -135,48 +157,52 @@ function PublicDiningContent({
           </div>
           <AppearanceControls />
         </header>
-        <h1>{t(verify ? 'd1.documentVerify' : 'd1.publicMenu')}</h1>
-        <p>
-          {t(operational ? 'integration.publicNotice' : 'd1.publicLocalNotice')}
-        </p>
-        {busy && <p role="status">{t('quality.processing')}</p>}
-        {error && (
-          <p role="alert">
-            {t('d1.publicUnavailable')} {t('quality.uncertain')}
+        <section className={styles.card}>
+          <h1>{t(verify ? 'd1.documentVerify' : 'd1.publicMenu')}</h1>
+          <p>
+            {t(
+              operational ? 'integration.publicNotice' : 'd1.publicLocalNotice',
+            )}
           </p>
-        )}
-        <div className={styles.row}>
-          <Button disabled={busy} onClick={() => void run(load)}>
-            {t('d1.refresh')}
-          </Button>
-          {!verify && menu && (
-            <label>
-              {t('d1.currency')}
-              <select
-                aria-label={t('d1.currency')}
-                value={menu.currency ?? ''}
-                disabled={busy}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  changeView(() => {
-                    setCurrency(next);
-                    setMenu(null);
-                    setVisit(null);
-                    setCart({});
-                    orderKey.current = freshVisitSecret();
-                  });
-                }}
-              >
-                <option value="">{t('d1.choose')}</option>
-                {menu.currencies.map((value) => (
-                  <option key={value} value={value}>
-                    {value}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {busy && <p role="status">{t('quality.processing')}</p>}
+          {error && (
+            <p role="alert">
+              {t('d1.publicUnavailable')} {t('quality.uncertain')}
+            </p>
           )}
-        </div>
+          <div className={styles.row}>
+            <Button disabled={busy} onClick={() => void run(load)}>
+              {t('d1.refresh')}
+            </Button>
+            {!verify && menu && (
+              <label>
+                {t('d1.currency')}
+                <select
+                  aria-label={t('d1.currency')}
+                  value={menu.currency ?? ''}
+                  disabled={busy}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    changeView(() => {
+                      setCurrency(next);
+                      setMenu(null);
+                      setVisit(null);
+                      setCart({});
+                      orderKey.current = freshVisitSecret();
+                    });
+                  }}
+                >
+                  <option value="">{t('d1.choose')}</option>
+                  {menu.currencies.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+        </section>
         {verified && (
           <section className={styles.card}>
             <h2>{t('d1.documentStatus_' + verified.status)}</h2>
@@ -373,7 +399,11 @@ function PublicDiningContent({
             )}
           </>
         )}
-        {invoiceError && <p role="alert">{t('d1.invoiceUnavailable')}</p>}
+        {invoiceError && (
+          <p role="alert" className={`${styles.banner} ${styles.error}`}>
+            {t('d1.invoiceUnavailable')}
+          </p>
+        )}
         {invoice && 'balance' in invoice && (
           <section
             className={styles.card}
@@ -419,9 +449,7 @@ function PublicDiningContent({
                 tabIndex={0}
               >
                 <table>
-                  <caption>
-                    {t('d1.invoice')} <bdi dir="ltr">#{invoice.invoice_id}</bdi>
-                  </caption>
+                  <caption>{t('documents.lines')}</caption>
                   <thead>
                     <tr>
                       {[
@@ -465,28 +493,50 @@ function PublicDiningContent({
               {t('d1.invoiceTotal')}:{' '}
               <ExactAmount value={invoice.total} currency={invoice.currency} />
             </p>
-            <p>
-              {t('d1.advance')}:{' '}
-              <ExactAmount
-                value={invoice.advance}
-                currency={invoice.currency}
-              />
-            </p>
-            <p>
-              {t('d1.recordedPayment')}:{' '}
-              <ExactAmount value={invoice.paid} currency={invoice.currency} />
-            </p>
-            <p>
-              {t('d1.balance')}:{' '}
-              <ExactAmount
-                value={invoice.balance}
-                currency={invoice.currency}
-              />
-            </p>
+            <section
+              aria-label={t('documents.settlement')}
+              className={styles.settlementSummary}
+            >
+              <h3>{t('documents.settlement')}</h3>
+              <p>{t('documents.frozenHelp')}</p>
+              {invoice.settlement_as_of && (
+                <p>
+                  {t('documents.consultedAt')}:{' '}
+                  <bdi>
+                    <time dateTime={invoice.settlement_as_of}>
+                      {new Date(invoice.settlement_as_of).toLocaleString(
+                        i18n.language,
+                        { timeZone: 'UTC' },
+                      )}
+                    </time>
+                  </bdi>
+                </p>
+              )}
+              <p>
+                {t('d1.advance')}:{' '}
+                <ExactAmount
+                  value={invoice.advance}
+                  currency={invoice.currency}
+                />
+              </p>
+              <p>
+                {t('d1.recordedPayment')}:{' '}
+                <ExactAmount value={invoice.paid} currency={invoice.currency} />
+              </p>
+              <p>
+                {t('d1.balance')}:{' '}
+                <ExactAmount
+                  value={invoice.balance}
+                  currency={invoice.currency}
+                />
+              </p>
+            </section>
+            <InvoiceDocument document={invoice.document} />
             <Button
               type="button"
               variant="secondary"
-              onClick={() => window.print()}
+              disabled={busy}
+              onClick={() => void printInvoice()}
               data-print-control
             >
               {t(

@@ -37,6 +37,7 @@ from contextlib import asynccontextmanager
 from ipaddress import ip_address
 from typing import (
     Annotated,
+    Literal,
     TypeAlias,
     TypedDict,
 )
@@ -1204,11 +1205,16 @@ def compose_browser_app(*, configuration: IntegrationConfig | StagingConfig) -> 
     async def customer_invoice(
         data: PublicReadInput,
         visit_token: Annotated[str, Header(alias="X-Visit-Token")],
+        locale: Literal["fr", "en", "ar"] = "fr",
         session: AsyncSession = session_dep,
     ) -> JsonView:
         """Read only this visit's finalized invoice; never infer customer authority from a staff session."""
         return await own_invoice(
-            session=session, public_id=data.public_id, token=visit_token
+            session=session,
+            public_id=data.public_id,
+            token=visit_token,
+            origin=configuration.origin,
+            locale=locale,
         )
 
     app.include_router(

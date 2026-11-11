@@ -9,11 +9,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import AxeBuilder from '@axe-core/playwright';
 import { launch, newContext, origin, root } from './operationalHarness.mjs';
 
 const output = path.join(
   root,
-  'artifacts/interface-consolidation-20261110/invoice-visual-fixture',
+  process.argv.includes('--documents')
+    ? `artifacts/interface-documents-20261110/invoice-${process.argv.includes('--before') ? 'before' : 'after'}`
+    : 'artifacts/interface-consolidation-20261110/invoice-visual-fixture',
 );
 fs.mkdirSync(output, { recursive: true });
 const labels = {
@@ -96,6 +99,27 @@ try {
         path: path.join(output, `screen-${locale}-${theme}-mobile.png`),
         fullPage: true,
       });
+      if (process.argv.includes('--documents')) {
+        const accessibility = await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+          .analyze();
+        fs.writeFileSync(
+          path.join(output, `accessibility-${locale}-${theme}.json`),
+          JSON.stringify(
+            {
+              source: 'explicit visual fixture',
+              violations: accessibility.violations.map((v) => ({
+                id: v.id,
+                targets: v.nodes.map((n) => n.target),
+              })),
+              incomplete: accessibility.incomplete.map((v) => v.id),
+            },
+            null,
+            2,
+          ),
+        );
+        assert.equal(accessibility.violations.length, 0);
+      }
     }
     await page.emulateMedia({ media: 'print' });
     await page

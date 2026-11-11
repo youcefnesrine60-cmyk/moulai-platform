@@ -8,6 +8,93 @@
 // Presentation only: these labels never change session, financial or permission rules.
 const entries = [
   [
+    'documents.otherSpaces',
+    'Autres espaces de cet établissement',
+    'Other areas for this establishment',
+    'مساحات العمل الأخرى لهذا المطعم',
+  ],
+  [
+    'documents.contextDetails',
+    'Session et détails de l’environnement',
+    'Session and environment details',
+    'الجلسة وتفاصيل بيئة العمل',
+  ],
+  ['d1.invoice', 'Facture client', 'Customer invoice', 'فاتورة الزبون'],
+  ['d1.quantity', 'Quantité', 'Quantity', 'الكمية'],
+  ['d1.amount', 'Montant', 'Amount', 'المبلغ'],
+  [
+    'documents.lines',
+    'Détail des lignes finalisées',
+    'Finalized invoice lines',
+    'بنود الفاتورة المعتمدة',
+  ],
+  [
+    'documents.settlement',
+    'Situation de règlement consultée',
+    'Payment position at consultation',
+    'حالة السداد عند الاطلاع',
+  ],
+  [
+    'documents.frozenHelp',
+    'Les paiements font évoluer le solde, sans réécrire les lignes ni le total de la facture finalisée.',
+    'Payments update the balance without rewriting the finalized invoice lines or total.',
+    'تغيّر المدفوعات المبلغ المتبقي، دون تعديل بنود الفاتورة المعتمدة أو مجموعها.',
+  ],
+  [
+    'documents.consultedAt',
+    'Consultée le — UTC',
+    'Consulted on — UTC',
+    'تاريخ الاطلاع — التوقيت العالمي UTC',
+  ],
+  [
+    'documents.verification',
+    'Vérification du document émis',
+    'Issued document verification',
+    'التحقق من الوثيقة الصادرة',
+  ],
+  [
+    'documents.reference',
+    'Référence du document',
+    'Document reference',
+    'مرجع الوثيقة',
+  ],
+  [
+    'documents.qrAlt',
+    'QR de vérification de cette facture client',
+    'Verification QR for this customer invoice',
+    'رمز التحقق من فاتورة الزبون هذه',
+  ],
+  [
+    'documents.verificationHelp',
+    'Ce lien vérifie la référence et la validité du document ; il ne donne pas accès à la visite ni aux actions du personnel. Vérifiez sa validité au moment de l’utilisation.',
+    'This link checks the document reference and validity; it grants no access to the visit or staff actions. Check validity when using the document.',
+    'يتحقق هذا الرابط من مرجع الوثيقة وصلاحيتها، ولا يتيح الوصول إلى الزيارة أو تنفيذ إجراءات الموظفين. تحقّق من الصلاحية عند استخدام الوثيقة.',
+  ],
+  [
+    'documents.localOnly',
+    'Lien de recette limité à cet ordinateur (127.0.0.1) : il ne fonctionne pas depuis un autre téléphone.',
+    'Acceptance link limited to this computer (127.0.0.1): it is not reachable from another phone.',
+    'هذا رابط اختبار خاص بهذا الحاسوب (127.0.0.1)، ولا يمكن فتحه من هاتف آخر.',
+  ],
+  [
+    'documents.unissued',
+    'Facture finalisée, document de partage non émis. Demandez au personnel habilité de l’émettre dans « QR, visites et cuisine ». Le client ne peut pas l’émettre.',
+    'The invoice is finalized, but its shareable document has not been issued. Ask authorized staff to issue it in “QR, visits and kitchen”. Customers cannot issue it.',
+    'الفاتورة معتمدة، لكن وثيقة مشاركتها لم تُصدر بعد. اطلب من الموظف المخوّل إصدارها من قسم «الرموز والزيارات والمطبخ». لا يمكن للزبون إصدارها.',
+  ],
+  [
+    'documents.invalidated',
+    'Le document émis a été invalidé ou remplacé. Aucun QR actif n’est proposé ; consultez le personnel habilité.',
+    'The issued document has been invalidated or replaced. No active QR is offered; contact authorized staff.',
+    'أُلغيت صلاحية الوثيقة الصادرة أو استُبدلت. لا يُعرض رمز صالح؛ راجع الموظف المخوّل.',
+  ],
+  [
+    'documents.origin_unavailable',
+    'Document émis, adresse de vérification non configurée. Le personnel doit faire vérifier la configuration avant le partage.',
+    'Document issued, but the verification address is not configured. Staff must have the configuration checked before sharing.',
+    'صدرت الوثيقة، لكن عنوان التحقق غير مُعدّ. على الموظف طلب فحص الإعدادات قبل مشاركتها.',
+  ],
+  [
     'quality.recheck',
     'Vérifier l’état enregistré',
     'Check the recorded state',

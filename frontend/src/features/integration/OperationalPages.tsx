@@ -67,16 +67,24 @@ export function OperationalRestaurantFrame() {
           {t('business.changeRestaurant')}
         </Link>
       </section>
-      <nav className={styles.tabs}>
-        <NavLink to={root} end>
-          {t('business.overview')}
-        </NavLink>
-        <NavLink to={root + '/tables'}>{t('dining.title')}</NavLink>
-        {selection.company.permissions.includes('tenant.billing.read') && (
-          <NavLink to={root + '/offer'}>{t('offer.title')}</NavLink>
-        )}
-        <Link to="/workspace/invitations">{t('integration.invitations')}</Link>
-      </nav>
+      <details
+        open={!location.pathname.endsWith('/tables')}
+        className={styles.restaurantNavigation}
+      >
+        <summary>{t('documents.otherSpaces')}</summary>
+        <nav className={styles.tabs}>
+          <NavLink to={root} end>
+            {t('business.overview')}
+          </NavLink>
+          <NavLink to={root + '/tables'}>{t('dining.title')}</NavLink>
+          {selection.company.permissions.includes('tenant.billing.read') && (
+            <NavLink to={root + '/offer'}>{t('offer.title')}</NavLink>
+          )}
+          <Link to="/workspace/invitations">
+            {t('integration.invitations')}
+          </Link>
+        </nav>
+      </details>
       {[root + '/tables', root + '/offer'].includes(location.pathname) ? (
         <Outlet key={root} />
       ) : (

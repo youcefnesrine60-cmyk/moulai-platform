@@ -17,6 +17,10 @@ import styles from './integration.module.css';
 import { campaignDateInput, campaignDateValue } from './campaignDates';
 import { ReminderEditor } from './ReminderEditor';
 import { PricingHistory } from './PricingHistory';
+import {
+  useUnsavedChanges,
+  useViewChange,
+} from '../../shared/ui/UnsavedChanges';
 
 const campaign = z.object({
   id: z.number(),
@@ -91,6 +95,23 @@ export function PricingCampaignsPage() {
     [busy, setBusy] = useState(false),
     [error, setError] = useState(false),
     [saved, setSaved] = useState(false);
+  const changeView = useViewChange();
+  const baseline = editing
+    ? {
+        name: editing.name,
+        discount_percent: editing.discount_percent,
+        starts_at: campaignDateInput(editing.starts_at),
+        expires_at: campaignDateInput(editing.expires_at),
+        priority: String(editing.priority),
+        reason: '',
+      }
+    : initial;
+  useUnsavedChanges(
+    Boolean(baseAmount || baseReason) ||
+      Object.entries(values).some(
+        ([key, value]) => value !== baseline[key as keyof typeof initial],
+      ),
+  );
   async function send(body: unknown) {
     if (busy) return;
     setBusy(true);
@@ -99,8 +120,15 @@ export function PricingCampaignsPage() {
     try {
       await webRequest('/platform/pricing/campaigns', undefined, 'POST', body);
       await query.refetch();
-      setEditing(null);
-      setValues(initial);
+      if (
+        typeof body === 'object' &&
+        body !== null &&
+        'operation' in body &&
+        ['create', 'update'].includes(String(body.operation))
+      ) {
+        setEditing(null);
+        setValues(initial);
+      }
       setSaved(true);
     } catch {
       setError(true);
@@ -178,9 +206,12 @@ export function PricingCampaignsPage() {
           <select
             value={baseContext}
             onChange={(event) => {
-              setBaseContext(event.target.value);
-              setBaseAmount('');
-              setBaseReason('');
+              const value = event.target.value;
+              changeView(() => {
+                setBaseContext(value);
+                setBaseAmount('');
+                setBaseReason('');
+              });
             }}
             disabled={busy || !contexts.data?.length}
           >
@@ -302,10 +333,12 @@ export function PricingCampaignsPage() {
           <Button
             variant="secondary"
             type="button"
-            onClick={() => {
-              setEditing(null);
-              setValues(initial);
-            }}
+            onClick={() =>
+              changeView(() => {
+                setEditing(null);
+                setValues(initial);
+              })
+            }
           >
             {t('pricing.cancelEdit')}
           </Button>
@@ -356,17 +389,19 @@ export function PricingCampaignsPage() {
                       busy ||
                       Boolean(row.restaurant_id || row.owner_id || row.plan_id)
                     }
-                    onClick={() => {
-                      setEditing(row);
-                      setValues({
-                        name: row.name,
-                        discount_percent: row.discount_percent,
-                        starts_at: campaignDateInput(row.starts_at),
-                        expires_at: campaignDateInput(row.expires_at),
-                        priority: String(row.priority),
-                        reason: '',
-                      });
-                    }}
+                    onClick={() =>
+                      changeView(() => {
+                        setEditing(row);
+                        setValues({
+                          name: row.name,
+                          discount_percent: row.discount_percent,
+                          starts_at: campaignDateInput(row.starts_at),
+                          expires_at: campaignDateInput(row.expires_at),
+                          priority: String(row.priority),
+                          reason: '',
+                        });
+                      })
+                    }
                   >
                     {t('pricing.edit')}
                   </Button>

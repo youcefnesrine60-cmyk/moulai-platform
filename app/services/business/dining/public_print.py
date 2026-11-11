@@ -52,7 +52,7 @@ LABELS = {
     "en": {
         "table": "Table — menu",
         "reservation": "Reservation confirmation",
-        "food_invoice": "Food invoice",
+        "food_invoice": "Customer invoice",
         "receipt": "Receipt",
         "reference": "Reference",
         "version": "Issued version",
@@ -68,7 +68,7 @@ LABELS = {
     "ar": {
         "table": "الطاولة — القائمة",
         "reservation": "تأكيد الحجز",
-        "food_invoice": "فاتورة العميل",
+        "food_invoice": "فاتورة الزبون",
         "receipt": "إيصال",
         "reference": "المرجع",
         "version": "النسخة الصادرة",

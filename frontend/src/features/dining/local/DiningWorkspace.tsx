@@ -288,7 +288,7 @@ function DiningWorkspace({
 
             <section className={styles.intro}>
               <h1>{t('d1.title')}</h1>
-              <p className={styles.reviewNotice}>
+              <p className={styles.reviewNotice} hidden={operational}>
                 {t(operational ? 'integration.notice' : 'd1.localNotice')}
               </p>
               <section
@@ -296,7 +296,7 @@ function DiningWorkspace({
                 aria-label={t('d1.activeSession')}
                 data-testid="active-session"
               >
-                <p>
+                <p hidden={operational}>
                   <strong>{t('d1.activeSession')}:</strong>{' '}
                   {session ? (
                     operational ? (
@@ -309,8 +309,13 @@ function DiningWorkspace({
                   )}
                 </p>
                 <p>
-                  <strong>{t('d1.restaurant')}:</strong>{' '}
-                  <bdi>{scope?.restaurant_name ?? t('d1.chooseScope')}</bdi> ·{' '}
+                  {!operational && (
+                    <>
+                      <strong>{t('d1.restaurant')}:</strong>{' '}
+                      <bdi>{scope?.restaurant_name ?? t('d1.chooseScope')}</bdi>{' '}
+                      ·{' '}
+                    </>
+                  )}
                   <strong>{t('d1.branch')}:</strong>{' '}
                   <bdi>{scope?.branch_name ?? t('d1.chooseScope')}</bdi>
                 </p>
@@ -337,7 +342,7 @@ function DiningWorkspace({
                 open={!session || !scope}
               >
                 <summary>
-                  {session ? (
+                  {session && !operational ? (
                     <>
                       {t('d1.signedIdentity')}:{' '}
                       {operational ? (
@@ -347,9 +352,22 @@ function DiningWorkspace({
                       )}
                     </>
                   ) : (
-                    t('ops.sessionSettings')
+                    t(
+                      operational
+                        ? 'documents.contextDetails'
+                        : 'ops.sessionSettings',
+                    )
                   )}
                 </summary>
+                {operational && (
+                  <>
+                    <p>
+                      {t('d1.signedIdentity')}:{' '}
+                      <bdi>{session?.actor ?? t('d1.noSession')}</bdi>
+                    </p>
+                    <p>{t('integration.notice')}</p>
+                  </>
+                )}
                 {!operational && (
                   <>
                     {' '}
@@ -446,7 +464,8 @@ function DiningWorkspace({
                 )}
               </details>
             </section>
-            {session &&
+            {!operational &&
+              session &&
               session.actor !== 'customer' &&
               session.actor !== 'assistant' && (
                 <PersonalInvitations key={session.actor} api={api} />

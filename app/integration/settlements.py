@@ -20,9 +20,13 @@ from __future__ import annotations
 # Reuse existing tenant authority, human collection and frozen invoices instead of creating a second invoice.
 # ==============================================
 
-from datetime import datetime
+from datetime import (
+    UTC,
+    datetime,
+)
 from decimal import Decimal
 from typing import Literal
+from urllib.parse import urlsplit
 
 from pydantic import Field
 from sqlalchemy import func
@@ -32,7 +36,10 @@ from app.models.dining import (
     DiningAllocation,
     DiningInvoice,
 )
-from app.models.dining_service import DiningVisit
+from app.models.dining_service import (
+    DiningPublicLink,
+    DiningVisit,
+)
 from app.models.dining_settlement import DiningSettlement
 from app.repositories.subscription_queries import base_select
 from app.schemas.dining import (
@@ -48,6 +55,10 @@ from app.services.business.dining.service import DiningUnit
 from app.services.business.dining.values import (
     DiningError,
     utc,
+)
+from app.services.business.document_qr import (
+    public_read_url,
+    svg_for_public_url,
 )
 from app.services.business.tenant_foundation import tenant_unit_of_work
 
@@ -185,7 +196,12 @@ async def record_settlement(
 
 
 async def own_invoice(
-    *, session: AsyncSession, public_id: str, token: str
+    *,
+    session: AsyncSession,
+    public_id: str,
+    token: str,
+    origin: str | None = None,
+    locale: str = "fr",
 ) -> JsonObject:
     """Read the visitor's finalized balance and frozen lines after departure.
 
@@ -213,6 +229,46 @@ async def own_invoice(
             return {"status": "not_issued"}
 
         # ==============================================
+        # ALREADY ISSUED DOCUMENT FOR THIS EXACT INVOICE
+        # Customer reads cannot issue a link; a disabled or stale version never receives a usable QR.
+        # ==============================================
+
+        issued = await session.scalar(
+            repo.statement(model=DiningPublicLink)
+            .where(
+                DiningPublicLink.kind == "food_invoice",
+                DiningPublicLink.invoice_id == invoice.id,
+            )
+            .order_by(DiningPublicLink.id.desc())
+            .limit(1)
+        )
+        document: JsonObject = {"status": "unissued"}
+        if issued is not None:
+            document = {
+                "status": "invalidated",
+                "reference": issued.reference,
+                "version": issued.version,
+            }
+            if issued.active and issued.version == invoice.revision:
+                document["status"] = "origin_unavailable"
+                if origin is not None:
+                    url = public_read_url(
+                        origin=origin,
+                        page="verify-document",
+                        public_id=issued.public_id,
+                        locale=locale,
+                    )
+                    document.update(
+                        {
+                            "status": "issued",
+                            "url": url,
+                            "qr_svg": svg_for_public_url(value=url),
+                            "local_only": urlsplit(origin).hostname
+                            in {"127.0.0.1", "localhost", "::1"},
+                        }
+                    )
+
+        # ==============================================
         # IMMUTABLE CUSTOMER PRESENTATION
         # Reuse the finalized snapshot rather than today's catalogue or staff-only reconciliation evidence.
         # ==============================================
@@ -221,6 +277,8 @@ async def own_invoice(
         result.update(
             {
                 "revision": invoice.revision,
+                "document": document,
+                "settlement_as_of": datetime.now(UTC).isoformat(),
                 "finalized_at": (
                     invoice.finalized_at.isoformat()
                     + ("Z" if invoice.finalized_at.tzinfo is None else "")

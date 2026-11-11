@@ -19,6 +19,30 @@ export const invoiceBalance = z.object({
 });
 export const ownInvoice = z.union([
   invoiceBalance.extend({
+    settlement_as_of: z.string().datetime({ offset: true }).optional(),
+    document: z
+      .discriminatedUnion('status', [
+        z.object({ status: z.literal('unissued') }),
+        z.object({
+          status: z.literal('invalidated'),
+          reference: z.string(),
+          version: z.number().int().positive(),
+        }),
+        z.object({
+          status: z.literal('origin_unavailable'),
+          reference: z.string(),
+          version: z.number().int().positive(),
+        }),
+        z.object({
+          status: z.literal('issued'),
+          reference: z.string(),
+          version: z.number().int().positive(),
+          url: z.string().url(),
+          qr_svg: z.string(),
+          local_only: z.boolean(),
+        }),
+      ])
+      .optional(),
     revision: z.number().int().positive().optional(),
     finalized_at: z.string().datetime({ offset: true }).nullable().optional(),
     lines: z

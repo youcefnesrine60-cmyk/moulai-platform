@@ -25,7 +25,7 @@ assert(!receiptPhase || ['before', 'after'].includes(receiptPhase));
 const output = path.join(
   root,
   receiptPhase
-    ? `artifacts/interface-consolidation-20261110/${receiptPhase}`
+    ? `artifacts/${process.argv.includes('--documents') ? 'interface-documents-20261110' : 'interface-consolidation-20261110'}/${receiptPhase}${process.argv.includes('--short') ? '-short' : ''}`
     : 'artifacts/staging-local-followup-20261110/captures',
 );
 fs.mkdirSync(output, { recursive: true });
@@ -65,8 +65,14 @@ try {
       );
       for (const theme of ['light', 'dark'])
         for (const [device, viewport] of Object.entries({
-          desktop: { width: 1440, height: 1000 },
-          mobile: { width: 390, height: 844 },
+          desktop: {
+            width: 1440,
+            height: process.argv.includes('--short') ? 720 : 1000,
+          },
+          mobile: {
+            width: 390,
+            height: process.argv.includes('--short') ? 667 : 844,
+          },
         })) {
           phase = [name, locale, theme, device].join('-');
           await page.setViewportSize(viewport);
