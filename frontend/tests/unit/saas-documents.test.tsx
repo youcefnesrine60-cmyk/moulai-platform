@@ -69,7 +69,13 @@ describe('retained SaaS document presentation', () => {
         expect(
           screen.getByText(i18n.t('saasDoc.scheduled')),
         ).toBeInTheDocument();
-        expect(screen.queryByRole('button')).not.toBeInTheDocument();
+        expect(screen.getAllByRole('button')).toHaveLength(2);
+        expect(
+          screen.queryByRole('button', { name: i18n.t('saasDoc.issue') }),
+        ).not.toBeInTheDocument();
+        expect(
+          screen.queryByRole('button', { name: i18n.t('saasDoc.invalidate') }),
+        ).not.toBeInTheDocument();
         expect(screen.getByRole('link')).toHaveAttribute(
           'href',
           fixture.verification_url,

@@ -8,6 +8,38 @@
 // Documentary labels describe actual persisted facts, without assigning an unapproved fiscal qualification.
 const entries = [
   [
+    'saasDoc.paymentStatus',
+    'Situation du paiement consultée',
+    'Payment status at viewing',
+    'حالة الدفع عند الاطلاع',
+  ],
+  ['saasDoc.copy', 'Copier', 'Copy', 'نسخ'],
+  ['saasDoc.copied', 'Copié', 'Copied', 'تم النسخ'],
+  [
+    'saasDoc.copyFailed',
+    'Copie indisponible : sélectionnez le texte.',
+    'Copy unavailable: select the text.',
+    'النسخ غير متاح: حدّد النص لنسخه.',
+  ],
+  [
+    'saasDoc.dateUnavailable',
+    'Date non vérifiable',
+    'Date cannot be verified',
+    'تعذّر التحقق من التاريخ',
+  ],
+  [
+    'saasDoc.openVerification',
+    'Ouvrir la page de vérification',
+    'Open verification page',
+    'فتح صفحة التحقق',
+  ],
+  [
+    'saasDoc.currentValidity',
+    'La validité affichée correspond à cette consultation. Le QR permet de vérifier l’état actuel ; une copie ancienne ne se met pas à jour.',
+    'Validity reflects this viewing. The QR checks the current state; an older copy does not update itself.',
+    'تعكس الصلاحية هذه المعاينة. يتيح رمز QR التحقق من الحالة الحالية؛ النسخة القديمة لا تتحدّث تلقائيًا.',
+  ],
+  [
     'saasDoc.retainedPayment',
     'Récapitulatif du paiement enregistré',
     'Recorded payment summary',

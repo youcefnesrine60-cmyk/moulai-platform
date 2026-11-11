@@ -1,14 +1,15 @@
 {
-  "approval": "User-approved 01 frontend display variants, 2026-10-25; historical DAS reference unchanged.",
+  "approval": "Dark original approved by owner on 2026-11-11; light 01 presentation retained unchanged.",
   "previousPresentationArchive": "archive/presentation-before-20261025/",
   "sources": [
     {
       "theme": "dark",
-      "file": "moulai-logo-dark01.png",
-      "width": 2172,
-      "height": 724,
-      "sha256": "82d125604fbfe68162ed5ad85bb336df3c146554d43080d38afbedd04a0040f2",
-      "transparent": true
+      "file": "moulai-logo-dark-approved-20261111.png",
+      "width": 2048,
+      "height": 682,
+      "sha256": "2449087cfb4371606965a320fae2ff22880f802b91c6b84d353b098c9c5bdb0e",
+      "transparent": true,
+      "original": "assets/originals/moulai-logo-Mode-Sombre.png"
     },
     {
       "theme": "light",

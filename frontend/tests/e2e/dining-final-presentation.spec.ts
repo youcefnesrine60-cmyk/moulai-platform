@@ -36,7 +36,9 @@ for (const locale of ['fr', 'en', 'ar'] as const)
         const artwork = brand.locator('img');
         await expect(artwork).toHaveAttribute(
           'src',
-          `/brand/moulai-logo-${theme}01.png`,
+          theme === 'dark'
+            ? '/brand/moulai-logo-dark-approved-20261111.png'
+            : '/brand/moulai-logo-light01.png',
         );
         const size = await artwork.boundingBox();
         expect(size!.width / size!.height).toBeCloseTo(3, 1);

@@ -15,7 +15,7 @@ import { root, origin, newContext } from './operationalHarness.mjs';
 
 const output = path.join(
   root,
-  'artifacts/operational-followup-20261109/favicon',
+  'artifacts/documents-o5-polish-20261111/favicon-window',
 );
 fs.mkdirSync(output, { recursive: true });
 const stop = path.join(output, 'close-window');
@@ -43,14 +43,17 @@ try {
   );
   assert.deepEqual(
     icons.map((i) => i.href),
-    ['/brand/GateWay.png', '/brand/GateWay.ico'],
+    ['/brand/GateWay-transparent-v2.png', '/brand/GateWay-transparent-v2.ico'],
   );
   const resources = [];
-  for (const name of ['GateWay.ico', 'GateWay.png']) {
+  for (const name of [
+    'GateWay-transparent-v2.ico',
+    'GateWay-transparent-v2.png',
+  ]) {
     const response = await page.request.get(origin + '/brand/' + name);
     assert.equal(response.status(), 200);
     const actual = await response.body(),
-      source = fs.readFileSync(path.join(root, 'assets/originals', name));
+      source = fs.readFileSync(path.join(root, 'frontend/public/brand', name));
     assert(actual.equals(source));
     resources.push({
       name,

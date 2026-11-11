@@ -21,6 +21,7 @@ import * as Select from '@radix-ui/react-select';
 import { AccessError } from '../access/contracts';
 import { useTheme } from '../theme';
 import styles from './ui.module.css';
+import { brandArtwork } from './brandArtwork';
 
 /** Use the supplied transparent theme-specific artwork without altering its pixels. */
 export function Brand({
@@ -41,10 +42,10 @@ export function Brand({
         <img
           className={styles.brandLogo}
           key={theme}
-          src={`/brand/moulai-logo-${theme}01.png`}
+          src={brandArtwork[theme].src}
           alt="MoulAI™"
-          width={2172}
-          height={724}
+          width={brandArtwork[theme].width}
+          height={brandArtwork[theme].height}
           decoding="async"
           fetchPriority="high"
         />

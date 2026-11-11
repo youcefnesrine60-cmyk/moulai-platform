@@ -33,6 +33,29 @@
   font-size: 1.2rem;
   font-weight: 700;
 }
+.reference {
+  overflow-wrap: anywhere;
+  word-break: normal;
+  unicode-bidi: isolate;
+}
+[data-document-copy] {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+[data-document-copy] button {
+  min-block-size: 36px;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+[data-document-copy] button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
 .verification {
   display: grid;
   grid-template-columns: 192px minmax(0, 1fr);
@@ -111,6 +134,14 @@
   }
   .sheet:last-child {
     break-after: auto;
+  }
+  .sheet p {
+    orphans: 3;
+    widows: 3;
+  }
+  .sheet h1,
+  .sheet h2 {
+    break-after: avoid;
   }
   .sheet h1 {
     font-size: 18px;

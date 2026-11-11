@@ -21,6 +21,10 @@ import {
 } from '../../shared/intelligence/contracts';
 import { agentDraftSchema } from '../../shared/intelligence/validation';
 import { AppearanceControls, Button } from '../../shared/ui/primitives';
+import {
+  useUnsavedChanges,
+  useViewChange,
+} from '../../shared/ui/UnsavedChanges';
 import { useIntelligence } from './scope';
 import shared from '../management/management.module.css';
 import styles from './intelligence.module.css';
@@ -51,7 +55,7 @@ export function AgentEditor({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<AgentDraft>({
     resolver: zodResolver(agentDraftSchema),
     defaultValues: {
@@ -61,6 +65,8 @@ export function AgentEditor({
       tone: agent.tone,
     },
   });
+  useUnsavedChanges(isDirty || draft !== null);
+  const changeView = useViewChange();
   useEffect(() => () => controller.current?.abort(), []);
   /** Keep the operation bound to its original scope and cancel it when the dialog exits. */
   const save = async (): Promise<void> => {
@@ -93,7 +99,7 @@ export function AgentEditor({
     <Dialog.Root
       open
       onOpenChange={(open) => {
-        if (!open) close();
+        if (!open && !pending) changeView(close);
       }}
     >
       <Dialog.Portal>
@@ -111,6 +117,7 @@ export function AgentEditor({
           </Dialog.Description>
           <AppearanceControls />
           <Dialog.Close
+            disabled={pending}
             className={styles.close}
             aria-label={t('intelligence.closeEditor')}
           >

@@ -30,6 +30,10 @@ import {
   profileSchema,
 } from '../../shared/business/validation';
 import { AppearanceControls, Button } from '../../shared/ui/primitives';
+import {
+  useUnsavedChanges,
+  useViewChange,
+} from '../../shared/ui/UnsavedChanges';
 import { useRestaurantContext } from './scope';
 import styles from './management.module.css';
 
@@ -250,7 +254,7 @@ export function ReviewEditor({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<Draft>({
     defaultValues: initialDraft(selection, data),
     resolver: zodResolver(validation),
@@ -274,6 +278,8 @@ export function ReviewEditor({
       close();
     },
   });
+  useUnsavedChanges(!mutation.isSuccess && (isDirty || confirmation !== null));
+  const changeView = useViewChange();
   const titleKey =
     selection.kind === 'profile'
       ? 'business.editProfile'
@@ -418,7 +424,7 @@ export function ReviewEditor({
     <Dialog.Root
       open
       onOpenChange={(open) => {
-        if (!open && !mutation.isPending) close();
+        if (!open && !mutation.isPending) changeView(close);
       }}
     >
       <Dialog.Portal>
@@ -568,7 +574,11 @@ export function ReviewEditor({
                 input('sortOrder', 'number')}
               {selection.kind === 'orderNote' && textarea('note', 2000)}
               <div className={styles.formActions}>
-                <Button type="button" variant="secondary" onClick={close}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => changeView(close)}
+                >
                   {t('business.cancel')}
                 </Button>
                 <Button type="submit">{t('business.confirm')}</Button>

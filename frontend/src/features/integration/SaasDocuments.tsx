@@ -15,6 +15,7 @@ import { z } from 'zod';
 import { identityKey, useSession } from '../../app/access';
 import { Button, LoadingPanel } from '../../shared/ui/primitives';
 import { ExactAmount } from '../../shared/ui/ExactAmount';
+import { CopyDocumentFact, DocumentDate } from '../../shared/ui/DocumentFacts';
 import { useUnsavedChanges } from '../../shared/ui/UnsavedChanges';
 import { enrollmentRequest } from './EnrollmentPage';
 import styles from './saasDocuments.module.css';
@@ -106,12 +107,20 @@ export function SaasDocumentContent({
         <strong>{t('saasDoc.' + value.state)}</strong>
       </p>
       <p>
-        {t('documents.reference')}: <bdi>{value.reference}</bdi> ·{' '}
-        {t('saasDoc.version')} <bdi>{value.version}</bdi>
+        {t('documents.reference')}:{' '}
+        <bdi className={styles.reference} dir="ltr">
+          {value.reference}
+        </bdi>{' '}
+        <CopyDocumentFact
+          value={value.reference}
+          label={t('documents.reference')}
+          className={styles.noPrint}
+        />{' '}
+        · {t('saasDoc.version')} <bdi>{value.version}</bdi>
       </p>
       <p>
         {t('saasDoc.issuer')}: <bdi>{value.issuer}</bdi> ·{' '}
-        {t('saasDoc.issuedAt')}: <bdi dir="ltr">{value.issued_at}</bdi>
+        {t('saasDoc.issuedAt')}: <DocumentDate value={value.issued_at} />
       </p>
       <p className={styles.amount}>
         <ExactAmount
@@ -120,10 +129,9 @@ export function SaasDocumentContent({
         />
       </p>
       <p>
-        {t('saasDoc.period')}:{' '}
-        <bdi dir="ltr">
-          {value.content.starts_at} → {value.content.expires_at}
-        </bdi>
+        {t('saasDoc.period')}: <DocumentDate value={value.content.starts_at} />
+        {' → '}
+        <DocumentDate value={value.content.expires_at} />
       </p>
       <p>
         {t('saasDoc.atIssue')}:{' '}
@@ -157,8 +165,17 @@ export function SaasDocumentContent({
             rel="noreferrer"
             dir="ltr"
           >
-            {value.verification_url}
+            {t('saasDoc.openVerification')}
           </a>
+          <p className={styles.reference} dir="ltr">
+            {value.verification_url}
+          </p>
+          <CopyDocumentFact
+            value={value.verification_url}
+            label={t('saasDoc.verify')}
+            className={styles.noPrint}
+          />
+          <p>{t('saasDoc.currentValidity')}</p>
           {['127.0.0.1', 'localhost', '[::1]'].includes(
             new URL(value.verification_url).hostname,
           ) && <p>{t('documents.localOnly')}</p>}
@@ -173,10 +190,17 @@ export function SaasDocumentContent({
                 ? 'saasDoc.issued'
                 : 'saasDoc.invalidatedEvent',
             )}{' '}
-            · <bdi>{event.author}</bdi> · <bdi dir="ltr">{event.at}</bdi> ·{' '}
+            · <bdi>{event.author}</bdi> · <DocumentDate value={event.at} /> ·{' '}
             {event.reason}
           </p>
         ))}
+        <p dir="ltr">
+          {value.issued_at}
+          <br />
+          {value.content.starts_at}
+          <br />
+          {value.content.expires_at}
+        </p>
       </details>
     </article>
   );
@@ -190,11 +214,19 @@ function OwnedDocumentContent({
 }) {
   const { t } = useTranslation();
   return data.documents.length ? (
-    data.documents.map((value, index) => (
-      <div key={value.id} className={index ? styles.oldVersion : ''}>
-        <SaasDocumentContent document={value} />
-      </div>
-    ))
+    <>
+      <p className={styles.noPrint} data-saas-payment-status>
+        {t('saasDoc.paymentStatus')}:{' '}
+        {t('o3.payment.' + data.payment.status, {
+          defaultValue: t('quality.notConfirmed'),
+        })}
+      </p>
+      {data.documents.map((value, index) => (
+        <div key={value.id} className={index ? styles.oldVersion : ''}>
+          <SaasDocumentContent document={value} />
+        </div>
+      ))}
+    </>
   ) : (
     <article className={styles.sheet} data-saas-printable>
       <img className={styles.logo} src="/brand/moulai-logo.png" alt="MoulAI™" />
@@ -555,7 +587,7 @@ export function VerifySaasDocumentPage() {
             {query.data.issued_at && (
               <p>
                 {t('saasDoc.issuedAt')}:{' '}
-                <bdi dir="ltr">{query.data.issued_at}</bdi>
+                <DocumentDate value={query.data.issued_at} />
               </p>
             )}
           </section>

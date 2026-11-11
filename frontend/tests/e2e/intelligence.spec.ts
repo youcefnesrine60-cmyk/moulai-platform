@@ -142,7 +142,9 @@ for (const width of [1440, 390])
         );
         await expect(page.locator('header img')).toHaveAttribute(
           'src',
-          `/brand/moulai-logo-${theme}01.png`,
+          theme === 'dark'
+            ? '/brand/moulai-logo-dark-approved-20261111.png'
+            : '/brand/moulai-logo-light01.png',
         );
         const prefix = `${width}-${locale}-${theme}`;
         await capture(page, `${prefix}-agents`, info);

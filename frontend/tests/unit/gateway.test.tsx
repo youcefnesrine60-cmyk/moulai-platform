@@ -68,7 +68,9 @@ describe('approved Gateway assets and access boundary', () => {
         ).not.toBeInTheDocument();
         expect(screen.getByAltText('MoulAI™')).toHaveAttribute(
           'src',
-          `/brand/moulai-logo-${theme}01.png`,
+          theme === 'dark'
+            ? '/brand/moulai-logo-dark-approved-20261111.png'
+            : '/brand/moulai-logo-light01.png',
         );
       });
 

@@ -7,6 +7,7 @@
 
 import { useState, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router';
 import { BookOpen, Plus } from 'lucide-react';
 import { AccessError } from '../../shared/access/contracts';
 import { Badge, Button, ErrorPanel } from '../../shared/ui/primitives';
@@ -25,11 +26,31 @@ export function CataloguePage(): ReactElement {
   const { t } = useTranslation();
   const { data, company } = useRestaurantContext();
   const { money } = useBusinessFormatting();
-  const [section, setSection] = useState<CatalogueSection>('products');
-  const [category, setCategory] = useState('all');
-  const [product, setProduct] = useState('all');
-  const [search, setSearch] = useState('');
-  const [availability, setAvailability] = useState('all');
+  const [parameters, setParameters] = useSearchParams();
+  const selected = parameters.get('catalog-section');
+  const section: CatalogueSection =
+    selected === 'categories' || selected === 'options' ? selected : 'products';
+  const category = parameters.get('catalog-category') ?? 'all';
+  const product = parameters.get('catalog-product') ?? 'all';
+  const search = (parameters.get('catalog-search') ?? '').slice(0, 255);
+  const availability = parameters.get('catalog-availability') ?? 'all';
+  /** Preserve unrelated query parameters and avoid adding a history entry for every typed character. */
+  function filter(name: string, value: string): void {
+    setParameters(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        if (
+          value === '' ||
+          value === 'all' ||
+          (name === 'section' && value === 'products')
+        )
+          next.delete('catalog-' + name);
+        else next.set('catalog-' + name, value);
+        return next;
+      },
+      { replace: true },
+    );
+  }
   const [editor, setEditor] = useState<EditorSelection | null>(null);
   const [saved, setSaved] = useState(false);
   if (!company.permissions.includes('tenant.catalog.read'))
@@ -57,10 +78,15 @@ export function CataloguePage(): ReactElement {
     setEditor(selection);
   };
   const clear = (): void => {
-    setSearch('');
-    setCategory('all');
-    setAvailability('all');
-    setProduct('all');
+    setParameters(
+      (previous) => {
+        const next = new URLSearchParams(previous);
+        for (const name of ['search', 'category', 'availability', 'product'])
+          next.delete('catalog-' + name);
+        return next;
+      },
+      { replace: true },
+    );
   };
   return (
     <>
@@ -87,7 +113,7 @@ export function CataloguePage(): ReactElement {
           <button
             key={value}
             aria-pressed={section === value}
-            onClick={() => setSection(value)}
+            onClick={() => filter('section', value)}
           >
             {t(`business.${value}`)}
           </button>
@@ -101,7 +127,7 @@ export function CataloguePage(): ReactElement {
               <input
                 type="search"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) => filter('search', event.target.value)}
                 maxLength={255}
               />
             </label>
@@ -109,7 +135,7 @@ export function CataloguePage(): ReactElement {
               {t('business.category')}
               <select
                 value={category}
-                onChange={(event) => setCategory(event.target.value)}
+                onChange={(event) => filter('category', event.target.value)}
               >
                 <option value="all">{t('business.allCategories')}</option>
                 {sortedCategories.map((row) => (
@@ -123,7 +149,7 @@ export function CataloguePage(): ReactElement {
               {t('business.available')}
               <select
                 value={availability}
-                onChange={(event) => setAvailability(event.target.value)}
+                onChange={(event) => filter('availability', event.target.value)}
               >
                 <option value="all">{t('business.allProducts')}</option>
                 <option value="available">{t('business.available')}</option>
@@ -236,7 +262,7 @@ export function CataloguePage(): ReactElement {
               {t('business.product')}
               <select
                 value={product}
-                onChange={(event) => setProduct(event.target.value)}
+                onChange={(event) => filter('product', event.target.value)}
               >
                 <option value="all">{t('business.allProducts')}</option>
                 {data.products.map((row) => (

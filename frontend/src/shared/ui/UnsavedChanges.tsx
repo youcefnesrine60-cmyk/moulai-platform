@@ -106,10 +106,14 @@ export function UnsavedChangesProvider({ children }: { children: ReactNode }) {
             }}
             onCloseAutoFocus={(event) => {
               event.preventDefault();
-              (returnFocus.current?.isConnected
-                ? returnFocus.current
-                : document.getElementById('main-content')
-              )?.focus({ preventScroll: true });
+              if (returnFocus.current?.isConnected)
+                returnFocus.current.focus({ preventScroll: true });
+              // A nested editor may already have restored its opener after explicit discard.
+              // Do not steal that focus when the discarded field no longer exists.
+              else if (document.activeElement === document.body)
+                document
+                  .getElementById('main-content')
+                  ?.focus({ preventScroll: true });
             }}
           >
             <Dialog.Title>{t('quality.unsavedTitle')}</Dialog.Title>

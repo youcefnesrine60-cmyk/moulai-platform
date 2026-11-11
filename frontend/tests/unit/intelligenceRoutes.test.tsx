@@ -301,6 +301,9 @@ describe('scoped intelligence routes and local configuration', () => {
     await user.click(
       screen.getByRole('button', { name: i18n.t('intelligence.closeEditor') }),
     );
+    await user.click(
+      screen.getByRole('button', { name: i18n.t('quality.leave') }),
+    );
     await waitFor(() =>
       expect(
         screen.getByRole('button', { name: i18n.t('intelligence.configure') }),

@@ -58,7 +58,9 @@ async function inspect(
   const logo = page.locator('header img[alt="MoulAI™"]');
   await expect(logo).toHaveAttribute(
     'src',
-    `/brand/moulai-logo-${theme}01.png`,
+    theme === 'dark'
+      ? '/brand/moulai-logo-dark-approved-20261111.png'
+      : '/brand/moulai-logo-light01.png',
   );
   await expect
     .poll(() =>

@@ -99,10 +99,18 @@ describe('approved frontend signature and planned Agent-as-a-Service copy', () =
         const logo = screen.getByAltText('MoulAI™');
         expect(logo).toHaveAttribute(
           'src',
-          `/brand/moulai-logo-${theme}01.png`,
+          theme === 'dark'
+            ? '/brand/moulai-logo-dark-approved-20261111.png'
+            : '/brand/moulai-logo-light01.png',
         );
-        expect(logo).toHaveAttribute('width', '2172');
-        expect(logo).toHaveAttribute('height', '724');
+        expect(logo).toHaveAttribute(
+          'width',
+          theme === 'dark' ? '2048' : '2172',
+        );
+        expect(logo).toHaveAttribute(
+          'height',
+          theme === 'dark' ? '682' : '724',
+        );
         for (const other of ['fr', 'en', 'ar'] as const)
           if (other !== locale)
             for (const text of approved[other])
