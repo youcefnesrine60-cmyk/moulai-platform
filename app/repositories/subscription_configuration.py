@@ -35,7 +35,7 @@ LEGACY_REVISIONS = frozenset(
         "o220261108",
     }
 )
-COUNTRY_REVISIONS = frozenset({"o320261108", "o420261108"})
+COUNTRY_REVISIONS = frozenset({"o320261108", "o420261108", "o520261111"})
 
 # ==============================================
 # GLOBAL POLICY READ

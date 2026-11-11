@@ -25,7 +25,8 @@ if (
     or not connection.in_transaction()
     or not isinstance(marker, str)
     or len(marker) != 32
-    or context.get_revision_argument() not in {"o220261108", "o320261108", "o420261108"}
+    or context.get_revision_argument()
+    not in {"o220261108", "o320261108", "o420261108", "o520261111"}
 ):
     raise RuntimeError("country_base_migration_not_attested")
 row = connection.execute(

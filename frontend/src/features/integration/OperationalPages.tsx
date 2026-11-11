@@ -112,6 +112,16 @@ export function OperationalPlatformPage() {
       <h1>{t('nav.platformArea')}</h1>
       <p>{t('integration.adminScope')}</p>
       <p>{t('integration.notice')}</p>
+      {session.data?.platformPermissions.some((permission) =>
+        [
+          'subscriptions.documents.issue',
+          'subscriptions.documents.invalidate',
+        ].includes(permission),
+      ) && (
+        <p>
+          <Link to="/platform/saas-documents">{t('saasDoc.title')}</Link>
+        </p>
+      )}
       {session.data?.platformPermissions.includes('payments.review') && (
         <p>
           <Link to="/platform/saas-payments">{t('o3.paymentReview')}</Link>

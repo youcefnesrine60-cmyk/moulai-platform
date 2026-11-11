@@ -14,6 +14,8 @@
 
 SUBSCRIPTION_PRICING_MANAGE = "subscriptions.pricing.manage"
 TENANT_BILLING_COUNTRY_MANAGE = "tenant.billing_country.manage"
+SUBSCRIPTION_DOCUMENTS_ISSUE = "subscriptions.documents.issue"
+SUBSCRIPTION_DOCUMENTS_INVALIDATE = "subscriptions.documents.invalidate"
 PLATFORM_PERMISSION_REFERENCE = frozenset(
     {
         "admins.manage",
@@ -21,5 +23,7 @@ PLATFORM_PERMISSION_REFERENCE = frozenset(
         "payments.review",
         SUBSCRIPTION_PRICING_MANAGE,
         TENANT_BILLING_COUNTRY_MANAGE,
+        SUBSCRIPTION_DOCUMENTS_ISSUE,
+        SUBSCRIPTION_DOCUMENTS_INVALIDATE,
     }
 )

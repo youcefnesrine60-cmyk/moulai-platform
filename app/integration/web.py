@@ -85,6 +85,7 @@ from app.integration.offers import (
     simulate_offer,
 )
 from app.integration.queries import base_select
+from app.integration.saas_document_routes import mount_saas_document_routes
 from app.integration.saas_payment_routes import mount_saas_payment_routes
 from app.integration.sessions import BrowserSessions
 from app.integration.settlements import (
@@ -171,16 +172,12 @@ async def attest_database(
     revision = await session.scalar(
         text("SELECT version_num FROM public.alembic_version")
     )
-    if (
-        tuple(row)
-        != (
-            "moulai_integrated",
-            "moulai_integrated",
-            55433,
-            "moulai-operational-local:" + configuration.instance_id,
-        )
-        or revision != "o420261108"
-    ):
+    if tuple(row) != (
+        "moulai_integrated",
+        "moulai_integrated",
+        55433,
+        "moulai-operational-local:" + configuration.instance_id,
+    ) or revision not in {"o420261108", "o520261111"}:
         raise RuntimeError("integration_database_identity_or_revision_mismatch")
 
 
@@ -437,6 +434,13 @@ def compose_browser_app(*, configuration: IntegrationConfig | StagingConfig) -> 
     )
     mount_saas_payment_routes(
         app=app, identity_dep=identity_dep, session_dep=session_dep
+    )
+    mount_saas_document_routes(
+        app=app,
+        identity_dep=identity_dep,
+        session_dep=session_dep,
+        marker=configuration.instance_id,
+        origin=configuration.origin,
     )
 
     # ==============================================

@@ -20,6 +20,7 @@ from __future__ import annotations
 # Passwords remain in private files or child environments and are never printed or passed as command arguments.
 # ==============================================
 
+import argparse
 import asyncio
 import hashlib
 import json
@@ -276,7 +277,9 @@ async def fingerprint(*, connection: AsyncConnection) -> dict[str, object]:
 # ==============================================
 
 
-def migrate_clone(*, connection: Connection, marker: str) -> None:
+def migrate_clone(
+    *, connection: Connection, marker: str, target: str = "o420261108"
+) -> None:
     """Run only the reviewed O2 to O4 chain through Alembic without editing installed revision metadata."""
     settings = Config()
     settings.set_main_option(
@@ -287,7 +290,9 @@ def migrate_clone(*, connection: Connection, marker: str) -> None:
     settings.attributes.update(
         connection=connection, country_base_marker=marker, restored_operational=True
     )
-    command.upgrade(settings, "o420261108")
+    if target not in {"o420261108", "o520261111"}:
+        raise RuntimeError("operational_restore_target_not_approved")
+    command.upgrade(settings, target)
 
 
 # ==============================================
@@ -369,6 +374,7 @@ async def verify_clone(
     archive: Path,
     baseline: dict[str, object],
     output: Path,
+    target: str = "o420261108",
 ) -> dict[str, object]:
     """Restore all source ACLs and owners, prove transactional migration rollback and test actual recovery."""
     bootstrap = await asyncpg.connect(
@@ -435,11 +441,13 @@ async def verify_clone(
             await connection.rollback()
             transaction = await connection.begin()
             await connection.run_sync(
-                lambda sync: migrate_clone(connection=sync, marker=marker)
+                lambda sync: migrate_clone(
+                    connection=sync, marker=marker, target=target
+                )
             )
             if (
                 await connection.scalar(text("SELECT version_num FROM alembic_version"))
-                != "o420261108"
+                != target
             ):
                 raise RuntimeError("operational_clone_migration_not_complete")
             await transaction.rollback()
@@ -448,14 +456,25 @@ async def verify_clone(
             await connection.rollback()
             async with connection.begin():
                 await connection.run_sync(
-                    lambda sync: migrate_clone(connection=sync, marker=marker)
+                    lambda sync: migrate_clone(
+                        connection=sync, marker=marker, target=target
+                    )
                 )
             after = await fingerprint(connection=connection)
-            if after["revision"] != "o420261108" or len(after["tables"]) != 101:
+            if (
+                after["revision"] != target
+                or len(after["tables"])
+                != {"o420261108": 101, "o520261111": 103}[target]
+            ):
                 raise RuntimeError("operational_clone_final_catalogue_incomplete")
             for table, value in baseline["tables"].items():
                 if (
-                    table not in {"alembic_version", "subscription_pricing_config"}
+                    table
+                    not in (
+                        {"alembic_version", "subscription_pricing_config"}
+                        if target == "o420261108"
+                        else {"alembic_version"}
+                    )
                     and after["tables"].get(table) != value
                 ):
                     raise RuntimeError("operational_clone_changed_preexisting_rows")
@@ -505,13 +524,18 @@ async def verify_clone(
 
 
 def verified_restoration_proof(
-    *, configuration: IntegrationConfig
+    *, configuration: IntegrationConfig, target: str = "o420261108"
 ) -> dict[str, object]:
     """Admit only this source's verified immutable archive and the exact migration sources rehearsed with it."""
-    pointer = json.loads((OUTPUT / "restore-proof.json").read_text(encoding="utf-8"))
+    root = (
+        OUTPUT if target == "o420261108" else ROOT / "artifacts/saas-documents-20261111"
+    )
+    if target not in {"o420261108", "o520261111"}:
+        raise RuntimeError("operational_restore_target_not_approved")
+    pointer = json.loads((root / "restore-proof.json").read_text(encoding="utf-8"))
     path = Path(pointer["report"]).resolve()
     if (
-        not path.is_relative_to(OUTPUT.resolve())
+        not path.is_relative_to(root.resolve())
         or hashlib.sha256(path.read_bytes()).hexdigest() != pointer["sha256"]
     ):
         raise RuntimeError("operational_restore_proof_integrity_failed")
@@ -519,6 +543,7 @@ def verified_restoration_proof(
     archive = Path(report["backup_reference"]).resolve()
     if (
         report["status"] != "PASS"
+        or report["forward"]["revision"] != target
         or report["source_instance"] != configuration.instance_id
         or report["source_migrated"] is not False
         or any(
@@ -554,13 +579,21 @@ def verified_restoration_proof(
 
 def main() -> int:
     """Create a private fresh backup and a public nonsensitive restoration report; never migrate the source."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--target", choices=("o420261108", "o520261111"), default="o420261108"
+    )
+    target = parser.parse_args().target
+    root = (
+        OUTPUT if target == "o420261108" else ROOT / "artifacts/saas-documents-20261111"
+    )
     configuration = resolve_instance(supplied=None)
     marker = uuid4().hex
-    output = OUTPUT / ("restore-" + marker)
-    private = configuration.directory / "private" / "backups" / ("o4-" + marker)
+    output = root / ("restore-" + marker)
+    private = configuration.directory / "private" / "backups" / (target + "-" + marker)
     private.mkdir(parents=True)
     output.mkdir(parents=True)
-    archive = private / "before-o4.dump"
+    archive = private / ("before-" + target + ".dump")
     clone_data = output / "postgres-data"
     sys.addaudithook(RestorationNetworkGuard())
     with local_host_lease(directory=configuration.directory):
@@ -604,7 +637,14 @@ def main() -> int:
             )
             source_started = True
             baseline = asyncio.run(
-                backup_source(configuration=configuration, archive=archive)
+                backup_source(
+                    configuration=configuration,
+                    archive=archive,
+                    expected_revision=(
+                        "o220261108" if target == "o420261108" else "o420261108"
+                    ),
+                    expected_tables=93 if target == "o420261108" else 101,
+                )
             )
             native(
                 arguments=[
@@ -628,6 +668,7 @@ def main() -> int:
                     archive=archive,
                     baseline=baseline,
                     output=output,
+                    target=target,
                 )
             )
             hashes = {
@@ -639,6 +680,10 @@ def main() -> int:
                     ROOT / "migration_support/billing_country_o4.py",
                     ROOT / "alembic/versions/2026_11_08_country_base_o3.py",
                     ROOT / "alembic/versions/2026_11_08_billing_country_o4.py",
+                    ROOT / "migration_support/saas_documents_o5.py",
+                    ROOT / "alembic/versions/2026_11_11_saas_documents_o5.py",
+                    ROOT / "alembic_country_base_local/env.py",
+                    ROOT / "alembic_operational_local/env.py",
                 )
             }
             report = {
@@ -657,7 +702,7 @@ def main() -> int:
             (output / "summary.json").write_text(
                 json.dumps(report, indent=2), encoding="utf-8"
             )
-            (OUTPUT / "restore-proof.json").write_text(
+            (root / "restore-proof.json").write_text(
                 json.dumps(
                     {
                         "report": str(output / "summary.json"),

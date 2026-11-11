@@ -121,6 +121,7 @@ async def initialize(
     url: str,
     billing_country: bool = False,
     operational_history: bool = False,
+    saas_documents: bool = False,
 ) -> None:
     """Create a nonsuperuser owner, execute frozen prerequisites and the complete main history."""
     bootstrap = await asyncpg.connect(
@@ -204,7 +205,12 @@ async def initialize(
                 )
                 config.attributes.update(connection=sync, country_base_marker=marker)
                 command.upgrade(
-                    config, "o420261108" if billing_country else "o320261108"
+                    config,
+                    (
+                        "o520261111"
+                        if saas_documents
+                        else "o420261108" if billing_country else "o320261108"
+                    ),
                 )
 
             await connection.run_sync(forward)
@@ -224,11 +230,16 @@ def main() -> int:
     profiles = parser.add_mutually_exclusive_group()
     profiles.add_argument("--billing-country", action="store_true")
     profiles.add_argument("--operational-history", action="store_true")
+    profiles.add_argument("--saas-documents", action="store_true")
     options = parser.parse_args()
     revision = (
         "o220261108"
         if options.operational_history
-        else "o420261108" if options.billing_country else "o320261108"
+        else (
+            "o520261111"
+            if options.saas_documents
+            else "o420261108" if options.billing_country else "o320261108"
+        )
     )
     with socket.socket() as check:
         check.bind(("127.0.0.1", PORT))
@@ -239,9 +250,13 @@ def main() -> int:
             "artifacts/operational-history-tests-20261109"
             if options.operational_history
             else (
-                "artifacts/operational-o3-20261108"
-                if options.billing_country
-                else "artifacts/saas-base-country-20261108"
+                "artifacts/saas-documents-20261111/rehearsals"
+                if options.saas_documents
+                else (
+                    "artifacts/operational-o3-20261108"
+                    if options.billing_country
+                    else "artifacts/saas-base-country-20261108"
+                )
             )
         )
         / marker
@@ -299,7 +314,11 @@ def main() -> int:
         COUNTRY_BASE_TEST_PROFILE=(
             "operational-o2"
             if options.operational_history
-            else "billing-o4" if options.billing_country else "country-o3"
+            else (
+                "documents-o5"
+                if options.saas_documents
+                else "billing-o4" if options.billing_country else "country-o3"
+            )
         ),
     )
     sys.addaudithook(CountryBaseNetworkGuard())
@@ -325,8 +344,9 @@ def main() -> int:
                 bootstrap_password=bootstrap_password,
                 marker=marker,
                 url=url,
-                billing_country=options.billing_country,
+                billing_country=options.billing_country or options.saas_documents,
                 operational_history=options.operational_history,
+                saas_documents=options.saas_documents,
             )
         )
         import pytest
@@ -353,7 +373,12 @@ def main() -> int:
                             "tests/integration_local/test_country_checkout_postgres.py",
                             "tests/integration_local/test_followup_postgres.py",
                         ]
-                        if options.billing_country
+                        if options.billing_country or options.saas_documents
+                        else []
+                    ),
+                    *(
+                        ["tests/integration_local/test_saas_documents_postgres.py"]
+                        if options.saas_documents
                         else []
                     ),
                     "--junitxml=" + str(output / "results.xml"),

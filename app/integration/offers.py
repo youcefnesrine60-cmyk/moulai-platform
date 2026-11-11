@@ -147,7 +147,7 @@ async def available_offer(*, session: AsyncSession, restaurant_id: int) -> JsonO
         "registration_connected": await session.scalar(
             text("SELECT version_num FROM public.alembic_version")
         )
-        == "o420261108",
+        in {"o420261108", "o520261111"},
         "registration_scope": (
             "isolated_staging_fictitious_documents_only"
             if os.environ.get("APP_ENV") == "staging"

@@ -10,6 +10,7 @@ import { useId, useState, type FormEvent } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
+import { Link } from 'react-router';
 import { identityKey, useSession } from '../../app/access';
 import {
   Badge,
@@ -493,6 +494,11 @@ export function SaasPayments({
       ) : (
         query.data.map((row) => (
           <article className={styles.record} key={row.id}>
+            <Link
+              to={`/workspace/saas-documents/${organizationId}/${restaurantId}/${row.id}`}
+            >
+              {t('saasDoc.title')}
+            </Link>
             <PaymentProgress row={row} />
             <p>
               <strong>

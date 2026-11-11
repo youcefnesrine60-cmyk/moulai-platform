@@ -110,10 +110,10 @@ async def schedule(*, session: AsyncSession, subscription: Subscription) -> None
 
     from sqlalchemy import text
 
-    if (
-        await session.scalar(text("SELECT version_num FROM public.alembic_version"))
-        == "o420261108"
-    ):
+    if await session.scalar(text("SELECT version_num FROM public.alembic_version")) in {
+        "o420261108",
+        "o520261111",
+    }:
         from app.models.billing_country import EnrollmentDossier
         from app.models.registration_request import RegistrationRequest
 

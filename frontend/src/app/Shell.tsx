@@ -174,6 +174,24 @@ export function Sidebar({
         )}
         {platform &&
           operational &&
+          session.data?.platformPermissions.some((permission) =>
+            [
+              'subscriptions.documents.issue',
+              'subscriptions.documents.invalidate',
+            ].includes(permission),
+          ) && (
+            <NavLink
+              to="/platform/saas-documents"
+              className={({ isActive }) =>
+                `${styles.navLink} ${isActive ? styles.navActive : ''}`
+              }
+              onClick={close}
+            >
+              {t('saasDoc.title')}
+            </NavLink>
+          )}
+        {platform &&
+          operational &&
           [
             [
               'tenant.billing_country.manage',

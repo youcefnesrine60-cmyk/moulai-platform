@@ -102,7 +102,7 @@ async def factory() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
         )
         assert await connection.scalar(
             text("SELECT version_num FROM alembic_version")
-        ) in {"o320261108", "o420261108"}
+        ) in {"o320261108", "o420261108", "o520261111"}
     try:
         yield async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
     finally:

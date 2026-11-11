@@ -13,5 +13,12 @@
 """Unknown revisions remain refused; this list does not substitute for migrations."""
 
 DINING_SERVICE_REVISIONS = frozenset(
-    {"d1d20261105", "o120261108", "o220261108", "o320261108", "o420261108"}
+    {
+        "d1d20261105",
+        "o120261108",
+        "o220261108",
+        "o320261108",
+        "o420261108",
+        "o520261111",
+    }
 )

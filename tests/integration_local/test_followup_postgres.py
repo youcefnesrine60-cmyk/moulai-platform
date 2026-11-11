@@ -29,6 +29,7 @@ from datetime import (
     timezone,
 )
 from decimal import Decimal
+from typing import Literal
 from uuid import uuid4
 
 import pytest
@@ -86,7 +87,10 @@ pytestmark = pytest.mark.country_rehearsal
 
 
 async def pending_offer(
-    *, factory: async_sessionmaker[AsyncSession], extra_site: bool = False
+    *,
+    factory: async_sessionmaker[AsyncSession],
+    extra_site: bool = False,
+    method: Literal["ccp", "baridimob", "cash"] = "ccp",
 ) -> tuple[OIDCPrincipal, int, int, int, int]:
     """Commit one dossier, validated country and pending invoice without funds or real customers."""
     principal, organization = await draft(factory=factory)
@@ -170,7 +174,7 @@ async def pending_offer(
             data=ManualSubscriptionCheckout(
                 restaurant_id=restaurant_id,
                 plan_id=plan_id,
-                payment_method="ccp",
+                payment_method=method,
                 currency="DZD",
                 billing_cycle="monthly",
             ),

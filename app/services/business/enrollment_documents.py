@@ -102,11 +102,9 @@ async def require_document_rehearsal(*, session: AsyncSession, marker: str) -> N
             "moulai-country-base:" + marker,
         ),
     }
-    if (
-        tuple(row) not in allowed
-        or await session.scalar(text("SELECT version_num FROM public.alembic_version"))
-        != "o420261108"
-    ):
+    if tuple(row) not in allowed or await session.scalar(
+        text("SELECT version_num FROM public.alembic_version")
+    ) not in {"o420261108", "o520261111"}:
         raise ValueError("fictitious_enrollment_documents_local_only")
 
 

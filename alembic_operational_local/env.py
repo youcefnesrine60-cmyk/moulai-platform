@@ -25,7 +25,8 @@ if (
     or not isinstance(connection, Connection)
     or not isinstance(configuration, IntegrationConfig)
     or not connection.in_transaction()
-    or context.get_revision_argument() not in {"o120261108", "o220261108", "o420261108"}
+    or context.get_revision_argument()
+    not in {"o120261108", "o220261108", "o420261108", "o520261111"}
 ):
     raise RuntimeError("operational_migration_not_attested")
 row = connection.execute(

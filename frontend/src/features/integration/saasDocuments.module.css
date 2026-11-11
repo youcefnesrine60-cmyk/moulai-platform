@@ -1,0 +1,132 @@
+.page {
+  max-inline-size: 1120px;
+  margin-inline: auto;
+  padding: 20px;
+  min-inline-size: 0;
+}
+.record,
+.sheet {
+  padding: 20px;
+  margin-block: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.logo {
+  inline-size: 180px;
+  block-size: auto;
+  object-fit: contain;
+}
+.sheet h1 {
+  font-size: 1.4rem;
+}
+.sheet h2 {
+  font-size: 1.1rem;
+}
+.warning {
+  font-weight: 700;
+}
+.amount {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.verification {
+  display: grid;
+  grid-template-columns: 192px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+.verification > img {
+  background: white;
+  padding: 8px;
+  box-sizing: content-box;
+  max-inline-size: 176px;
+}
+.record form {
+  display: grid;
+  gap: 12px;
+  margin-block: 16px;
+}
+.record label {
+  display: grid;
+  gap: 8px;
+}
+.record input[type='checkbox'] {
+  inline-size: 22px;
+  block-size: 22px;
+}
+.record textarea {
+  inline-size: 100%;
+  min-block-size: 80px;
+}
+@media (max-width: 600px) {
+  .page,
+  .sheet,
+  .record {
+    padding: 12px;
+  }
+  .verification {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.printLayer {
+  display: none;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+@media print {
+  :global(body[data-saas-document-page='true']) > * {
+    display: none !important;
+  }
+  :global(body[data-saas-document-page='true']) > [data-saas-print-root] {
+    display: block !important;
+    inline-size: 100%;
+    background: white !important;
+    color: #102a43 !important;
+  }
+  :global(html),
+  :global(body[data-saas-document-page='true']) {
+    background: white !important;
+    background-image: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .noPrint {
+    display: none !important;
+  }
+  .sheet {
+    background: white;
+    color: #102a43;
+    border: 1px solid #627d98;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 12px;
+    break-after: page;
+  }
+  .sheet:last-child {
+    break-after: auto;
+  }
+  .sheet h1 {
+    font-size: 18px;
+  }
+  .sheet h2 {
+    font-size: 15px;
+  }
+  .oldVersion {
+    break-before: page;
+  }
+  .verification {
+    grid-template-columns: 192px minmax(0, 1fr);
+    break-inside: avoid;
+  }
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+}

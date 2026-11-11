@@ -36,6 +36,7 @@ import { integration } from './integration';
 import { o3 } from './o3';
 import { followup } from './followup';
 import { interfaceQuality } from './interfaceQuality';
+import { saasDocuments } from './saasDocuments';
 import type { Locale, LocalizedLabel } from '../access/contracts';
 
 /** Store only a language preference; identities and tenant data stay in memory. */
@@ -67,6 +68,7 @@ await i18n.use(initReactI18next).init({
         ...o3.fr,
         ...followup.fr,
         ...interfaceQuality.fr,
+        ...saasDocuments.fr,
       },
     },
     ar: {
@@ -86,6 +88,7 @@ await i18n.use(initReactI18next).init({
         ...o3.ar,
         ...followup.ar,
         ...interfaceQuality.ar,
+        ...saasDocuments.ar,
       },
     },
     en: {
@@ -105,6 +108,7 @@ await i18n.use(initReactI18next).init({
         ...o3.en,
         ...followup.en,
         ...interfaceQuality.en,
+        ...saasDocuments.en,
       },
     },
   },

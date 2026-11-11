@@ -34,8 +34,12 @@ from urllib.parse import (
 import qrcode
 from qrcode.image.svg import SvgPathImage
 
-ReadPage: TypeAlias = Literal["menu", "verify-document", "verify-reservation"]
-READ_PAGES = frozenset({"/menu", "/verify-document", "/verify-reservation"})
+ReadPage: TypeAlias = Literal[
+    "menu", "verify-document", "verify-reservation", "verify-saas-document"
+]
+READ_PAGES = frozenset(
+    {"/menu", "/verify-document", "/verify-reservation", "/verify-saas-document"}
+)
 
 
 # ==============================================
@@ -100,7 +104,7 @@ def checked_public_origin(*, value: str) -> str:
 def public_read_url(*, origin: str, page: ReadPage, public_id: str, locale: str) -> str:
     """Return a scanable/manual read address with no mutation or finance authority."""
     if (
-        page not in {"menu", "verify-document", "verify-reservation"}
+        "/" + page not in READ_PAGES
         or not valid_public_id(value=public_id)
         or locale not in {"fr", "en", "ar"}
     ):

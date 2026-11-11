@@ -25,6 +25,7 @@ from typing import Literal
 from fastapi import (
     FastAPI,
     HTTPException,
+    Query,
     Request,
 )
 from fastapi.params import Depends
@@ -153,6 +154,7 @@ def mount_saas_payment_routes(
     async def payments(
         organization_id: int,
         restaurant_id: int,
+        payment_id: int | None = Query(default=None, gt=0),
         person: BrowserIdentity = identity_dep,
         session: AsyncSession = session_dep,
     ) -> list[dict[str, JsonValue]]:
@@ -192,6 +194,11 @@ def mount_saas_payment_routes(
                     .where(
                         Payment.restaurant_id == restaurant_id,
                         Payment.subscription_id.is_not(None),
+                        (
+                            Payment.id == payment_id
+                            if payment_id is not None
+                            else Payment.id.is_not(None)
+                        ),
                     )
                     .order_by(Payment.id.desc())
                     .limit(50)

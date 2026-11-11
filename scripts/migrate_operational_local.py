@@ -67,6 +67,7 @@ async def migrate(*, target: str) -> dict[str, object]:
         "o120261108": "d1d20261105",
         "o220261108": "o120261108",
         "o420261108": "o220261108",
+        "o520261111": "o420261108",
     }[target]
     configuration = resolve_instance(supplied=None)
     engine = create_async_engine(
@@ -98,8 +99,10 @@ async def migrate(*, target: str) -> dict[str, object]:
             )
             if revision != expected or clients:
                 raise RuntimeError("local_migration_revision_or_writer_mismatch")
-            if target == "o420261108":
-                proof = verified_restoration_proof(configuration=configuration)
+            if target in {"o420261108", "o520261111"}:
+                proof = verified_restoration_proof(
+                    configuration=configuration, target=target
+                )
                 current = await fingerprint(connection=connection)
                 if json.dumps(current, sort_keys=True) != json.dumps(
                     proof["source_before"], sort_keys=True
@@ -153,6 +156,14 @@ async def migrate(*, target: str) -> dict[str, object]:
                 await observer.scalar(text("SELECT version_num FROM alembic_version"))
                 == target
             )
+            if target == "o520261111":
+                final = await fingerprint(connection=observer)
+                if json.dumps(final, sort_keys=True) != json.dumps(
+                    proof["forward"], sort_keys=True
+                ):
+                    raise RuntimeError(
+                        "local_migration_final_catalogue_or_rows_mismatch"
+                    )
         return {
             "before": expected,
             "after": target,
@@ -173,7 +184,9 @@ def main() -> int:
     """Prepare a verified archive, migrate once and stop this script's owned PostgreSQL process."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--target", required=True, choices=("o120261108", "o220261108", "o420261108")
+        "--target",
+        required=True,
+        choices=("o120261108", "o220261108", "o420261108", "o520261111"),
     )
     options = parser.parse_args()
     configuration = resolve_instance(supplied=None)
@@ -196,8 +209,10 @@ def main() -> int:
         try:
             from sqlalchemy.engine import make_url
 
-            if options.target == "o420261108":
-                proof = verified_restoration_proof(configuration=configuration)
+            if options.target in {"o420261108", "o520261111"}:
+                proof = verified_restoration_proof(
+                    configuration=configuration, target=options.target
+                )
                 result = asyncio.run(migrate(target=options.target))
                 result.update(
                     backup_reference=proof["backup_reference"],
@@ -205,15 +220,19 @@ def main() -> int:
                     actual_restore_verified=True,
                     source_instance=configuration.instance_id,
                 )
-                destination = (
-                    ROOT / "artifacts/operational-o3-20261108/review-migration.json"
+                destination = ROOT / (
+                    "artifacts/operational-o3-20261108/review-migration.json"
+                    if options.target == "o420261108"
+                    else "artifacts/saas-documents-20261111/review-migration.json"
                 )
                 destination.write_text(json.dumps(result, indent=2), encoding="utf-8")
                 (configuration.directory / "schema.json").write_text(
                     json.dumps(
                         {
                             "revision": result["after"],
-                            "public_tables": 101,
+                            "public_tables": (
+                                101 if options.target == "o420261108" else 103
+                            ),
                             "target": "127.0.0.1:55433/moulai_integrated",
                         },
                         indent=2,

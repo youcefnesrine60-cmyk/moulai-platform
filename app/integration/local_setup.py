@@ -271,7 +271,7 @@ async def initialize_database(
                 config.attributes.update(
                     connection=sync, operational_configuration=configuration
                 )
-                if target not in {"o220261108", "o420261108"}:
+                if target not in {"o220261108", "o420261108", "o520261111"}:
                     raise ValueError("operational_bootstrap_target_not_admitted")
                 command.upgrade(config, target)
 
@@ -285,7 +285,8 @@ async def initialize_database(
             )
             if (
                 revision != target
-                or tables != {"o220261108": 93, "o420261108": 101}[target]
+                or tables
+                != {"o220261108": 93, "o420261108": 101, "o520261111": 103}[target]
             ):
                 raise RuntimeError("operational_catalogue_not_expected")
         (configuration.directory / "schema.json").write_text(
@@ -385,7 +386,7 @@ def initialize_instance() -> Path:
         initialize_database(
             configuration=configuration,
             bootstrap_password=bootstrap_password,
-            target="o420261108",
+            target="o520261111",
         )
     )
     realm = {

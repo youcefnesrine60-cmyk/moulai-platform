@@ -45,6 +45,19 @@ export const routes: RouteObject[] = [
     HydrateFallback: LoadingPanel,
     children: [
       ...(import.meta.env.MODE === 'staging' ||
+      (import.meta.env.DEV && import.meta.env.MODE === 'operational')
+        ? [
+            {
+              path: '/verify-saas-document',
+              lazy: async () => ({
+                Component: (
+                  await import('../features/integration/SaasDocuments')
+                ).VerifySaasDocumentPage,
+              }),
+            },
+          ]
+        : []),
+      ...(import.meta.env.MODE === 'staging' ||
       (import.meta.env.DEV &&
         ['dining', 'operational'].includes(import.meta.env.MODE))
         ? [
@@ -104,6 +117,14 @@ export const routes: RouteObject[] = [
                         Component: (
                           await import('../features/integration/OperationalPages')
                         ).OperationalInvitationsPage,
+                      }),
+                    },
+                    {
+                      path: '/workspace/saas-documents/:organizationId/:restaurantId/:paymentId',
+                      lazy: async () => ({
+                        Component: (
+                          await import('../features/integration/SaasDocuments')
+                        ).OwnerSaasDocumentsPage,
                       }),
                     },
                   ]
@@ -300,6 +321,14 @@ export const routes: RouteObject[] = [
                         Component: (
                           await import('../features/integration/SaasPayments')
                         ).SaasPaymentReviewPage,
+                      }),
+                    },
+                    {
+                      path: '/platform/saas-documents',
+                      lazy: async () => ({
+                        Component: (
+                          await import('../features/integration/SaasDocuments')
+                        ).PlatformSaasDocumentsPage,
                       }),
                     },
                     {
