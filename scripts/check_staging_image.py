@@ -81,6 +81,9 @@ async def check() -> None:
                 response.status_code == 200
                 and "sha256-" in response.headers["content-security-policy"]
             )
+            assert "GateWay-transparent-v2.png" in response.text
+            assert "GateWay-transparent-v2.ico" in response.text
+            assert "<title>MoulAI™</title>" in response.text
             assert (await client.get("/api/web/session")).json() is None
             assert (await client.get("/api/web/unknown")).status_code == 401
         print(
@@ -99,8 +102,10 @@ async def check() -> None:
                         for name in [
                             "Icon-help-MoulAI(2).png",
                             "Icon-Assistant-MoulAI(2).png",
-                            "GateWay.ico",
-                            "GateWay.png",
+                            "GateWay-transparent-v2.ico",
+                            "GateWay-transparent-v2.png",
+                            "moulai-logo-dark-approved-20261111.png",
+                            "moulai-logo-light01.png",
                         ]
                     },
                 }

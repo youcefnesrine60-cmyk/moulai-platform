@@ -583,9 +583,19 @@ def main() -> int:
     parser.add_argument(
         "--target", choices=("o420261108", "o520261111"), default="o420261108"
     )
-    target = parser.parse_args().target
+    parser.add_argument("--recover-o5", action="store_true")
+    options = parser.parse_args()
+    target = options.target
+    if options.recover_o5 and target != "o520261111":
+        parser.error("O5 recovery requires the exact O5 target")
     root = (
-        OUTPUT if target == "o420261108" else ROOT / "artifacts/saas-documents-20261111"
+        ROOT / "artifacts/staging-o5-20261111/recovery"
+        if options.recover_o5
+        else (
+            OUTPUT
+            if target == "o420261108"
+            else ROOT / "artifacts/saas-documents-20261111"
+        )
     )
     configuration = resolve_instance(supplied=None)
     marker = uuid4().hex
@@ -641,9 +651,15 @@ def main() -> int:
                     configuration=configuration,
                     archive=archive,
                     expected_revision=(
-                        "o220261108" if target == "o420261108" else "o420261108"
+                        "o520261111"
+                        if options.recover_o5
+                        else "o220261108" if target == "o420261108" else "o420261108"
                     ),
-                    expected_tables=93 if target == "o420261108" else 101,
+                    expected_tables=(
+                        103
+                        if options.recover_o5
+                        else 93 if target == "o420261108" else 101
+                    ),
                 )
             )
             native(
@@ -696,6 +712,11 @@ def main() -> int:
                 "backup_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
                 "source_before": baseline,
                 "source_migrated": False,
+                "recovery_mode": (
+                    "retained-O5-including-document-history"
+                    if options.recover_o5
+                    else "pre-transition-parent"
+                ),
                 "migration_sources": hashes,
                 **result,
             }

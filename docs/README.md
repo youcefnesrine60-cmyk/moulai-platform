@@ -116,3 +116,5 @@ The local `artifacts/README.md` provides a central evidence index. Follow
 [project maintenance](project-maintenance.md) when organizing generated output
 or reviewing retired tools; recorded results remain tied to their original
 source state and verification scope.
+
+- [O5 presentation and isolated staging preparation](o5-polish-staging-20261111.md): approved dark artwork, transparent favicon, documentary reading, legacy continuity and O5-aware local recovery; remaining integration work stays explicit.

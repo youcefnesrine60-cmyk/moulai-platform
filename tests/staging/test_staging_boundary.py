@@ -156,7 +156,7 @@ def test_database_identity_and_role_required() -> None:
         "moulai-staging:" + target.instance_id,
     )
     connection.execute.return_value.one.return_value = valid
-    connection.scalar.return_value = "o420261108"
+    connection.scalar.return_value = "o520261111"
     target.attest(connection=connection, migration=False, require_revision=True)
     for index in range(6):
         row = list(valid)
@@ -165,9 +165,10 @@ def test_database_identity_and_role_required() -> None:
         with pytest.raises(RuntimeError, match="identity_mismatch"):
             target.attest(connection=connection, migration=False)
     connection.execute.return_value.one.return_value = valid
-    connection.scalar.return_value = "s1a20261028"
-    with pytest.raises(RuntimeError, match="revision_mismatch"):
-        target.attest(connection=connection, migration=False, require_revision=True)
+    for revision in ("s1a20261028", "o420261108", "unknown"):
+        connection.scalar.return_value = revision
+        with pytest.raises(RuntimeError, match="revision_mismatch"):
+            target.attest(connection=connection, migration=False, require_revision=True)
 
 
 # ==============================================

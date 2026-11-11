@@ -21,6 +21,7 @@ from __future__ import annotations
 # The existing bootstrap owns its DDL and Alembic owns every recorded revision write.
 # ==============================================
 
+import argparse
 import asyncio
 import hashlib
 import json
@@ -50,7 +51,10 @@ from sqlalchemy.engine import (
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import command
-from scripts.rehearse_country_base import initialize
+from scripts.rehearse_country_base import (
+    CountryBaseNetworkGuard,
+    initialize,
+)
 from scripts.staging_sql_support import (
     OUTPUT,
     PG,
@@ -59,14 +63,121 @@ from scripts.staging_sql_support import (
 )
 
 # ==============================================
-# REAL DDL CAPTURE AND REPLAY
-# Compile bound mutations with SQLAlchemy types instead of interpolating values.
+# LIMITED RUNTIME AUTHORITY REHEARSAL
+# Test remote target refusal and local privileges without changing any remote role.
 # ==============================================
 
 
-async def prepare(*, password: str, bootstrap_password: str, marker: str) -> None:
+async def verify_o5_runtime(*, bootstrap_password: str, output: Path) -> None:
+    """Check the exact runtime grant body on a disposable local O5 database only.
+
+    The remote identity guard must reject this local server. Only the grant body
+    is then tested as a separate local rehearsal, never by relaxing its guard.
+    """
+    connection = await asyncpg.connect(
+        host="127.0.0.1",
+        port=55434,
+        user="moulai_bootstrap",
+        password=bootstrap_password,
+        database="moulai_base_rehearsal",
+        ssl=False,
+    )
+    try:
+        script = (ROOT / "deploy/staging/provision-runtime.sql").read_text(
+            encoding="utf-8"
+        )
+        async with connection.transaction():
+            try:
+                async with connection.transaction():
+                    await connection.execute(script)
+            except asyncpg.RaiseError as error:
+                if error.message != "staging_runtime_target_refused":
+                    raise
+            else:
+                raise RuntimeError("staging_remote_guard_accepted_local_target")
+            await connection.execute(
+                "CREATE ROLE moulai_staging_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE"
+            )
+            await connection.execute(script.split("END $attest$;", 1)[1])
+            await connection.execute("SET LOCAL ROLE moulai_staging_app")
+            for table in ("subscription_documents", "subscription_document_events"):
+                for privilege in ("SELECT", "INSERT"):
+                    if not await connection.fetchval(
+                        "SELECT has_table_privilege(current_user,$1,$2)",
+                        table,
+                        privilege,
+                    ):
+                        raise RuntimeError("staging_o5_runtime_append_grant_missing")
+                if not await connection.fetchval(
+                    "SELECT has_sequence_privilege(current_user,pg_get_serial_sequence($1,'id'),'USAGE')",
+                    table,
+                ):
+                    raise RuntimeError("staging_o5_runtime_sequence_grant_missing")
+                await connection.fetch("SELECT * FROM public." + table + " LIMIT 1")
+            forbidden = (
+                "UPDATE public.subscription_documents SET version=version WHERE false",
+                "UPDATE public.subscription_document_events SET event=event WHERE false",
+                "DELETE FROM public.subscription_documents WHERE false",
+                "DELETE FROM public.subscription_document_events WHERE false",
+                "TRUNCATE public.subscription_documents",
+                "TRUNCATE public.subscription_document_events",
+                "UPDATE public.alembic_version SET version_num=version_num WHERE false",
+                "CREATE TABLE public.runtime_forbidden(id integer)",
+            )
+            for statement in forbidden:
+                try:
+                    async with connection.transaction():
+                        await connection.execute(statement)
+                except asyncpg.InsufficientPrivilegeError:
+                    continue
+                raise RuntimeError("staging_runtime_forbidden_operation_admitted")
+            if await connection.fetchval(
+                "SELECT pg_has_role(current_user,'moulai_base_rehearsal','MEMBER')"
+            ):
+                raise RuntimeError("staging_runtime_inherits_owner")
+        (output / "runtime-proof.json").write_text(
+            json.dumps(
+                {
+                    "status": "PASS",
+                    "remote_guard_rejected_local": True,
+                    "grant_body_sha256": hashlib.sha256(
+                        script.split("END $attest$;", 1)[1].encode()
+                    ).hexdigest(),
+                    "select_insert_document_tables": True,
+                    "sequence_usage": True,
+                    "forbidden_operations_refused": len(forbidden),
+                    "runtime_not_owner": True,
+                    "scope": "disposable local PostgreSQL only",
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+    finally:
+        await connection.close()
+
+
+# ==============================================
+# EXECUTED MAIN CHAIN AND SQL REPLAY
+# Keep O4 and O5 observations separate so their row preservation is measurable.
+# ==============================================
+
+
+async def prepare(
+    *,
+    password: str,
+    bootstrap_password: str,
+    marker: str,
+    target_revision: str = "o420261108",
+    output: Path = OUTPUT,
+    runtime_checks: bool = False,
+) -> None:
     """Run the main graph, retain exact mutation SQL, and prove backup replay equality."""
+    if target_revision not in {"o420261108", "o520261111"}:
+        raise ValueError("staging_sql_revision_not_approved")
     phases: dict[str, list[str]] = {"bootstrap": [], "transition": []}
+    if target_revision == "o520261111":
+        phases["documents"] = []
     phase = "bootstrap"
 
     # ==============================================
@@ -127,6 +238,11 @@ async def prepare(*, password: str, bootstrap_password: str, marker: str) -> Non
             phases[phase].append(statement)
         if "version_num='s1a20261028'" in statement.replace(" ", ""):
             phase = "transition"
+        if (
+            target_revision == "o520261111"
+            and "version_num='o420261108'" in statement.replace(" ", "")
+        ):
+            phase = "documents"
 
     url = (
         "postgresql+asyncpg://moulai_base_rehearsal:"
@@ -149,12 +265,12 @@ async def prepare(*, password: str, bootstrap_password: str, marker: str) -> Non
             async with engine.begin() as connection:
 
                 # ==============================================
-                # COMPLETE O4 THROUGH THE LOCAL ATTESTED ENVIRONMENT
-                # Preserve every historical source and connection guard.
+                # COMPLETE THE SELECTED MAIN REVISION
+                # Preserve every historical source and capture O5 separately from O4.
                 # ==============================================
 
                 def forward(sync: Connection) -> None:
-                    """Let Alembic produce the O3/O4 delta on the actual O2 schema."""
+                    """Let Alembic produce the approved delta on the actual O2 schema."""
                     config = Config()
                     config.set_main_option(
                         "script_location", str(ROOT / "alembic_country_base_local")
@@ -165,14 +281,16 @@ async def prepare(*, password: str, bootstrap_password: str, marker: str) -> Non
                     config.attributes.update(
                         connection=sync, country_base_marker=marker
                     )
-                    command.upgrade(config, "o420261108")
+                    command.upgrade(config, target_revision)
 
                 await connection.run_sync(forward)
         finally:
             await engine.dispose()
     finally:
         event.remove(Engine, "before_cursor_execute", capture)
-    if phase != "transition" or not all(phases.values()):
+    if phase != (
+        "documents" if target_revision == "o520261111" else "transition"
+    ) or not all(phases.values()):
         raise RuntimeError("staging_s1a_capture_boundary_missing")
     admin = await asyncpg.connect(
         host="127.0.0.1",
@@ -211,37 +329,49 @@ async def prepare(*, password: str, bootstrap_password: str, marker: str) -> Non
                 for statement in statements:
                     await restored.execute(statement)
             observed = await fingerprint(connection=restored)
-            expected_revision = "s1a20261028" if name == "bootstrap" else "o420261108"
+            expected_revision = {
+                "bootstrap": "s1a20261028",
+                "transition": "o420261108",
+                "documents": "o520261111",
+            }[name]
             if observed["revision"] != expected_revision:
                 raise RuntimeError("staging_sql_replay_revision_mismatch")
             observations[name] = observed
-            (OUTPUT / ("sql-" + name + ".json")).write_text(
+            if name == "documents" and any(
+                observed["tables"].get(table) != value
+                for table, value in observations["transition"]["tables"].items()
+                if table != "alembic_version"
+            ):
+                raise RuntimeError("staging_o5_changed_existing_o4_rows")
+            (output / ("sql-" + name + ".json")).write_text(
                 json.dumps(statements, indent=2), encoding="utf-8"
             )
-            (OUTPUT / (name + ".sql")).write_text(
+            (output / (name + ".sql")).write_text(
                 ";\n\n".join(s.rstrip().rstrip(";") for s in statements) + ";\n",
                 encoding="utf-8",
             )
         original = await fingerprint(connection=source)
+        final = observations[
+            "documents" if target_revision == "o520261111" else "transition"
+        ]
         differences = [
             name
             for name, value in original["tables"].items()
-            if value != observations["transition"]["tables"][name]
+            if value != final["tables"][name]
         ]
-        (OUTPUT / "sql-replay-difference.json").write_text(
+        (output / "sql-replay-difference.json").write_text(
             json.dumps(
                 {
-                    "catalogue_equal": original["catalogue"]
-                    == observations["transition"]["catalogue"],
+                    "catalogue_equal": original["catalogue"] == final["catalogue"],
                     "tables": differences,
                     "original": original,
-                    "replayed": observations["transition"],
+                    "replayed": final,
                 },
                 indent=2,
             ),
             encoding="utf-8",
         )
-        if original["catalogue"] != observations["transition"]["catalogue"]:
+        if original["catalogue"] != final["catalogue"]:
             raise RuntimeError("staging_main_chain_and_sql_catalogues_differ")
         clocks = {}
         reference_tables = {
@@ -297,22 +427,32 @@ async def prepare(*, password: str, bootstrap_password: str, marker: str) -> Non
             "all_nonclock_reference_values_exact": True,
             "initialization_clock_differences": clocks,
             "phase_counts": {k: len(v) for k, v in phases.items()},
+            "revision": target_revision,
+            "o4_rows_preserved": target_revision == "o520261111",
             "observations": observations,
             "artifacts": {
                 p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in [
-                    OUTPUT / "bootstrap.sql",
-                    OUTPUT / "transition.sql",
-                    OUTPUT / "sql-bootstrap.json",
-                    OUTPUT / "sql-transition.json",
+                    *(output / (name + ".sql") for name in phases),
+                    *(output / ("sql-" + name + ".json") for name in phases),
                 ]
             },
         }
-        (OUTPUT / "sql-provenance.json").write_text(
+        (output / "sql-provenance.json").write_text(
             json.dumps(provenance, indent=2), encoding="utf-8"
         )
+        if runtime_checks:
+            await verify_o5_runtime(
+                bootstrap_password=bootstrap_password, output=output
+            )
         print(
-            json.dumps({"status": "PASS", "phase_counts": provenance["phase_counts"]})
+            json.dumps(
+                {
+                    "status": "PASS",
+                    "phase_counts": provenance["phase_counts"],
+                    "output": str(output),
+                }
+            )
         )
     finally:
         await source.close()
@@ -327,10 +467,26 @@ async def prepare(*, password: str, bootstrap_password: str, marker: str) -> Non
 
 def main() -> int:
     """Prepare SQL locally; never connect to any remote database or read .env."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--target", choices=("o420261108", "o520261111"), default="o420261108"
+    )
+    parser.add_argument("--verify-runtime", action="store_true")
+    options = parser.parse_args()
+    if options.verify_runtime and options.target != "o520261111":
+        parser.error("runtime rehearsal requires O5")
+    marker = uuid4().hex
+    output = (
+        OUTPUT
+        if options.target == "o420261108"
+        else ROOT / "artifacts/staging-o5-20261111" / "rehearsals" / marker
+    )
+    if options.target == "o520261111" and (output / "sql-provenance.json").exists():
+        raise RuntimeError("staging_o5_preparation_already_recorded")
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 55434))
-    marker = uuid4().hex
-    private = OUTPUT / "private" / ("sql-build-" + marker)
+    sys.addaudithook(CountryBaseNetworkGuard())
+    private = output / "private" / ("sql-build-" + marker)
     private.mkdir(parents=True)
     data = private / "postgres"
     password, bootstrap_password = secrets.token_hex(32), secrets.token_hex(32)
@@ -371,7 +527,12 @@ def main() -> int:
         started = True
         asyncio.run(
             prepare(
-                password=password, bootstrap_password=bootstrap_password, marker=marker
+                password=password,
+                bootstrap_password=bootstrap_password,
+                marker=marker,
+                target_revision=options.target,
+                output=output,
+                runtime_checks=options.verify_runtime,
             )
         )
         return 0

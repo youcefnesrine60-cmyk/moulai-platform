@@ -7,7 +7,9 @@ BEGIN
     OR current_setting('neon.project_id',true) IS DISTINCT FROM 'sparkling-rice-23028300'
     OR current_setting('neon.branch_id',true) IS DISTINCT FROM 'br-lucky-smoke-b9edyxoe'
     OR current_setting('neon.endpoint_id',true) IS DISTINCT FROM 'ep-odd-wildflower-b9wacgg0'
-    OR (SELECT version_num FROM public.alembic_version) IS DISTINCT FROM 'o420261108'
+    OR (SELECT version_num FROM public.alembic_version) IS DISTINCT FROM 'o520261111'
+    OR (SELECT shobj_description(oid,'pg_database') FROM pg_database WHERE datname=current_database())
+      IS DISTINCT FROM 'moulai-staging:bf4de394885f4d208b018f5056366f59'
   THEN RAISE EXCEPTION 'staging_runtime_target_refused'; END IF;
   IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname='moulai_staging_app'
     AND rolcanlogin AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole)
@@ -22,9 +24,15 @@ DO $grants$
 DECLARE table_name text;
 BEGIN
   FOR table_name IN SELECT tablename FROM pg_tables
-    WHERE schemaname='public' AND tablename<>'alembic_version'
+    WHERE schemaname='public' AND tablename NOT IN
+      ('alembic_version','subscription_documents','subscription_document_events')
   LOOP
     EXECUTE format('GRANT INSERT,UPDATE,DELETE ON public.%I TO moulai_staging_app',table_name);
   END LOOP;
 END $grants$;
+-- O5 histories are append-only even for the runtime role; triggers remain a second defence.
+REVOKE UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER ON public.subscription_documents,
+  public.subscription_document_events FROM moulai_staging_app;
+GRANT SELECT,INSERT ON public.subscription_documents,public.subscription_document_events
+  TO moulai_staging_app;
 -- No table ownership, schema CREATE, migration-history write, personal admin or cash grant.

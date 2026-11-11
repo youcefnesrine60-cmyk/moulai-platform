@@ -30,7 +30,8 @@ if (
     or not isinstance(connection, Connection)
     or not connection.in_transaction()
     or not isinstance(target, StagingTarget)
-    or context.get_revision_argument() not in {"s1a20261028", "o420261108"}
+    or context.get_revision_argument()
+    not in {"s1a20261028", "o420261108", "o520261111"}
 ):
     raise RuntimeError("staging_migration_not_attested")
 target.attest(connection=connection, migration=True)

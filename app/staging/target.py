@@ -140,6 +140,6 @@ class StagingTarget:
             and connection.scalar(
                 text("SELECT version_num FROM public.alembic_version")
             )
-            != "o420261108"
+            != "o520261111"
         ):
             raise RuntimeError("staging_schema_revision_mismatch")

@@ -1,0 +1,24 @@
+{
+  "scope": "LOCAL PREPARATION ONLY \u00e2\u20ac\u201d remote previously rehearsed O4 is not an O5 proof",
+  "source": "Executed main-bootstrap-v1 and unchanged real Alembic main chain; separately replayed locally",
+  "revision_from": "o420261108",
+  "revision_to": "o520261111",
+  "source_statements": 9,
+  "body_sha256": "e58719774e969f58052f59209242bf53de5a674472e965d9137dad7abf322416",
+  "guarded_file": "deploy/staging/migrations/from-o4-to-o5.sql",
+  "guarded_sha256": "0b01f29ffe4e6dce2423fa50e39493663b884b6a84048e954a26acdb899c9369",
+  "migration_sha256": {
+    "migration_support/saas_documents_o5.py": "f4e5c6a37704fbdd935ecf10d52318845478a2f3ab3e9e79c6a6111476ec7a19",
+    "alembic/versions/2026_11_11_saas_documents_o5.py": "bc76c411521350861c82acb34146c5d0eea97dc91177e317e5c6ea6854fa810c"
+  },
+  "remote_executed": false,
+  "runtime_sql_sha256": "cc22ea4a4dbb1ffbda9fce5110e06a943ffe57a27cedd9555605d6bcde4d2814",
+  "final_local_evidence": "artifacts/staging-o5-20261111/rehearsals/03b9ee21615f437cb981e70263d63ecb",
+  "recovery_evidence": "artifacts/staging-o5-20261111/recovery/restore-942e4e07edf0499bbe2af53fd3f14639/summary.json",
+  "source_preparation_sha256": {
+    "scripts/prepare_staging_sql.py": "4aafb631cfeccf4b785a00a67474675c42327071321f0c4c11de706891a4d1a0",
+    "app/staging/target.py": "79caf4da884db23c6898d8ce13fa9212ea35b4c14d1e4178713485106ebe3c16",
+    "alembic_staging/env.py": "e8a9bec1fd12d5dac2df952bc4e653911635ad9aad7e80a90bf4921f8d3feb5e",
+    "scripts/prepare_operational_o4.py": "5c5a06d152408e948d26175ce275f5bb71224705f2afdc0df414af590449fc72"
+  }
+}
