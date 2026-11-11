@@ -18,6 +18,7 @@ import styles from './integration.module.css';
 import { BillingCountryPanel } from './EnrollmentPage';
 import { SaasPayments } from './SaasPayments';
 import { ExactAmount } from '../../shared/ui/ExactAmount';
+import { useUnsavedChanges } from '../../shared/ui/UnsavedChanges';
 
 const offer = z.object({
   base_reference: z.string().nullable(),
@@ -71,6 +72,10 @@ export function OwnerOfferPage() {
     [result, setResult] = useState<z.infer<typeof pricing> | null>(null),
     [failed, setFailed] = useState(false);
   const [resultCurrency, setResultCurrency] = useState<string | null>(null);
+  // Protect the owner's explicitly selected simulation inputs; expiry still takes priority in the shared guard.
+  useUnsavedChanges(
+    Boolean(plan || currency || cycle !== 'monthly' || method !== 'electronic'),
+  );
   async function simulate(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
